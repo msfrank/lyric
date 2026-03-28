@@ -60,12 +60,12 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedCalls.resize(m_object.numCalls());
     for (int i = 0; i < m_object.numCalls(); i++) {
-        m_importedCalls[i] = new CallImport(shared_from_this(), i);
+        m_importedCalls[i] = std::make_shared<CallImport>(weak_from_this(), i);
     }
 
     m_importedClasses.resize(m_object.numClasses());
     for (int i = 0; i < m_object.numClasses(); i++) {
-        m_importedClasses[i] = new ClassImport(shared_from_this(), i);
+        m_importedClasses[i] = std::make_shared<ClassImport>(weak_from_this(), i);
     }
 
     m_importedConcepts.resize(m_object.numConcepts());
@@ -75,12 +75,12 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedEnums.resize(m_object.numEnums());
     for (int i = 0; i < m_object.numEnums(); i++) {
-        m_importedEnums[i] = new EnumImport(shared_from_this(), i);
+        m_importedEnums[i] = std::make_shared<EnumImport>(weak_from_this(), i);
     }
 
     m_importedExistentials.resize(m_object.numExistentials());
     for (int i = 0; i < m_object.numExistentials(); i++) {
-        m_importedExistentials[i] = new ExistentialImport(shared_from_this(), i);
+        m_importedExistentials[i] = std::make_shared<ExistentialImport>(weak_from_this(), i);
     }
 
     m_importedFields.resize(m_object.numFields());
@@ -120,12 +120,12 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedTemplates.resize(m_object.numTemplates());
     for (int i = 0; i < m_object.numTemplates(); i++) {
-        m_importedTemplates[i] = new TemplateImport(shared_from_this(), i);
+        m_importedTemplates[i] = std::make_shared<TemplateImport>(weak_from_this(), i);
     }
 
     m_importedTypes.resize(m_object.numTypes());
     for (int i = 0; i < m_object.numTypes(); i++) {
-        m_importedTypes[i] = new TypeImport(shared_from_this(), i);
+        m_importedTypes[i] = std::make_shared<TypeImport>(weak_from_this(), i);
     }
 
     return {};
@@ -171,7 +171,7 @@ lyric_importer::ModuleImport::getBinding(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::CallImport *
+std::shared_ptr<lyric_importer::CallImport>
 lyric_importer::ModuleImport::getCall(tu_uint32 offset) const
 {
     if (offset < m_importedCalls.size())
@@ -179,7 +179,7 @@ lyric_importer::ModuleImport::getCall(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::ClassImport *
+std::shared_ptr<lyric_importer::ClassImport>
 lyric_importer::ModuleImport::getClass(tu_uint32 offset) const
 {
     if (offset < m_importedClasses.size())
@@ -195,7 +195,7 @@ lyric_importer::ModuleImport::getConcept(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::EnumImport *
+std::shared_ptr<lyric_importer::EnumImport>
 lyric_importer::ModuleImport::getEnum(tu_uint32 offset) const
 {
     if (offset < m_importedEnums.size())
@@ -203,7 +203,7 @@ lyric_importer::ModuleImport::getEnum(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::ExistentialImport *
+std::shared_ptr<lyric_importer::ExistentialImport>
 lyric_importer::ModuleImport::getExistential(tu_uint32 offset) const
 {
     if (offset < m_importedExistentials.size())
@@ -267,7 +267,7 @@ lyric_importer::ModuleImport::getStruct(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::TemplateImport *
+std::shared_ptr<lyric_importer::TemplateImport>
 lyric_importer::ModuleImport::getTemplate(tu_uint32 offset) const
 {
     if (offset < m_importedTemplates.size())
@@ -275,7 +275,7 @@ lyric_importer::ModuleImport::getTemplate(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::TypeImport *
+std::shared_ptr<lyric_importer::TypeImport>
 lyric_importer::ModuleImport::getType(tu_uint32 offset) const
 {
     if (offset < m_importedTypes.size())

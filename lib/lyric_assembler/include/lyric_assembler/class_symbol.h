@@ -57,7 +57,7 @@ namespace lyric_assembler {
 
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
-            lyric_importer::ClassImport *classImport,
+            std::shared_ptr<lyric_importer::ClassImport> classImport,
             bool isCopied,
             ObjectState *state);
 
@@ -157,7 +157,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_classUrl;
-        lyric_importer::ClassImport *m_classImport = nullptr;
+        std::shared_ptr<lyric_importer::ClassImport> m_classImport;
         ObjectState *m_state;
 
         ClassSymbolPriv *load() override;

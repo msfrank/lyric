@@ -43,11 +43,11 @@ namespace lyric_importer {
 
         tempo_utils::Result<std::shared_ptr<ActionImport>> getAction(const lyric_common::SymbolUrl &actionUrl);
         tempo_utils::Result<std::shared_ptr<BindingImport>> getBinding(const lyric_common::SymbolUrl &bindingUrl);
-        tempo_utils::Result<CallImport *> getCall(const lyric_common::SymbolUrl &callUrl);
-        tempo_utils::Result<ClassImport *> getClass(const lyric_common::SymbolUrl &classUrl);
+        tempo_utils::Result<std::shared_ptr<CallImport>> getCall(const lyric_common::SymbolUrl &callUrl);
+        tempo_utils::Result<std::shared_ptr<ClassImport>> getClass(const lyric_common::SymbolUrl &classUrl);
         tempo_utils::Result<std::shared_ptr<ConceptImport>> getConcept(const lyric_common::SymbolUrl &conceptUrl);
-        tempo_utils::Result<EnumImport *> getEnum(const lyric_common::SymbolUrl &enumUrl);
-        tempo_utils::Result<ExistentialImport *> getExistential(const lyric_common::SymbolUrl &existentialUrl);
+        tempo_utils::Result<std::shared_ptr<EnumImport>> getEnum(const lyric_common::SymbolUrl &enumUrl);
+        tempo_utils::Result<std::shared_ptr<ExistentialImport>> getExistential(const lyric_common::SymbolUrl &existentialUrl);
         tempo_utils::Result<std::shared_ptr<FieldImport>> getField(const lyric_common::SymbolUrl &fieldUrl);
         tempo_utils::Result<std::shared_ptr<InstanceImport>> getInstance(const lyric_common::SymbolUrl &instanceUrl);
         tempo_utils::Result<std::shared_ptr<NamespaceImport>> getNamespace(const lyric_common::SymbolUrl &namespaceUrl);

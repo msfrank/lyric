@@ -67,13 +67,6 @@ lyric_assembler::ImplHandle::ImplHandle(std::shared_ptr<lyric_importer::ImplImpo
     TU_ASSERT (m_state != nullptr);
 }
 
-//lyric_assembler::ImplOffset
-//lyric_assembler::ImplHandle::getOffset() const
-//{
-//    auto *priv = getPriv();
-//    return priv->offset;
-//}
-
 lyric_assembler::ImplRef
 lyric_assembler::ImplHandle::getRef() const
 {
@@ -290,8 +283,14 @@ lyric_assembler::ImplHandle::load()
 
     priv->isDeclOnly = m_implImport->isDeclOnly();
 
-    auto *implType = m_implImport->getImplType();
-    TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(implType));
+    auto typeImport = m_implImport->getImplType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import impl at index {}; missing type",
+            m_implImport->getImplOffset()));
+    TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(typeImport));
+
     TU_ASSIGN_OR_RAISE (priv->implConcept, importCache->importConcept(m_implImport->getImplConcept()));
     priv->receiverUrl = m_implImport->getReceiverUrl();
 

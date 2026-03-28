@@ -96,12 +96,12 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Call: {
-            auto *callImport = moduleImport->getCall(symbolWalker.getLinkageIndex());
+            auto callImport = moduleImport->getCall(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::CallSymbol(symbolUrl, callImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Class: {
-            auto *classImport = moduleImport->getClass(symbolWalker.getLinkageIndex());
+            auto classImport = moduleImport->getClass(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ClassSymbol(symbolUrl, classImport, /* isCopied= */ false, state);
             break;
         }
@@ -111,12 +111,12 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Enum: {
-            auto *enumImport = moduleImport->getEnum(symbolWalker.getLinkageIndex());
+            auto enumImport = moduleImport->getEnum(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::EnumSymbol(symbolUrl, enumImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Existential: {
-            auto *existentialImport = moduleImport->getExistential(symbolWalker.getLinkageIndex());
+            auto existentialImport = moduleImport->getExistential(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ExistentialSymbol(symbolUrl, existentialImport, /* isCopied= */ false, state);
             break;
         }

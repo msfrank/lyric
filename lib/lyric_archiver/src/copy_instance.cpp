@@ -83,12 +83,12 @@ lyric_archiver::copy_instance(
 
         auto initializerUrl = fieldImport->getInitializer();
         if (initializerUrl.isValid()) {
-            lyric_importer::CallImport *initImport;
+            std::shared_ptr<lyric_importer::CallImport> initImport;
             TU_ASSIGN_OR_RETURN (initImport, archiverState.importCall(initializerUrl));
             std::vector<lyric_object::TemplateParameter> templateParameters;
-            auto *templateImport = initImport->getCallTemplate();
-            if (templateImport != nullptr) {
-                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+            if (initImport->hasCallTemplate()) {
+                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                    initImport->getCallTemplate(), objectState));
             }
 
             lyric_assembler::InitializerHandle *initializerHandle;
@@ -115,12 +115,12 @@ lyric_archiver::copy_instance(
             ctorUrl = it->second;
             continue;
         }
-        lyric_importer::CallImport *callImport;
+        std::shared_ptr<lyric_importer::CallImport> callImport;
         TU_ASSIGN_OR_RETURN (callImport, archiverState.importCall(it->second));
         std::vector<lyric_object::TemplateParameter> templateParameters;
-        auto *templateImport = callImport->getCallTemplate();
-        if (templateImport != nullptr) {
-            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+        if (callImport->hasCallTemplate()) {
+            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                callImport->getCallTemplate(), objectState));
         }
         lyric_assembler::CallSymbol *callSymbol;
         TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbolPtr->declareMethod(name, callImport->isHidden()));
@@ -144,7 +144,7 @@ lyric_archiver::copy_instance(
             implImport, implHandle, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
 
-    lyric_importer::CallImport *ctorImport;
+    std::shared_ptr<lyric_importer::CallImport> ctorImport;
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;

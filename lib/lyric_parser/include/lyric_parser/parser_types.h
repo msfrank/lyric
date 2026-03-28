@@ -19,7 +19,6 @@ namespace lyric_parser {
     };
 
     enum class BoundType {
-        None,
         Extends,
         Super,
     };

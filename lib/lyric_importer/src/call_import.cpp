@@ -4,28 +4,8 @@
 #include <lyric_importer/type_import.h>
 #include <lyric_object/parameter_walker.h>
 
-namespace lyric_importer {
-    struct CallImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        lyric_common::SymbolUrl receiverUrl;
-        lyric_common::SymbolUrl virtualUrl;
-        TemplateImport *callTemplate;
-        TypeImport *returnType;
-        bool isDeclOnly;
-        bool isHidden;
-        lyric_object::CallMode callMode;
-        bool isAbstract;
-        bool isFinal;
-        std::vector<Parameter> listParameters;
-        std::vector<Parameter> namedParameters;
-        Option<Parameter> restParameter;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-        std::vector<tu_uint8> inlineBytecode;
-    };
-}
-
-lyric_importer::CallImport::CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset)
-    : BaseImport(moduleImport),
+lyric_importer::CallImport::CallImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 callOffset)
+    : BaseImport(std::move(moduleImport)),
       m_callOffset(callOffset)
 {
     TU_ASSERT (m_callOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -86,14 +66,21 @@ lyric_importer::CallImport::isFinal()
     return m_priv->isFinal;
 }
 
-lyric_importer::TemplateImport *
+bool
+lyric_importer::CallImport::hasCallTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
 lyric_importer::CallImport::getCallTemplate()
 {
     load();
     return m_priv->callTemplate;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::CallImport::getReturnType()
 {
     load();
@@ -300,11 +287,10 @@ lyric_importer::CallImport::load()
         priv->isFinal = false;
     }
 
-    if (callWalker.hasTemplate()) {
+    priv->hasTemplate = callWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->callTemplate = moduleImport->getTemplate(
             callWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->callTemplate = nullptr;
     }
 
     priv->returnType = moduleImport->getType(callWalker.getResultType().getDescriptorOffset());
@@ -369,7 +355,7 @@ lyric_importer::CallImport::load()
                     callWalker.getDescriptorOffset(), objectLocation.toString(), i));
         }
 
-        priv->listParameters.push_back(p);
+        priv->listParameters.push_back(std::move(p));
     }
 
     // get named parameters
@@ -430,7 +416,7 @@ lyric_importer::CallImport::load()
                     callWalker.getDescriptorOffset(), objectLocation.toString(), i));
         }
 
-        priv->namedParameters.push_back(p);
+        priv->namedParameters.push_back(std::move(p));
     }
 
     if (callWalker.hasRestParameter()) {

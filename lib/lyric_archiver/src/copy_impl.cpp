@@ -17,7 +17,7 @@ lyric_archiver::copy_impl(
         const auto &name = it->first;
         const auto &extension = it->second;
 
-        lyric_importer::CallImport *callImport;
+        std::shared_ptr<lyric_importer::CallImport> callImport;
         TU_ASSIGN_OR_RETURN (callImport, archiverState.importCall(extension.callUrl));
 
         TU_RETURN_IF_NOT_OK (define_extension(
@@ -30,7 +30,7 @@ lyric_archiver::copy_impl(
 tempo_utils::Status
 lyric_archiver::define_extension(
     const std::string &name,
-    lyric_importer::CallImport *callImport,
+    const std::shared_ptr<lyric_importer::CallImport> &callImport,
     lyric_assembler::ImplHandle *implHandle,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
@@ -83,7 +83,10 @@ lyric_archiver::define_extension(
         parameterPack.restParameter = Option(p);
     }
 
-    auto returnType = callImport->getReturnType()->getTypeDef();
+    lyric_assembler::TypeHandle *returnTypeHandle;
+    TU_ASSIGN_OR_RETURN (returnTypeHandle, copy_type(
+            callImport->getReturnType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
+    auto returnType = returnTypeHandle->getTypeDef();
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, implHandle->defineExtension(name, parameterPack, returnType));

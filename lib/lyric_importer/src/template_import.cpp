@@ -5,16 +5,8 @@
 #include <lyric_object/template_walker.h>
 #include <lyric_object/template_parameter_walker.h>
 
-namespace lyric_importer {
-    struct TemplateImport::Priv {
-        lyric_common::SymbolUrl templateUrl;
-        TemplateImport *superTemplate;
-        std::vector<TemplateParameter> templateParameters;
-    };
-}
-
-lyric_importer::TemplateImport::TemplateImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset)
-    : BaseImport(moduleImport),
+lyric_importer::TemplateImport::TemplateImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset)
+    : BaseImport(std::move(moduleImport)),
       m_templateOffset(templateOffset)
 {
     TU_ASSERT (m_templateOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -27,7 +19,14 @@ lyric_importer::TemplateImport::getTemplateUrl()
     return m_priv->templateUrl;
 }
 
-lyric_importer::TemplateImport *
+bool
+lyric_importer::TemplateImport::hasSuperTemplate()
+{
+    load();
+    return m_priv->hasSuper;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
 lyric_importer::TemplateImport::getSuperTemplate()
 {
     load();
@@ -64,6 +63,12 @@ lyric_importer::TemplateImport::numTemplateParameters()
     return m_priv->templateParameters.size();
 }
 
+tu_uint32
+lyric_importer::TemplateImport::getTemplateOffset() const
+{
+    return m_templateOffset;
+}
+
 void
 lyric_importer::TemplateImport::load()
 {
@@ -84,11 +89,10 @@ lyric_importer::TemplateImport::load()
     auto templateWalker = moduleImport->getObject().getTemplate(m_templateOffset);
     priv->templateUrl = lyric_common::SymbolUrl(objectLocation, templateWalker.getSymbolPath());
 
-    if (templateWalker.hasSuperTemplate()) {
+    priv->hasSuper = templateWalker.hasSuperTemplate();
+    if (priv->hasSuper) {
         priv->superTemplate = moduleImport->getTemplate(
             templateWalker.getSuperTemplate().getDescriptorOffset());
-    } else {
-        priv->superTemplate = nullptr;
     }
 
     for (tu_uint8 i = 0; i < templateWalker.numTemplateParameters(); i++) {
@@ -97,17 +101,42 @@ lyric_importer::TemplateImport::load()
         TemplateParameter tp;
         tp.index = i;
         tp.name = templateParameter.getPlaceholderName();
-        tp.variance = templateParameter.getPlaceholderVariance();
-        tp.bound = templateParameter.getConstraintBound();
+        if (tp.name.empty())
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(ImporterCondition::kImportError,
+                "cannot import template at index {} in module {}; invalid template parameter at index {}",
+                m_templateOffset, objectLocation.toString(), i));
 
-        auto constraintType = templateParameter.getConstraintType();
-        if (constraintType.isValid()) {
-            tp.type = moduleImport->getType(constraintType.getDescriptorOffset());
+        tp.variance = templateParameter.getPlaceholderVariance();
+        if (tp.variance == lyric_object::VarianceType::Invalid)
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(ImporterCondition::kImportError,
+                "cannot import template at index {} in module {}; invalid template parameter at index {}",
+                m_templateOffset, objectLocation.toString(), i));
+
+        if (templateParameter.hasConstraint()) {
+            TemplateParameter::Constraint constraint;
+            constraint.bound = templateParameter.getConstraintBound();
+            if (constraint.bound == lyric_object::BoundType::Invalid)
+                throw tempo_utils::StatusException(
+                    ImporterStatus::forCondition(ImporterCondition::kImportError,
+                    "cannot import template at index {} in module {}; invalid constraint on template parameter at index {}",
+                    m_templateOffset, objectLocation.toString(), i));
+
+            auto constraintType = templateParameter.getConstraintType();
+            if (!constraintType.isValid())
+                throw tempo_utils::StatusException(
+                    ImporterStatus::forCondition(ImporterCondition::kImportError,
+                    "cannot import template at index {} in module {}; invalid constraint on template parameter at index {}",
+                    m_templateOffset, objectLocation.toString(), i));
+
+            constraint.type = moduleImport->getType(constraintType.getDescriptorOffset());
+            tp.constraint = std::move(constraint);
         } else {
-            tp.type = nullptr;
+            tp.constraint = {};
         }
 
-        priv->templateParameters.push_back(tp);
+        priv->templateParameters.push_back(std::move(tp));
     }
 
     m_priv = std::move(priv);

@@ -34,6 +34,20 @@ lyric_importer::ActionImport::isHidden()
     return m_priv->isHidden;
 }
 
+bool
+lyric_importer::ActionImport::hasActionTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
+lyric_importer::ActionImport::getActionTemplate()
+{
+    load();
+    return m_priv->actionTemplate;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::ActionImport::getReceiverUrl()
 {
@@ -41,14 +55,7 @@ lyric_importer::ActionImport::getReceiverUrl()
     return m_priv->receiverUrl;
 }
 
-lyric_importer::TemplateImport *
-lyric_importer::ActionImport::getActionTemplate()
-{
-    load();
-    return m_priv->actionTemplate;
-}
-
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ActionImport::getReturnType()
 {
     load();
@@ -210,11 +217,10 @@ lyric_importer::ActionImport::load()
                     actionWalker.getDescriptorOffset(), objectLocation.toString()));
     }
 
-    if (actionWalker.hasTemplate()) {
+    priv->hasTemplate = actionWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->actionTemplate = moduleImport->getTemplate(
             actionWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->actionTemplate = nullptr;
     }
 
     priv->returnType = moduleImport->getType(actionWalker.getResultType().getDescriptorOffset());

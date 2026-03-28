@@ -44,7 +44,7 @@ lyric_importer::ProtocolImport::getCommunication()
     return m_priv->comm;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ProtocolImport::getProtocolType()
 {
     load();
@@ -55,10 +55,10 @@ bool
 lyric_importer::ProtocolImport::hasSendType()
 {
     load();
-    return m_priv->sendType != nullptr;
+    return !m_priv->sendType.expired();
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ProtocolImport::getSendType()
 {
     load();
@@ -69,10 +69,10 @@ bool
 lyric_importer::ProtocolImport::hasReceiveType()
 {
     load();
-    return m_priv->receiveType != nullptr;
+    return !m_priv->receiveType.expired();
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ProtocolImport::getReceiveType()
 {
     load();

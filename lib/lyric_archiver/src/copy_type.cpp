@@ -96,13 +96,18 @@ update_type(const lyric_common::TypeDef &typeDef, CopyTypeData &data)
 
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_archiver::copy_type(
-    lyric_importer::TypeImport *typeImport,
+    std::weak_ptr<lyric_importer::TypeImport> typeImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
     ArchiverState &archiverState)
 {
-    auto moduleImport = typeImport->acquireModuleImport();
+    auto sharedType = typeImport.lock();
+    if (sharedType == nullptr)
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "missing type import");
+
+    auto moduleImport = sharedType->acquireModuleImport();
 
     CopyTypeData data;
     data.location = moduleImport->getObjectLocation();
@@ -111,7 +116,7 @@ lyric_archiver::copy_type(
     data.symbolReferenceSet = &symbolReferenceSet;
 
     lyric_common::TypeDef copiedType;
-    TU_ASSIGN_OR_RETURN (copiedType, update_type(typeImport->getTypeDef(), data));
+    TU_ASSIGN_OR_RETURN (copiedType, update_type(sharedType->getTypeDef(), data));
 
     auto *objectState = archiverState.objectState();
     auto *typeCache = objectState->typeCache();

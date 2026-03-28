@@ -17,7 +17,7 @@ lyric_importer::ImplImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ImplImport::getImplType()
 {
     load();
@@ -57,6 +57,12 @@ lyric_importer::ImplImport::numExtensions()
 {
     load();
     return m_priv->extensions.size();
+}
+
+tu_uint32
+lyric_importer::ImplImport::getImplOffset() const
+{
+    return m_implOffset;
 }
 
 void

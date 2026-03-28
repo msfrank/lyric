@@ -39,7 +39,7 @@ lyric_importer::NamespaceImport::getSuperNamespace()
     return m_priv->superNamespace;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::NamespaceImport::getNamespaceType()
 {
     load();

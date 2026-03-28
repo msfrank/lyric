@@ -45,7 +45,7 @@ namespace lyric_assembler {
             ObjectState *state);
         EnumSymbol(
             const lyric_common::SymbolUrl &enumUrl,
-            lyric_importer::EnumImport *enumImport,
+            std::shared_ptr<lyric_importer::EnumImport> enumImport,
             bool isCopied,
             ObjectState *state);
 
@@ -141,7 +141,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_enumUrl;
-        lyric_importer::EnumImport *m_enumImport;
+        std::shared_ptr<lyric_importer::EnumImport> m_enumImport;
         ObjectState *m_state;
 
         EnumSymbolPriv *load() override;

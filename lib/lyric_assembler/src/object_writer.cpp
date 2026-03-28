@@ -44,7 +44,13 @@ lyric_assembler::ObjectWriter::ObjectWriter(const ObjectState *state)
       m_includeUnusedPrivateSymbols(true),
       m_includeUnusedImports(true)
 {
-    TU_ASSERT (m_state != nullptr);
+    TU_NOTNULL (m_state);
+}
+
+const lyric_assembler::ObjectState *
+lyric_assembler::ObjectWriter::objectState() const
+{
+    return m_state;
 }
 
 tempo_utils::Status

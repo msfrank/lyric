@@ -75,12 +75,29 @@ lyric_assembler::ProtocolSymbol::load()
     priv->port = m_protocolImport->getPort();
     priv->comm = m_protocolImport->getCommunication();
 
-    TU_ASSIGN_OR_RAISE (priv->protocolType, typeCache->importType(m_protocolImport->getProtocolType()));
+    auto typeImport = m_protocolImport->getProtocolType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import protocol {}; missing type",
+            m_protocolUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->protocolType, typeCache->importType(typeImport));
 
-    auto *sendType = m_protocolImport->getSendType();
-    TU_ASSIGN_OR_RAISE (priv->sendType, typeCache->importType(sendType));
-    auto *receiveType = m_protocolImport->getReceiveType();
-    TU_ASSIGN_OR_RAISE (priv->receiveType, typeCache->importType(receiveType));
+    auto sendImport = m_protocolImport->getSendType().lock();
+    if (sendImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import protocol {}; missing send type",
+            m_protocolUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->sendType, typeCache->importType(sendImport));
+
+    auto receiveImport = m_protocolImport->getReceiveType().lock();
+    if (receiveImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import protocol {}; missing receive type",
+            m_protocolUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->receiveType, typeCache->importType(receiveImport));
 
     priv->protocolBlock = std::make_unique<BlockHandle>(
         m_protocolUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);

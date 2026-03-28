@@ -138,23 +138,23 @@ lyric_typing::MemberReifier::checkPlaceholder(
     const lyric_object::TemplateParameter &tp,
     const lyric_common::TypeDef &arg) const
 {
-    if (tp.bound == lyric_object::BoundType::None)
-        return {};
+    lyric_runtime::TypeComparison comparison;
+    TU_ASSIGN_OR_RETURN (comparison, m_typeSystem->compareAssignable(tp.typeDef, arg));
 
-    auto compareAssignableResult = m_typeSystem->compareAssignable(tp.typeDef, arg);
-    if (compareAssignableResult.isStatus())
-        return compareAssignableResult.getStatus();
-    auto comparison = compareAssignableResult.getResult();
-
-    if (tp.bound == lyric_object::BoundType::Extends) {
-        if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::EXTENDS)
-            return {};
+    switch (tp.bound) {
+        case lyric_object::BoundType::Extends:
+            if (comparison == lyric_runtime::TypeComparison::EQUAL
+              || comparison == lyric_runtime::TypeComparison::EXTENDS)
+                return {};
+            break;
+        case lyric_object::BoundType::Super:
+            if (comparison == lyric_runtime::TypeComparison::EQUAL
+              || comparison == lyric_runtime::TypeComparison::SUPER)
+                return {};
+            break;
+        default:
+            break;
     }
-    if (tp.bound == lyric_object::BoundType::Super) {
-        if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::SUPER)
-            return {};
-    }
-
     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
         "argument type {} is not substitutable for constraint {}",
         arg.toString(), tp.typeDef.toString());

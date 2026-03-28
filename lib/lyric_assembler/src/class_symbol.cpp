@@ -76,12 +76,12 @@ lyric_assembler::ClassSymbol::ClassSymbol(
 
 lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
-    lyric_importer::ClassImport *classImport,
+    std::shared_ptr<lyric_importer::ClassImport> classImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_classUrl(classUrl),
-      m_classImport(classImport),
+      m_classImport(std::move(classImport)),
       m_state(state)
 {
     TU_ASSERT (m_classUrl.isValid());
@@ -104,12 +104,22 @@ lyric_assembler::ClassSymbol::load()
     priv->derive = m_classImport->getDerive();
     priv->isDeclOnly = m_classImport->isDeclOnly();
 
-    auto *classType = m_classImport->getClassType();
-    TU_ASSIGN_OR_RAISE (priv->classType, typeCache->importType(classType));
+    auto typeImport = m_classImport->getClassType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import class {}; missing type",
+            m_classUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->classType, typeCache->importType(typeImport));
 
-    auto *classTemplate = m_classImport->getClassTemplate();
-    if (classTemplate != nullptr) {
-        TU_ASSIGN_OR_RAISE (priv->classTemplate, typeCache->importTemplate(classTemplate));
+    if (m_classImport->hasClassTemplate()) {
+        auto templateImport = m_classImport->getClassTemplate().lock();
+        if (templateImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import class {}; missing template",
+                m_classUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->classTemplate, typeCache->importTemplate(templateImport));
     }
 
     auto superClassUrl = m_classImport->getSuperClass();

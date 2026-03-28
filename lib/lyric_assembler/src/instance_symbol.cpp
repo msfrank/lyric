@@ -76,8 +76,13 @@ lyric_assembler::InstanceSymbol::load()
     priv->derive = m_instanceImport->getDerive();
     priv->isDeclOnly = m_instanceImport->isDeclOnly();
 
-    auto *instanceType = m_instanceImport->getInstanceType();
-    TU_ASSIGN_OR_RAISE (priv->instanceType, typeCache->importType(instanceType));
+    auto typeImport = m_instanceImport->getInstanceType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import instance {}; missing type",
+            m_instanceUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->instanceType, typeCache->importType(typeImport));
 
     auto superInstanceUrl = m_instanceImport->getSuperInstance();
     if (superInstanceUrl.isValid()) {

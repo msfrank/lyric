@@ -16,7 +16,7 @@ namespace lyric_importer {
         bool isDeclOnly();
         bool isHidden();
 
-        TypeImport *getStaticType();
+        std::weak_ptr<TypeImport> getStaticType();
         lyric_common::SymbolUrl getInitializer();
 
     private:
@@ -28,7 +28,7 @@ namespace lyric_importer {
             bool isVariable = false;
             bool isDeclOnly = false;
             bool isHidden = false;
-            TypeImport *staticType = nullptr;
+            std::weak_ptr<TypeImport> staticType;
             lyric_common::SymbolUrl initializer;
         };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);

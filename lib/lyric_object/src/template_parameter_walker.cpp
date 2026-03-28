@@ -120,11 +120,11 @@ lyric_object::BoundType
 lyric_object::TemplateParameterWalker::getConstraintBound() const
 {
     if (!isValid())
-        return {};
+        return BoundType::Invalid;
     auto *templateDescriptor = static_cast<const lyo1::TemplateDescriptor *>(m_templateDescriptor);
     auto *constraint = get_constraint(templateDescriptor, m_placeholderOffset);
     if (constraint == nullptr)
-        return BoundType::None;
+        return BoundType::Invalid;
     switch (constraint->constraint_bound()) {
         case lyo1::ConstraintBound::Extends:
             return BoundType::Extends;

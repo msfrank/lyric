@@ -45,7 +45,7 @@ lyric_compiler::compile_predicate(
         case lyric_common::TypeDefType::Placeholder: {
             std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
             TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(predicateType));
-            if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+            if (bound.first != lyric_object::BoundType::Extends)
                 return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                     "predicate type {} cannot match; constraint must have Extends bounds",
                     predicateType.toString());
@@ -179,7 +179,7 @@ check_placeholder_target_is_exhaustive(
 
     std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
     TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(targetType));
-    if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+    if (bound.first != lyric_object::BoundType::Extends)
         return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kTypeError,
             "invalid target type {}; constraint must have Extends bounds",
             targetType.toString());

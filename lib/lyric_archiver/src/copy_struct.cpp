@@ -83,12 +83,12 @@ lyric_archiver::copy_struct(
 
         auto initializerUrl = fieldImport->getInitializer();
         if (initializerUrl.isValid()) {
-            lyric_importer::CallImport *initImport;
+            std::shared_ptr<lyric_importer::CallImport> initImport;
             TU_ASSIGN_OR_RETURN (initImport, archiverState.importCall(initializerUrl));
             std::vector<lyric_object::TemplateParameter> templateParameters;
-            auto *templateImport = initImport->getCallTemplate();
-            if (templateImport != nullptr) {
-                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+            if (initImport->hasCallTemplate()) {
+                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                    initImport->getCallTemplate(), objectState));
             }
 
             lyric_assembler::InitializerHandle *initializerHandle;
@@ -104,14 +104,14 @@ lyric_archiver::copy_struct(
         }
     }
 
-    absl::flat_hash_map<std::string,lyric_importer::CallImport *> ctors;
+    absl::flat_hash_map<std::string,std::shared_ptr<lyric_importer::CallImport>> ctors;
 
     // define the struct methods
 
     for (auto it = structImport->methodsBegin(); it != structImport->methodsEnd(); it++) {
         auto &name = it->first;
 
-        lyric_importer::CallImport *callImport;
+        std::shared_ptr<lyric_importer::CallImport> callImport;
         TU_ASSIGN_OR_RETURN (callImport, archiverState.importCall(it->second));
         if (callImport->getCallMode() == lyric_object::CallMode::Constructor) {
             ctors[name] = callImport;
@@ -120,9 +120,9 @@ lyric_archiver::copy_struct(
         }
 
         std::vector<lyric_object::TemplateParameter> templateParameters;
-        auto *templateImport = callImport->getCallTemplate();
-        if (templateImport != nullptr) {
-            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+        if (callImport->hasCallTemplate()) {
+            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                callImport->getCallTemplate(), objectState));
         }
         lyric_assembler::CallSymbol *callSymbol;
         TU_ASSIGN_OR_RETURN (callSymbol, structSymbolPtr->declareMethod(name, callImport->isHidden()));
@@ -151,7 +151,7 @@ lyric_archiver::copy_struct(
 
     for (auto it = ctors.cbegin(); it != ctors.cend(); it++) {
         auto &name = it->first;
-        auto *ctorImport = it->second;
+        auto ctorImport = it->second;
 
         lyric_assembler::CallSymbol *ctorSymbol;
         TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbolPtr->declareCtor(

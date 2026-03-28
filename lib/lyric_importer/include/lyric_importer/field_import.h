@@ -16,7 +16,7 @@ namespace lyric_importer {
         bool isVariable();
         bool isHidden();
 
-        TypeImport *getFieldType();
+        std::weak_ptr<TypeImport> getFieldType();
 
         lyric_common::SymbolUrl getInitializer();
 
@@ -29,7 +29,7 @@ namespace lyric_importer {
             bool isHidden = false;
             bool isVariable = false;
             bool isDeclOnly = false;
-            TypeImport *fieldType = nullptr;
+            std::weak_ptr<TypeImport> fieldType;
             lyric_common::SymbolUrl initializer;
         };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);

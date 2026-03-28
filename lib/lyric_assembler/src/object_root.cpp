@@ -27,6 +27,19 @@ lyric_assembler::ObjectRoot::ObjectRoot(ObjectState *state)
     m_rootBlock = std::make_unique<BlockHandle>(m_environmentBlock.get(), m_state);
 }
 
+inline tempo_utils::Result<lyric_common::TypeDef>
+type_import_to_typedef(
+    std::weak_ptr<lyric_importer::TypeImport> typeImport,
+    const lyric_common::SymbolUrl symbolUrl)
+{
+    auto type = typeImport.lock();
+    if (type == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kImportError,
+            "cannot import prelude symbol {}; missing type", symbolUrl.toString());
+    return type->getTypeDef();
+}
+
 tempo_utils::Status
 lyric_assembler::ObjectRoot::initialize(
     const lyric_common::ModuleLocation &preludeLocation,
@@ -81,39 +94,39 @@ lyric_assembler::ObjectRoot::initialize(
 
         switch (symbolWalker.getLinkageSection()) {
             case lyric_object::LinkageSection::Call: {
-                auto *callImport = preludeImport->getCall(symbolWalker.getLinkageIndex());
+                auto callImport = preludeImport->getCall(symbolWalker.getLinkageIndex());
                 if (!callImport->getReceiverUrl().isValid()) {
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 }
                 break;
             }
             case lyric_object::LinkageSection::Class: {
-                auto *classImport = preludeImport->getClass(symbolWalker.getLinkageIndex());
-                binding.typeDef = classImport->getClassType()->getTypeDef();
+                auto classImport = preludeImport->getClass(symbolWalker.getLinkageIndex());
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(classImport->getClassType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Concept: {
                 auto conceptImport = preludeImport->getConcept(symbolWalker.getLinkageIndex());
-                binding.typeDef = conceptImport->getConceptType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(conceptImport->getConceptType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Enum: {
-                auto *enumImport = preludeImport->getEnum(symbolWalker.getLinkageIndex());
-                binding.typeDef = enumImport->getEnumType()->getTypeDef();
+                auto enumImport = preludeImport->getEnum(symbolWalker.getLinkageIndex());
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(enumImport->getEnumType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Existential: {
-                auto *existentialImport = preludeImport->getExistential(symbolWalker.getLinkageIndex());
-                binding.typeDef = existentialImport->getExistentialType()->getTypeDef();
+                auto existentialImport = preludeImport->getExistential(symbolWalker.getLinkageIndex());
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(existentialImport->getExistentialType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Instance: {
                 auto instanceImport = preludeImport->getInstance(symbolWalker.getLinkageIndex());
-                binding.typeDef = instanceImport->getInstanceType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(instanceImport->getInstanceType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 InstanceSymbol *instanceSymbol;
                 TU_ASSIGN_OR_RETURN (instanceSymbol, importCache->importInstance(symbolUrl));
@@ -122,25 +135,25 @@ lyric_assembler::ObjectRoot::initialize(
             }
             case lyric_object::LinkageSection::Namespace: {
                 auto namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
-                binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(namespaceImport->getNamespaceType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Protocol: {
                 auto protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
-                binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(protocolImport->getProtocolType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Static: {
                 auto staticImport = preludeImport->getStatic(symbolWalker.getLinkageIndex());
-                binding.typeDef = staticImport->getStaticType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(staticImport->getStaticType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Struct: {
                 auto structImport = preludeImport->getStruct(symbolWalker.getLinkageIndex());
-                binding.typeDef = structImport->getStructType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(structImport->getStructType(), symbolUrl));
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
@@ -183,39 +196,39 @@ lyric_assembler::ObjectRoot::initialize(
 
             switch (symbolWalker.getLinkageSection()) {
                 case lyric_object::LinkageSection::Call: {
-                    auto *callImport = environmentImport->getCall(symbolWalker.getLinkageIndex());
+                    auto callImport = environmentImport->getCall(symbolWalker.getLinkageIndex());
                     if (!callImport->getReceiverUrl().isValid()) {
                         TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     }
                     break;
                 }
                 case lyric_object::LinkageSection::Class: {
-                    auto *classImport = environmentImport->getClass(symbolWalker.getLinkageIndex());
-                    binding.typeDef = classImport->getClassType()->getTypeDef();
+                    auto classImport = environmentImport->getClass(symbolWalker.getLinkageIndex());
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(classImport->getClassType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Concept: {
                     auto conceptImport = environmentImport->getConcept(symbolWalker.getLinkageIndex());
-                    binding.typeDef = conceptImport->getConceptType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(conceptImport->getConceptType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Enum: {
-                    auto *enumImport = environmentImport->getEnum(symbolWalker.getLinkageIndex());
-                    binding.typeDef = enumImport->getEnumType()->getTypeDef();
+                    auto enumImport = environmentImport->getEnum(symbolWalker.getLinkageIndex());
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(enumImport->getEnumType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Existential: {
-                    auto *existentialImport = environmentImport->getExistential(symbolWalker.getLinkageIndex());
-                    binding.typeDef = existentialImport->getExistentialType()->getTypeDef();
+                    auto existentialImport = environmentImport->getExistential(symbolWalker.getLinkageIndex());
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(existentialImport->getExistentialType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Instance: {
                     auto instanceImport = environmentImport->getInstance(symbolWalker.getLinkageIndex());
-                    binding.typeDef = instanceImport->getInstanceType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(instanceImport->getInstanceType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     InstanceSymbol *instanceSymbol;
                     TU_ASSIGN_OR_RETURN(instanceSymbol, importCache->importInstance(symbolUrl));
@@ -224,25 +237,25 @@ lyric_assembler::ObjectRoot::initialize(
                 }
                 case lyric_object::LinkageSection::Namespace: {
                     auto namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
-                    binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(namespaceImport->getNamespaceType(), symbolUrl));
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Protocol: {
                     auto protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
-                    binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(protocolImport->getProtocolType(), symbolUrl));
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Static: {
                     auto staticImport = environmentImport->getStatic(symbolWalker.getLinkageIndex());
-                    binding.typeDef = staticImport->getStaticType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(staticImport->getStaticType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Struct: {
                     auto structImport = environmentImport->getStruct(symbolWalker.getLinkageIndex());
-                    binding.typeDef = structImport->getStructType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, type_import_to_typedef(structImport->getStructType(), symbolUrl));
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }

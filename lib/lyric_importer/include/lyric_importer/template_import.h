@@ -9,24 +9,33 @@ namespace lyric_importer {
 
     class TemplateImport : public BaseImport {
     public:
-        TemplateImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset);
+        TemplateImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset);
 
         lyric_common::SymbolUrl getTemplateUrl();
-        TemplateImport *getSuperTemplate();
+
+        bool hasSuperTemplate();
+        std::weak_ptr<TemplateImport> getSuperTemplate();
 
         TemplateParameter getTemplateParameter(int index);
         std::vector<TemplateParameter>::const_iterator templateParametersBegin();
         std::vector<TemplateParameter>::const_iterator templateParametersEnd();
         int numTemplateParameters();
 
+        tu_uint32 getTemplateOffset() const;
+
     private:
         tu_uint32 m_templateOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl templateUrl;
+            bool hasSuper = false;
+            std::weak_ptr<TemplateImport> superTemplate;
+            std::vector<TemplateParameter> templateParameters;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
-         void load();
+        void load();
     };
 }
 

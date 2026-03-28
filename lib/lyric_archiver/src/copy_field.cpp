@@ -54,12 +54,12 @@ lyric_archiver::copy_field(
     // define the initializer if it exists
     auto initializerUrl = fieldImport->getInitializer();
     if (initializerUrl.isValid()) {
-        lyric_importer::CallImport *initImport;
+        std::shared_ptr<lyric_importer::CallImport> initImport;
         TU_ASSIGN_OR_RETURN (initImport, archiverState.importCall(initializerUrl));
         std::vector<lyric_object::TemplateParameter> templateParameters;
-        auto *templateImport = initImport->getCallTemplate();
-        if (templateImport != nullptr) {
-            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+        if (initImport->hasCallTemplate()) {
+            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                initImport->getCallTemplate(), objectState));
         }
 
         lyric_assembler::InitializerHandle *initializerHandle;

@@ -8,13 +8,15 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+#include "lyric_assembler/fundamental_cache.h"
+
 tempo_utils::Status
 lyric_assembler::internal::touch_template(
     const TemplateHandle *templateHandle,
     const ObjectState *objectState,
     ObjectWriter &writer)
 {
-    TU_ASSERT (templateHandle != nullptr);
+    TU_NOTNULL (templateHandle);
 
     auto templateUrl = templateHandle->getTemplateUrl();
 
@@ -48,20 +50,19 @@ lyric_assembler::internal::touch_template(
     for (auto it = templateHandle->templateParametersBegin(); it != templateHandle->templateParametersEnd(); it++) {
         const auto &tp = *it;
         switch (tp.bound) {
-            case lyric_object::BoundType::None:
-                break;
             case lyric_object::BoundType::Extends:
             case lyric_object::BoundType::Super:
-                if (tp.typeDef.isValid()) {
-                    TypeHandle *typeHandle;
-                    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(tp.typeDef));
-                    TU_RETURN_IF_NOT_OK (writer.touchType(typeHandle));
-                }
                 break;
             default:
                 return AssemblerStatus::forCondition(
                     AssemblerCondition::kAssemblerInvariant, "invalid bound for type");
         }
+        if (!tp.typeDef.isValid())
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid bound for type");
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(tp.typeDef));
+        TU_RETURN_IF_NOT_OK (writer.touchType(typeHandle));
     }
 
     return {};
@@ -86,6 +87,10 @@ write_template(
     std::vector<lyo1::Placeholder> placeholders;
     std::vector<lyo1::Constraint> constraints;
     std::vector<std::string> names;
+
+    auto *objectState = writer.objectState();
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto anyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
 
     for (int i = 0; i < templateHandle->numTemplateParameters(); i++) {
         const auto &tp = templateHandle->getTemplateParameter(i);
@@ -112,25 +117,26 @@ write_template(
         }
         placeholders.emplace_back(variance, name_offset);
 
-        if (tp.bound != lyric_object::BoundType::None) {
-            lyo1::ConstraintBound bound;
-            switch (tp.bound) {
-                case lyric_object::BoundType::Extends:
-                    bound = lyo1::ConstraintBound::Extends;
-                    break;
-                case lyric_object::BoundType::Super:
-                    bound = lyo1::ConstraintBound::Super;
-                    break;
-                default:
-                    return lyric_assembler::AssemblerStatus::forCondition(
-                        lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                        "invalid type bound");
-            }
-            if (!tp.typeDef.isValid())
+        lyo1::ConstraintBound bound;
+        switch (tp.bound) {
+            case lyric_object::BoundType::Extends:
+                bound = lyo1::ConstraintBound::Extends;
+                break;
+            case lyric_object::BoundType::Super:
+                bound = lyo1::ConstraintBound::Super;
+                break;
+            default:
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                    "invalid constraint type");
+                    "invalid type bound");
+        }
+        if (!tp.typeDef.isValid())
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid constraint type");
 
+        // as a special case we do not write out constraint if the bound is Extends and type is Any
+        if (bound != lyo1::ConstraintBound::Extends || tp.typeDef != anyType) {
             tu_uint32 typeOffset;
             TU_ASSIGN_OR_RETURN (typeOffset, writer.getTypeOffset(tp.typeDef));
             constraints.emplace_back(placeholder_offset, bound, typeOffset);

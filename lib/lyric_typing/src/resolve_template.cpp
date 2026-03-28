@@ -38,7 +38,7 @@ lyric_typing::resolve_template(
 
         // template parameter defaults
         lyric_object::TemplateParameter tp;
-        tp.bound = lyric_object::BoundType::None;
+        tp.bound = lyric_object::BoundType::Extends;
         tp.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
         tp.index = i;
 
@@ -80,9 +80,6 @@ lyric_typing::resolve_template(
             if (status.notOk())
                 return status;
             switch (bound) {
-                case lyric_parser::BoundType::None:
-                    tp.bound = lyric_object::BoundType::None;
-                    break;
                 case lyric_parser::BoundType::Extends:
                     tp.bound = lyric_object::BoundType::Extends;
                     break;
@@ -120,16 +117,7 @@ lyric_typing::resolve_bound(
     TU_ASSIGN_OR_RETURN (templateHandle, typeCache->getOrImportTemplate(placeholderType.getPlaceholderTemplateUrl()));
     auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
 
-    std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
-
-    // we treat None bound as extending Any
-    if (tp.bound == lyric_object::BoundType::None) {
-        auto *fundamentalCache = state->fundamentalCache();
-        auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-        bound = {lyric_object::BoundType::Extends, AnyType};
-    } else {
-        bound = std::pair{tp.bound, tp.typeDef};
-    }
+    std::pair bound{tp.bound, tp.typeDef};
 
     // ensure the bound type exists in the type cache
     TU_RETURN_IF_STATUS (typeCache->getOrMakeType(bound.second));

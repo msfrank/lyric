@@ -41,10 +41,9 @@ lyric_archiver::copy_concept(
     auto isHidden = conceptImport->isHidden();
     auto derive = conceptImport->getDerive();
 
-    auto *conceptTemplateImport = conceptImport->getConceptTemplate();
     lyric_assembler::TemplateHandle *conceptTemplate = nullptr;
-    if (conceptTemplateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (conceptTemplate, copy_template(conceptTemplateImport, conceptUrl, objectState));
+    if (conceptImport->hasConceptTemplate()) {
+        TU_ASSIGN_OR_RETURN (conceptTemplate, copy_template(conceptImport->getConceptTemplate(), conceptUrl, objectState));
     }
 
     auto superConceptUrl = conceptImport->getSuperConcept();
@@ -95,9 +94,9 @@ lyric_archiver::copy_concept(
         std::shared_ptr<lyric_importer::ActionImport> actionImport;
         TU_ASSIGN_OR_RETURN (actionImport, archiverState.importAction(it->second));
         std::vector<lyric_object::TemplateParameter> templateParameters;
-        auto *templateImport = actionImport->getActionTemplate();
-        if (templateImport != nullptr) {
-            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+        if (actionImport->hasActionTemplate()) {
+            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                actionImport->getActionTemplate(), objectState));
         }
         lyric_assembler::ActionSymbol *actionSymbol;
         TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbolPtr->declareAction(name, actionImport->isHidden()));

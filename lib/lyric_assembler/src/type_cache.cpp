@@ -287,7 +287,7 @@ lyric_assembler::TypeCache::appendType(TypeHandle *typeHandle)
 }
 
 tempo_utils::Result<lyric_assembler::TypeHandle *>
-lyric_assembler::TypeCache::importType(lyric_importer::TypeImport *typeImport)
+lyric_assembler::TypeCache::importType(std::shared_ptr<lyric_importer::TypeImport> typeImport)
 {
     TU_ASSERT (typeImport != nullptr);
 
@@ -296,15 +296,22 @@ lyric_assembler::TypeCache::importType(lyric_importer::TypeImport *typeImport)
     if (entry != m_typecache.cend())
         return entry->second;
 
-    for (auto iterator = typeImport->argumentsBegin(); iterator != typeImport->argumentsEnd(); iterator++) {
-        TU_RETURN_IF_STATUS (importType(*iterator));
+    for (auto it = typeImport->argumentsBegin(); it != typeImport->argumentsEnd(); it++) {
+        auto argImport = it->lock();
+        if (argImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid type import"));
+        TU_RETURN_IF_STATUS (importType(argImport));
     }
 
     TypeHandle *typeHandle;
-    if (typeImport->getSuperType() != nullptr) {
-        auto assignableSuperType = typeImport->getSuperType()->getTypeDef();
+    if (typeImport->hasSuperType()) {
+        auto superImport = typeImport->getSuperType().lock();
+        if (superImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid type import"));
         TypeHandle *superTypeHandle;
-        TU_ASSIGN_OR_RETURN(superTypeHandle, importType(typeImport->getSuperType()));
+        TU_ASSIGN_OR_RETURN(superTypeHandle, importType(superImport));
         typeHandle = new TypeHandle(assignableType, superTypeHandle);
     } else {
         typeHandle = new TypeHandle(assignableType);
@@ -585,7 +592,7 @@ lyric_assembler::TypeCache::appendTemplate(TemplateHandle *templateHandle)
 }
 
 tempo_utils::Result<lyric_assembler::TemplateHandle *>
-lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templateImport)
+lyric_assembler::TypeCache::importTemplate(std::shared_ptr<lyric_importer::TemplateImport> templateImport)
 {
     TU_ASSERT (templateImport != nullptr);
 
@@ -594,10 +601,13 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
     if (m_templatecache.contains(templateUrl))
         return m_templatecache.at(templateUrl);
 
-    auto *superTemplateImport = templateImport->getSuperTemplate();
     TemplateHandle *superTemplate = nullptr;
-    if (superTemplateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (superTemplate, importTemplate(superTemplateImport));
+    if (templateImport->hasSuperTemplate()) {
+        auto superImport = templateImport->getSuperTemplate().lock();
+        if (superImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid template import"));
+        TU_ASSIGN_OR_RETURN (superTemplate, importTemplate(superImport));
     }
 
     std::vector<lyric_object::TemplateParameter> templateParameters;
@@ -606,23 +616,28 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
         tp.index = it->index;
         tp.name = it->name;
         tp.variance = it->variance;
-        tp.bound = it->bound;
 
-        if (it->type != nullptr) {
-            TypeHandle *paramType;
-            TU_ASSIGN_OR_RETURN (paramType, importType(it->type));
-            tp.typeDef = paramType->getTypeDef();
+        if (it->constraint.has_value()) {
+            const auto &constraint = it->constraint.value();
+            tp.bound = constraint.bound;
+
+            auto constraintImport = constraint.type.lock();
+            if (constraintImport == nullptr)
+                return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                    "cannot import template {}; missing constraint type for template parameter {}",
+                    templateUrl.toString(), it->index);
+
+            TypeHandle *constraintType;
+            TU_ASSIGN_OR_RETURN (constraintType, importType(constraintImport));
+            tp.typeDef = constraintType->getTypeDef();
             if (!tp.typeDef.isValid())
-                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
                     "cannot import template {}; invalid constraint type for template parameter {}",
                     templateUrl.toString(), it->index);
-        } else if (tp.bound == lyric_object::BoundType::None) {
-            auto *fundamentalCache = m_objectState->fundamentalCache();
-            tp.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Any);
         } else {
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "cannot import template {}; missing constraint type for template parameter {}",
-                templateUrl.toString(), it->index);
+            auto *fundamentalCache = m_objectState->fundamentalCache();
+            tp.bound = lyric_object::BoundType::Extends;
+            tp.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Any);
         }
 
         templateParameters.push_back(tp);
@@ -657,6 +672,12 @@ lyric_assembler::TypeCache::resolveConcrete(
     return concreteType;
 }
 
+/**
+ *
+ * @param placeholderType
+ * @param objectState
+ * @return
+ */
 inline tempo_utils::Result<lyric_common::SymbolUrl>
 get_placeholder_bound(
     const lyric_common::TypeDef &placeholderType,
@@ -666,21 +687,22 @@ get_placeholder_bound(
     auto *typeCache = objectState->typeCache();
 
     auto templateUrl = placeholderType.getPlaceholderTemplateUrl();
-    //auto *templateHandle = typeCache->getTemplate(templateUrl);
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RETURN (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
-    if (tp.bound != lyric_object::BoundType::None && tp.bound != lyric_object::BoundType::Extends)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kIncompatibleType,
-            "incompatible type bound for placeholder {}", placeholderType.toString());
 
-    auto boundType = tp.typeDef;
+    const auto &boundType = tp.typeDef;
     if (boundType.getType() != lyric_common::TypeDefType::Concrete)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-            "invalid constraint for placeholder {}", placeholderType.toString());
+            "invalid constraint '{}' for placeholder '{}'",
+            boundType.toString(), placeholderType.toString());
+
+    if (tp.bound != lyric_object::BoundType::Extends)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kIncompatibleType,
+            "incompatible type bound for placeholder {}", placeholderType.toString());
 
     return boundType.getConcreteUrl();
 }

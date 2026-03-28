@@ -46,12 +46,12 @@ lyric_assembler::EnumSymbol::EnumSymbol(
 
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
-    lyric_importer::EnumImport *enumImport,
+    std::shared_ptr<lyric_importer::EnumImport> enumImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_enumUrl(enumUrl),
-      m_enumImport(enumImport),
+      m_enumImport(std::move(enumImport)),
       m_state(state)
 {
     TU_ASSERT (m_enumUrl.isValid());
@@ -74,8 +74,13 @@ lyric_assembler::EnumSymbol::load()
     priv->derive = m_enumImport->getDerive();
     priv->isDeclOnly = m_enumImport->isDeclOnly();
 
-    auto *enumType = m_enumImport->getEnumType();
-    TU_ASSIGN_OR_RAISE (priv->enumType, typeCache->importType(enumType));
+    auto typeImport = m_enumImport->getEnumType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import enum {}; missing type",
+            m_enumUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->enumType, typeCache->importType(typeImport));
 
     auto superEnumUrl = m_enumImport->getSuperEnum();
     if (superEnumUrl.isValid()) {

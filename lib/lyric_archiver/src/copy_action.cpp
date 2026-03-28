@@ -45,10 +45,9 @@ lyric_archiver::copy_action(
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "cannot archive {}; missing receiver", importUrl.toString());
 
-    auto *templateImport = actionImport->getActionTemplate();
     lyric_assembler::TemplateHandle *actionTemplate = nullptr;
-    if (templateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (actionTemplate, copy_template(templateImport, actionUrl, objectState));
+    if (actionImport->hasActionTemplate()) {
+        TU_ASSIGN_OR_RETURN (actionTemplate, copy_template(actionImport->getActionTemplate(), actionUrl, objectState));
     }
 
     auto isHidden = actionImport->isHidden();

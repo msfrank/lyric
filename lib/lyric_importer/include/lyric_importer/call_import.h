@@ -9,7 +9,7 @@ namespace lyric_importer {
 
     class CallImport : public BaseImport {
     public:
-        CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset);
+        CallImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 callOffset);
 
         tu_uint32 getCallOffset() const;
 
@@ -22,8 +22,10 @@ namespace lyric_importer {
         bool isOverride();
         bool isFinal();
 
-        TemplateImport *getCallTemplate();
-        TypeImport *getReturnType();
+        bool hasCallTemplate();
+        std::weak_ptr<TemplateImport> getCallTemplate();
+
+        std::weak_ptr<TypeImport> getReturnType();
 
         lyric_common::SymbolUrl getReceiverUrl();
         lyric_common::SymbolUrl getVirtualUrl();
@@ -52,7 +54,24 @@ namespace lyric_importer {
         tu_uint32 m_callOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            lyric_common::SymbolUrl receiverUrl;
+            lyric_common::SymbolUrl virtualUrl;
+            bool hasTemplate = false;
+            std::weak_ptr<TemplateImport> callTemplate;
+            std::weak_ptr<TypeImport> returnType;
+            bool isDeclOnly = false;
+            bool isHidden = false;
+            lyric_object::CallMode callMode = lyric_object::CallMode::Invalid;
+            bool isAbstract = false;
+            bool isFinal = false;
+            std::vector<Parameter> listParameters;
+            std::vector<Parameter> namedParameters;
+            Option<Parameter> restParameter;
+            absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+            std::vector<tu_uint8> inlineBytecode;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

@@ -12,7 +12,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::EnumSymbol *> copy_enum(
-        lyric_importer::EnumImport *enumImport,
+        const std::shared_ptr<lyric_importer::EnumImport> &enumImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

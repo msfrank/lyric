@@ -75,12 +75,12 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
 
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
-    lyric_importer::ExistentialImport *existentialImport,
+    std::shared_ptr<lyric_importer::ExistentialImport> existentialImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_existentialUrl(existentialUrl),
-      m_existentialImport(existentialImport),
+      m_existentialImport(std::move(existentialImport)),
       m_state(state)
 {
     TU_ASSERT (m_existentialUrl.isValid());
@@ -103,12 +103,22 @@ lyric_assembler::ExistentialSymbol::load()
     priv->derive = m_existentialImport->getDerive();
     priv->isDeclOnly = m_existentialImport->isDeclOnly();
 
-    auto *existentialType = m_existentialImport->getExistentialType();
-    TU_ASSIGN_OR_RAISE (priv->existentialType, typeCache->importType(existentialType));
+    auto typeImport = m_existentialImport->getExistentialType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import existential {}; missing type",
+            m_existentialUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->existentialType, typeCache->importType(typeImport));
 
-    auto *existentialTemplate = m_existentialImport->getExistentialTemplate();
-    if (existentialTemplate != nullptr) {
-        TU_ASSIGN_OR_RAISE (priv->existentialTemplate, typeCache->importTemplate(existentialTemplate));
+    if (m_existentialImport->hasExistentialTemplate()) {
+        auto templateImport = m_existentialImport->getExistentialTemplate().lock();
+        if (templateImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import existential {}; missing template",
+                m_existentialUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->existentialTemplate, typeCache->importTemplate(templateImport));
     }
 
     auto superExistentialUrl = m_existentialImport->getSuperExistential();

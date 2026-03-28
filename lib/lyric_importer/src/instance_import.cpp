@@ -41,7 +41,7 @@ lyric_importer::InstanceImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::InstanceImport::getInstanceType()
 {
     load();
@@ -277,14 +277,14 @@ lyric_importer::InstanceImport::load()
                     m_instanceOffset, objectLocation.toString(), i));
         }
 
-        auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
+        auto implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
         auto implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < instanceWalker.numSealedSubInstances(); i++) {
         auto subInstanceType = instanceWalker.getSealedSubInstance(i);
-        auto *sealedType = moduleImport->getType(subInstanceType.getDescriptorOffset());
+        auto sealedType = moduleImport->getType(subInstanceType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

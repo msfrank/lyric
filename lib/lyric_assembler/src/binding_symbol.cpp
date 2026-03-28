@@ -74,16 +74,31 @@ lyric_assembler::BindingSymbol::load()
 
     priv->isHidden = m_bindingImport->isHidden();
 
-    auto *bindingType = m_bindingImport->getBindingType();
-    TU_ASSIGN_OR_RAISE (priv->bindingType, typeCache->importType(bindingType));
+    auto typeImport = m_bindingImport->getBindingType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import binding {}; missing type",
+            m_bindingUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->bindingType, typeCache->importType(typeImport));
 
-    auto *bindingTemplate = m_bindingImport->getBindingTemplate();
-    if (bindingTemplate != nullptr) {
-        TU_ASSIGN_OR_RAISE (priv->bindingTemplate, typeCache->importTemplate(bindingTemplate));
+    if (m_bindingImport->hasBindingTemplate()) {
+        auto templateImport = m_bindingImport->getBindingTemplate().lock();
+        if (templateImport != nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import binding {}; missing template",
+                m_bindingUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->bindingTemplate, typeCache->importTemplate(templateImport));
     }
 
-    auto *targetType = m_bindingImport->getTargetType();
-    TU_ASSIGN_OR_RAISE (priv->targetType, typeCache->importType(targetType));
+    auto targetImport = m_bindingImport->getTargetType().lock();
+    if (targetImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import binding {}; missing target",
+            m_bindingUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->targetType, typeCache->importType(targetImport));
 
     return priv.release();
 }

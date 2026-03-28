@@ -5,25 +5,10 @@
 #include <lyric_object/existential_walker.h>
 #include <lyric_object/object_types.h>
 
-namespace lyric_importer {
-    struct ExistentialImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly;
-        lyric_object::DeriveType derive;
-        bool isHidden;
-        TypeImport *existentialType;
-        TemplateImport *existentialTemplate;
-        lyric_common::SymbolUrl superExistential;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
-        absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
-    };
-}
-
 lyric_importer::ExistentialImport::ExistentialImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 existentialOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_existentialOffset(existentialOffset)
 {
     TU_ASSERT (m_existentialOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -57,18 +42,11 @@ lyric_importer::ExistentialImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ExistentialImport::getExistentialType()
 {
     load();
     return m_priv->existentialType;
-}
-
-lyric_importer::TemplateImport *
-lyric_importer::ExistentialImport::getExistentialTemplate()
-{
-    load();
-    return m_priv->existentialTemplate;
 }
 
 lyric_common::SymbolUrl
@@ -76,6 +54,20 @@ lyric_importer::ExistentialImport::getSuperExistential()
 {
     load();
     return m_priv->superExistential;
+}
+
+bool
+lyric_importer::ExistentialImport::hasExistentialTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
+lyric_importer::ExistentialImport::getExistentialTemplate()
+{
+    load();
+    return m_priv->existentialTemplate;
 }
 
 lyric_common::SymbolUrl
@@ -198,11 +190,10 @@ lyric_importer::ExistentialImport::load()
     priv->existentialType = moduleImport->getType(
         existentialWalker.getExistentialType().getDescriptorOffset());
 
-    if (existentialWalker.hasTemplate()) {
+    priv->hasTemplate = existentialWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->existentialTemplate = moduleImport->getTemplate(
             existentialWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->existentialTemplate = nullptr;
     }
 
     if (existentialWalker.hasSuperExistential()) {
@@ -247,14 +238,14 @@ lyric_importer::ExistentialImport::load()
     for (tu_uint8 i = 0; i < existentialWalker.numImpls(); i++) {
         auto implWalker = existentialWalker.getImpl(i);
 
-        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
         auto implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < existentialWalker.numSealedSubExistentials(); i++) {
         auto subExistentialType = existentialWalker.getSealedSubExistential(i);
-        auto *sealedType = moduleImport->getType(subExistentialType.getDescriptorOffset());
+        auto sealedType = moduleImport->getType(subExistentialType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

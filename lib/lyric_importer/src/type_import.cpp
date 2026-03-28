@@ -7,16 +7,8 @@
 #include <lyric_object/union_type_walker.h>
 #include <lyric_object/type_walker.h>
 
-namespace lyric_importer {
-    struct TypeImport::Priv {
-        lyric_common::TypeDef typeDef;
-        TypeImport *superType;
-        std::vector<TypeImport *> typeArguments;
-    };
-}
-
-lyric_importer::TypeImport::TypeImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 typeOffset)
-    : BaseImport(moduleImport),
+lyric_importer::TypeImport::TypeImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 typeOffset)
+    : BaseImport(std::move(moduleImport)),
       m_typeOffset(typeOffset)
 {
     TU_ASSERT (m_typeOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -29,21 +21,28 @@ lyric_importer::TypeImport::getTypeDef()
     return m_priv->typeDef;
 }
 
-lyric_importer::TypeImport *
+bool
+lyric_importer::TypeImport::hasSuperType()
+{
+    load();
+    return m_priv->hasSuper;
+}
+
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::TypeImport::getSuperType()
 {
     load();
     return m_priv->superType;
 }
 
-std::vector<lyric_importer::TypeImport *>::const_iterator
+std::vector<std::weak_ptr<lyric_importer::TypeImport>>::const_iterator
 lyric_importer::TypeImport::argumentsBegin()
 {
     load();
     return m_priv->typeArguments.cbegin();
 }
 
-std::vector<lyric_importer::TypeImport *>::const_iterator
+std::vector<std::weak_ptr<lyric_importer::TypeImport>>::const_iterator
 lyric_importer::TypeImport::argumentsEnd()
 {
     load();
@@ -138,7 +137,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> concreteParameters;
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                auto *parameterType = moduleImport->getType(parameterOffset);
+                auto parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -173,7 +172,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> placeholderParameters;
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                auto *parameterType = moduleImport->getType(parameterOffset);
+                auto parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -217,7 +216,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> intersectionMembers;
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                auto *memberType = moduleImport->getType(memberOffset);
+                auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -250,14 +249,14 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
     }
 }
 
-static std::vector<lyric_importer::TypeImport *>
+static std::vector<std::weak_ptr<lyric_importer::TypeImport>>
 import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer::ModuleImport *moduleImport)
 {
     TU_ASSERT (typeWalker.isValid());
 
     auto typeOffset = typeWalker.getDescriptorOffset();
     auto objectLocation = moduleImport->getObjectLocation();
-    std::vector<lyric_importer::TypeImport *> typeArguments;
+    std::vector<std::weak_ptr<lyric_importer::TypeImport>> typeArguments;
 
     switch (typeWalker.getTypeDefType()) {
 
@@ -266,7 +265,7 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                auto *parameterType = moduleImport->getType(parameterOffset);
+                auto parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -284,7 +283,7 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                auto *parameterType = moduleImport->getType(parameterOffset);
+                auto parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -319,7 +318,7 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                auto *memberType = moduleImport->getType(memberOffset);
+                auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -368,10 +367,9 @@ lyric_importer::TypeImport::load()
     priv->typeDef = import_assignable_type(typeWalker, moduleImport.get());
     priv->typeArguments = import_type_arguments(typeWalker, moduleImport.get());
 
-    if (typeWalker.hasSuperType()) {
+    priv->hasSuper = typeWalker.hasSuperType();
+    if (priv->hasSuper) {
         priv->superType = moduleImport->getType(typeWalker.getSuperType().getDescriptorOffset());
-    } else {
-        priv->superType = nullptr;
     }
 
     m_priv = std::move(priv);

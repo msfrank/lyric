@@ -151,7 +151,7 @@ lyric_importer::ModuleCache::getBinding(const lyric_common::SymbolUrl &bindingUr
     return moduleImport->getBinding(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::CallImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::CallImport>>
 lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -168,7 +168,7 @@ lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
     return moduleImport->getCall(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::ClassImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ClassImport>>
 lyric_importer::ModuleCache::getClass(const lyric_common::SymbolUrl &classUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -202,7 +202,7 @@ lyric_importer::ModuleCache::getConcept(const lyric_common::SymbolUrl &conceptUr
     return moduleImport->getConcept(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::EnumImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::EnumImport>>
 lyric_importer::ModuleCache::getEnum(const lyric_common::SymbolUrl &enumUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -219,7 +219,7 @@ lyric_importer::ModuleCache::getEnum(const lyric_common::SymbolUrl &enumUrl)
     return moduleImport->getEnum(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::ExistentialImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ExistentialImport>>
 lyric_importer::ModuleCache::getExistential(const lyric_common::SymbolUrl &existentialUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;

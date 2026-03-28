@@ -13,12 +13,12 @@
 namespace lyric_assembler {
 
     struct ExistentialSymbolPriv {
-        bool isHidden;
-        lyric_object::DeriveType derive;
-        bool isDeclOnly;
-        TypeHandle *existentialType;
-        TemplateHandle *existentialTemplate;
-        ExistentialSymbol *superExistential;
+        bool isHidden = false;
+        lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
+        bool isDeclOnly = false;
+        TypeHandle *existentialType = nullptr;
+        TemplateHandle *existentialTemplate = nullptr;
+        ExistentialSymbol *superExistential = nullptr;
         absl::flat_hash_map<std::string, BoundMethod> methods;
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
@@ -49,7 +49,7 @@ namespace lyric_assembler {
             ObjectState *state);
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
-            lyric_importer::ExistentialImport *existentialImport,
+            std::shared_ptr<lyric_importer::ExistentialImport> existentialImport,
             bool isCopied,
             ObjectState *state);
 
@@ -108,7 +108,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_existentialUrl;
-        lyric_importer::ExistentialImport *m_existentialImport;
+        std::shared_ptr<lyric_importer::ExistentialImport> m_existentialImport;
         ObjectState *m_state;
 
         ExistentialSymbolPriv *load() override;

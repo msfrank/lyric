@@ -15,7 +15,7 @@
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_archiver::copy_call(
-    lyric_importer::CallImport *callImport,
+    const std::shared_ptr<lyric_importer::CallImport> &callImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -57,10 +57,9 @@ lyric_archiver::copy_call(
                 "cannot archive {}; unexpected call mode", importUrl.toString());
     }
 
-    auto *templateImport = callImport->getCallTemplate();
     lyric_assembler::TemplateHandle *callTemplate = nullptr;
-    if (templateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (callTemplate, copy_template(templateImport, callUrl, objectState));
+    if (callImport->hasCallTemplate()) {
+        TU_ASSIGN_OR_RETURN (callTemplate, copy_template(callImport->getCallTemplate(), callUrl, objectState));
     }
 
     auto isHidden = callImport->isHidden();
@@ -93,7 +92,7 @@ lyric_archiver::copy_call(
 
 tempo_utils::Status
 lyric_archiver::define_call(
-    lyric_importer::CallImport *callImport,
+    const std::shared_ptr<lyric_importer::CallImport> &callImport,
     lyric_assembler::CallSymbol *callSymbol,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
@@ -166,7 +165,7 @@ lyric_archiver::define_call(
         if (!initializer.isValid() || initializer.getLinkageSection() != lyric_object::LinkageSection::Call)
             return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
                 "'{}' parameter has invalid initializer", name);
-        auto *initializerImport = moduleImport->getCall(initializer.getLinkageIndex());
+        auto initializerImport = moduleImport->getCall(initializer.getLinkageIndex());
 
         lyric_assembler::CallSymbol *initializerSymbol;
         TU_ASSIGN_OR_RETURN (initializerSymbol, copy_call(
@@ -179,7 +178,7 @@ lyric_archiver::define_call(
 
 tempo_utils::Status
 lyric_archiver::put_pending_proc(
-    lyric_importer::CallImport *callImport,
+    const std::shared_ptr<lyric_importer::CallImport> &callImport,
     lyric_assembler::ProcHandle *procHandle,
     SymbolReferenceSet &symbolReferenceSet,
     ArchiverState &archiverState)

@@ -17,9 +17,11 @@ namespace lyric_importer {
         bool isDeclOnly();
         bool isHidden();
 
+        bool hasActionTemplate();
+        std::weak_ptr<TemplateImport> getActionTemplate();
+
         lyric_common::SymbolUrl getReceiverUrl();
-        TemplateImport *getActionTemplate();
-        TypeImport *getReturnType();
+        std::weak_ptr<TypeImport> getReturnType();
 
         Parameter getListParameter(tu_uint8 index);
         std::vector<Parameter>::const_iterator listParametersBegin();
@@ -48,8 +50,9 @@ namespace lyric_importer {
             lyric_common::SymbolUrl receiverUrl;
             bool isDeclOnly = false;
             bool isHidden = false;
-            TemplateImport *actionTemplate = nullptr;
-            TypeImport *returnType = nullptr;
+            bool hasTemplate = false;
+            std::weak_ptr<TemplateImport> actionTemplate;
+            std::weak_ptr<TypeImport> returnType;
             std::vector<Parameter> listParameters;
             std::vector<Parameter> namedParameters;
             Option<Parameter> restParameter;

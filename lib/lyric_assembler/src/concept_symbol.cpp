@@ -101,12 +101,22 @@ lyric_assembler::ConceptSymbol::load()
     priv->isHidden = m_conceptImport->isHidden();
     priv->derive = m_conceptImport->getDerive();
 
-    auto *conceptType = m_conceptImport->getConceptType();
-    TU_ASSIGN_OR_RAISE (priv->conceptType, typeCache->importType(conceptType));
+    auto typeImport = m_conceptImport->getConceptType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import concept {}; missing type",
+            m_conceptUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->conceptType, typeCache->importType(typeImport));
 
-    auto *conceptTemplate = m_conceptImport->getConceptTemplate();
-    if (conceptTemplate != nullptr) {
-        TU_ASSIGN_OR_RAISE (priv->conceptTemplate, typeCache->importTemplate(conceptTemplate));
+    if (m_conceptImport->hasConceptTemplate()) {
+        auto templateImport = m_conceptImport->getConceptTemplate().lock();
+        if (templateImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import concept {}; missing template",
+                m_conceptUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->conceptTemplate, typeCache->importTemplate(templateImport));
     }
 
     auto superConceptUrl = m_conceptImport->getSuperConcept();

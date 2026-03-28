@@ -24,21 +24,28 @@ lyric_importer::BindingImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::BindingImport::getBindingType()
 {
     load();
     return m_priv->bindingType;
 }
 
-lyric_importer::TemplateImport *
+bool
+lyric_importer::BindingImport::hasBindingTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
 lyric_importer::BindingImport::getBindingTemplate()
 {
     load();
     return m_priv->bindingTemplate;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::BindingImport::getTargetType()
 {
     load();
@@ -83,11 +90,10 @@ lyric_importer::BindingImport::load()
     priv->bindingType = moduleImport->getType(
         bindingWalker.getBindingType().getDescriptorOffset());
 
-    if (bindingWalker.hasTemplate()) {
+    priv->hasTemplate = bindingWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->bindingTemplate = moduleImport->getTemplate(
             bindingWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->bindingTemplate = nullptr;
     }
 
     priv->targetType = moduleImport->getType(

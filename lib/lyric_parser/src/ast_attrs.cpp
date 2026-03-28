@@ -110,9 +110,6 @@ value_to_bound_type(tu_int64 value, lyric_parser::BoundType &bound)
         case lyric_parser::BoundType::Super:
             bound = lyric_parser::BoundType::Super;
             return {};
-        case lyric_parser::BoundType::None:
-            bound = lyric_parser::BoundType::None;
-            return {};
         default:
             return tempo_schema::SchemaStatus::forCondition(
                 tempo_schema::SchemaCondition::kConversionError, "invalid bound type");

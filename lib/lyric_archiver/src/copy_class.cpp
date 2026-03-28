@@ -12,7 +12,7 @@
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
 lyric_archiver::copy_class(
-    lyric_importer::ClassImport *classImport,
+    const std::shared_ptr<lyric_importer::ClassImport> &classImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -39,10 +39,9 @@ lyric_archiver::copy_class(
     auto isHidden = classImport->isHidden();
     auto derive = classImport->getDerive();
 
-    auto *classTemplateImport = classImport->getClassTemplate();
     lyric_assembler::TemplateHandle *classTemplate = nullptr;
-    if (classTemplateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (classTemplate, copy_template(classTemplateImport, classUrl, objectState));
+    if (classImport->hasClassTemplate()) {
+        TU_ASSIGN_OR_RETURN (classTemplate, copy_template(classImport->getClassTemplate(), classUrl, objectState));
     }
 
     auto superClassUrl = classImport->getSuperClass();
@@ -102,12 +101,12 @@ lyric_archiver::copy_class(
 
         auto initializerUrl = fieldImport->getInitializer();
         if (initializerUrl.isValid()) {
-            lyric_importer::CallImport *initImport;
+            std::shared_ptr<lyric_importer::CallImport> initImport;
             TU_ASSIGN_OR_RETURN (initImport, archiverState.importCall(initializerUrl));
             std::vector<lyric_object::TemplateParameter> templateParameters;
-            auto *templateImport = initImport->getCallTemplate();
-            if (templateImport != nullptr) {
-                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+            if (initImport->hasCallTemplate()) {
+                TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                    initImport->getCallTemplate(), objectState));
             }
 
             lyric_assembler::InitializerHandle *initializerHandle;
@@ -134,12 +133,12 @@ lyric_archiver::copy_class(
             ctorUrl = it->second;
             continue;
         }
-        lyric_importer::CallImport *callImport;
+        std::shared_ptr<lyric_importer::CallImport> callImport;
         TU_ASSIGN_OR_RETURN (callImport, archiverState.importCall(it->second));
         std::vector<lyric_object::TemplateParameter> templateParameters;
-        auto *templateImport = callImport->getCallTemplate();
-        if (templateImport != nullptr) {
-            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
+        if (callImport->hasCallTemplate()) {
+            TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(
+                callImport->getCallTemplate(), objectState));
         }
         lyric_assembler::DispatchType dispatch = lyric_assembler::DispatchType::Virtual;
         if (callImport->getCallMode() == lyric_object::CallMode::Abstract) {
@@ -170,7 +169,7 @@ lyric_archiver::copy_class(
             implImport, implHandle, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
 
-    lyric_importer::CallImport *ctorImport;
+    std::shared_ptr<lyric_importer::CallImport> ctorImport;
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;

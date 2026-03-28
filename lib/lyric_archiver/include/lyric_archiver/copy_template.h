@@ -8,12 +8,12 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::TemplateHandle *> copy_template(
-        lyric_importer::TemplateImport *templateImport,
+        std::weak_ptr<lyric_importer::TemplateImport> templateImport,
         const lyric_common::SymbolUrl &templateUrl,
         lyric_assembler::ObjectState *objectState);
 
     tempo_utils::Result<lyric_assembler::TemplateHandle *> copy_template(
-        lyric_importer::TemplateImport *templateImport,
+        std::weak_ptr<lyric_importer::TemplateImport> templateImport,
         const lyric_common::SymbolUrl &templateUrl,
         lyric_assembler::TemplateHandle *superTemplate,
         lyric_assembler::ObjectState *objectState);

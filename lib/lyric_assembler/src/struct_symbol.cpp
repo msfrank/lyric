@@ -78,8 +78,13 @@ lyric_assembler::StructSymbol::load()
     priv->derive = m_structImport->getDerive();
     priv->isDeclOnly = m_structImport->isDeclOnly();
 
-    auto *structType = m_structImport->getStructType();
-    TU_ASSIGN_OR_RAISE (priv->structType, typeCache->importType(structType));
+    auto typeImport = m_structImport->getStructType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import struct {}; missing type",
+            m_structUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->structType, typeCache->importType(typeImport));
 
     auto superStructUrl = m_structImport->getSuperStruct();
     if (superStructUrl.isValid()) {

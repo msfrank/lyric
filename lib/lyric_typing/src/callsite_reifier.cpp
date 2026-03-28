@@ -133,21 +133,22 @@ lyric_typing::CallsiteReifier::checkPlaceholder(
     const lyric_object::TemplateParameter &tp,
     const lyric_common::TypeDef &arg) const
 {
-    if (tp.bound == lyric_object::BoundType::None)
-        return {};
+    lyric_runtime::TypeComparison comparison;
+    TU_ASSIGN_OR_RETURN (comparison, m_typeSystem->compareAssignable(tp.typeDef, arg));
 
-    auto compareAssignableResult = m_typeSystem->compareAssignable(tp.typeDef, arg);
-    if (compareAssignableResult.isStatus())
-        return compareAssignableResult.getStatus();
-    auto comparison = compareAssignableResult.getResult();
-
-    if (tp.bound == lyric_object::BoundType::Extends) {
-        if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::EXTENDS)
-            return {};
-    }
-    if (tp.bound == lyric_object::BoundType::Super) {
-        if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::SUPER)
-            return {};
+    switch (tp.bound) {
+        case lyric_object::BoundType::Extends:
+            if (comparison == lyric_runtime::TypeComparison::EQUAL
+              || comparison == lyric_runtime::TypeComparison::EXTENDS)
+                return {};
+            break;
+        case lyric_object::BoundType::Super:
+            if (comparison == lyric_runtime::TypeComparison::EQUAL
+              || comparison == lyric_runtime::TypeComparison::SUPER)
+                return {};
+            break;
+        default:
+            break;
     }
 
     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
@@ -361,7 +362,7 @@ lyric_typing::CallsiteReifier::reifyUnion(
             case lyric_common::TypeDefType::Placeholder: {
                 std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
                 TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
-                if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+                if (bound.first != lyric_object::BoundType::Extends)
                     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
                         "incompatible union member type {}; type bounds must be Extends",
                         member.toString());
@@ -395,7 +396,7 @@ lyric_typing::CallsiteReifier::reifyUnion(
             case lyric_common::TypeDefType::Placeholder: {
                 std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
                 TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
-                if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+                if (bound.first != lyric_object::BoundType::Extends)
                     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
                         "incompatible union member type {}; type bounds must be Extends",
                         member.toString());

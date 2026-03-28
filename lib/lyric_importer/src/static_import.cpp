@@ -30,7 +30,7 @@ lyric_importer::StaticImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::StaticImport::getStaticType()
 {
     load();

@@ -19,8 +19,7 @@ namespace lyric_importer {
         lyric_object::DeriveType getDerive();
         bool isHidden();
 
-        TypeImport *getInstanceType();
-        TemplateImport *getInstanceTemplate();
+        std::weak_ptr<TypeImport> getInstanceType();
         lyric_common::SymbolUrl getSuperInstance();
 
         lyric_common::SymbolUrl getMember(std::string_view name);
@@ -53,7 +52,7 @@ namespace lyric_importer {
             bool isDeclOnly = false;
             lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
             bool isHidden = false;
-            TypeImport *instanceType = nullptr;
+            std::weak_ptr<TypeImport> instanceType;
             lyric_common::SymbolUrl superInstance;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;

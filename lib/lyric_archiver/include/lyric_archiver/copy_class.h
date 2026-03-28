@@ -12,7 +12,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::ClassSymbol *> copy_class(
-        lyric_importer::ClassImport *classImport,
+        const std::shared_ptr<lyric_importer::ClassImport> &classImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

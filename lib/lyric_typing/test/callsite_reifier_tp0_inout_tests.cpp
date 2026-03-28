@@ -26,7 +26,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
     tp0.index = 0;
     tp0.name = "T";
     tp0.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    tp0.bound = lyric_object::BoundType::None;
+    tp0.bound = lyric_object::BoundType::Extends;
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
@@ -76,7 +76,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     tp0.index = 0;
     tp0.name = "T";
     tp0.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    tp0.bound = lyric_object::BoundType::None;
+    tp0.bound = lyric_object::BoundType::Extends;
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
@@ -92,7 +92,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     lyric_assembler::ClassSymbol *collectionClass;
     TU_ASSIGN_OR_RAISE (collectionClass,
         block->declareClass("Collection", ObjectClass, /* isHidden= */ false, {
-            {"T", 0, AnyType, lyric_object::VarianceType::Invariant, lyric_object::BoundType::None},
+            {"T", 0, AnyType, lyric_object::VarianceType::Invariant, lyric_object::BoundType::Extends},
         }));
     auto collectionUrl = collectionClass->getSymbolUrl();
     lyric_common::TypeDef CollectionOfTType;
@@ -143,7 +143,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
     tp0.index = 0;
     tp0.name = "T";
     tp0.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    tp0.bound = lyric_object::BoundType::None;
+    tp0.bound = lyric_object::BoundType::Extends;
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));

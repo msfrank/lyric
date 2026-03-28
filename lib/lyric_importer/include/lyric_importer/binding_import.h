@@ -13,9 +13,12 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isHidden();
-        TypeImport *getBindingType();
-        TemplateImport *getBindingTemplate();
-        TypeImport *getTargetType();
+
+        std::weak_ptr<TypeImport> getBindingType();
+        std::weak_ptr<TypeImport> getTargetType();
+
+        bool hasBindingTemplate();
+        std::weak_ptr<TemplateImport> getBindingTemplate();
 
     private:
         tu_uint32 m_bindingOffset;
@@ -23,10 +26,11 @@ namespace lyric_importer {
 
         struct Priv {
             lyric_common::SymbolUrl symbolUrl;
-            bool isHidden;
-            TypeImport *bindingType;
-            TemplateImport *bindingTemplate;
-            TypeImport *targetType;
+            bool isHidden = false;
+            std::weak_ptr<TypeImport> bindingType;
+            bool hasTemplate = false;
+            std::weak_ptr<TemplateImport> bindingTemplate;
+            std::weak_ptr<TypeImport> targetType;
         };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 

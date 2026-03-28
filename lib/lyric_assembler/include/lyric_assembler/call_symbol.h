@@ -109,7 +109,7 @@ namespace lyric_assembler {
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
-            lyric_importer::CallImport *callImport,
+            std::shared_ptr<lyric_importer::CallImport> callImport,
             bool isCopied,
             ObjectState *state);
 
@@ -168,7 +168,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_callUrl;
-        lyric_importer::CallImport *m_callImport = nullptr;
+        std::shared_ptr<lyric_importer::CallImport> m_callImport;
         ObjectState *m_state;
 
         CallSymbolPriv *load() override;

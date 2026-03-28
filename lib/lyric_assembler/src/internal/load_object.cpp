@@ -63,7 +63,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numCalls(); i++) {
         auto walker = object.getCall(i);
         lyric_common::SymbolUrl callUrl(walker.getSymbolPath());
-        auto *callImport = moduleImport->getCall(i);
+        auto callImport = moduleImport->getCall(i);
         auto callSymbol = std::make_unique<CallSymbol>(callUrl, callImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendCall(std::move(callSymbol)));
     }
@@ -71,7 +71,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numClasses(); i++) {
         auto walker = object.getClass(i);
         lyric_common::SymbolUrl classUrl(walker.getSymbolPath());
-        auto *classImport = moduleImport->getClass(i);
+        auto classImport = moduleImport->getClass(i);
         auto classSymbol = std::make_unique<ClassSymbol>(classUrl, classImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendClass(std::move(classSymbol)));
     }
@@ -87,7 +87,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numEnums(); i++) {
         auto walker = object.getEnum(i);
         lyric_common::SymbolUrl enumUrl(walker.getSymbolPath());
-        auto *enumImport = moduleImport->getEnum(i);
+        auto enumImport = moduleImport->getEnum(i);
         auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, enumImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendEnum(std::move(enumSymbol)));
     }
@@ -95,7 +95,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numExistentials(); i++) {
         auto walker = object.getExistential(i);
         lyric_common::SymbolUrl existentialUrl(walker.getSymbolPath());
-        auto *existentialImport = moduleImport->getExistential(i);
+        auto existentialImport = moduleImport->getExistential(i);
         auto existentialSymbol = std::make_unique<ExistentialSymbol>(existentialUrl, existentialImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendExistential(std::move(existentialSymbol)));
     }

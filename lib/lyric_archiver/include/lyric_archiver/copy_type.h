@@ -11,7 +11,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::TypeHandle *> copy_type(
-        lyric_importer::TypeImport *typeImport,
+        std::weak_ptr<lyric_importer::TypeImport> typeImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

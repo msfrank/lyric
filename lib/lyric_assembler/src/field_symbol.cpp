@@ -58,8 +58,13 @@ lyric_assembler::FieldSymbol::load()
     priv->isVariable = m_fieldImport->isVariable();
     priv->isDeclOnly = m_fieldImport->isDeclOnly();
 
-    auto *fieldType = m_fieldImport->getFieldType();
-    TU_ASSIGN_OR_RAISE (priv->fieldType, typeCache->importType(fieldType));
+    auto typeImport = m_fieldImport->getFieldType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import field {}; missing type",
+            m_fieldUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->fieldType, typeCache->importType(typeImport));
 
     auto *symbolCache = m_state->symbolCache();
 

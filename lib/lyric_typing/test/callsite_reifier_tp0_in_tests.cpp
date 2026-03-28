@@ -26,7 +26,7 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     tp.index = 0;
     tp.name = "T";
     tp.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    tp.bound = lyric_object::BoundType::None;
+    tp.bound = lyric_object::BoundType::Extends;
     tp.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));

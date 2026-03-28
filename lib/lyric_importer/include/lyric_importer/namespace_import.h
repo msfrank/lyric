@@ -17,7 +17,7 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSuperNamespace();
 
-        TypeImport *getNamespaceType();
+        std::weak_ptr<TypeImport> getNamespaceType();
 
         absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator symbolsBegin();
         absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator symbolsEnd();
@@ -32,7 +32,7 @@ namespace lyric_importer {
             bool isDeclOnly;
             bool isHidden;
             lyric_common::SymbolUrl superNamespace;
-            TypeImport *namespaceType = nullptr;
+            std::weak_ptr<TypeImport> namespaceType;
             absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
         };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);

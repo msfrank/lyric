@@ -82,7 +82,13 @@ lyric_assembler::NamespaceSymbol::load()
     priv->isHidden = m_namespaceImport->isHidden();
     priv->isDeclOnly = m_namespaceImport->isDeclOnly();
 
-    TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->importType(m_namespaceImport->getNamespaceType()));
+    auto typeImport = m_namespaceImport->getNamespaceType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import namespace {}; missing type",
+            m_namespaceUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->importType(typeImport));
 
     auto superNamespaceUrl = m_namespaceImport->getSuperNamespace();
     if (superNamespaceUrl.isValid()) {

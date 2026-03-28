@@ -4,27 +4,10 @@
 #include <lyric_importer/type_import.h>
 #include <lyric_object/class_walker.h>
 
-namespace lyric_importer {
-    struct ClassImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly;
-        lyric_object::DeriveType derive;
-        bool isHidden;
-        TypeImport *classType;
-        TemplateImport *classTemplate;
-        lyric_common::SymbolUrl superClass;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
-        absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
-        std::string allocator;
-    };
-}
-
 lyric_importer::ClassImport::ClassImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 classOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_classOffset(classOffset)
 {
     TU_ASSERT (m_classOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -58,26 +41,32 @@ lyric_importer::ClassImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ClassImport::getClassType()
 {
     load();
     return m_priv->classType;
 }
 
-lyric_importer::TemplateImport *
-lyric_importer::ClassImport::getClassTemplate()
-{
-    load();
-    return m_priv->classTemplate;
-}
-
-
 lyric_common::SymbolUrl
 lyric_importer::ClassImport::getSuperClass()
 {
     load();
     return m_priv->superClass;
+}
+
+bool
+lyric_importer::ClassImport::hasClassTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
+lyric_importer::ClassImport::getClassTemplate()
+{
+    load();
+    return m_priv->classTemplate;
 }
 
 lyric_common::SymbolUrl
@@ -242,11 +231,10 @@ lyric_importer::ClassImport::load()
     priv->classType = moduleImport->getType(
         classWalker.getClassType().getDescriptorOffset());
 
-    if (classWalker.hasTemplate()) {
+    priv->hasTemplate = classWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->classTemplate = moduleImport->getTemplate(
             classWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->classTemplate = nullptr;
     }
 
     if (classWalker.hasSuperClass()) {
@@ -309,14 +297,14 @@ lyric_importer::ClassImport::load()
                     m_classOffset, objectLocation.toString(), i));
         }
 
-        auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
+        auto implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
         auto implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < classWalker.numSealedSubClasses(); i++) {
         auto subClassType = classWalker.getSealedSubClass(i);
-        auto *sealedType = moduleImport->getType(subClassType.getDescriptorOffset());
+        auto sealedType = moduleImport->getType(subClassType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

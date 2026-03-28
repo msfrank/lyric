@@ -4,26 +4,10 @@
 #include <lyric_importer/type_import.h>
 #include <lyric_object/enum_walker.h>
 
-namespace lyric_importer {
-    struct EnumImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly;
-        lyric_object::DeriveType derive;
-        bool isHidden;
-        TypeImport *enumType;
-        lyric_common::SymbolUrl superEnum;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
-        absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
-        std::string allocator;
-    };
-}
-
 lyric_importer::EnumImport::EnumImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 enumOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_enumOffset(enumOffset)
 {
     TU_ASSERT (m_enumOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -57,7 +41,7 @@ lyric_importer::EnumImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::EnumImport::getEnumType()
 {
     load();
@@ -293,14 +277,14 @@ lyric_importer::EnumImport::load()
                     m_enumOffset, objectLocation.toString(), i));
         }
 
-        auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
+        auto implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
         auto implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numSealedSubEnums(); i++) {
         auto subEnumType = enumWalker.getSealedSubEnum(i);
-        auto *sealedType = moduleImport->getType(subEnumType.getDescriptorOffset());
+        auto sealedType = moduleImport->getType(subEnumType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

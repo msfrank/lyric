@@ -18,13 +18,13 @@ namespace lyric_importer {
         lyric_object::PortType getPort();
         lyric_object::CommunicationType getCommunication();
 
-        TypeImport *getProtocolType();
+        std::weak_ptr<TypeImport> getProtocolType();
 
         bool hasSendType();
-        TypeImport *getSendType();
+        std::weak_ptr<TypeImport> getSendType();
 
         bool hasReceiveType();
-        TypeImport *getReceiveType();
+        std::weak_ptr<TypeImport> getReceiveType();
 
     private:
         tu_uint32 m_protocolOffset;
@@ -36,9 +36,9 @@ namespace lyric_importer {
             bool isHidden = false;
             lyric_object::PortType port = lyric_object::PortType::Invalid;
             lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
-            TypeImport *protocolType = nullptr;
-            TypeImport *sendType = nullptr;
-            TypeImport *receiveType = nullptr;
+            std::weak_ptr<TypeImport> protocolType;
+            std::weak_ptr<TypeImport> sendType;
+            std::weak_ptr<TypeImport> receiveType;
         };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 

@@ -134,7 +134,7 @@ lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actio
     return moduleImport->getAction(symbol.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::CallImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::CallImport>>
 lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl)
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
@@ -232,7 +232,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Call: {
-            auto *callImport = moduleImport->getCall(symbol.getLinkageIndex());
+            auto callImport = moduleImport->getCall(symbol.getLinkageIndex());
             lyric_assembler::CallSymbol *copiedCall;
             TU_ASSIGN_OR_RETURN (copiedCall, copy_call(
                 callImport, importHash, globalNamespace, symbolReferenceSet, *this));
@@ -240,7 +240,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Class: {
-            auto *classImport = moduleImport->getClass(symbol.getLinkageIndex());
+            auto classImport = moduleImport->getClass(symbol.getLinkageIndex());
             lyric_assembler::ClassSymbol *copiedClass;
             TU_ASSIGN_OR_RETURN (copiedClass, copy_class(
                 classImport, importHash, globalNamespace, symbolReferenceSet, *this));
@@ -256,7 +256,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Enum: {
-            auto *enumImport = moduleImport->getEnum(symbol.getLinkageIndex());
+            auto enumImport = moduleImport->getEnum(symbol.getLinkageIndex());
             lyric_assembler::EnumSymbol *copiedEnum;
             TU_ASSIGN_OR_RETURN (copiedEnum, copy_enum(
                 enumImport, importHash, globalNamespace, symbolReferenceSet, *this));

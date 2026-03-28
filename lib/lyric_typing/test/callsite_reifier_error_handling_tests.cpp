@@ -29,7 +29,7 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
     tp0.name = "T";
     tp0.typeDef = AnyType;
     tp0.variance = lyric_object::VarianceType::Invariant;
-    tp0.bound = lyric_object::BoundType::None;
+    tp0.bound = lyric_object::BoundType::Extends;
 
     std::vector<lyric_object::TemplateParameter> templateParameters{tp0};
 

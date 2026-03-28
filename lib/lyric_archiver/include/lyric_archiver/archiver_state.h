@@ -45,7 +45,7 @@ namespace lyric_archiver {
         bool hasImport(const lyric_common::ModuleLocation &location) const;
 
         tempo_utils::Result<std::shared_ptr<lyric_importer::ActionImport>> importAction(const lyric_common::SymbolUrl &actionUrl);
-        tempo_utils::Result<lyric_importer::CallImport *> importCall(const lyric_common::SymbolUrl &callUrl);
+        tempo_utils::Result<std::shared_ptr<lyric_importer::CallImport>> importCall(const lyric_common::SymbolUrl &callUrl);
         tempo_utils::Result<std::shared_ptr<lyric_importer::FieldImport>> importField(const lyric_common::SymbolUrl &fieldUrl);
 
         tempo_utils::Result<lyric_assembler::AbstractSymbol *> getSymbol(const lyric_common::SymbolUrl &symbolUrl);

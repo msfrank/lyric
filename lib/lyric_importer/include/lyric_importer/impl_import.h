@@ -12,7 +12,7 @@ namespace lyric_importer {
         ImplImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 implOffset);
 
         bool isDeclOnly();
-        TypeImport *getImplType();
+        std::weak_ptr<TypeImport> getImplType();
         lyric_common::SymbolUrl getImplConcept();
         lyric_common::SymbolUrl getReceiverUrl();
 
@@ -20,13 +20,15 @@ namespace lyric_importer {
         absl::flat_hash_map<std::string,Extension>::const_iterator extensionsEnd();
         int numExtensions();
 
+        tu_uint32 getImplOffset() const;
+
     private:
         tu_uint32 m_implOffset;
         absl::Mutex m_lock;
 
         struct Priv {
             bool isDeclOnly = false;
-            TypeImport *implType = nullptr;
+            std::weak_ptr<TypeImport> implType;
             lyric_common::SymbolUrl implConcept;
             lyric_common::SymbolUrl receiverUrl;
             absl::flat_hash_map<std::string, Extension> extensions;

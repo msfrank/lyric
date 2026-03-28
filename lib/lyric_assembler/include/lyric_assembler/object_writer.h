@@ -23,6 +23,8 @@ namespace lyric_assembler {
     public:
         explicit ObjectWriter(const ObjectState *state);
 
+        const ObjectState *objectState() const;
+
         tempo_utils::Status initialize();
 
         tempo_utils::Status touchAction(const ActionSymbol *actionSymbol);

@@ -40,7 +40,7 @@ lyric_importer::FieldImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::FieldImport::getFieldType()
 {
     load();

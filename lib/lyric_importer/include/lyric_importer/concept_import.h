@@ -18,9 +18,11 @@ namespace lyric_importer {
         lyric_object::DeriveType getDerive();
         bool isHidden();
 
-        TypeImport *getConceptType();
-        TemplateImport *getConceptTemplate();
+        std::weak_ptr<TypeImport> getConceptType();
         lyric_common::SymbolUrl getSuperConcept();
+
+        bool hasConceptTemplate();
+        std::weak_ptr<TemplateImport> getConceptTemplate();
 
         lyric_common::SymbolUrl getAction(std::string_view name);
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator actionsBegin();
@@ -44,8 +46,9 @@ namespace lyric_importer {
             bool isDeclOnly = false;
             lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
             bool isHidden = false;
-            TypeImport *conceptType = nullptr;
-            TemplateImport *conceptTemplate = nullptr;
+            std::weak_ptr<TypeImport> conceptType;
+            bool hasTemplate = false;
+            std::weak_ptr<TemplateImport> conceptTemplate;
             lyric_common::SymbolUrl superConcept;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> actions;
             absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;

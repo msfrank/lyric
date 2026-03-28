@@ -12,14 +12,14 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::CallSymbol *> copy_call(
-        lyric_importer::CallImport *callImport,
+        const std::shared_ptr<lyric_importer::CallImport> &callImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,
         ArchiverState &archiverState);
 
     tempo_utils::Status define_call(
-        lyric_importer::CallImport *callImport,
+        const std::shared_ptr<lyric_importer::CallImport> &callImport,
         lyric_assembler::CallSymbol *callSymbol,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
@@ -27,7 +27,7 @@ namespace lyric_archiver {
         ArchiverState &archiverState);
 
     tempo_utils::Status put_pending_proc(
-        lyric_importer::CallImport *callImport,
+        const std::shared_ptr<lyric_importer::CallImport> &callImport,
         lyric_assembler::ProcHandle *procHandle,
         SymbolReferenceSet &symbolReferenceSet,
         ArchiverState &archiverState);

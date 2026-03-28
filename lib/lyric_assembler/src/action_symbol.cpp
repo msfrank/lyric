@@ -83,8 +83,15 @@ lyric_assembler::ActionSymbol::load()
         p.placement = it->placement;
         p.isVariable = it->isVariable;
 
+        auto paramImport = it->type.lock();
+        if (paramImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import action {}; missing type for list parameter '{}' at index {}",
+                m_actionUrl.toString(), it->name, it->index));
+
         TypeHandle *paramType = nullptr;
-        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
+        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(paramImport));
         p.typeDef = paramType->getTypeDef();
 
         priv->listParameters.push_back(p);
@@ -97,8 +104,15 @@ lyric_assembler::ActionSymbol::load()
         p.placement = it->placement;
         p.isVariable = it->isVariable;
 
+        auto paramImport = it->type.lock();
+        if (paramImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import action {}; missing type for named parameter '{}' at index {}",
+                m_actionUrl.toString(), it->name, it->index));
+
         TypeHandle *paramType = nullptr;
-        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
+        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(paramImport));
         p.typeDef = paramType->getTypeDef();
 
         priv->namedParameters.push_back(p);
@@ -113,22 +127,46 @@ lyric_assembler::ActionSymbol::load()
         p.placement = rest.placement;
         p.isVariable = rest.isVariable;
 
+        auto paramImport = rest.type.lock();
+        if (paramImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import action {}; missing type for rest parameter '{}'",
+                m_actionUrl.toString(), rest.name));
+
         TypeHandle *paramType = nullptr;
-        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(rest.type));
+        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(paramImport));
         p.typeDef = paramType->getTypeDef();
 
         priv->restParameter = Option(p);
     }
 
     priv->receiverUrl = m_actionImport->getReceiverUrl();
+    if (!priv->receiverUrl.isValid())
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import action {}; invalid receiver url",
+            m_actionUrl.toString()));
 
-    auto *actionTemplate = m_actionImport->getActionTemplate();
-    if (actionTemplate != nullptr) {
-        TU_ASSIGN_OR_RAISE (priv->actionTemplate, typeCache->importTemplate(actionTemplate));
+    if (m_actionImport->hasActionTemplate()) {
+        auto templateImport = m_actionImport->getActionTemplate().lock();
+        if (templateImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import action {}; missing template",
+                m_actionUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->actionTemplate, typeCache->importTemplate(templateImport));
     }
 
+    auto returnImport = m_actionImport->getReturnType().lock();
+    if (returnImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import action {}; missing return type",
+            m_actionUrl.toString()));
+
     TypeHandle *returnType = nullptr;
-    TU_ASSIGN_OR_RAISE (returnType, typeCache->importType(m_actionImport->getReturnType()));
+    TU_ASSIGN_OR_RAISE (returnType, typeCache->importType(returnImport));
     priv->returnType = returnType->getTypeDef();
 
     priv->initializers = absl::flat_hash_map<std::string,lyric_common::SymbolUrl>(

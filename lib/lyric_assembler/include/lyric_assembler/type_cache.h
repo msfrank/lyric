@@ -21,7 +21,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<TypeHandle *> getOrMakeType(const lyric_common::TypeDef &assignableType);
         tempo_utils::Status appendType(TypeHandle *typeHandle);
-        tempo_utils::Result<TypeHandle *> importType(lyric_importer::TypeImport *typeImport);
+        tempo_utils::Result<TypeHandle *> importType(std::shared_ptr<lyric_importer::TypeImport> typeImport);
 
         tempo_utils::Result<TypeHandle *> declareSubType(
             const lyric_common::SymbolUrl &subTypeUrl,
@@ -52,7 +52,7 @@ namespace lyric_assembler {
             TemplateHandle *superTemplate,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             BlockHandle *parentBlock);
-        tempo_utils::Result<TemplateHandle *> importTemplate(lyric_importer::TemplateImport *templateImport);
+        tempo_utils::Result<TemplateHandle *> importTemplate(std::shared_ptr<lyric_importer::TemplateImport> templateImport);
         tempo_utils::Status appendTemplate(TemplateHandle *templateHandle);
         tempo_utils::Status touchTemplateParameters(const std::vector<lyric_object::TemplateParameter> &parameters);
 

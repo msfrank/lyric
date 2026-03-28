@@ -182,7 +182,6 @@ namespace lyric_object {
 
     enum class BoundType {
         Invalid,
-        None,
         Extends,
         Super,
     };

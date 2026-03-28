@@ -42,18 +42,11 @@ lyric_importer::ConceptImport::isHidden()
     return m_priv->isHidden;
 }
 
-lyric_importer::TypeImport *
+std::weak_ptr<lyric_importer::TypeImport>
 lyric_importer::ConceptImport::getConceptType()
 {
     load();
     return m_priv->conceptType;
-}
-
-lyric_importer::TemplateImport *
-lyric_importer::ConceptImport::getConceptTemplate()
-{
-    load();
-    return m_priv->conceptTemplate;
 }
 
 lyric_common::SymbolUrl
@@ -61,6 +54,20 @@ lyric_importer::ConceptImport::getSuperConcept()
 {
     load();
     return m_priv->superConcept;
+}
+
+bool
+lyric_importer::ConceptImport::hasConceptTemplate()
+{
+    load();
+    return m_priv->hasTemplate;
+}
+
+std::weak_ptr<lyric_importer::TemplateImport>
+lyric_importer::ConceptImport::getConceptTemplate()
+{
+    load();
+    return m_priv->conceptTemplate;
 }
 
 lyric_common::SymbolUrl
@@ -183,11 +190,10 @@ lyric_importer::ConceptImport::load()
     priv->conceptType = moduleImport->getType(
         conceptWalker.getConceptType().getDescriptorOffset());
 
-    if (conceptWalker.hasTemplate()) {
+    priv->hasTemplate = conceptWalker.hasTemplate();
+    if (priv->hasTemplate) {
         priv->conceptTemplate = moduleImport->getTemplate(
             conceptWalker.getTemplate().getDescriptorOffset());
-    } else {
-        priv->conceptTemplate = nullptr;
     }
 
     if (conceptWalker.hasSuperConcept()) {
@@ -232,14 +238,14 @@ lyric_importer::ConceptImport::load()
     for (tu_uint8 i = 0; i < conceptWalker.numImpls(); i++) {
         auto implWalker = conceptWalker.getImpl(i);
 
-        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
         auto implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < conceptWalker.numSealedSubConcepts(); i++) {
         auto subConceptType = conceptWalker.getSealedSubConcept(i);
-        auto *sealedType = moduleImport->getType(subConceptType.getDescriptorOffset());
+        auto sealedType = moduleImport->getType(subConceptType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

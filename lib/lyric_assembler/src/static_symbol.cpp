@@ -60,8 +60,13 @@ lyric_assembler::StaticSymbol::load()
     priv->isVariable = m_staticImport->isVariable();
     priv->isDeclOnly = m_staticImport->isDeclOnly();
 
-    auto *staticType = m_staticImport->getStaticType();
-    TU_ASSIGN_OR_RAISE (priv->staticType, typeCache->importType(staticType));
+    auto typeImport = m_staticImport->getStaticType().lock();
+    if (typeImport == nullptr)
+        throw tempo_utils::StatusException(
+            AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "cannot import static {}; missing type",
+            m_staticUrl.toString()));
+    TU_ASSIGN_OR_RAISE (priv->staticType, typeCache->importType(typeImport));
 
     auto *symbolCache = m_state->symbolCache();
 
