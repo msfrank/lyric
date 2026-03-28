@@ -2,28 +2,19 @@
 #define LYRIC_COMPILER_BASE_CHOICE_H
 
 #include <lyric_assembler/block_handle.h>
-#include <lyric_schema/ast_schema.h>
+#include <lyric_parser/archetype_node.h>
 
-#include "abstract_behavior.h"
-#include "base_grouping.h"
 #include "visitor_context.h"
 
 namespace lyric_compiler {
 
-    class BaseChoice {
+    class BaseChoice : public AbstractChoice {
     public:
         explicit BaseChoice(CompilerScanDriver *driver);
         BaseChoice(lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
-        virtual ~BaseChoice() = default;
 
-        virtual tempo_utils::Status decide(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            DecideContext &ctx) = 0;
-
-        lyric_assembler::BlockHandle *getBlock();
-        CompilerScanDriver *getDriver();
-
+        lyric_assembler::BlockHandle *getBlock() override;
+        CompilerScanDriver *getDriver() override;
 
     private:
         lyric_assembler::BlockHandle *m_block;

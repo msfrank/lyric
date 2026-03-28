@@ -7,9 +7,73 @@ namespace lyric_compiler {
 
     // forward declarations
     class AbstractBehavior;
-    class BaseChoice;
-    class BaseGrouping;
+    class AfterContext;
+    class BeforeContext;
     class CompilerScanDriver;
+    class DecideContext;
+    class EnterContext;
+    class ExitContext;
+    struct Handler;
+
+    class AbstractBehavior {
+    public:
+        virtual ~AbstractBehavior() = default;
+
+        virtual tempo_utils::Status enter(
+            CompilerScanDriver *driver,
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            lyric_assembler::BlockHandle *block,
+            EnterContext &ctx) = 0;
+
+        virtual tempo_utils::Status exit(
+            CompilerScanDriver *driver,
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            lyric_assembler::BlockHandle *block,
+            ExitContext &ctx) = 0;
+    };
+
+    class AbstractChoice {
+    public:
+        virtual ~AbstractChoice() = default;
+
+        virtual tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) = 0;
+
+        virtual lyric_assembler::BlockHandle *getBlock() = 0;
+
+        virtual CompilerScanDriver *getDriver() = 0;
+    };
+
+    class AbstractGrouping {
+    public:
+        virtual ~AbstractGrouping() = default;
+
+        virtual tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) = 0;
+
+        virtual tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) = 0;
+
+        virtual lyric_assembler::BlockHandle *getBlock() = 0;
+
+        virtual CompilerScanDriver *getDriver() = 0;
+
+    private:
+        virtual Handler *currentHandler() const = 0;
+        virtual void appendHandlers(std::vector<std::unique_ptr<Handler>> &&handlers) = 0;
+        virtual bool advanceHandler() = 0;
+        virtual bool isFinished() const = 0;
+
+        friend class CompilerScanDriver;
+    };
 
     enum class HandlerType {
         Invalid,
@@ -21,8 +85,8 @@ namespace lyric_compiler {
     struct Handler {
         HandlerType type;
         std::unique_ptr<AbstractBehavior> behavior;
-        std::unique_ptr<BaseChoice> choice;
-        std::unique_ptr<BaseGrouping> grouping;
+        std::unique_ptr<AbstractChoice> choice;
+        std::unique_ptr<AbstractGrouping> grouping;
     };
 
     class BeforeContext {
@@ -36,8 +100,8 @@ namespace lyric_compiler {
         void setSkipChildren(bool skip);
 
         void appendBehavior(std::unique_ptr<AbstractBehavior> &&behavior);
-        void appendChoice(std::unique_ptr<BaseChoice> &&choice);
-        void appendGrouping(std::unique_ptr<BaseGrouping> &&grouping);
+        void appendChoice(std::unique_ptr<AbstractChoice> &&choice);
+        void appendGrouping(std::unique_ptr<AbstractGrouping> &&grouping);
 
         std::vector<std::unique_ptr<Handler>>&& takeHandlers();
 
@@ -69,8 +133,8 @@ namespace lyric_compiler {
         int childIndex() const;
 
         void appendBehavior(std::unique_ptr<AbstractBehavior> &&behavior);
-        void appendChoice(std::unique_ptr<BaseChoice> &&choice);
-        void appendGrouping(std::unique_ptr<BaseGrouping> &&grouping);
+        void appendChoice(std::unique_ptr<AbstractChoice> &&choice);
+        void appendGrouping(std::unique_ptr<AbstractGrouping> &&grouping);
 
         std::vector<std::unique_ptr<Handler>>&& takeHandlers();
 
@@ -107,8 +171,8 @@ namespace lyric_compiler {
         int childIndex() const;
 
         void setBehavior(std::unique_ptr<AbstractBehavior> &&behavior);
-        void setChoice(std::unique_ptr<BaseChoice> &&choice);
-        void setGrouping(std::unique_ptr<BaseGrouping> &&grouping);
+        void setChoice(std::unique_ptr<AbstractChoice> &&choice);
+        void setGrouping(std::unique_ptr<AbstractGrouping> &&grouping);
 
         std::unique_ptr<Handler>&& takeHandler();
 

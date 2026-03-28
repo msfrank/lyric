@@ -7,7 +7,6 @@ add_library(lyric_compiler SHARED)
 add_library(lyric::lyric_compiler ALIAS lyric_compiler)
 
 set(LYRIC_COMPILER_INCLUDES
-    include/lyric_compiler/abstract_behavior.h
     include/lyric_compiler/action_handler.h
     include/lyric_compiler/assembler_handler.h
     include/lyric_compiler/assignment_handler.h

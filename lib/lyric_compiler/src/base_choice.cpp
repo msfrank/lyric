@@ -5,15 +5,15 @@ lyric_compiler::BaseChoice::BaseChoice(CompilerScanDriver *driver)
     : m_block(nullptr),
       m_driver(driver)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 lyric_compiler::BaseChoice::BaseChoice(lyric_assembler::BlockHandle *block, CompilerScanDriver *driver)
     : m_block(block),
       m_driver(driver)
 {
-    TU_ASSERT (m_block != nullptr);
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_block);
+    TU_NOTNULL (m_driver);
 }
 
 lyric_assembler::BlockHandle *

@@ -11,16 +11,12 @@
 
 namespace lyric_compiler {
 
-//    // forward declarations
-//    class BaseGrouping;
-//    class EnterContext;
-
     class CompilerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
         CompilerScanDriver(lyric_assembler::ObjectRoot *root, lyric_assembler::ObjectState *state);
         ~CompilerScanDriver() override;
 
-        tempo_utils::Status initialize(std::unique_ptr<BaseGrouping> &&rootGrouping);
+        tempo_utils::Status initialize(std::unique_ptr<AbstractGrouping> &&rootGrouping);
 
         tempo_utils::Status enter(
             const lyric_parser::ArchetypeState *state,
@@ -44,7 +40,7 @@ namespace lyric_compiler {
         lyric_assembler::TypeCache *getTypeCache() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
-        BaseGrouping *peekGrouping();
+        AbstractGrouping *peekGrouping();
         tempo_utils::Status popGrouping();
         tu_uint32 numGroupings() const;
 
@@ -60,7 +56,7 @@ namespace lyric_compiler {
         std::stack<lyric_common::TypeDef> m_results;
 
         struct GroupingData {
-            std::unique_ptr<BaseGrouping> grouping;
+            std::unique_ptr<AbstractGrouping> grouping;
             const lyric_parser::ArchetypeNode *node = nullptr;
             bool pending = true;
         };

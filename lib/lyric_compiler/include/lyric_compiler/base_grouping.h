@@ -1,32 +1,30 @@
 #ifndef LYRIC_COMPILER_BASE_GROUPING_H
 #define LYRIC_COMPILER_BASE_GROUPING_H
 
-#include <lyric_schema/ast_schema.h>
+#include <lyric_assembler/block_handle.h>
+#include <lyric_parser/archetype_node.h>
 
-#include "abstract_behavior.h"
 #include "visitor_context.h"
 
 namespace lyric_compiler {
 
-    class BaseGrouping {
+    class BaseGrouping : public AbstractGrouping {
     public:
         explicit BaseGrouping(CompilerScanDriver *driver);
         BaseGrouping(lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
-        virtual ~BaseGrouping() = default;
 
-        virtual tempo_utils::Status before(
+        tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
             const lyric_parser::ArchetypeNode *node,
-            BeforeContext &ctx);
+            BeforeContext &ctx) override;
 
-        virtual tempo_utils::Status after(
+        tempo_utils::Status after(
             const lyric_parser::ArchetypeState *state,
             const lyric_parser::ArchetypeNode *node,
-            AfterContext &ctx);
+            AfterContext &ctx) override;
 
-        lyric_assembler::BlockHandle *getBlock();
-        CompilerScanDriver *getDriver();
-
+        lyric_assembler::BlockHandle *getBlock() override;
+        CompilerScanDriver *getDriver() override;
 
     private:
         lyric_assembler::BlockHandle *m_block;
@@ -34,21 +32,10 @@ namespace lyric_compiler {
         std::vector<std::unique_ptr<Handler>> m_handlers;
         int m_curr;
 
-//        tempo_utils::Status enter(
-//            const lyric_parser::ArchetypeState *state,
-//            const lyric_parser::ArchetypeNode *node,
-//            EnterContext &ctx);
-//        tempo_utils::Status exit(
-//            const lyric_parser::ArchetypeState *state,
-//            const lyric_parser::ArchetypeNode *node,
-//            ExitContext &ctx);
-
-        Handler *currentHandler() const;
-        void appendHandlers(std::vector<std::unique_ptr<Handler>> &&handlers);
-        bool advanceHandler();
-        bool isFinished() const;
-
-        friend class CompilerScanDriver;
+        Handler *currentHandler() const override;
+        void appendHandlers(std::vector<std::unique_ptr<Handler>> &&handlers) override;
+        bool advanceHandler() override;
+        bool isFinished() const override;
     };
 }
 

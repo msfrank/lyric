@@ -78,7 +78,7 @@ class Lyric(ConanFile):
         self.description = self._get_meta('description')
 
     def validate(self):
-        check_min_cppstd(self, "20")
+        check_min_cppstd(self, "23")
 
     def layout(self):
         cmake_layout(self)

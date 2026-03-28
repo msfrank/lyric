@@ -28,8 +28,8 @@ lyric_compiler::CompilerScanDriver::CompilerScanDriver(
       m_state(state),
       m_typeSystem(nullptr)
 {
-    TU_ASSERT (m_root != nullptr);
-    TU_ASSERT (m_state != nullptr);
+    TU_NOTNULL (m_root);
+    TU_NOTNULL (m_state);
 }
 
 lyric_compiler::CompilerScanDriver::~CompilerScanDriver()
@@ -38,7 +38,7 @@ lyric_compiler::CompilerScanDriver::~CompilerScanDriver()
 }
 
 tempo_utils::Status
-lyric_compiler::CompilerScanDriver::initialize(std::unique_ptr<BaseGrouping> &&rootGrouping)
+lyric_compiler::CompilerScanDriver::initialize(std::unique_ptr<AbstractGrouping> &&rootGrouping)
 {
     if (m_typeSystem != nullptr)
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
@@ -81,7 +81,7 @@ lyric_compiler::CompilerScanDriver::enter(
     }
 
     auto *handler = grouping->currentHandler();
-    TU_ASSERT (handler != nullptr);
+    TU_NOTNULL (handler);
 
     switch (handler->type) {
 
@@ -95,7 +95,7 @@ lyric_compiler::CompilerScanDriver::enter(
         }
 
         case HandlerType::Choice: {
-            std::unique_ptr<BaseChoice> choice = std::move(handler->choice);
+            std::unique_ptr<AbstractChoice> choice = std::move(handler->choice);
             handler->type = HandlerType::Invalid;
             DecideContext decideContext(ctx, this);
             TU_RETURN_IF_NOT_OK (choice->decide(state, node, decideContext));
@@ -259,7 +259,7 @@ lyric_compiler::CompilerScanDriver::getTypeSystem() const
     return m_typeSystem;
 }
 
-lyric_compiler::BaseGrouping *
+lyric_compiler::AbstractGrouping *
 lyric_compiler::CompilerScanDriver::peekGrouping()
 {
     if (m_groupings.empty())

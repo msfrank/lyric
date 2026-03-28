@@ -1,8 +1,5 @@
 
-#include <lyric_compiler/abstract_behavior.h>
-#include <lyric_compiler/base_choice.h>
 #include <lyric_compiler/base_grouping.h>
-#include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/visitor_context.h>
 
 lyric_compiler::BeforeContext::BeforeContext(
@@ -11,7 +8,7 @@ lyric_compiler::BeforeContext::BeforeContext(
     : m_visitorContext(visitorContext),
       m_driver(driver)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 const lyric_compiler::CompilerScanDriver *
@@ -46,7 +43,7 @@ lyric_compiler::BeforeContext::setSkipChildren(bool skip)
 void
 lyric_compiler::BeforeContext::appendBehavior(std::unique_ptr<AbstractBehavior> &&behavior)
 {
-    TU_ASSERT (behavior != nullptr);
+    TU_NOTNULL (behavior);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Behavior;
     handler->behavior = std::move(behavior);
@@ -54,9 +51,9 @@ lyric_compiler::BeforeContext::appendBehavior(std::unique_ptr<AbstractBehavior> 
 }
 
 void
-lyric_compiler::BeforeContext::appendChoice(std::unique_ptr<BaseChoice> &&choice)
+lyric_compiler::BeforeContext::appendChoice(std::unique_ptr<AbstractChoice> &&choice)
 {
-    TU_ASSERT (choice != nullptr);
+    TU_NOTNULL (choice);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Choice;
     handler->choice = std::move(choice);
@@ -64,9 +61,9 @@ lyric_compiler::BeforeContext::appendChoice(std::unique_ptr<BaseChoice> &&choice
 }
 
 void
-lyric_compiler::BeforeContext::appendGrouping(std::unique_ptr<BaseGrouping> &&grouping)
+lyric_compiler::BeforeContext::appendGrouping(std::unique_ptr<AbstractGrouping> &&grouping)
 {
-    TU_ASSERT (grouping != nullptr);
+    TU_NOTNULL (grouping);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Grouping;
     handler->grouping = std::move(grouping);
@@ -85,7 +82,7 @@ lyric_compiler::AfterContext::AfterContext(
     : m_visitorContext(visitorContext),
       m_driver(driver)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 const lyric_compiler::CompilerScanDriver *
@@ -112,7 +109,7 @@ lyric_compiler::EnterContext::EnterContext(
     : m_visitorContext(visitorContext),
       m_driver(driver)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 const lyric_compiler::CompilerScanDriver *
@@ -136,7 +133,7 @@ lyric_compiler::EnterContext::childIndex() const
 void
 lyric_compiler::EnterContext::appendBehavior(std::unique_ptr<AbstractBehavior> &&behavior)
 {
-    TU_ASSERT (behavior != nullptr);
+    TU_NOTNULL (behavior);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Behavior;
     handler->behavior = std::move(behavior);
@@ -144,9 +141,9 @@ lyric_compiler::EnterContext::appendBehavior(std::unique_ptr<AbstractBehavior> &
 }
 
 void
-lyric_compiler::EnterContext::appendChoice(std::unique_ptr<BaseChoice> &&choice)
+lyric_compiler::EnterContext::appendChoice(std::unique_ptr<AbstractChoice> &&choice)
 {
-    TU_ASSERT (choice != nullptr);
+    TU_NOTNULL (choice);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Choice;
     handler->choice = std::move(choice);
@@ -154,9 +151,9 @@ lyric_compiler::EnterContext::appendChoice(std::unique_ptr<BaseChoice> &&choice)
 }
 
 void
-lyric_compiler::EnterContext::appendGrouping(std::unique_ptr<BaseGrouping> &&grouping)
+lyric_compiler::EnterContext::appendGrouping(std::unique_ptr<AbstractGrouping> &&grouping)
 {
-    TU_ASSERT (grouping != nullptr);
+    TU_NOTNULL (grouping);
     auto handler = std::make_unique<Handler>();
     handler->type = HandlerType::Grouping;
     handler->grouping = std::move(grouping);
@@ -173,9 +170,10 @@ lyric_compiler::ExitContext::ExitContext(
     const lyric_rewriter::VisitorContext &visitorContext,
     const CompilerScanDriver *driver)
     : m_visitorContext(visitorContext),
-      m_driver(driver)
+      m_driver(driver),
+      m_popHandler(false)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 const lyric_compiler::CompilerScanDriver *
@@ -214,7 +212,7 @@ lyric_compiler::DecideContext::DecideContext(
     : m_visitorContext(visitorContext),
       m_driver(driver)
 {
-    TU_ASSERT (m_driver != nullptr);
+    TU_NOTNULL (m_driver);
 }
 
 const lyric_compiler::CompilerScanDriver *
@@ -244,7 +242,7 @@ lyric_compiler::DecideContext::setBehavior(std::unique_ptr<AbstractBehavior> &&b
 }
 
 void
-lyric_compiler::DecideContext::setChoice(std::unique_ptr<BaseChoice> &&choice)
+lyric_compiler::DecideContext::setChoice(std::unique_ptr<AbstractChoice> &&choice)
 {
     m_handler = std::make_unique<Handler>();
     m_handler->type = HandlerType::Choice;
@@ -252,7 +250,7 @@ lyric_compiler::DecideContext::setChoice(std::unique_ptr<BaseChoice> &&choice)
 }
 
 void
-lyric_compiler::DecideContext::setGrouping(std::unique_ptr<BaseGrouping> &&grouping)
+lyric_compiler::DecideContext::setGrouping(std::unique_ptr<AbstractGrouping> &&grouping)
 {
     m_handler = std::make_unique<Handler>();
     m_handler->type = HandlerType::Grouping;
