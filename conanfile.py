@@ -14,9 +14,9 @@ class Lyric(ConanFile):
 
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
-        'runtime_distribution_root': ['ANY', None],
         'enable_sanitizer': [True, False, None],
         'sanitizer': ['address', 'thread', 'memory', 'ub', 'leak', None],
+        'libcpp_hardening_mode': ['fast', 'extensive', 'debug', None],
         'enable_profiler': [True, False, None],
         'enable_docker_build': [True, False, None],
         'docker_program': ['ANY', None],
@@ -28,9 +28,9 @@ class Lyric(ConanFile):
         'disable_testing': [True, False, None],
     }
     default_options = {
-        'runtime_distribution_root': None,
         'enable_sanitizer': None,
         'sanitizer': None,
+        'libcpp_hardening_mode': None,
         'enable_profiler': None,
         'enable_docker_build': None,
         'docker_program': None,
@@ -91,12 +91,12 @@ class Lyric(ConanFile):
         tc.cache_variables['ANTLR_TOOL_JAR'] = antlr.get('ANTLR_TOOL_JAR')
         tc.cache_variables['FLATBUFFERS_FLATC'] = flatbuffers.get('FLATBUFFERS_FLATC')
 
-        if self.options.runtime_distribution_root:
-            tc.cache_variables['RUNTIME_DISTRIBUTION_ROOT'] = self.options.runtime_distribution_root
         if self.options.enable_sanitizer:
             tc.cache_variables['ENABLE_SANITIZER'] = self.options.enable_sanitizer
         if self.options.sanitizer:
             tc.cache_variables['SANITIZER'] = self.options.sanitizer
+        if self.options.libcpp_hardening_mode:
+            tc.cache_variables['LIBCPP_HARDENING_MODE'] = self.options.libcpp_hardening_mode
         if self.options.enable_profiler:
             tc.cache_variables['ENABLE_PROFILER'] = self.options.enable_profiler
         if self.options.enable_docker_build:
