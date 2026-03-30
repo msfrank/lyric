@@ -13,15 +13,16 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/abstract_plugin.h
     include/lyric_runtime/abstract_port_writer.h
     include/lyric_runtime/abstract_ref.h
+    include/lyric_runtime/abstract_transport.h
     include/lyric_runtime/base_ref.h
     include/lyric_runtime/bytecode_interpreter.h
     include/lyric_runtime/bytecode_segment.h
     include/lyric_runtime/bytes_ref.h
     include/lyric_runtime/call_cell.h
     include/lyric_runtime/chain_loader.h
+    include/lyric_runtime/connection.h
     include/lyric_runtime/data_cell.h
     include/lyric_runtime/descriptor_entry.h
-    include/lyric_runtime/duplex_port.h
     include/lyric_runtime/gc_heap.h
     include/lyric_runtime/hash_data_cell.h
     include/lyric_runtime/heap_manager.h
@@ -62,9 +63,9 @@ target_sources(lyric_runtime PRIVATE
     src/bytes_ref.cpp
     src/call_cell.cpp
     src/chain_loader.cpp
+    src/connection.cpp
     src/data_cell.cpp
     src/descriptor_entry.cpp
-    src/duplex_port.cpp
     src/gc_heap.cpp
     src/heap_manager.cpp
     src/interpreter_result.cpp

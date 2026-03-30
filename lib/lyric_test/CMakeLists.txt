@@ -8,16 +8,11 @@ add_library(lyric::lyric_test ALIAS lyric_test)
 
 set(LYRIC_TEST_INCLUDES
     include/lyric_test/abstract_tester.h
-    include/lyric_test/base_protocol_mock.h
     include/lyric_test/common_printers.h
     include/lyric_test/computation_matchers.h
     include/lyric_test/data_cell_matchers.h
-    include/lyric_test/lyric_protocol_tester.h
     include/lyric_test/lyric_tester.h
     include/lyric_test/matchers.h
-    include/lyric_test/mock_binder.h
-    include/lyric_test/mock_receive.h
-    include/lyric_test/mock_send.h
     include/lyric_test/ref_handle_matchers.h
     include/lyric_test/status_ref_matchers.h
     include/lyric_test/test_inspector.h
@@ -29,15 +24,10 @@ set(LYRIC_TEST_INCLUDES
 set_target_properties(lyric_test PROPERTIES PUBLIC_HEADER "${LYRIC_TEST_INCLUDES}")
 
 target_sources(lyric_test PRIVATE
-    src/base_protocol_mock.cpp
     src/common_printers.cpp
     src/computation_matchers.cpp
     src/data_cell_matchers.cpp
-    src/lyric_protocol_tester.cpp
     src/lyric_tester.cpp
-    src/mock_binder.cpp
-    src/mock_receive.cpp
-    src/mock_send.cpp
     src/ref_handle_matchers.cpp
     src/status_ref_matchers.cpp
     src/test_inspector.cpp

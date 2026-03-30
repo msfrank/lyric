@@ -3,18 +3,16 @@
 
 #include <uv.h>
 
-#include <lyric_runtime/abstract_heap.h>
-#include <lyric_runtime/abstract_loader.h>
-#include <lyric_runtime/call_cell.h>
-#include <lyric_runtime/data_cell.h>
-#include <lyric_runtime/heap_manager.h>
-#include <lyric_runtime/port_multiplexer.h>
-#include <lyric_runtime/ref_handle.h>
-#include <lyric_runtime/segment_manager.h>
-#include <lyric_runtime/stackful_coroutine.h>
-#include <lyric_runtime/subroutine_manager.h>
-#include <lyric_runtime/system_scheduler.h>
-
+#include "abstract_heap.h"
+#include "abstract_loader.h"
+#include "data_cell.h"
+#include "heap_manager.h"
+#include "port_multiplexer.h"
+#include "ref_handle.h"
+#include "segment_manager.h"
+#include "stackful_coroutine.h"
+#include "subroutine_manager.h"
+#include "system_scheduler.h"
 #include "type_manager.h"
 
 namespace lyric_runtime {
@@ -32,6 +30,10 @@ namespace lyric_runtime {
          *
          */
         std::shared_ptr<AbstractHeap> heap = {};
+        /**
+         *
+         */
+        std::shared_ptr<TransportRegistry> transportRegistry = {};
         /**
          *
          */
@@ -83,6 +85,7 @@ namespace lyric_runtime {
         std::shared_ptr<AbstractLoader> m_systemLoader;
         std::shared_ptr<AbstractLoader> m_applicationLoader;
         std::shared_ptr<AbstractHeap> m_heap;
+        std::shared_ptr<TransportRegistry> m_transportRegistry;
 
         // set in initialize method
         std::unique_ptr<SegmentManager> m_segmentManager;
@@ -104,7 +107,8 @@ namespace lyric_runtime {
             const lyric_common::ModuleLocation &preludeLocation,
             std::shared_ptr<AbstractLoader> systemLoader,
             std::shared_ptr<AbstractLoader> applicationLoader,
-            std::shared_ptr<AbstractHeap> heap);
+            std::shared_ptr<AbstractHeap> heap,
+            std::shared_ptr<TransportRegistry> transportRegistry);
 
         tempo_utils::Status initialize(const lyric_common::ModuleLocation &mainLocation);
 

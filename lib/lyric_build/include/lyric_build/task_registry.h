@@ -14,9 +14,9 @@ namespace lyric_build {
     public:
         explicit TaskRegistry(bool excludePredefinedDomains = false);
 
-        using MakeTaskFunc = std::function<lyric_build::BaseTask*(
+        using MakeTaskFunc = std::function<BaseTask*(
             const tempo_utils::UUID &,                                  // generation
-            const lyric_build::TaskKey &,                               // key
+            const TaskKey &,                                            // key
             std::shared_ptr<tempo_tracing::TraceSpan>)>;                // span
 
         tempo_utils::Status registerTaskDomain(std::string_view domain, MakeTaskFunc func);
@@ -31,7 +31,6 @@ namespace lyric_build {
             std::shared_ptr<tempo_tracing::TraceSpan> span) const;
 
     private:
-        TaskSettings m_config;
         absl::flat_hash_map<std::string,MakeTaskFunc> m_makeTaskFuncs;
         bool m_isSealed;
     };

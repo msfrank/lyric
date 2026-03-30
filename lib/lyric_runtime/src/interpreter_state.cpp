@@ -27,20 +27,23 @@ lyric_runtime::InterpreterState::InterpreterState(
     const lyric_common::ModuleLocation &preludeLocation,
     std::shared_ptr<AbstractLoader> systemLoader,
     std::shared_ptr<AbstractLoader> applicationLoader,
-    std::shared_ptr<AbstractHeap> heap)
+    std::shared_ptr<AbstractHeap> heap,
+    std::shared_ptr<TransportRegistry> transportRegistry)
     : m_loop(loop),
       m_preludeLocation(preludeLocation),
       m_systemLoader(std::move(systemLoader)),
       m_applicationLoader(std::move(applicationLoader)),
       m_heap(std::move(heap)),
+      m_transportRegistry(std::move(transportRegistry)),
       m_loadEpochMillis(0),
       m_statusCode(tempo_utils::StatusCode::kUnknown),
       m_active(false)
 {
-    TU_ASSERT (m_loop != nullptr);
-    TU_ASSERT (m_systemLoader != nullptr);
-    TU_ASSERT (m_applicationLoader != nullptr);
-    TU_ASSERT (m_heap != nullptr);
+    TU_NOTNULL (m_loop);
+    TU_NOTNULL (m_systemLoader);
+    TU_NOTNULL (m_applicationLoader);
+    TU_NOTNULL (m_heap);
+    TU_NOTNULL (m_transportRegistry);
 }
 
 lyric_runtime::InterpreterState::~InterpreterState()
@@ -78,6 +81,14 @@ lyric_runtime::InterpreterState::create(
         heap = options.heap;
     }
 
+    // if transport registry is not specified in options then allocate one
+    std::shared_ptr<TransportRegistry> transportRegistry;
+    if (options.transportRegistry == nullptr) {
+        transportRegistry = std::make_shared<TransportRegistry>();
+    } else {
+        transportRegistry = options.transportRegistry;
+    }
+
     // allocate a new UV main loop
     loop = new uv_loop_t;
 
@@ -97,8 +108,9 @@ lyric_runtime::InterpreterState::create(
      */
 
     // allocate the interpreter state
-    auto state = std::shared_ptr<InterpreterState>(new InterpreterState(loop, options.preludeLocation,
-        std::move(systemLoader), std::move(applicationLoader), std::move(heap)));
+    auto state = std::shared_ptr<InterpreterState>(new InterpreterState(
+        loop, options.preludeLocation, std::move(systemLoader), std::move(applicationLoader),
+        std::move(heap), std::move(transportRegistry)));
 
     // capture pointer to interpreter state in the loop data field
     loop->data = state.get();
@@ -457,9 +469,9 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
     TU_RETURN_IF_NOT_OK (allocate_type_manager(
         segmentManager.get(), preludeSegment, preludeObject, typeManager));
 
-    auto portMultiplexer = std::make_unique<PortMultiplexer>();
     auto subroutineManager = std::make_unique<SubroutineManager>(segmentManager.get());
     auto systemScheduler = std::make_unique<SystemScheduler>(m_loop);
+    auto portMultiplexer = std::make_unique<PortMultiplexer>(m_transportRegistry, systemScheduler.get());
 
     // allocate the remaining subsystems
     std::unique_ptr<HeapManager> heapManager;
@@ -470,9 +482,9 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
     m_segmentManager = std::move(segmentManager);
     m_preludeLocation = std::move(preludeLocation);
     m_typeManager = std::move(typeManager);
-    m_portMultiplexer = std::move(portMultiplexer);
     m_subroutineManager = std::move(subroutineManager);
     m_systemScheduler = std::move(systemScheduler);
+    m_portMultiplexer = std::move(portMultiplexer);
     m_heapManager = std::move(heapManager);
 
     return {};
