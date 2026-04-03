@@ -3,13 +3,6 @@
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/promise.h>
 
-lyric_runtime::Promise::Promise(State state, const DataCell &result)
-    : m_accept(nullptr),
-      m_state(state),
-      m_result(result)
-{
-}
-
 lyric_runtime::Promise::Promise(AcceptCallback accept, const PromiseOptions &options)
     : m_accept(accept),
       m_options(options),
@@ -35,7 +28,7 @@ lyric_runtime::Promise::~Promise()
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::create(AcceptCallback accept, const PromiseOptions &options)
 {
-    return std::shared_ptr<Promise>(new Promise(accept, options));
+    return std::make_shared<Promise>(accept, options);
 }
 
 /**
@@ -47,7 +40,9 @@ lyric_runtime::Promise::create(AcceptCallback accept, const PromiseOptions &opti
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::completed(const DataCell &result)
 {
-    return std::shared_ptr<Promise>(new Promise(State::Completed, result));
+    auto promise = create();
+    promise->complete(result);
+    return promise;
 }
 
 /**
@@ -60,7 +55,9 @@ lyric_runtime::Promise::completed(const DataCell &result)
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::rejected(const DataCell &result)
 {
-    return std::shared_ptr<Promise>(new Promise(State::Rejected, result));
+    auto promise = create();
+    promise->reject(result);
+    return promise;
 }
 
 lyric_runtime::Promise::State
@@ -94,17 +91,10 @@ lyric_runtime::Promise::attach(Waiter *waiter)
 void
 lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 {
-    TU_ASSERT (m_waiter != nullptr);
+    TU_NOTNULL (systemScheduler);
+    TU_NOTNULL (m_waiter);
     TU_ASSERT (m_state == State::Pending);
-    TU_ASSERT (m_waiter->task == nullptr);
-
-    // associate waiter with the current task
-    auto *currentTask = systemScheduler->currentTask();
-    m_waiter->task = currentTask;
-
-    // suspend the current task and set state to Waiting
-    TU_LOG_VV << "suspending task " << currentTask;
-    systemScheduler->suspendTask(currentTask);
+    systemScheduler->await(m_waiter);
 }
 
 void
@@ -140,6 +130,7 @@ lyric_runtime::Promise::setReachable()
 void
 lyric_runtime::Promise::complete(const DataCell &result)
 {
+    TU_ASSERT (result.isValid());
     m_result = result;
     m_state = State::Completed;
 }
@@ -147,6 +138,7 @@ lyric_runtime::Promise::complete(const DataCell &result)
 void
 lyric_runtime::Promise::reject(const DataCell &result)
 {
+    TU_ASSERT (result.type == DataCellType::STATUS);
     m_result = result;
     m_state = State::Rejected;
 }

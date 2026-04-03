@@ -7,6 +7,7 @@ include(GoogleTest)
 set(TEST_CASES
     connection_tests.cpp
     port_multiplexer_tests.cpp
+    system_scheduler_tests.cpp
     )
 
 # define test suite driver

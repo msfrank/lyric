@@ -1,7 +1,195 @@
 
+#include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/system_scheduler.h>
 
-#include "lyric_runtime/interpreter_state.h"
+lyric_runtime::AsyncHandle::AsyncHandle(uv_async_t *async, uv_close_cb cb)
+    : m_async(async),
+      m_cb(cb),
+      m_pending(true)
+{
+    m_lock = std::make_unique<absl::Mutex>();
+    TU_NOTNULL (m_async);
+}
+
+lyric_runtime::AsyncHandle::~AsyncHandle()
+{
+    close();
+}
+
+/**
+ * Indicates whether the AsyncHandle is in pending state.
+ *
+ * @return true if the AsyncHandle is pending, otherwise false.
+ */
+bool
+lyric_runtime::AsyncHandle::isPending() const
+{
+    absl::MutexLock locker(m_lock.get());
+    return m_pending;
+}
+
+/**
+ * If AsyncHandle is pending then trigger the async callback, otherwise do nothing.
+ *
+ * @return true if the signal was sent, otherwise false.
+ */
+bool
+lyric_runtime::AsyncHandle::sendSignal()
+{
+    absl::MutexLock locker(m_lock.get());
+    if (m_async && m_pending) {
+        uv_async_send(m_async);
+        m_pending = false;
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Closes the internal async handle and marks it for deletion. After this method has been called
+ * `sendSignal` will do nothing, and `isPending` will return false.
+ */
+void
+lyric_runtime::AsyncHandle::close()
+{
+    absl::MutexLock locker(m_lock.get());
+    if (m_async) {
+        uv_close((uv_handle_t *) m_async, m_cb);
+        m_async = nullptr;
+        m_pending = false;
+    }
+}
+
+lyric_runtime::Waiter::Waiter(std::shared_ptr<AsyncHandle> async, std::shared_ptr<Promise> promise)
+    : m_type(Type::Async),
+      m_promise(std::move(promise))
+{
+    TU_NOTNULL (async);
+    m_waitee = std::move(async);
+}
+
+lyric_runtime::Waiter::Waiter(uv_handle_t *handle, std::shared_ptr<Promise> promise)
+    : m_type(Type::Handle),
+      m_promise(std::move(promise))
+{
+    TU_NOTNULL (handle);
+    m_waitee = handle;
+}
+
+lyric_runtime::Waiter::Waiter(uv_fs_t *req, std::shared_ptr<Promise> promise)
+    : m_type(Type::Req),
+      m_promise(std::move(promise))
+{
+    TU_NOTNULL (req);
+    m_waitee = req;
+}
+
+static void
+on_handle_close(uv_handle_t *handle)
+{
+    free(handle);
+}
+
+lyric_runtime::Waiter::~Waiter()
+{
+    switch (m_type) {
+        case Type::Async: {
+            auto async = std::get<std::shared_ptr<AsyncHandle>>(m_waitee);
+            // close async handle if still pending, otherwise this is a no-op
+            async->close();
+            break;
+        }
+        case Type::Handle: {
+            auto *handle = std::get<uv_handle_t *>(m_waitee);
+            // close the handle and defer deallocation to the specified callback
+            uv_close(handle, on_handle_close);
+            break;
+        }
+        case Type::Req: {
+            auto *req = std::get<uv_fs_t *>(m_waitee);
+            // clean up the fs request immediately
+            uv_fs_req_cleanup(req);
+            break;
+        }
+        default:
+            TU_UNREACHABLE();
+    }
+}
+
+lyric_runtime::Waiter::Type
+lyric_runtime::Waiter::getType() const
+{
+    return m_type;
+}
+
+const lyric_runtime::AsyncHandle *
+lyric_runtime::Waiter::peekAsync() const
+{
+    if (static_cast<Type>(m_waitee.index()) != Type::Async)
+        return nullptr;
+    auto async = std::get<std::shared_ptr<AsyncHandle>>(m_waitee);
+    return async.get();
+}
+
+const uv_handle_t *
+lyric_runtime::Waiter::peekHandle() const
+{
+    if (static_cast<Type>(m_waitee.index()) != Type::Handle)
+        return nullptr;
+    return std::get<uv_handle_t *>(m_waitee);
+}
+
+const uv_fs_t *
+lyric_runtime::Waiter::peekReq() const
+{
+    if (static_cast<Type>(m_waitee.index()) != Type::Req)
+        return nullptr;
+    return std::get<uv_fs_t *>(m_waitee);
+}
+
+bool
+lyric_runtime::Waiter::hasTask() const
+{
+    return m_task != nullptr;
+}
+
+lyric_runtime::Task *
+lyric_runtime::Waiter::getTask() const
+{
+    return m_task;
+}
+
+void
+lyric_runtime::Waiter::assignTask(Task *task)
+{
+    TU_NOTNULL (task);
+    TU_ASSERT (m_task == nullptr);
+    m_task = task;
+}
+
+bool
+lyric_runtime::Waiter::hasPromise() const
+{
+    return m_promise != nullptr;
+}
+
+std::shared_ptr<lyric_runtime::Promise>
+lyric_runtime::Waiter::getPromise() const
+{
+    return m_promise;
+}
+
+lyric_runtime::Waiter *
+lyric_runtime::Waiter::prevWaiter() const
+{
+    return m_prev;
+}
+
+lyric_runtime::Waiter *
+lyric_runtime::Waiter::nextWaiter() const
+{
+    return m_next;
+}
 
 lyric_runtime::SystemScheduler::SystemScheduler(uv_loop_t *loop)
     : m_loop(loop),
@@ -236,30 +424,44 @@ lyric_runtime::SystemScheduler::destroyTask(Task *task)
     delete task;
 }
 
-static void
-on_worker_complete(uv_async_t *monitor)
+void
+lyric_runtime::SystemScheduler::await(Waiter *waiter)
 {
-    auto *waiter = static_cast<lyric_runtime::Waiter *>(monitor->data);
+    TU_NOTNULL (waiter);
+    auto *currentTask = m_currentTask;
+
+    // associate waiter with the current task
+    waiter->assignTask(currentTask);
+
+    // suspend the current task and set state to Waiting
+    suspendTask(currentTask);
+}
+
+void
+lyric_runtime::on_async_complete(uv_async_t *async)
+{
+    auto *waiter = static_cast<Waiter *>(async->data);
 
     // if there is a task associated with the waiter, then resume the suspended task.
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
-    if (waiter->task) {
-        waiter->task->resume();
+    if (waiter->hasTask()) {
+        auto *task = waiter->getTask();
+        task->resume();
     }
 
-    auto *state = static_cast<lyric_runtime::InterpreterState *>(monitor->loop->data);
+    auto *state = static_cast<InterpreterState *>(async->loop->data);
     auto *systemScheduler = state->systemScheduler();
 
     // if the waiter has an attached promise, then run the accept callback
-    if (waiter->promise) {
-        auto promise = waiter->promise;
+    if (waiter->hasPromise()) {
+        auto promise = waiter->getPromise();
         promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
-            auto *task = waiter->task;
-            TU_ASSERT (task != nullptr);
+            auto *task = waiter->getTask();
+            TU_NOTNULL (task);
             task->appendPromise(promise);
         }
     }
@@ -268,7 +470,75 @@ on_worker_complete(uv_async_t *monitor)
     systemScheduler->destroyWaiter(waiter);
 }
 
+static void
+on_async_close(uv_handle_t *async)
+{
+    std::free(async);
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_runtime::AsyncHandle>>
+lyric_runtime::SystemScheduler::registerAsync(
+    std::shared_ptr<Promise> promise,
+    tu_uint64 deadline)
+{
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
+
+    // initialize the async handle
+    auto *handle = (uv_async_t *) malloc(sizeof(uv_async_t));
+    uv_async_init(m_loop, handle, on_async_complete);
+    auto async = std::make_shared<AsyncHandle>(handle, on_async_close);
+
+    // allocate a new waiter
+    auto *waiter = new Waiter(async, promise);
+
+    // link the waiter to the promise and set the promise state to Pending
+    promise->attach(waiter);
+
+    // link the waiter to the async handle
+    handle->data = waiter;
+
+    // attach waiter to the end of the global waiters list
+    attachWaiter(waiter);
+
+    // return async handle
+    return async;
+}
+
 void
+lyric_runtime::on_worker_complete(uv_async_t *monitor)
+{
+    auto *waiter = static_cast<Waiter *>(monitor->data);
+
+    // if there is a task associated with the waiter, then resume the suspended task.
+    // we do this before running the waiter callback so that there will be a coroutine
+    // available to the callback.
+    if (waiter->hasTask()) {
+        auto *task = waiter->getTask();
+        task->resume();
+    }
+
+    auto *state = static_cast<InterpreterState *>(monitor->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
+    // if the waiter has an attached promise, then run the accept callback
+    if (waiter->hasPromise()) {
+        auto promise = waiter->getPromise();
+        promise->accept(waiter, state);
+
+        // if the promise has an adapt callback, then schedule it to be called before the task resumes
+        if (promise->needsAdapt()) {
+            auto *task = waiter->getTask();
+            TU_NOTNULL (task);
+            task->appendPromise(promise);
+        }
+    }
+
+    // free the completed waiter
+    systemScheduler->destroyWaiter(waiter);
+}
+
+tempo_utils::Status
 lyric_runtime::SystemScheduler::registerWorker(Task *workerTask, std::shared_ptr<Promise> promise)
 {
     TU_ASSERT (promise != nullptr);
@@ -279,8 +549,7 @@ lyric_runtime::SystemScheduler::registerWorker(Task *workerTask, std::shared_ptr
     uv_async_init(m_loop, monitor, on_worker_complete);
 
     // allocate a new waiter
-    auto *waiter = new Waiter((uv_handle_t *) monitor);
-    waiter->promise = promise;
+    auto *waiter = new Waiter((uv_handle_t *) monitor, promise);
 
     // link the waiter to the promise and set the promise state to Pending
     promise->attach(waiter);
@@ -293,32 +562,35 @@ lyric_runtime::SystemScheduler::registerWorker(Task *workerTask, std::shared_ptr
 
     //
     workerTask->setMonitor(monitor);
+
+    return {};
 }
 
-static void
-on_timer_complete(uv_timer_t *timer)
+void
+lyric_runtime::on_timer_complete(uv_timer_t *timer)
 {
-    auto *waiter = static_cast<lyric_runtime::Waiter *>(timer->data);
+    auto *waiter = static_cast<Waiter *>(timer->data);
 
     // if there is a task associated with the waiter, then resume the suspended task.
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
-    if (waiter->task) {
-        waiter->task->resume();
+    if (waiter->hasTask()) {
+        auto *task = waiter->getTask();
+        task->resume();
     }
 
-    auto *state = static_cast<lyric_runtime::InterpreterState *>(timer->loop->data);
+    auto *state = static_cast<InterpreterState *>(timer->loop->data);
     auto *systemScheduler = state->systemScheduler();
 
     // if the waiter has an attached promise, then run the accept callback
-    if (waiter->promise) {
-        auto promise = waiter->promise;
+    if (waiter->hasPromise()) {
+        auto promise = waiter->getPromise();
         promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
-            auto *task = waiter->task;
-            TU_ASSERT (task != nullptr);
+            auto *task = waiter->getTask();
+            TU_NOTNULL (task);
             task->appendPromise(promise);
         }
     }
@@ -327,7 +599,7 @@ on_timer_complete(uv_timer_t *timer)
     systemScheduler->destroyWaiter(waiter);
 }
 
-void
+tempo_utils::Status
 lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise)
 {
     TU_ASSERT (promise != nullptr);
@@ -338,8 +610,7 @@ lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_pt
     uv_timer_init(m_loop, timer);
 
     // allocate a new waiter
-    auto *waiter = new Waiter((uv_handle_t *) timer);
-    waiter->promise = promise;
+    auto *waiter = new Waiter((uv_handle_t *) timer, promise);
 
     // link the waiter to the promise and set the promise state to Pending
     promise->attach(waiter);
@@ -352,95 +623,35 @@ lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_pt
 
     // attach waiter to the end of the global waiters list
     attachWaiter(waiter);
-}
 
-static void
-on_async_complete(uv_async_t *async)
-{
-    auto *waiter = static_cast<lyric_runtime::Waiter *>(async->data);
-
-    // if there is a task associated with the waiter, then resume the suspended task.
-    // we do this before running the waiter callback so that there will be a coroutine
-    // available to the callback.
-    if (waiter->task) {
-        waiter->task->resume();
-    }
-
-    auto *state = static_cast<lyric_runtime::InterpreterState *>(async->loop->data);
-    auto *systemScheduler = state->systemScheduler();
-
-    // if the waiter has an attached promise, then run the accept callback
-    if (waiter->promise) {
-        auto promise = waiter->promise;
-        promise->accept(waiter, state);
-
-        // if the promise has an adapt callback, then schedule it to be called before the task resumes
-        if (promise->needsAdapt()) {
-            auto *task = waiter->task;
-            TU_ASSERT (task != nullptr);
-            task->appendPromise(promise);
-        }
-    }
-
-    // free the completed waiter
-    systemScheduler->destroyWaiter(waiter);
+    return {};
 }
 
 void
-lyric_runtime::SystemScheduler::registerAsync(
-    uv_async_t **asyncptr,
-    std::shared_ptr<Promise> promise,
-    tu_uint64 deadline)
+lyric_runtime::on_read_complete(uv_fs_t *req)
 {
-    TU_ASSERT (asyncptr != nullptr);
-    TU_ASSERT (promise != nullptr);
-    TU_ASSERT (promise->getState() == Promise::State::Initial);
-
-    // initialize the async handle
-    auto *async = (uv_async_t *) malloc(sizeof(uv_async_t));
-    uv_async_init(m_loop, async, on_async_complete);
-
-    // allocate a new waiter
-    auto *waiter = new Waiter((uv_handle_t *) async);
-    waiter->promise = promise;
-
-    // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
-
-    // link the waiter to the async handle
-    async->data = waiter;
-
-    // attach waiter to the end of the global waiters list
-    attachWaiter(waiter);
-
-    // pass async handle back via the out parameter
-    *asyncptr = async;
-}
-
-static void
-on_read_complete(uv_fs_t *req)
-{
-    auto *waiter = static_cast<lyric_runtime::Waiter *>(req->data);
+    auto *waiter = static_cast<Waiter *>(req->data);
 
     // if there is a task associated with the waiter, then resume the suspended task.
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
-    if (waiter->task) {
-        waiter->task->resume();
+    if (waiter->hasTask()) {
+        auto *task = waiter->getTask();
+        task->resume();
     }
 
-    auto *state = static_cast<lyric_runtime::InterpreterState *>(req->loop->data);
+    auto *state = static_cast<InterpreterState *>(req->loop->data);
     auto *systemScheduler = state->systemScheduler();
 
     // if the waiter has an attached promise, then run the accept callback
-    if (waiter->promise) {
-        auto promise = waiter->promise;
+    if (waiter->hasPromise()) {
+        auto promise = waiter->getPromise();
         promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
-            auto *task = waiter->task;
-            TU_ASSERT (task != nullptr);
+            auto *task = waiter->getTask();
+            TU_NOTNULL (task);
             task->appendPromise(promise);
         }
     }
@@ -471,8 +682,7 @@ lyric_runtime::SystemScheduler::registerRead(
     }
 
     // allocate a new waiter
-    auto *waiter = new Waiter(req);
-    waiter->promise = promise;
+    auto *waiter = new Waiter(req, promise);
 
     // link the waiter to the promise and set the promise state to Pending
     promise->attach(waiter);
@@ -486,30 +696,31 @@ lyric_runtime::SystemScheduler::registerRead(
     return {};
 }
 
-static void
-on_write_complete(uv_fs_t *req)
+void
+lyric_runtime::on_write_complete(uv_fs_t *req)
 {
-    auto *waiter = static_cast<lyric_runtime::Waiter *>(req->data);
+    auto *waiter = static_cast<Waiter *>(req->data);
 
     // if there is a task associated with the waiter, then resume the suspended task.
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
-    if (waiter->task) {
-        waiter->task->resume();
+    if (waiter->hasTask()) {
+        auto *task = waiter->getTask();
+        task->resume();
     }
 
-    auto *state = static_cast<lyric_runtime::InterpreterState *>(req->loop->data);
+    auto *state = static_cast<InterpreterState *>(req->loop->data);
     auto *systemScheduler = state->systemScheduler();
 
     // if the waiter has an attached promise, then run the accept callback
-    if (waiter->promise) {
-        auto promise = waiter->promise;
+    if (waiter->hasPromise()) {
+        auto promise = waiter->getPromise();
         promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
-            auto *task = waiter->task;
-            TU_ASSERT (task != nullptr);
+            auto *task = waiter->getTask();
+            TU_NOTNULL (task);
             task->appendPromise(promise);
         }
     }
@@ -540,8 +751,7 @@ lyric_runtime::SystemScheduler::registerWrite(
     }
 
     // allocate a new waiter
-    auto *waiter = new Waiter(req);
-    waiter->promise = promise;
+    auto *waiter = new Waiter(req, promise);
 
     // link the waiter to the promise and set the promise state to Pending
     promise->attach(waiter);
@@ -558,61 +768,49 @@ lyric_runtime::SystemScheduler::registerWrite(
 void
 lyric_runtime::SystemScheduler::attachWaiter(Waiter *waiter)
 {
-    TU_ASSERT (waiter != nullptr);
-    TU_ASSERT (waiter->prev == nullptr);
-    TU_ASSERT (waiter->next == nullptr);
+    TU_NOTNULL (waiter);
+    TU_ASSERT (waiter->m_prev == nullptr);
+    TU_ASSERT (waiter->m_next == nullptr);
 
     if (m_waiters == nullptr) {
-        waiter->prev = nullptr;
-        waiter->next = nullptr;
+        waiter->m_prev = nullptr;
+        waiter->m_next = nullptr;
         m_waiters = waiter;
     } else {
-        auto *prev = m_waiters->prev;
-        auto *next = m_waiters->next;
+        auto *prev = m_waiters->m_prev;
+        auto *next = m_waiters->m_next;
         if (prev == nullptr && next == nullptr) {
-            m_waiters->prev = waiter;
-            m_waiters->next = waiter;
-            waiter->prev = m_waiters;
-            waiter->next = m_waiters;
+            m_waiters->m_prev = waiter;
+            m_waiters->m_next = waiter;
+            waiter->m_prev = m_waiters;
+            waiter->m_next = m_waiters;
         } else {
-            TU_ASSERT (prev != nullptr);
-            TU_ASSERT (next != nullptr);
-            waiter->prev = prev;
-            waiter->next = m_waiters;
-            prev->next = waiter;
-            m_waiters->prev = waiter;
+            TU_NOTNULL (prev);
+            TU_NOTNULL (next);
+            waiter->m_prev = prev;
+            waiter->m_next = m_waiters;
+            prev->m_next = waiter;
+            m_waiters->m_prev = waiter;
         }
     }
-}
-
-static void
-on_handle_close(uv_handle_t *handle)
-{
-    free(handle);
 }
 
 void
 lyric_runtime::SystemScheduler::destroyWaiter(Waiter *waiter)
 {
-    if (waiter->handle) {
-        // close the handle and defer deallocation to the specified callback
-        uv_close(waiter->handle, on_handle_close);
-    } else if (waiter->req) {
-        // clean up the fs request immediately
-        uv_fs_req_cleanup(waiter->req);
-    }
+    TU_NOTNULL (waiter);
 
-    auto *prev = waiter->prev;
-    auto *next = waiter->next;
+    auto *prev = waiter->m_prev;
+    auto *next = waiter->m_next;
 
     // detach task from the wait queue
     if (prev != nullptr && next != nullptr) {
         if (prev == next) {
-            next->next = nullptr;
-            next->prev = nullptr;
+            next->m_next = nullptr;
+            next->m_prev = nullptr;
         } else {
-            prev->next = waiter->next;
-            next->prev = waiter->prev;
+            prev->m_next = waiter->m_next;
+            next->m_prev = waiter->m_prev;
         }
         if (waiter == m_waiters) {
             m_waiters = next;
@@ -639,7 +837,7 @@ lyric_runtime::SystemScheduler::lastWaiter() const
 {
     if (m_waiters == nullptr)
         return nullptr;
-    return m_waiters->prev;
+    return m_waiters->m_prev;
 }
 
 /**

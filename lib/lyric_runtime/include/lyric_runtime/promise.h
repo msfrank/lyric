@@ -12,7 +12,7 @@ namespace lyric_runtime {
     class Promise;
     class InterpreterState;
     class SystemScheduler;
-    struct Waiter;
+    class Waiter;
 
     /** Callback invoked to accept the event data from a waiter. */
     typedef void (*AcceptCallback)(Promise *, const Waiter *, InterpreterState *);
@@ -37,14 +37,17 @@ namespace lyric_runtime {
     };
 
     /**
-     *
+     * A Promise is a placeholder for a result that is placed on the top of the call stack when a task
+     * has finished awaiting.
      */
     class Promise final {
     public:
+        Promise(AcceptCallback accept, const PromiseOptions &options);
+        ~Promise();
+
         static std::shared_ptr<Promise> create(AcceptCallback accept = {}, const PromiseOptions &options = {});
         static std::shared_ptr<Promise> completed(const DataCell &result);
         static std::shared_ptr<Promise> rejected(const DataCell &result);
-        ~Promise();
 
         enum class State {
             Initial,    /**< The initial state of a promise before it is attached to a waiter. */
@@ -72,10 +75,7 @@ namespace lyric_runtime {
 
         State m_state;
         Waiter *m_waiter;
-        DataCell m_result;  // FIXME: ensure result is reachable during GC
-
-        Promise(State state, const DataCell &result);
-        Promise(AcceptCallback accept, const PromiseOptions &options);
+        DataCell m_result;
     };
 }
 

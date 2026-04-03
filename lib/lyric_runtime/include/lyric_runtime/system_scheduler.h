@@ -10,28 +10,82 @@
 namespace lyric_runtime {
 
     class SystemScheduler;
-    struct Waiter;
+    class Waiter;
 
     /**
      *
      */
-    struct Waiter final {
-    private:
-        Waiter *prev = nullptr;
-        Waiter *next = nullptr;
-        friend class SystemScheduler;
-
+    class AsyncHandle {
     public:
-        uv_handle_t * const handle = nullptr;
-        uv_fs_t * const req = nullptr;
-        Task *task = nullptr;
-        std::shared_ptr<Promise> promise;
+        AsyncHandle(uv_async_t *async, uv_close_cb cb);
+        ~AsyncHandle();
 
-        explicit Waiter(uv_handle_t *handle): handle(handle) {};
-        explicit Waiter(uv_fs_t *req): req(req) {};
+        bool isPending() const;
+        bool sendSignal();
 
-        Waiter *prevWaiter() const { return prev; };
-        Waiter *nextWaiter() const { return next; };
+    private:
+        std::unique_ptr<absl::Mutex> m_lock;
+        uv_async_t *m_async ABSL_GUARDED_BY(*m_lock);
+        uv_close_cb m_cb ABSL_GUARDED_BY(*m_lock);
+        bool m_pending ABSL_GUARDED_BY(*m_lock);
+
+        void close();
+
+        friend class SystemScheduler;
+        friend class Waiter;
+    };
+
+    /**
+     *
+     */
+    class Waiter final {
+    public:
+        ~Waiter();
+
+        enum class Type {
+            Invalid,
+            Async,
+            Handle,
+            Req,
+        };
+
+        Type getType() const;
+        bool hasTask() const;
+        bool hasPromise() const;
+
+        const AsyncHandle *peekAsync() const;
+        const uv_handle_t *peekHandle() const;
+        const uv_fs_t *peekReq() const;
+
+        Waiter *prevWaiter() const;
+        Waiter *nextWaiter() const;
+
+    private:
+        Waiter *m_prev = nullptr;
+        Waiter *m_next = nullptr;
+
+        Type m_type;
+        std::variant<std::nullptr_t, std::shared_ptr<AsyncHandle>, uv_handle_t *, uv_fs_t *> m_waitee;
+        uv_timer_t *m_deadline = nullptr;
+        Task *m_task = nullptr;
+        std::shared_ptr<Promise> m_promise;
+
+        explicit Waiter(std::shared_ptr<AsyncHandle> async, std::shared_ptr<Promise> promise = {});
+        explicit Waiter(uv_handle_t *handle, std::shared_ptr<Promise> promise = {});
+        explicit Waiter(uv_fs_t *req, std::shared_ptr<Promise> promise = {});
+
+        Task *getTask() const;
+        void assignTask(Task *task);
+        std::shared_ptr<Promise> getPromise() const;
+
+        friend class SystemScheduler;
+        friend class HeapManager;
+
+        friend void on_async_complete(uv_async_t *async);
+        friend void on_timer_complete(uv_timer_t *timer);
+        friend void on_worker_complete(uv_async_t *monitor);
+        friend void on_read_complete(uv_fs_t *req);
+        friend void on_write_complete(uv_fs_t *req);
     };
 
     /**
@@ -60,9 +114,14 @@ namespace lyric_runtime {
         void terminateTask(Task *task);
         void destroyTask(Task *task);
 
-        void registerWorker(Task *workerTask, std::shared_ptr<Promise> promise);
-        void registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
-        void registerAsync(uv_async_t **asyncptr, std::shared_ptr<Promise> promise, tu_uint64 deadline = 0);
+        void await(Waiter *waiter);
+
+        tempo_utils::Result<std::shared_ptr<AsyncHandle>> registerAsync(
+            std::shared_ptr<Promise> promise,
+            tu_uint64 deadline = 0);
+
+        tempo_utils::Status registerWorker(Task *workerTask, std::shared_ptr<Promise> promise);
+        tempo_utils::Status registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
         tempo_utils::Status registerRead(
             uv_file file,
             uv_buf_t buf,

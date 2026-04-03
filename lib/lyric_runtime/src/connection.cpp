@@ -27,11 +27,11 @@ private:
 
     ConnectionState getState();
     tempo_utils::Status startConnect(
-        uv_async_t *async,
+        std::shared_ptr<AsyncHandle> async,
         Connection *connection,
         std::shared_ptr<AbstractConnectCompleter> completer);
     tempo_utils::Status startReceive(
-        uv_async_t *async,
+        std::shared_ptr<AsyncHandle> async,
         std::shared_ptr<Promise> promise,
         std::shared_ptr<AbstractReceiveCompleter> completer);
     tempo_utils::Status sendPayload(std::shared_ptr<const tempo_utils::ImmutableBytes> payload);
@@ -52,7 +52,7 @@ struct lyric_runtime::Connection::Stream::InitialData : AbstractData {
 };
 
 struct lyric_runtime::Connection::Stream::ConnectingData : AbstractData {
-    uv_async_t *async = nullptr;
+    std::shared_ptr<AsyncHandle> async;
     Connection *conn = nullptr;
     std::shared_ptr<AbstractConnectCompleter> completer;
 
@@ -72,7 +72,7 @@ struct lyric_runtime::Connection::Stream::ActiveData : AbstractData {
     AbstractPeer *peer = nullptr;
     std::queue<std::shared_ptr<const tempo_utils::ImmutableBytes>> incoming;
     std::queue<
-        std::tuple<uv_async_t *,std::shared_ptr<Promise>,std::shared_ptr<AbstractReceiveCompleter>>
+        std::tuple<std::shared_ptr<AsyncHandle>,std::shared_ptr<Promise>,std::shared_ptr<AbstractReceiveCompleter>>
     > pending;
 
     void error(const tempo_utils::Status &status) override {
@@ -108,7 +108,7 @@ lyric_runtime::Connection::Stream::getState()
 
 tempo_utils::Status
 lyric_runtime::Connection::Stream::startConnect(
-    uv_async_t *async,
+    std::shared_ptr<AsyncHandle> async,
     Connection *conn,
     std::shared_ptr<AbstractConnectCompleter> completer)
 {
@@ -140,10 +140,7 @@ lyric_runtime::Connection::Stream::connectComplete(AbstractPeer *peer)
     next->peer = peer;
     next->conn = connecting->conn;
 
-    auto ret = uv_async_send(connecting->async);
-    connecting->async = nullptr;
-    if (ret != 0) {
-        TU_LOG_WARN << "uv_async_send failed: {}", uv_strerror(ret);
+    if (!connecting->async->sendSignal()) {
         connecting->completer->error(InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "unexpected error completing connect"));
         connecting->conn->reset();
@@ -159,7 +156,7 @@ lyric_runtime::Connection::Stream::connectComplete(AbstractPeer *peer)
 
 tempo_utils::Status
 lyric_runtime::Connection::Stream::startReceive(
-    uv_async_t *async,
+    std::shared_ptr<AsyncHandle> async,
     std::shared_ptr<Promise> promise,
     std::shared_ptr<AbstractReceiveCompleter> completer)
 {
@@ -186,9 +183,8 @@ lyric_runtime::Connection::Stream::receiveComplete(std::shared_ptr<const tempo_u
     if (!active->pending.empty()) {
         auto &pending = active->pending.front();
         auto &completer = std::get<std::shared_ptr<AbstractReceiveCompleter>>(pending);
-        auto ret = uv_async_send(std::get<uv_async_t *>(pending));
-        if (ret != 0) {
-            TU_LOG_WARN << "uv_async_send failed: " << uv_strerror(ret);
+        auto async = std::get<std::shared_ptr<AsyncHandle>>(pending);
+        if (!async->sendSignal()) {
             completer->error(InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
                 "unexpected error completing connect"));
         } else {
@@ -277,8 +273,8 @@ lyric_runtime::Connection::registerConnect(
     TU_NOTNULL (systemScheduler);
     TU_NOTNULL (promise);
 
-    uv_async_t *async;
-    systemScheduler->registerAsync(&async, std::move(promise));
+    std::shared_ptr<AsyncHandle> async;
+    TU_ASSIGN_OR_RETURN (async, systemScheduler->registerAsync(std::move(promise)));
     m_stream->startConnect(async, this, std::move(completer));
 
     return m_transport->connect(m_stream, m_nodeUrl);
@@ -293,8 +289,8 @@ lyric_runtime::Connection::registerReceive(
     TU_NOTNULL (systemScheduler);
     TU_NOTNULL (promise);
 
-    uv_async_t *async;
-    systemScheduler->registerAsync(&async, promise);
+    std::shared_ptr<AsyncHandle> async;
+    TU_ASSIGN_OR_RETURN (async, systemScheduler->registerAsync(promise));
     return m_stream->startReceive(async, promise, std::move(completer));
 }
 
