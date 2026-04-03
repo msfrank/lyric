@@ -1,4 +1,5 @@
 
+#include <lyric_runtime/interpreter_result.h>
 #include <lyric_runtime/port_multiplexer.h>
 #include <tempo_utils/uuid.h>
 

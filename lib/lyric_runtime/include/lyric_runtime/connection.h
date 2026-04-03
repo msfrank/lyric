@@ -1,21 +1,40 @@
 #ifndef LYRIC_RUNTIME_CONNECTION_H
 #define LYRIC_RUNTIME_CONNECTION_H
 
-#include <queue>
-#include <string>
-
-#include <uv.h>
-
 #include <tempo_utils/immutable_bytes.h>
 #include <tempo_utils/uuid.h>
 
-#include "abstract_port_writer.h"
 #include "abstract_transport.h"
-#include "interpreter_result.h"
 #include "system_scheduler.h"
 
 namespace lyric_runtime {
 
+    enum class ConnectionState {
+        Initial,
+        Connecting,
+        Active,
+        Done,
+    };
+
+    class AbstractConnectCompleter {
+    public:
+        virtual ~AbstractConnectCompleter() = default;
+        virtual void connectComplete() = 0;
+        virtual void error(const tempo_utils::Status &status) = 0;
+        virtual void close() = 0;
+    };
+
+    class AbstractReceiveCompleter {
+    public:
+        virtual ~AbstractReceiveCompleter() = default;
+        virtual void receiveComplete(std::shared_ptr<const tempo_utils::ImmutableBytes> payload) = 0;
+        virtual void error(const tempo_utils::Status &status) = 0;
+        virtual void close() = 0;
+    };
+
+    /**
+     *
+     */
     class Connection {
 
     public:
@@ -27,30 +46,31 @@ namespace lyric_runtime {
 
         tempo_utils::UUID getId() const;
         tempo_utils::Url getNodeUrl() const;
+        ConnectionState getState() const;
 
-        tempo_utils::Status registerConnect(SystemScheduler *systemScheduler, std::shared_ptr<Promise> promise);
+        tempo_utils::Status registerConnect(
+            SystemScheduler *systemScheduler,
+            std::shared_ptr<Promise> promise,
+            std::shared_ptr<AbstractConnectCompleter> completer);
 
-        bool isAttached();
-        tempo_utils::Status attach(AbstractPortWriter *writer);
-        tempo_utils::Status detach();
+        tempo_utils::Status registerReceive(
+            SystemScheduler *systemScheduler,
+            std::shared_ptr<Promise> promise,
+            std::shared_ptr<AbstractReceiveCompleter> completer);
 
-        bool hasPending();
-        std::shared_ptr<tempo_utils::ImmutableBytes> nextPending();
-        int numPending();
+        tempo_utils::Status send(std::shared_ptr<const tempo_utils::ImmutableBytes> payload);
 
-        void send(std::shared_ptr<tempo_utils::ImmutableBytes> payload);
-        void receive(std::shared_ptr<tempo_utils::ImmutableBytes> payload);
-        void readyToReceive(uv_async_t *async);
+        tempo_utils::Status shutdown();
 
     private:
         tempo_utils::UUID m_id;
         std::shared_ptr<AbstractTransport> m_transport;
         tempo_utils::Url m_nodeUrl;
 
-        absl::Mutex m_lock;
-        AbstractPortWriter *m_writer;
-        std::queue<std::shared_ptr<tempo_utils::ImmutableBytes>> m_pending;
-        uv_async_t *m_async;
+        class Stream;
+        std::shared_ptr<Stream> m_stream;
+
+        void reset();
     };
 }
 

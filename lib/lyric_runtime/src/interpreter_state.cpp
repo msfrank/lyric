@@ -28,13 +28,15 @@ lyric_runtime::InterpreterState::InterpreterState(
     std::shared_ptr<AbstractLoader> systemLoader,
     std::shared_ptr<AbstractLoader> applicationLoader,
     std::shared_ptr<AbstractHeap> heap,
-    std::shared_ptr<TransportRegistry> transportRegistry)
+    std::unique_ptr<SystemScheduler> systemScheduler,
+    std::unique_ptr<PortMultiplexer> portMultiplexer)
     : m_loop(loop),
       m_preludeLocation(preludeLocation),
       m_systemLoader(std::move(systemLoader)),
       m_applicationLoader(std::move(applicationLoader)),
       m_heap(std::move(heap)),
-      m_transportRegistry(std::move(transportRegistry)),
+      m_systemScheduler(std::move(systemScheduler)),
+      m_portMultiplexer(std::move(portMultiplexer)),
       m_loadEpochMillis(0),
       m_statusCode(tempo_utils::StatusCode::kUnknown),
       m_active(false)
@@ -43,7 +45,8 @@ lyric_runtime::InterpreterState::InterpreterState(
     TU_NOTNULL (m_systemLoader);
     TU_NOTNULL (m_applicationLoader);
     TU_NOTNULL (m_heap);
-    TU_NOTNULL (m_transportRegistry);
+    TU_NOTNULL (m_systemScheduler);
+    TU_NOTNULL (m_portMultiplexer);
 }
 
 lyric_runtime::InterpreterState::~InterpreterState()
@@ -107,10 +110,13 @@ lyric_runtime::InterpreterState::create(
      * ownership to the interpreter state!
      */
 
+    auto systemScheduler = std::make_unique<SystemScheduler>(loop);
+    auto portMultiplexer = std::make_unique<PortMultiplexer>(transportRegistry, systemScheduler.get());
+
     // allocate the interpreter state
     auto state = std::shared_ptr<InterpreterState>(new InterpreterState(
         loop, options.preludeLocation, std::move(systemLoader), std::move(applicationLoader),
-        std::move(heap), std::move(transportRegistry)));
+        std::move(heap), std::move(systemScheduler), std::move(portMultiplexer)));
 
     // capture pointer to interpreter state in the loop data field
     loop->data = state.get();
@@ -435,7 +441,7 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "invalid application loader");
 
-    // allocate a new segment manager
+    // allocate the segment manager
     auto segmentManager = std::make_unique<SegmentManager>(m_systemLoader, m_applicationLoader);
     TU_RETURN_IF_NOT_OK (segmentManager->setOrigin(mainLocation));
 
@@ -469,13 +475,12 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
     TU_RETURN_IF_NOT_OK (allocate_type_manager(
         segmentManager.get(), preludeSegment, preludeObject, typeManager));
 
+    // allocate the subroutine manager
     auto subroutineManager = std::make_unique<SubroutineManager>(segmentManager.get());
-    auto systemScheduler = std::make_unique<SystemScheduler>(m_loop);
-    auto portMultiplexer = std::make_unique<PortMultiplexer>(m_transportRegistry, systemScheduler.get());
 
-    // allocate the remaining subsystems
+    // allocate the heap manager
     std::unique_ptr<HeapManager> heapManager;
-    TU_RETURN_IF_NOT_OK (allocate_heap_manager(segmentManager.get(), systemScheduler.get(),
+    TU_RETURN_IF_NOT_OK (allocate_heap_manager(segmentManager.get(), m_systemScheduler.get(),
         preludeSegment, preludeObject, m_heap, heapManager));
 
     // transfer ownership to this
@@ -483,8 +488,6 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
     m_preludeLocation = std::move(preludeLocation);
     m_typeManager = std::move(typeManager);
     m_subroutineManager = std::move(subroutineManager);
-    m_systemScheduler = std::move(systemScheduler);
-    m_portMultiplexer = std::move(portMultiplexer);
     m_heapManager = std::move(heapManager);
 
     return {};

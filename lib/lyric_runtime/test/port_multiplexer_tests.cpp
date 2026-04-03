@@ -1,5 +1,6 @@
-#include <gmock/gmock-matchers.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 #include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
 
@@ -83,5 +84,49 @@ TEST_F (PortMultiplexer, MakeLocalConnectionFailsWhenMissingLocalTransport)
     ASSERT_THAT (portMultiplexer->registerConnector(protocolUrl, policy), tempo_test::IsOk());
 
     auto makeConnectionResult = portMultiplexer->makeConnection(protocolUrl);
+    ASSERT_THAT (makeConnectionResult, tempo_test::IsStatus());
+}
+
+TEST_F (PortMultiplexer, MakeRemoteConnection)
+{
+    auto protocolUrl = tempo_utils::Url::fromString("dev.zuri.proto://test");
+    auto nodeUrl = tempo_utils::Url::fromString("dev.zuri.node://node1");
+
+    auto transport = std::make_shared<MockTransport>();
+    ASSERT_THAT (transportRegistry->registerRemoteTransport(nodeUrl.getScheme(), transport), tempo_test::IsOk());
+
+    lyric_runtime::ConnectorPolicy policy;
+    ASSERT_THAT (portMultiplexer->registerConnector(protocolUrl, policy), tempo_test::IsOk());
+
+    auto makeConnectionResult = portMultiplexer->makeConnection(protocolUrl, nodeUrl);
+    ASSERT_THAT (makeConnectionResult, tempo_test::IsResult());
+    auto connection = makeConnectionResult.getResult();
+
+    ASSERT_TRUE (connection->getId().isValid());
+    ASSERT_EQ (nodeUrl, connection->getNodeUrl());
+}
+
+TEST_F (PortMultiplexer, MakeRemoteConnectionFailsWhenMissingTransport)
+{
+    auto protocolUrl = tempo_utils::Url::fromString("dev.zuri.proto://test");
+    lyric_runtime::ConnectorPolicy policy;
+    ASSERT_THAT (portMultiplexer->registerConnector(protocolUrl, policy), tempo_test::IsOk());
+
+    auto makeConnectionResult = portMultiplexer->makeConnection(protocolUrl);
+    ASSERT_THAT (makeConnectionResult, tempo_test::IsStatus());
+}
+
+TEST_F (PortMultiplexer, MakeLocalConnectionFailsWhenMissingRemoteTransport)
+{
+    auto protocolUrl = tempo_utils::Url::fromString("dev.zuri.proto://test");
+    auto nodeUrl = tempo_utils::Url::fromString("dev.zuri.node://node1");
+
+    auto transport = std::make_shared<MockTransport>();
+    ASSERT_THAT (transportRegistry->registerLocalTransport(protocolUrl, transport), tempo_test::IsOk());
+
+    lyric_runtime::ConnectorPolicy policy;
+    ASSERT_THAT (portMultiplexer->registerConnector(protocolUrl, policy), tempo_test::IsOk());
+
+    auto makeConnectionResult = portMultiplexer->makeConnection(protocolUrl, nodeUrl);
     ASSERT_THAT (makeConnectionResult, tempo_test::IsStatus());
 }

@@ -3,7 +3,6 @@
 
 #include <uv.h>
 
-#include "interpreter_result.h"
 #include "promise.h"
 #include "stackful_coroutine.h"
 #include "task.h"

@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    connection_tests.cpp
     port_multiplexer_tests.cpp
     )
 

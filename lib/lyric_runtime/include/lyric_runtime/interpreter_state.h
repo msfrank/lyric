@@ -85,7 +85,6 @@ namespace lyric_runtime {
         std::shared_ptr<AbstractLoader> m_systemLoader;
         std::shared_ptr<AbstractLoader> m_applicationLoader;
         std::shared_ptr<AbstractHeap> m_heap;
-        std::shared_ptr<TransportRegistry> m_transportRegistry;
 
         // set in initialize method
         std::unique_ptr<SegmentManager> m_segmentManager;
@@ -108,7 +107,8 @@ namespace lyric_runtime {
             std::shared_ptr<AbstractLoader> systemLoader,
             std::shared_ptr<AbstractLoader> applicationLoader,
             std::shared_ptr<AbstractHeap> heap,
-            std::shared_ptr<TransportRegistry> transportRegistry);
+            std::unique_ptr<SystemScheduler> systemScheduler,
+            std::unique_ptr<PortMultiplexer> portMultiplexer);
 
         tempo_utils::Status initialize(const lyric_common::ModuleLocation &mainLocation);
 
