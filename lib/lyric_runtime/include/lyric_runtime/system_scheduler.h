@@ -9,6 +9,7 @@
 
 namespace lyric_runtime {
 
+    class InterpreterState;
     class SystemScheduler;
     class Waiter;
 
@@ -60,26 +61,26 @@ namespace lyric_runtime {
         Waiter *prevWaiter() const;
         Waiter *nextWaiter() const;
 
+        void setReachable();
+
     private:
         Waiter *m_prev = nullptr;
         Waiter *m_next = nullptr;
 
         Type m_type;
         std::variant<std::nullptr_t, std::shared_ptr<AsyncHandle>, uv_handle_t *, uv_fs_t *> m_waitee;
-        uv_timer_t *m_deadline = nullptr;
+        // TODO: uv_timer_t *m_deadline = nullptr;
         Task *m_task = nullptr;
         std::shared_ptr<Promise> m_promise;
 
-        explicit Waiter(std::shared_ptr<AsyncHandle> async, std::shared_ptr<Promise> promise = {});
-        explicit Waiter(uv_handle_t *handle, std::shared_ptr<Promise> promise = {});
-        explicit Waiter(uv_fs_t *req, std::shared_ptr<Promise> promise = {});
+        Waiter(std::shared_ptr<AsyncHandle> async, std::shared_ptr<Promise> promise);
+        Waiter(uv_handle_t *handle, std::shared_ptr<Promise> promise);
+        Waiter(uv_fs_t *req, std::shared_ptr<Promise> promise);
 
-        Task *getTask() const;
         void assignTask(Task *task);
-        std::shared_ptr<Promise> getPromise() const;
+        void complete(InterpreterState *state);
 
         friend class SystemScheduler;
-        friend class HeapManager;
 
         friend void on_async_complete(uv_async_t *async);
         friend void on_timer_complete(uv_timer_t *timer);

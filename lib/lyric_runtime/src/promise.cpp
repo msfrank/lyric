@@ -3,9 +3,8 @@
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/promise.h>
 
-lyric_runtime::Promise::Promise(AcceptCallback accept, const PromiseOptions &options)
-    : m_accept(accept),
-      m_options(options),
+lyric_runtime::Promise::Promise(std::unique_ptr<PromiseOperations> ops)
+    : m_ops(std::move(ops)),
       m_state(State::Initial),
       m_waiter(nullptr)
 {
@@ -13,29 +12,61 @@ lyric_runtime::Promise::Promise(AcceptCallback accept, const PromiseOptions &opt
 
 lyric_runtime::Promise::~Promise()
 {
-    if (m_options.release) {
-        m_options.release(m_options.data);
+}
+
+class AcceptWrapperOps : public lyric_runtime::PromiseOperations {
+public:
+    explicit AcceptWrapperOps(lyric_runtime::AcceptCallback accept)
+        : m_accept(std::move(accept))
+    {}
+
+    void onAccept(
+        lyric_runtime::Promise *promise,
+        const lyric_runtime::Waiter *waiter,
+        lyric_runtime::InterpreterState *state) override
+    {
+        m_accept(promise, waiter, state);
     }
+
+private:
+    lyric_runtime::AcceptCallback m_accept;
+};
+
+/**
+ * Constructs a new promise managed by a shared ptr.
+ *
+ * @param ops The promise operations implementation.
+ * @return The new promise.
+ */
+std::shared_ptr<lyric_runtime::Promise>
+lyric_runtime::Promise::create(std::unique_ptr<PromiseOperations> ops)
+{
+    return std::make_shared<Promise>(std::move(ops));
 }
 
 /**
  * Constructs a new promise managed by a shared ptr.
  *
  * @param accept Optional accept callback which is invoked when the result becomes available.
- * @param options Promise options.
- * @return
+ * @return The new promise.
  */
 std::shared_ptr<lyric_runtime::Promise>
-lyric_runtime::Promise::create(AcceptCallback accept, const PromiseOptions &options)
+lyric_runtime::Promise::create(AcceptCallback accept)
 {
-    return std::make_shared<Promise>(accept, options);
+    std::unique_ptr<PromiseOperations> ops;
+    if (accept) {
+        ops = std::make_unique<AcceptWrapperOps>(std::move(accept));
+    } else {
+        ops = std::make_unique<PromiseOperations>();
+    }
+    return std::make_shared<Promise>(std::move(ops));
 }
 
 /**
  * Constructs a new promise which is already completed and contains the specified `result`.
  *
  * @param result
- * @return
+ * @return The new promise.
  */
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::completed(const DataCell &result)
@@ -50,7 +81,7 @@ lyric_runtime::Promise::completed(const DataCell &result)
  * expected to contain a Status.
  *
  * @param result
- * @return
+ * @return The new promise.
  */
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::rejected(const DataCell &result)
@@ -70,12 +101,6 @@ lyric_runtime::DataCell
 lyric_runtime::Promise::getResult() const
 {
     return m_result;
-}
-
-void *
-lyric_runtime::Promise::getData() const
-{
-    return m_options.data;
 }
 
 void
@@ -100,31 +125,19 @@ lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 void
 lyric_runtime::Promise::accept(const Waiter *waiter, InterpreterState *state)
 {
-    if (m_accept) {
-        m_accept(this, waiter, state);
-    }
+    m_ops->onAccept(this, waiter, state);
 }
 
 void
 lyric_runtime::Promise::adapt(BytecodeInterpreter *interp, InterpreterState *state)
 {
-    if (m_options.adapt) {
-        m_options.adapt(this, interp, state);
-    }
-}
-
-bool
-lyric_runtime::Promise::needsAdapt() const
-{
-    return m_options.adapt != nullptr;
+    m_ops->onAdapt(this, interp, state);
 }
 
 void
 lyric_runtime::Promise::setReachable()
 {
-    if (m_options.reachable) {
-        m_options.reachable(m_options.data);
-    }
+    m_ops->setReachable();
 }
 
 void

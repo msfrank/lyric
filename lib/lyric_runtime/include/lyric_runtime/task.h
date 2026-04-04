@@ -47,14 +47,17 @@ namespace lyric_runtime {
 
         void suspend();
         void resume();
-        void appendPromise(std::shared_ptr<Promise> promise);
-        void adaptPromises(BytecodeInterpreter *interp, InterpreterState *state);
+
+        bool hasPromise() const;
+        std::shared_ptr<Promise> getPromise() const;
+        void setPromise(std::shared_ptr<Promise> promise);
 
     private:
         bool m_isMainTask;
         State m_state;
         StackfulCoroutine m_coro;
-        std::queue<std::shared_ptr<Promise>> m_promises;
+        //std::queue<std::shared_ptr<Promise>> m_promises;
+        std::shared_ptr<Promise> m_promise;
         SystemScheduler *m_scheduler;
         uv_async_t *m_monitor;
         Task *m_prev;

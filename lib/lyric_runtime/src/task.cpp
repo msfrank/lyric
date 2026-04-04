@@ -14,6 +14,11 @@ lyric_runtime::Task::Task(bool isMainTask, SystemScheduler *scheduler)
     TU_ASSERT (m_scheduler != nullptr);
 }
 
+/**
+ * Returns whether the task is the main task. When the main task exits, the interpreter exits.
+ *
+ * @return true if the task is the main task, otherwise false.
+ */
 bool
 lyric_runtime::Task::isMainTask() const
 {
@@ -32,24 +37,44 @@ lyric_runtime::Task::stackfulCoroutine()
     return &m_coro;
 }
 
+/**
+ * Get the task state.
+ *
+ * @return The task state.
+ */
 lyric_runtime::Task::State
 lyric_runtime::Task::getState() const
 {
     return m_state;
 }
 
+/**
+ * Set the task state.
+ *
+ * @param state The new state.
+ */
 void
 lyric_runtime::Task::setState(State state)
 {
     m_state = state;
 }
 
+/**
+ * Get the task monitor handle.
+ *
+ * @return The monitor handle.
+ */
 uv_async_t *
 lyric_runtime::Task::getMonitor() const
 {
     return m_monitor;
 }
 
+/**
+ * Set the task monitor handle.
+ *
+ * @param monitor The monitor handle.
+ */
 void
 lyric_runtime::Task::setMonitor(uv_async_t *monitor)
 {
@@ -135,33 +160,62 @@ lyric_runtime::Task::detach(Task **head)
     }
 }
 
+/**
+ * Suspend the task. If the task is currently Running or Ready then the state will be set to Waiting
+ * and the task will be moved to the waitqueue. If the task is in Waiting state already then this does
+ * nothing.
+ */
 void
 lyric_runtime::Task::suspend()
 {
     m_scheduler->suspendTask(this);
 }
 
+/**
+ * Resume the task. If the task is currently Waiting then the state will be set to Ready and the task
+ * will be moved to the readyqueue. If the task is in Running or Ready state already then this does
+ * nothing.
+ */
 void
 lyric_runtime::Task::resume()
 {
     m_scheduler->resumeTask(this);
 }
 
-void
-lyric_runtime::Task::appendPromise(std::shared_ptr<Promise> promise)
+bool
+lyric_runtime::Task::hasPromise() const
 {
-    TU_ASSERT (promise->getState() == Promise::State::Pending);
-    m_promises.push(promise);
+    return m_promise != nullptr;
+}
+
+std::shared_ptr<lyric_runtime::Promise>
+lyric_runtime::Task::getPromise() const
+{
+    return m_promise;
 }
 
 void
-lyric_runtime::Task::adaptPromises(BytecodeInterpreter *interp, InterpreterState *state)
+lyric_runtime::Task::setPromise(std::shared_ptr<Promise> promise)
 {
-    while (!m_promises.empty()) {
-        auto promise = m_promises.front();
-        TU_ASSERT (promise->getState() == Promise::State::Pending);
-        promise->adapt(interp, state);
-        TU_ASSERT (promise->getState() == Promise::State::Completed || promise->getState() == Promise::State::Rejected);
-        m_promises.pop();
-    }
+    TU_ASSERT (promise->getState() == Promise::State::Pending);
+    m_promise = std::move(promise);
 }
+
+// void
+// lyric_runtime::Task::appendPromise(std::shared_ptr<Promise> promise)
+// {
+//     TU_ASSERT (promise->getState() == Promise::State::Pending);
+//     m_promises.push(promise);
+// }
+//
+// void
+// lyric_runtime::Task::adaptPromises(BytecodeInterpreter *interp, InterpreterState *state)
+// {
+//     while (!m_promises.empty()) {
+//         auto promise = m_promises.front();
+//         TU_ASSERT (promise->getState() == Promise::State::Pending);
+//         promise->adapt(interp, state);
+//         TU_ASSERT (promise->getState() == Promise::State::Completed || promise->getState() == Promise::State::Rejected);
+//         m_promises.pop();
+//     }
+// }

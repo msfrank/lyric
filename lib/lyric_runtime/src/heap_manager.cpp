@@ -349,10 +349,7 @@ lyric_runtime::HeapManager::collectGarbage() {
         Waiter *waiter = waiterHead;
         Waiter *next = waiter->nextWaiter();
         do {
-            if (waiter->hasPromise()) {
-                auto promise = waiter->getPromise();
-                promise->setReachable();
-            }
+            waiter->setReachable();
             waiter = next;
             next = waiter->nextWaiter();
         } while (next != nullptr && next != waiterHead);

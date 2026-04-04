@@ -108,9 +108,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
         }
 
         // if we switched tasks then process all attached promises
-        if (nextReady) {
-            nextReady->adaptPromises(this, m_state.get());
-        }
+        //if (nextReady) {
+        //    nextReady->adaptPromises(this, m_state.get());
+        //}
 
         // ensure the guard invariant for the current call stack is not violated
         if (!currentCoro->checkGuard())
