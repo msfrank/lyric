@@ -18,6 +18,7 @@
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -1284,13 +1285,84 @@ lyric_assembler::BlockHandle::resolveInstance(const lyric_common::TypeDef &insta
     lyric_common::SymbolUrl resolvedUrl;
     TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(instanceUrl.getSymbolPath()));
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(instanceUrl));
     if (symbol->getSymbolType() != SymbolType::INSTANCE)
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
             "type {} is not an instance", instanceType.toString());
 
     return cast_symbol_to_instance(symbol);
+}
+
+tempo_utils::Result<lyric_assembler::ProtocolSymbol *>
+lyric_assembler::BlockHandle::declareProtocol(
+    const std::string &name,
+    bool isHidden,
+    const lyric_common::TypeDef &sendType,
+    const lyric_common::TypeDef &receiveType,
+    lyric_object::PortType port,
+    lyric_object::CommunicationType comm,
+    bool declOnly)
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *typeCache = m_state->typeCache();
+
+    auto protocolUrl = makeSymbolUrl(name);
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, protocolUrl));
+
+    // resolve the send type handle
+    TypeHandle *sendTypeHandle;
+    TU_ASSIGN_OR_RETURN (sendTypeHandle, typeCache->getOrMakeType(sendType));
+
+    // resolve the receive type handle
+    TypeHandle *receiveTypeHandle;
+    TU_ASSIGN_OR_RETURN (receiveTypeHandle, typeCache->getOrMakeType(receiveType));
+
+    // declare Protocol[sendType,receiveType]
+    TypeHandle *superTypeHandle;
+    TU_ASSIGN_OR_RETURN (superTypeHandle, typeCache->declareParameterizedType(
+        fundamentalCache->getFundamentalUrl(FundamentalSymbol::Protocol), { sendType, receiveType}));
+
+    // create the type
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(protocolUrl, {}, superTypeHandle->getTypeDef()));
+
+    // create the protocol
+    std::unique_ptr<ProtocolSymbol> protocolSymbol;
+    protocolSymbol = std::make_unique<ProtocolSymbol>(protocolUrl, isHidden, port, comm, typeHandle,
+        sendTypeHandle, receiveTypeHandle, declOnly, this, m_state);
+
+    ProtocolSymbol *protocolPtr;
+    TU_ASSIGN_OR_RETURN (protocolPtr, m_state->appendProtocol(std::move(protocolSymbol), existingTypename));
+
+    SymbolBinding binding;
+    binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = protocolUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+    m_bindings[name] = binding;
+
+    return protocolPtr;
+}
+
+tempo_utils::Result<lyric_assembler::ProtocolSymbol *>
+lyric_assembler::BlockHandle::resolveProtocol(const lyric_common::TypeDef &protocolType)
+{
+    if (protocolType.getType() != lyric_common::TypeDefType::Concrete)
+        return AssemblerStatus::forCondition(AssemblerCondition::kIncompatibleType,
+            "invalid protocol type {}", protocolType.toString());
+    auto protocolUrl = protocolType.getConcreteUrl();
+
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(protocolUrl.getSymbolPath()));
+
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(protocolUrl));
+    if (symbol->getSymbolType() != SymbolType::PROTOCOL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "type {} is not a protocol", protocolType.toString());
+
+    return cast_symbol_to_protocol(symbol);
 }
 
 tempo_utils::Result<lyric_assembler::StructSymbol *>
@@ -1350,7 +1422,7 @@ lyric_assembler::BlockHandle::resolveStruct(const lyric_common::TypeDef &structT
     lyric_common::SymbolUrl resolvedUrl;
     TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(structUrl.getSymbolPath()));
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(resolvedUrl));
     if (symbol->getSymbolType() != SymbolType::STRUCT)
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,

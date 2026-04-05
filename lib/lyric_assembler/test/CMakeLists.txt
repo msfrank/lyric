@@ -11,12 +11,17 @@ set(TEST_CASES
     load_data_macro_tests.cpp
     opcode_macro_tests.cpp
     plugin_macro_tests.cpp
+    protocol_symbol_tests.cpp
+    struct_symbol_tests.cpp
     trap_macro_tests.cpp
     )
 
 # define test suite driver
 
-add_executable(lyric_assembler_testsuite ${TEST_CASES})
+add_executable(lyric_assembler_testsuite
+    ${TEST_CASES}
+    base_assembler_fixture.cpp base_assembler_fixture.h
+    )
 target_compile_definitions(lyric_assembler_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -33,7 +38,10 @@ gtest_discover_tests(lyric_assembler_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 
-add_library(LyricAssemblerTestSuite OBJECT ${TEST_CASES})
+add_library(LyricAssemblerTestSuite OBJECT
+    ${TEST_CASES}
+    base_assembler_fixture.cpp base_assembler_fixture.h
+    )
 target_compile_definitions(LyricAssemblerTestSuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

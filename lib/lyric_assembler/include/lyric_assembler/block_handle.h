@@ -140,6 +140,17 @@ namespace lyric_assembler {
 
         tempo_utils::Result<InstanceSymbol *> resolveInstance(const lyric_common::TypeDef &instanceType);
 
+        tempo_utils::Result<ProtocolSymbol *> declareProtocol(
+            const std::string &name,
+            bool isHidden,
+            const lyric_common::TypeDef &sendType,
+            const lyric_common::TypeDef &receiveType,
+            lyric_object::PortType port,
+            lyric_object::CommunicationType comm,
+            bool declOnly = false);
+
+        tempo_utils::Result<ProtocolSymbol *> resolveProtocol(const lyric_common::TypeDef &protocolType);
+
         tempo_utils::Result<StructSymbol *> declareStruct(
             const std::string &name,
             StructSymbol *superStruct,

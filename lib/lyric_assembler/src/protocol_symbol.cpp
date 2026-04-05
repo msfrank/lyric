@@ -169,14 +169,14 @@ lyric_assembler::TypeHandle *
 lyric_assembler::ProtocolSymbol::sendType() const
 {
     auto *priv = getPriv();
-    return priv->protocolType;
+    return priv->sendType;
 }
 
 lyric_assembler::TypeHandle *
 lyric_assembler::ProtocolSymbol::receiveType() const
 {
     auto *priv = getPriv();
-    return priv->protocolType;
+    return priv->receiveType;
 }
 
 lyric_assembler::BlockHandle *
