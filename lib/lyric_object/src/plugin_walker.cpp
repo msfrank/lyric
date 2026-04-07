@@ -37,3 +37,95 @@ lyric_object::PluginWalker::getPluginLocation() const
         return {};
     return lyric_common::ModuleLocation::fromString(pluginLocation->string_view());
 }
+
+bool
+lyric_object::PluginWalker::isExactLinkage() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    return bool(pluginDescriptor->flags() & lyo1::PluginFlags::ExactLinkage);
+}
+
+lyric_object::HashType
+lyric_object::PluginWalker::getHashType() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    switch (pluginDescriptor->hash_type()) {
+        case lyo1::HashType::None:
+            return HashType::None;
+        case lyo1::HashType::Sha256:
+            return HashType::Sha256;
+        default:
+            return HashType::Invalid;
+    }
+}
+
+bool
+lyric_object::PluginWalker::hasHash() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    auto *pluginhash = pluginDescriptor->plugin_hash();
+    return pluginhash != nullptr && !pluginhash->empty();
+}
+
+std::span<const tu_uint8>
+lyric_object::PluginWalker::hashValue() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    auto *pluginhash = pluginDescriptor->plugin_hash();
+    if (pluginhash == nullptr || pluginhash->empty())
+        return {};
+    return std::span(pluginhash->data(), pluginhash->size());
+}
+
+tu_uint32
+lyric_object::PluginWalker::numTraps() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    if (pluginDescriptor->traps() == nullptr)
+        return 0;
+    return pluginDescriptor->traps()->size();
+}
+
+std::string
+lyric_object::PluginWalker::getTrap(tu_uint32 index)
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    auto *traps = pluginDescriptor->traps();
+    if (traps == nullptr)
+        return {};
+    if (traps->size() <= index)
+        return {};
+    auto *trapName = traps->GetAsString(index);
+    if (trapName == nullptr)
+        return {};
+    return trapName->str();
+}
+
+std::string_view
+lyric_object::PluginWalker::trapValue(tu_uint32 index) const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = (const lyo1::PluginDescriptor *) m_pluginDescriptor;
+    auto *traps = pluginDescriptor->traps();
+    if (traps == nullptr)
+        return {};
+    if (traps->size() <= index)
+        return {};
+    auto *trapName = traps->GetAsString(index);
+    if (trapName == nullptr)
+        return {};
+    return trapName->string_view();
+}

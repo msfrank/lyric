@@ -47,6 +47,32 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     m_protocols = m_numProtocols > 0 ? new DataCell[m_numProtocols] : nullptr;
     m_numNamespaces = m_object.numNamespaces();
     m_namespaces = m_numNamespaces > 0 ? new DataCell[m_numNamespaces] : nullptr;
+
+    if (m_object.hasPlugin()) {
+        TU_NOTNULL (m_plugin);
+        auto walker = m_object.getPlugin();
+        TU_ASSERT (walker.isValid());
+
+        m_numTraps = walker.numTraps();
+        m_traps = m_numTraps > 0 ? new const NativeTrap*[m_numTraps] : nullptr;
+
+        absl::flat_hash_map<std::string,const NativeTrap *> nativeTraps;
+        for (tu_uint32 i = 0; i < m_plugin->numTraps(); ++i) {
+            auto *trap = m_plugin->getTrap(i);
+            if (trap != nullptr && trap->name != nullptr && trap->func != nullptr) {
+                std::string name(trap->name);
+                nativeTraps[name] = trap;
+            }
+        }
+
+        for (tu_uint32 i = 0; i < m_numTraps; ++i) {
+            auto trapName = walker.getTrap(i);
+            auto entry = nativeTraps.find(trapName);
+            if (entry != nativeTraps.cend()) {
+                m_traps[i] = entry->second;
+            }
+        }
+    }
 }
 
 lyric_runtime::BytecodeSegment::~BytecodeSegment()
@@ -63,6 +89,7 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
     delete[] m_enums;
     delete[] m_protocols;
     delete[] m_namespaces;
+    delete[] m_traps;
 }
 
 uint32_t
@@ -260,15 +287,12 @@ lyric_runtime::BytecodeSegment::setNamespace(uint32_t index, const DataCell &val
     return true;
 }
 
-lyric_runtime::NativeFunc
+const lyric_runtime::NativeTrap *
 lyric_runtime::BytecodeSegment::getTrap(tu_uint32 address) const
 {
-    if (m_plugin == nullptr)
-        return nullptr;
-    auto *trap = m_plugin->getTrap(address);
-    if (trap == nullptr)
-        return nullptr;
-    return trap->func;
+    if (address < m_numTraps)
+        return m_traps[address];
+    return nullptr;
 }
 
 void *

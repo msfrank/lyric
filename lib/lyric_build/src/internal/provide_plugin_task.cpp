@@ -6,7 +6,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/internal/provide_plugin_task.h>
-#include <lyric_build/internal/task_utils.h>
+#include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_types.h>

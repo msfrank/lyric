@@ -17,6 +17,16 @@ namespace lyric_object {
 
         lyric_common::ModuleLocation getPluginLocation() const;
 
+        bool isExactLinkage() const;
+        HashType getHashType() const;
+
+        bool hasHash() const;
+        std::span<const tu_uint8> hashValue() const;
+
+        tu_uint32 numTraps() const;
+        std::string getTrap(tu_uint32 index);
+        std::string_view trapValue(tu_uint32 index) const;
+
     private:
         std::shared_ptr<const internal::ObjectReader> m_reader;
         void *m_pluginDescriptor = nullptr;

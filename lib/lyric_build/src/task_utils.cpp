@@ -1,11 +1,11 @@
 
 #include <lyric_build/build_result.h>
-#include <lyric_build/internal/task_utils.h>
+#include <lyric_build/task_utils.h>
 #include <lyric_common/module_location.h>
 #include <lyric_common/common_types.h>
 
 tempo_utils::UrlPath
-lyric_build::internal::build_full_path(
+lyric_build::build_full_path(
     const tempo_utils::UrlPath &path,
     const tempo_utils::UrlPath &base)
 {
@@ -20,7 +20,7 @@ lyric_build::internal::build_full_path(
 }
 
 std::filesystem::path
-lyric_build::internal::to_absolute_path(
+lyric_build::to_absolute_path(
     const std::filesystem::path &baseDirectory,
     const tempo_utils::UrlPath &path,
     bool allowSymlinksOutsideBase)
@@ -34,7 +34,7 @@ lyric_build::internal::to_absolute_path(
 }
 
 tempo_utils::Result<lyric_common::ModuleLocation>
-lyric_build::internal::convert_source_path_to_module_location(const tempo_utils::UrlPath &path)
+lyric_build::convert_source_path_to_module_location(const tempo_utils::UrlPath &path)
 {
     std::filesystem::path p(path.toString(), std::filesystem::path::generic_format);
     if (p.extension() != std::string_view(lyric_common::kSourceFileDotSuffix))
@@ -46,7 +46,7 @@ lyric_build::internal::convert_source_path_to_module_location(const tempo_utils:
 }
 
 tempo_utils::Result<tempo_utils::UrlPath>
-lyric_build::internal::convert_module_location_to_artifact_path(
+lyric_build::convert_module_location_to_artifact_path(
     const lyric_common::ModuleLocation &location,
     std::string_view dotSuffix)
 {
@@ -59,7 +59,7 @@ lyric_build::internal::convert_module_location_to_artifact_path(
 }
 
 std::filesystem::path
-lyric_build::internal::generate_install_path(
+lyric_build::generate_install_path(
     std::string_view taskDomain,
     const tempo_utils::UrlPath &path,
     const char *dotSuffix)

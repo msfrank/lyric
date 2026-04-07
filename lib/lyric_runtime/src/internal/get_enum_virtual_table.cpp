@@ -248,12 +248,13 @@ lyric_runtime::internal::get_enum_virtual_table(
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
     if (enumDescriptor.hasAllocator()) {
-        allocator = enumSegment->getTrap(enumDescriptor.getAllocator());
-        if (allocator == nullptr) {
+        auto *trap = enumSegment->getTrap(enumDescriptor.getAllocator());
+        if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid enum allocator");
             return nullptr;
         }
+        allocator = trap->func;
     }
 
     auto *vtable = new VirtualTable(enumSegment, descriptor, enumType, parentTable,

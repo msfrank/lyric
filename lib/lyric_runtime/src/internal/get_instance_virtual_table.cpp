@@ -246,12 +246,13 @@ lyric_runtime::internal::get_instance_virtual_table(
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
     if (instanceDescriptor.hasAllocator()) {
-        allocator = instanceSegment->getTrap(instanceDescriptor.getAllocator());
-        if (allocator == nullptr) {
+        auto *trap = instanceSegment->getTrap(instanceDescriptor.getAllocator());
+        if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid instance allocator");
             return nullptr;
         }
+        allocator = trap->func;
     }
 
     auto *vtable = new VirtualTable(instanceSegment, descriptor, instanceType, parentTable,

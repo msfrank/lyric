@@ -361,15 +361,13 @@ lyric_assembler::ObjectWriter::getTrapNumber(
     auto *plugin = m_state->objectPlugin();
     if (plugin == nullptr)
         return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid object plugin");
+            AssemblerCondition::kAssemblerInvariant, "missing object plugin");
     if (pluginLocation != plugin->getLocation())
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "unexpected plugin location {} for trap {}",
             pluginLocation.toString(), trapName);
-    auto trapNumber = plugin->lookupTrap(trapName);
-    if (trapNumber == lyric_object::INVALID_ADDRESS_U32)
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid trap {}", trapName);
+    tu_uint32 trapNumber;
+    TU_ASSIGN_OR_RETURN (trapNumber, plugin->getOrInsertTrap(trapName));
     return trapNumber;
 }
 
@@ -379,11 +377,9 @@ lyric_assembler::ObjectWriter::getTrapNumber(std::string_view trapName) const
     auto *plugin = m_state->objectPlugin();
     if (plugin == nullptr)
         return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid object plugin");
-    auto trapNumber = plugin->lookupTrap(trapName);
-    if (trapNumber == lyric_object::INVALID_ADDRESS_U32)
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid trap {}", trapName);
+            AssemblerCondition::kAssemblerInvariant, "missing object plugin");
+    tu_uint32 trapNumber;
+    TU_ASSIGN_OR_RETURN (trapNumber, plugin->getOrInsertTrap(trapName));
     return trapNumber;
 }
 
@@ -941,13 +937,39 @@ lyric_assembler::ObjectWriter::toObject() const
 
     auto options = m_state->getOptions();
 
-    // serialize array of plugin descriptors
+    // serialize plugin descriptor if plugin is present
     flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
     auto *plugin = m_state->objectPlugin();
     if (plugin != nullptr) {
-        auto pluginLocation = m_state->getPluginLocation();
+        auto pluginLocation = m_state->getLocation();
         auto plugin_location = buffer.CreateSharedString(pluginLocation.toString());
-        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, plugin_location);
+
+        lyo1::PluginFlags flags = lyo1::PluginFlags::NONE;
+        if (plugin->isExactLinkage()) {
+            flags |= lyo1::PluginFlags::ExactLinkage;
+        }
+
+        lyo1::HashType hash_type;
+        switch (plugin->getHashType()) {
+            case lyric_object::HashType::None:
+                hash_type = lyo1::HashType::None;
+                break;
+            case lyric_object::HashType::Sha256:
+                hash_type = lyo1::HashType::Sha256;
+                break;
+            default:
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid plugin hash type");
+        }
+
+        std::vector<std::string> traps(plugin->numTraps());
+        for (auto it = plugin->trapsBegin(); it != plugin->trapsEnd(); it++) {
+            traps[it->second] = it->first;
+        }
+
+        auto trapsOffset = buffer.CreateVectorOfStrings(traps);
+        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, plugin_location,
+            hash_type, /* plugin_hash= */ 0, trapsOffset, flags);
     }
 
     // serialize vectors

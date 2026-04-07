@@ -362,12 +362,12 @@ tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>>
 lyric_compiler::CompilerScanDriverBuilder::makeScanDriver()
 {
     // construct the object state
+    m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_origin, m_localModuleCache,
+        m_systemModuleCache, m_shortcutResolver, m_objectStateOptions);
+
+    // if plugin pragma is present then declare the plugin
     if (m_pluginLocation.isValid()) {
-        m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_origin, m_localModuleCache,
-            m_systemModuleCache, m_shortcutResolver, m_pluginLocation, m_objectStateOptions);
-    } else {
-        m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_origin, m_localModuleCache,
-            m_systemModuleCache, m_shortcutResolver, m_objectStateOptions);
+        TU_RETURN_IF_STATUS (m_state->declarePlugin(m_pluginLocation));
     }
 
     // define the object root

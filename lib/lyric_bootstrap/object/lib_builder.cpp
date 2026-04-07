@@ -64,11 +64,8 @@ main(int argc, char *argv[])
         return -1;
     std::filesystem::path destinationPath(argv[1]);
 
-    auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(&kPreludeInterface);
-    TU_RAISE_IF_NOT_OK (trapIndex->initialize());
-
     auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
-    BuilderState state(location, trapIndex);
+    BuilderState state(location);
 
     // define the Any existential, which is the top of the main type hierarchy
     auto *AnyExistential = build_core_Any(state);
@@ -266,10 +263,20 @@ main(int argc, char *argv[])
     build_core_prelude_va_load(state, IntExistential->existentialType, AnyExistential->existentialType);
     build_core_prelude_va_size(state, IntExistential->existentialType);
 
-    auto bytes = state.toBytes();
+    auto object = state.toObject();
+
+    // validate that every trap refers to a trap present in the prelude plugin
+    auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(&kPreludeInterface);
+    TU_RAISE_IF_NOT_OK (trapIndex->initialize());
+    TU_ASSERT (object.hasPlugin());
+    auto walker = object.getPlugin();
+    for (tu_uint32 i = 0; i < walker.numTraps(); ++i) {
+        auto trapNumber = trapIndex->lookupTrap(walker.trapValue(i));
+        TU_ASSERT (trapNumber != lyric_object::INVALID_ADDRESS_U32);
+    }
 
     // write object to file
-    tempo_utils::FileWriter writer(destinationPath, *bytes,
+    tempo_utils::FileWriter writer(destinationPath, object.bytesView(),
         tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);
     if (!writer.isValid()) {
         TU_LOG_INFO << "failed to write output " << destinationPath;

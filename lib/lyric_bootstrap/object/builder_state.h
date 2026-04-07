@@ -4,13 +4,11 @@
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
 
 #include <lyric_common/symbol_url.h>
 #include <lyric_object/generated/object.h>
 #include <lyric_object/bytecode_builder.h>
 #include <lyric_runtime/abstract_heap.h>
-#include <lyric_runtime/trap_index.h>
 #include <tempo_utils/option_template.h>
 
 struct CoreCall;
@@ -250,11 +248,9 @@ struct BuilderState {
 
     absl::flat_hash_map<int, lyric_common::SymbolPath> functionclasspaths;
 
-    std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex;
+    absl::flat_hash_map<std::string,tu_uint32> trapNumbers;
 
-    BuilderState(
-        const lyric_common::ModuleLocation &location,
-        std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex);
+    BuilderState(const lyric_common::ModuleLocation &location);
 
     /*
      * type definitions
@@ -273,6 +269,7 @@ struct BuilderState {
         const std::vector<CorePlaceholder> &placeholders,
         const std::vector<CoreConstraint> &constraints = {});
 
+    tu_uint32 getOrInsertTrap(std::string_view trapName);
     void writeTrap(lyric_object::BytecodeBuilder &code, std::string_view trapName, tu_uint8 flags = 0);
 
     /*
@@ -485,7 +482,7 @@ struct BuilderState {
     tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;
 
     // serialize the state
-    std::shared_ptr<const std::string> toBytes() const;
+    lyric_object::LyricObject toObject() const;
 };
 
 #endif // ZURI_CORE_BUILDER_STATE_H

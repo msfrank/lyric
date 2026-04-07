@@ -52,25 +52,6 @@ lyric_assembler::ObjectState::ObjectState(
     }
 }
 
-lyric_assembler::ObjectState::ObjectState(
-    const lyric_common::ModuleLocation &location,
-    const lyric_common::ModuleLocation &origin,
-    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
-    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
-    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-    const lyric_common::ModuleLocation &pluginLocation,
-    const ObjectStateOptions &options)
-    : ObjectState(
-        location,
-        origin,
-        std::move(localModuleCache),
-        std::move(systemModuleCache),
-        std::move(shortcutResolver),
-        options)
-{
-    m_pluginLocation = pluginLocation;
-}
-
 lyric_assembler::ObjectState::~ObjectState()
 {
     delete m_implcache;
@@ -92,12 +73,6 @@ lyric_common::ModuleLocation
 lyric_assembler::ObjectState::getOrigin() const
 {
     return m_origin;
-}
-
-lyric_common::ModuleLocation
-lyric_assembler::ObjectState::getPluginLocation() const
-{
-    return m_pluginLocation;
 }
 
 const lyric_assembler::ObjectStateOptions *
@@ -127,10 +102,6 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
             "invalid origin {} for object state; origin must be absolute",
             m_origin.toString());
 
-    if (m_pluginLocation.isValid() && !m_pluginLocation.isRelative())
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid plugin location {} for object state; plugin location must be relative",
-            m_pluginLocation.toString());
 
     m_root = new ObjectRoot(this);
 
@@ -145,26 +116,6 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
 
     // initialize the root
     TU_RETURN_IF_NOT_OK (m_root->initialize(preludeLocation, m_options.environmentModules));
-
-    // if specified then find the plugin associated with the module
-    if (m_pluginLocation.isValid()) {
-        lyric_common::ModuleLocation pluginLocation;
-        TU_ASSIGN_OR_RETURN (pluginLocation, m_importcache->resolveImportLocation(m_pluginLocation.toUrl()));
-
-        auto localLoader = m_localModuleCache->getLoader();
-        auto pluginSpecifier = lyric_object::PluginSpecifier::systemDefault();
-        Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
-        TU_ASSIGN_OR_RETURN (pluginOption, localLoader->loadPlugin(pluginLocation, pluginSpecifier));
-
-        if (pluginOption.isEmpty())
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "missing plugin {}", pluginLocation.toString());
-
-        auto trapIndex = std::make_unique<lyric_runtime::TrapIndex>(pluginOption.getValue());
-        TU_RETURN_IF_NOT_OK (trapIndex->initialize());
-
-        m_plugin = std::make_unique<ObjectPlugin>(pluginLocation, std::move(trapIndex));
-    }
 
     return {};
 }
@@ -716,6 +667,38 @@ int
 lyric_assembler::ObjectState::numStructs() const
 {
     return m_structs.size();
+}
+
+tempo_utils::Result<lyric_assembler::ObjectPlugin *>
+lyric_assembler::ObjectState::declarePlugin(
+    const lyric_common::ModuleLocation &location,
+    lyric_object::HashType hash,
+    bool isExactLinkage)
+{
+    if (m_plugin != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "plugin is already defined");
+    if (!location.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid plugin location '{}'", location.toString());
+    if (!location.isRelative())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid plugin location '{}'; location must be relative",
+            location.toString());
+    m_plugin = std::make_unique<ObjectPlugin>(location, isExactLinkage, hash);
+    return m_plugin.get();
+}
+
+bool
+lyric_assembler::ObjectState::hasPlugin() const
+{
+    return m_plugin != nullptr;
+}
+
+lyric_assembler::ObjectPlugin *
+lyric_assembler::ObjectState::getPlugin() const
+{
+    return m_plugin.get();
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

@@ -231,12 +231,13 @@ lyric_runtime::internal::get_struct_virtual_table(
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
     if (structDescriptor.hasAllocator()) {
-        allocator = structSegment->getTrap(structDescriptor.getAllocator());
-        if (allocator == nullptr) {
+        auto *trap = structSegment->getTrap(structDescriptor.getAllocator());
+        if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid struct allocator");
             return nullptr;
         }
+        allocator = trap->func;
     }
 
     auto *vtable = new VirtualTable(structSegment, descriptor, structType, parentTable,

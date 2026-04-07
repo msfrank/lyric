@@ -1,10 +1,9 @@
 
+#include <lyric_build/build_result.h>
 #include <lyric_build/local_filesystem.h>
+#include <lyric_build/task_utils.h>
 #include <tempo_security/sha256_hash.h>
 #include <tempo_utils/file_reader.h>
-
-#include "lyric_build/build_result.h"
-#include "lyric_build/internal/task_utils.h"
 
 lyric_build::LocalFilesystem::LocalFilesystem(const std::filesystem::path &baseDirectory, bool allowSymlinksOutsideBase)
     : m_baseDirectory(baseDirectory),
@@ -31,7 +30,7 @@ lyric_build::LocalFilesystem::containsResource(const tempo_utils::UrlPath &path)
 {
     if (!path.isValid())
         return false;
-    auto resourcePath = internal::to_absolute_path(m_baseDirectory, path, m_allowSymlinksOutsideBase);
+    auto resourcePath = to_absolute_path(m_baseDirectory, path, m_allowSymlinksOutsideBase);
     if (resourcePath.empty())
         return false;
     return std::filesystem::is_regular_file(resourcePath);
@@ -44,7 +43,7 @@ lyric_build::LocalFilesystem::fetchResource(const tempo_utils::UrlPath &path)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource path '{}'", path.toString());
 
-    auto resourcePath = internal::to_absolute_path(m_baseDirectory, path, m_allowSymlinksOutsideBase);
+    auto resourcePath = to_absolute_path(m_baseDirectory, path, m_allowSymlinksOutsideBase);
     if (resourcePath.empty())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "path {} is outside of the base directory {}",
@@ -87,7 +86,7 @@ lyric_build::LocalFilesystem::listResources(
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource root '{}'", root.toString());
 
-    auto rootPath = internal::to_absolute_path(m_baseDirectory, root, m_allowSymlinksOutsideBase);
+    auto rootPath = to_absolute_path(m_baseDirectory, root, m_allowSymlinksOutsideBase);
     if (rootPath.empty())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "resource root {} is outside of the base directory {}",
@@ -124,7 +123,7 @@ lyric_build::LocalFilesystem::listResourcesRecursively(
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource root '{}'", root.toString());
 
-    auto rootPath = internal::to_absolute_path(m_baseDirectory, root, m_allowSymlinksOutsideBase);
+    auto rootPath = to_absolute_path(m_baseDirectory, root, m_allowSymlinksOutsideBase);
     if (rootPath.empty())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "resource root {} is outside of the base directory {}",

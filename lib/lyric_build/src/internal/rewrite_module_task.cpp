@@ -8,8 +8,9 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
+#include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/rewrite_module_task.h>
-#include <lyric_build/internal/task_utils.h>
+#include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_conversions.h>
@@ -20,10 +21,6 @@
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_tracing/tracing_schema.h>
-#include <tempo_utils/date_time.h>
-#include <tempo_utils/log_message.h>
-
-#include "lyric_build/internal/build_macros.h"
 
 lyric_build::internal::RewriteModuleTask::RewriteModuleTask(
     const tempo_utils::UUID &generation,

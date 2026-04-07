@@ -6,7 +6,7 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/parse_module_task.h>
-#include <lyric_build/internal/task_utils.h>
+#include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_conversions.h>
@@ -18,7 +18,6 @@
 #include <tempo_config/container_conversions.h>
 #include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/file_reader.h>
-#include <tempo_utils/log_message.h>
 
 lyric_build::internal::ParseModuleTask::ParseModuleTask(
     const tempo_utils::UUID &generation,

@@ -65,6 +65,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/task_hasher.h
     include/lyric_build/task_notification.h
     include/lyric_build/task_registry.h
+    include/lyric_build/task_utils.h
     include/lyric_build/temp_directory.h
     )
 set_target_properties(lyric_build PROPERTIES PUBLIC_HEADER "${LYRIC_BUILD_INCLUDES}")
@@ -98,6 +99,7 @@ target_sources(lyric_build PRIVATE
     src/task_notification.cpp
     src/task_registry.cpp
     src/task_settings.cpp
+    src/task_utils.cpp
     src/temp_directory.cpp
 
     include/lyric_build/internal/analyze_module_task.h
@@ -132,8 +134,6 @@ target_sources(lyric_build PRIVATE
     src/internal/runner_worker_thread.cpp
     include/lyric_build/internal/symbolize_module_task.h
     src/internal/symbolize_module_task.cpp
-    include/lyric_build/internal/task_utils.h
-    src/internal/task_utils.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_build/generated/metadata.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_build/generated/metadata_schema.h

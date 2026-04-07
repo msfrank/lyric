@@ -595,6 +595,7 @@ table PluginDescriptor {
                                                 // used for plugin resolution.
     hash_type: HashType = Invalid;              // hashing algorithm used for the plugin hash
     plugin_hash: [uint8];                       // content hash of plugin, or empty if hash type is NONE
+    traps: [string];                            // array of trap names referred to by the object
     flags: PluginFlags;                         // bitfield containing plugin flags
 }
 

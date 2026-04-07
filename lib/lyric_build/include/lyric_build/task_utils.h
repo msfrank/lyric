@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_INTERNAL_TASK_UTILS_H
-#define LYRIC_BUILD_INTERNAL_TASK_UTILS_H
+#ifndef LYRIC_BUILD_TASK_UTILS_H
+#define LYRIC_BUILD_TASK_UTILS_H
 
 #include <filesystem>
 
@@ -7,7 +7,7 @@
 #include <tempo_utils/result.h>
 #include <tempo_utils/url.h>
 
-namespace lyric_build::internal {
+namespace lyric_build {
 
     tempo_utils::UrlPath build_full_path(
         const tempo_utils::UrlPath &path,
@@ -32,4 +32,4 @@ namespace lyric_build::internal {
 
 }
 
-#endif // LYRIC_BUILD_INTERNAL_TASK_UTILS_H
+#endif // LYRIC_BUILD_TASK_UTILS_H

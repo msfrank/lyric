@@ -98,19 +98,10 @@ namespace lyric_assembler {
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             const ObjectStateOptions &options = {});
-        ObjectState(
-            const lyric_common::ModuleLocation &location,
-            const lyric_common::ModuleLocation &origin,
-            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
-            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
-            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-            const lyric_common::ModuleLocation &pluginLocation,
-            const ObjectStateOptions &options = {});
         ~ObjectState();
 
         lyric_common::ModuleLocation getLocation() const;
         lyric_common::ModuleLocation getOrigin() const;
-        lyric_common::ModuleLocation getPluginLocation() const;
         const ObjectStateOptions *getOptions() const;
 
         tempo_utils::Status load();
@@ -224,6 +215,13 @@ namespace lyric_assembler {
         std::vector<StructSymbol *>::const_iterator structsEnd() const;
         int numStructs() const;
 
+        tempo_utils::Result<ObjectPlugin *> declarePlugin(
+            const lyric_common::ModuleLocation &location,
+            lyric_object::HashType hash = lyric_object::HashType::None,
+            bool isExactLinkage = false);
+        bool hasPlugin() const;
+        ObjectPlugin *getPlugin() const;
+
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
     private:
@@ -232,7 +230,6 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
-        lyric_common::ModuleLocation m_pluginLocation;
         ObjectStateOptions m_options;
 
         ObjectRoot *m_root = nullptr;

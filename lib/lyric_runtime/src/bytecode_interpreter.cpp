@@ -1248,7 +1248,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (trap == nullptr)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "no trap found"));
-                auto status = trap(this, m_state.get(), nullptr);  // invoke the trap
+                // invoke the trap
+                auto status = trap->func(this, m_state.get(), nullptr);
                 if (!status.isOk())
                     return onError(op, status);
                 // ensure currentCoro is up to date

@@ -7,7 +7,7 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/compile_plugin_task.h>
-#include <lyric_build/internal/task_utils.h>
+#include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_types.h>
@@ -15,11 +15,9 @@
 #include <lyric_common/plugin.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_parser/ast_attrs.h>
-#include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
-#include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/process_builder.h>

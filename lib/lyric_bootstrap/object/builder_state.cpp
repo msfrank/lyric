@@ -117,14 +117,10 @@ CoreParam make_rest_param(const CoreType *type)
     return {{}, lyric_object::PlacementType::Rest, type, nullptr, false, false};
 }
 
-BuilderState::BuilderState(
-    const lyric_common::ModuleLocation &location,
-    std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex)
-    : location(location),
-      trapIndex(std::move(trapIndex))
+BuilderState::BuilderState(const lyric_common::ModuleLocation &location)
+    : location(location)
 {
     TU_ASSERT (this->location.isValid());
-    TU_ASSERT (this->trapIndex != nullptr);
 
     TU_LOG_FATAL_IF (!absl::SimpleAtoi(BOOTSTRAP_MAJOR_VERSION, &major))
         << "invalid major version " << BOOTSTRAP_MAJOR_VERSION;
@@ -221,10 +217,22 @@ BuilderState::addTemplate(
     return Template;
 }
 
+tu_uint32
+BuilderState::getOrInsertTrap(std::string_view trapName)
+{
+    auto entry = trapNumbers.find(trapName);
+    if (entry != trapNumbers.cend())
+        return entry->second;
+    auto trapNumber = trapNumbers.size();
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    trapNumbers[trapName] = trapNumber;
+    return trapNumber;
+}
+
 void
 BuilderState::writeTrap(lyric_object::BytecodeBuilder &code, std::string_view trapName, tu_uint8 flags)
 {
-    auto trapNumber = trapIndex->lookupTrap(trapName);
+    auto trapNumber = getOrInsertTrap(trapName);
     TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
     auto status = code.trap(trapNumber, flags);
     TU_RAISE_IF_NOT_OK (status);
@@ -689,7 +697,7 @@ BuilderState::setClassAllocator(const CoreClass *receiver, std::string_view trap
 
     auto *ReceiverClass = classcache[receiver->classPath];
     TU_ASSERT (ReceiverClass->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    auto trapNumber = trapIndex->lookupTrap(trapName);
+    auto trapNumber = getOrInsertTrap(trapName);
     TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
     ReceiverClass->allocatorTrap = trapNumber;
 }
@@ -890,7 +898,7 @@ BuilderState::setStructAllocator(const CoreStruct *receiver, std::string_view tr
 
     auto *ReceiverStruct = structcache[receiver->structPath];
     TU_ASSERT (ReceiverStruct->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    auto trapNumber = trapIndex->lookupTrap(trapName);
+    auto trapNumber = getOrInsertTrap(trapName);
     TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
     ReceiverStruct->allocatorTrap = trapNumber;
 }
@@ -1090,7 +1098,7 @@ BuilderState::setInstanceAllocator(const CoreInstance *receiver, std::string_vie
 
     auto *ReceiverInstance = instancecache[receiver->instancePath];
     TU_ASSERT (ReceiverInstance->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    auto trapNumber = trapIndex->lookupTrap(trapName);
+    auto trapNumber = getOrInsertTrap(trapName);
     TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
     ReceiverInstance->allocatorTrap = trapNumber;
 }
@@ -1430,7 +1438,7 @@ BuilderState::setEnumAllocator(const CoreEnum *receiver, std::string_view trapNa
 
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     TU_ASSERT (ReceiverEnum->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    auto trapNumber = trapIndex->lookupTrap(trapName);
+    auto trapNumber = getOrInsertTrap(trapName);
     TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
     ReceiverEnum->allocatorTrap = trapNumber;
 }
@@ -1676,8 +1684,8 @@ build_impls_vector(flatbuffers::FlatBufferBuilder &buffer, const std::vector<Cor
     return buffer.CreateVector(impl_offsets);
 }
 
-std::shared_ptr<const std::string>
-BuilderState::toBytes() const
+lyric_object::LyricObject
+BuilderState::toObject() const
 {
     flatbuffers::FlatBufferBuilder buffer;
     std::vector<flatbuffers::Offset<lyo1::TypeDescriptor>> types_vector;
@@ -1979,13 +1987,19 @@ BuilderState::toBytes() const
             buffer, fb_fullyQualifiedName, iterator->second));
     }
 
-    // write the plugin descriptor if plugin exists
-    flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
-    if (trapIndex != nullptr) {
-        auto pluginLocation = location.getPath();
-        auto fb_pluginLocation = buffer.CreateSharedString(pluginLocation.toString());
-        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, fb_pluginLocation);
+    // write the plugin descriptor
+    flatbuffers::Offset<lyo1::PluginDescriptor> pluginOffset = 0;
+    auto pluginPath = location.getPath();
+    auto fb_pluginLocation = buffer.CreateSharedString(pluginPath.toString());
+
+    std::vector<std::string> traps(trapNumbers.size());
+    for (auto &entry : trapNumbers) {
+        traps[entry.second] = entry.first;
     }
+    auto trapsOffset = buffer.CreateVectorOfStrings(traps);
+
+    pluginOffset = lyo1::CreatePluginDescriptor(buffer, fb_pluginLocation,
+        lyo1::HashType::None, /* plugin_hash= */ 0, trapsOffset, lyo1::PluginFlags::NONE);
 
     // serialize vectors
     auto typesOffset = buffer.CreateVector(types_vector);
@@ -2032,14 +2046,14 @@ BuilderState::toBytes() const
     objectBuilder.add_enums(enumsOffset);
     objectBuilder.add_protocols(protocolsOffset);
     objectBuilder.add_symbols(symbolsOffset);
-    objectBuilder.add_plugin(optionalPluginOffset);
+    objectBuilder.add_plugin(pluginOffset);
     objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);
     objectBuilder.add_symbol_table(symbolTableOffset.Union());
     objectBuilder.add_bytecode(bytecodeOffset);
     auto object = objectBuilder.Finish();
     buffer.Finish(object, lyo1::ObjectIdentifier());
 
-    // return a byte array with a deep copy of the buffer
-    return std::make_shared<const std::string>((const char *) buffer.GetBufferPointer(),
-        static_cast<tu_uint32>(buffer.GetSize()));
+    // return lyric object
+    auto bytes = tempo_utils::MemoryBytes::copy(buffer.GetBufferSpan());
+    return lyric_object::LyricObject(bytes);
 }

@@ -59,7 +59,7 @@ namespace lyric_runtime {
         DataCell getNamespace(tu_uint32 index) const;
         bool setNamespace(tu_uint32 index, const DataCell &value);
 
-        NativeFunc getTrap(tu_uint32 address) const;
+        const NativeTrap *getTrap(tu_uint32 address) const;
 
         void *getData() const;
         void setData(void *data);
@@ -93,6 +93,9 @@ namespace lyric_runtime {
 
         DataCell *m_namespaces;
         tu_uint32 m_numNamespaces;
+
+        const NativeTrap* *m_traps;
+        tu_uint32 m_numTraps;
 
         DescriptorTable m_actionDescriptors;
         DescriptorTable m_callDescriptors;
