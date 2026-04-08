@@ -1,22 +1,30 @@
-#ifndef LYRIC_BUILD_INTERNAL_SYMBOLIZE_MODULE_TASK_H
-#define LYRIC_BUILD_INTERNAL_SYMBOLIZE_MODULE_TASK_H
+#ifndef LYRIC_BUILD_INTERNAL_ANALYZE_OUTLINE_TASK_H
+#define LYRIC_BUILD_INTERNAL_ANALYZE_OUTLINE_TASK_H
 
 #include <filesystem>
 
+#include <absl/container/flat_hash_set.h>
+
+#include <lyric_analyzer/lyric_analyzer.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
-#include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
+#include <lyric_build/build_types.h>
 #include <lyric_parser/lyric_parser.h>
-#include <lyric_symbolizer/lyric_symbolizer.h>
 
 namespace lyric_build::internal {
 
-    class SymbolizeModuleTask : public BaseTask {
+    class AnalyzeOutlineTask : public BaseTask {
+
+        enum class Phase {
+            SYMBOLIZE_IMPORTS,
+            ANALYZE_OUTLINE,
+            COMPLETE,
+        };
 
     public:
-        SymbolizeModuleTask(
+        AnalyzeOutlineTask(
             const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
@@ -28,26 +36,32 @@ namespace lyric_build::internal {
         Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState) override;
+            BuildState *generation) override;
 
     private:
         lyric_common::ModuleLocation m_moduleLocation;
-        lyric_parser::ParserOptions m_parserOptions;
         lyric_assembler::ObjectStateOptions m_objectStateOptions;
-        lyric_symbolizer::SymbolizerOptions m_symbolizerOptions;
+        lyric_analyzer::AnalyzerOptions m_analyzerOptions;
         TaskKey m_parseTarget;
+        TaskKey m_symbolizeTarget;
+        absl::flat_hash_set<TaskKey> m_analyzeTargets;
+        Phase m_phase;
 
         tempo_utils::Status configure(const TaskSettings *config);
-        tempo_utils::Status symbolizeModule(
+        tempo_utils::Status symbolizeImports(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *buildState);
+        tempo_utils::Status analyzeModule(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
             BuildState *buildState);
     };
 
-    BaseTask *new_symbolize_module_task(
+    BaseTask *new_analyze_outline_task(
         const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 
-#endif // LYRIC_BUILD_INTERNAL_SYMBOLIZE_MODULE_TASK_H
+#endif // LYRIC_BUILD_INTERNAL_ANALYZE_OUTLINE_TASK_H

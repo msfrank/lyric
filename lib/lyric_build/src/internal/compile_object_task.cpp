@@ -7,7 +7,7 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/build_macros.h>
-#include <lyric_build/internal/compile_module_task.h>
+#include <lyric_build/internal/compile_object_task.h>
 #include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
@@ -21,17 +21,17 @@
 #include <tempo_config/container_conversions.h>
 #include <tempo_utils/log_message.h>
 
-lyric_build::internal::CompileModuleTask::CompileModuleTask(
+lyric_build::internal::CompileObjectTask::CompileObjectTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span),
-      m_phase(CompileModulePhase::ANALYZE_IMPORTS)
+    : BaseTask(generation, key, std::move(span)),
+      m_phase(Phase::ANALYZE_IMPORTS)
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
+lyric_build::internal::CompileObjectTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -54,11 +54,11 @@ lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.environmentModules, environmentModulesParser,
         config, taskId, "environmentModules"));
 
-    // configure the parse_module dependency
-    m_parseTarget = TaskKey("parse_module", taskId.getId());
+    // configure the parse_archetype dependency
+    m_parseTarget = TaskKey("parse_archetype", taskId.getId());
 
-    // configure the symbolize_module dependency
-    m_symbolizeTarget = TaskKey("symbolize_module", taskId.getId(), tempo_config::ConfigMap({
+    // configure the symbolize_linkage dependency
+    m_symbolizeTarget = TaskKey("symbolize_linkage", taskId.getId(), tempo_config::ConfigMap({
         {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
     }));
 
@@ -73,7 +73,7 @@ lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
 }
 
 tempo_utils::Result<std::string>
-lyric_build::internal::CompileModuleTask::configureTask(
+lyric_build::internal::CompileObjectTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
 {
@@ -91,14 +91,14 @@ lyric_build::internal::CompileModuleTask::configureTask(
 }
 
 tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::CompileModuleTask::checkDependencies()
+lyric_build::internal::CompileObjectTask::checkDependencies()
 {
     TU_LOG_VV << "task " << getKey() << " needs dependencies: " << m_compileTargets;
     return m_compileTargets;
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileModuleTask::analyzeImports(
+lyric_build::internal::CompileObjectTask::analyzeImports(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -129,11 +129,6 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
         if (pragma.isClass(lyric_schema::kLyricAssemblerPluginClass)) {
             TU_RETURN_IF_NOT_OK (pragma.parseAttr(lyric_parser::kLyricAstModuleLocation, pluginLocation));
         }
-    }
-
-    if (pluginLocation.isValid()) {
-        m_pluginTarget = TaskKey("provide_plugin", pluginLocation.getPath().toString());
-        m_compileTargets.insert(m_pluginTarget);
     }
 
     if (!depStates.contains(m_symbolizeTarget))
@@ -174,7 +169,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
             }
             mapBuilder = mapBuilder.put("environmentModules", seqBuilder.buildNode());
         }
-        analyzeTargets.insert(TaskKey("analyze_module", importPath, mapBuilder.buildMap()));
+        analyzeTargets.insert(TaskKey("analyze_outline", importPath, mapBuilder.buildMap()));
     }
 
     m_compileTargets.insert(analyzeTargets.cbegin(), analyzeTargets.cend());
@@ -183,7 +178,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileModuleTask::compileModule(
+lyric_build::internal::CompileObjectTask::compileModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -285,7 +280,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
 }
 
 Option<tempo_utils::Status>
-lyric_build::internal::CompileModuleTask::runTask(
+lyric_build::internal::CompileObjectTask::runTask(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -293,19 +288,19 @@ lyric_build::internal::CompileModuleTask::runTask(
     auto numDependencies = m_compileTargets.size();
     tempo_utils::Status status;
     switch (m_phase) {
-        case CompileModulePhase::ANALYZE_IMPORTS:
+        case Phase::ANALYZE_IMPORTS:
             status = analyzeImports(taskHash, depStates, buildState);
             if (!status.isOk())
                 return Option(status);
-            m_phase = CompileModulePhase::COMPILE_MODULE;
+            m_phase = Phase::COMPILE_OBJECT;
             if (m_compileTargets.size() > numDependencies)
                 return {};
             [[fallthrough]];
-        case CompileModulePhase::COMPILE_MODULE:
+        case Phase::COMPILE_OBJECT:
             status =  compileModule(taskHash, depStates, buildState);
-            m_phase = CompileModulePhase::COMPLETE;
+            m_phase = Phase::COMPLETE;
             return Option(status);
-        case CompileModulePhase::COMPLETE:
+        case Phase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "encountered invalid task phase");
             return Option(status);
@@ -315,10 +310,10 @@ lyric_build::internal::CompileModuleTask::runTask(
 }
 
 lyric_build::BaseTask *
-lyric_build::internal::new_compile_module_task(
+lyric_build::internal::new_compile_object_task(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new CompileModuleTask(generation, key, span);
+    return new CompileObjectTask(generation, key, std::move(span));
 }

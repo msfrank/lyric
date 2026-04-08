@@ -26,7 +26,7 @@ ArchiverTester::writeModule(const std::string &code, const std::filesystem::path
     lyric_common::ModuleLocation moduleLocation;
     TU_ASSIGN_OR_RETURN (moduleLocation, m_tester->writeModule(code, path));
 
-    lyric_build::TaskId target("compile_module", moduleLocation.toString());
+    lyric_build::TaskId target("compile_object", moduleLocation.toString());
     m_taskIds.insert(std::move(target));
 
     return moduleLocation;

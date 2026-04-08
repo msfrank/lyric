@@ -6,7 +6,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
-#include <lyric_build/internal/analyze_module_task.h>
+#include <lyric_build/internal/analyze_outline_task.h>
 #include <lyric_build/internal/build_macros.h>
 #include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
@@ -17,17 +17,17 @@
 #include <tempo_config/base_conversions.h>
 #include <tempo_tracing/tracing_schema.h>
 
-lyric_build::internal::AnalyzeModuleTask::AnalyzeModuleTask(
+lyric_build::internal::AnalyzeOutlineTask::AnalyzeOutlineTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span),
-      m_phase(AnalyzeModulePhase::SYMBOLIZE_IMPORTS)
+    : BaseTask(generation, key, std::move(span)),
+      m_phase(Phase::SYMBOLIZE_IMPORTS)
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
+lyric_build::internal::AnalyzeOutlineTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -44,11 +44,11 @@ lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
         config, taskId, "preludeLocation"));
 
-    // configure the parse_module dependency
-    m_parseTarget = TaskKey("parse_module", taskId.getId());
+    // configure the parse_archetype dependency
+    m_parseTarget = TaskKey("parse_archetype", taskId.getId());
 
-    // configure the symbolize_module dependency
-    m_symbolizeTarget = TaskKey("symbolize_module", taskId.getId(), tempo_config::ConfigMap({
+    // configure the symbolize_linkage dependency
+    m_symbolizeTarget = TaskKey("symbolize_linkage", taskId.getId(), tempo_config::ConfigMap({
         {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
     }));
 
@@ -65,7 +65,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
 }
 
 tempo_utils::Result<std::string>
-lyric_build::internal::AnalyzeModuleTask::configureTask(
+lyric_build::internal::AnalyzeOutlineTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
 {
@@ -82,13 +82,13 @@ lyric_build::internal::AnalyzeModuleTask::configureTask(
 }
 
 tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::AnalyzeModuleTask::checkDependencies()
+lyric_build::internal::AnalyzeOutlineTask::checkDependencies()
 {
     return m_analyzeTargets;
 }
 
 tempo_utils::Status
-lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
+lyric_build::internal::AnalyzeOutlineTask::symbolizeImports(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -123,7 +123,7 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
         if (location.hasScheme() || location.hasAuthority())    // ignore imports that aren't in the workspace
             continue;
         auto importPath = location.getPath().toString();
-        symbolizeTargets.insert(TaskKey("symbolize_module", importPath, tempo_config::ConfigMap({
+        symbolizeTargets.insert(TaskKey("symbolize_linkage", importPath, tempo_config::ConfigMap({
                 {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
                 {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })));
@@ -135,7 +135,7 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
 }
 
 tempo_utils::Status
-lyric_build::internal::AnalyzeModuleTask::analyzeModule(
+lyric_build::internal::AnalyzeOutlineTask::analyzeModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -210,7 +210,7 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
 }
 
 Option<tempo_utils::Status>
-lyric_build::internal::AnalyzeModuleTask::runTask(
+lyric_build::internal::AnalyzeOutlineTask::runTask(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -218,19 +218,19 @@ lyric_build::internal::AnalyzeModuleTask::runTask(
     auto numDependencies = m_analyzeTargets.size();
     tempo_utils::Status status;
     switch (m_phase) {
-        case AnalyzeModulePhase::SYMBOLIZE_IMPORTS:
+        case Phase::SYMBOLIZE_IMPORTS:
             status = symbolizeImports(taskHash, depStates, buildState);
             if (!status.isOk())
                 return Option(status);
-            m_phase = AnalyzeModulePhase::ANALYZE_MODULE;
+            m_phase = Phase::ANALYZE_OUTLINE;
             if (m_analyzeTargets.size() > numDependencies)
                 return {};
             [[fallthrough]];
-        case AnalyzeModulePhase::ANALYZE_MODULE:
+        case Phase::ANALYZE_OUTLINE:
             status =  analyzeModule(taskHash, depStates, buildState);
-            m_phase = AnalyzeModulePhase::COMPLETE;
+            m_phase = Phase::COMPLETE;
             return Option(status);
-        case AnalyzeModulePhase::COMPLETE:
+        case Phase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "encountered invalid task phase");
             return Option(status);
@@ -240,10 +240,10 @@ lyric_build::internal::AnalyzeModuleTask::runTask(
 }
 
 lyric_build::BaseTask *
-lyric_build::internal::new_analyze_module_task(
+lyric_build::internal::new_analyze_outline_task(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new AnalyzeModuleTask(generation, key, span);
+    return new AnalyzeOutlineTask(generation, key, std::move(span));
 }

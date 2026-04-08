@@ -1,7 +1,5 @@
-#ifndef LYRIC_BUILD_INTERNAL_REWRITE_MODULE_TASK_H
-#define LYRIC_BUILD_INTERNAL_REWRITE_MODULE_TASK_H
-
-#include <filesystem>
+#ifndef LYRIC_BUILD_INTERNAL_SYMBOLIZE_LINKAGE_TASK_H
+#define LYRIC_BUILD_INTERNAL_SYMBOLIZE_LINKAGE_TASK_H
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
@@ -9,15 +7,14 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_parser/lyric_parser.h>
-#include <lyric_rewriter/lyric_rewriter.h>
-#include <lyric_rewriter/macro_registry.h>
+#include <lyric_symbolizer/lyric_symbolizer.h>
 
 namespace lyric_build::internal {
 
-    class RewriteModuleTask : public BaseTask {
+    class SymbolizeLinkageTask : public BaseTask {
 
     public:
-        RewriteModuleTask(
+        SymbolizeLinkageTask(
             const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
@@ -29,24 +26,26 @@ namespace lyric_build::internal {
         Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation) override;
+            BuildState *buildState) override;
 
     private:
         lyric_common::ModuleLocation m_moduleLocation;
-        lyric_rewriter::RewriterOptions m_rewriterOptions;
+        lyric_parser::ParserOptions m_parserOptions;
+        lyric_assembler::ObjectStateOptions m_objectStateOptions;
+        lyric_symbolizer::SymbolizerOptions m_symbolizerOptions;
         TaskKey m_parseTarget;
 
         tempo_utils::Status configure(const TaskSettings *config);
-        tempo_utils::Status rewriteModule(
+        tempo_utils::Status symbolizeModule(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation);
+            BuildState *buildState);
     };
 
-    BaseTask *new_rewrite_module_task(
+    BaseTask *new_symbolize_linkage_task(
         const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 
-#endif // LYRIC_BUILD_INTERNAL_REWRITE_MODULE_TASK_H
+#endif // LYRIC_BUILD_INTERNAL_SYMBOLIZE_LINKAGE_TASK_H

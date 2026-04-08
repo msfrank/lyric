@@ -5,7 +5,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/internal/build_macros.h>
-#include <lyric_build/internal/parse_module_task.h>
+#include <lyric_build/internal/parse_archetype_task.h>
 #include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
@@ -19,16 +19,16 @@
 #include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/file_reader.h>
 
-lyric_build::internal::ParseModuleTask::ParseModuleTask(
+lyric_build::internal::ParseArchetypeTask::ParseArchetypeTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span)
+    : BaseTask(generation, key, std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
+lyric_build::internal::ParseArchetypeTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -61,7 +61,7 @@ lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
 }
 
 tempo_utils::Result<std::string>
-lyric_build::internal::ParseModuleTask::configureTask(
+lyric_build::internal::ParseArchetypeTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
 {
@@ -90,14 +90,14 @@ lyric_build::internal::ParseModuleTask::configureTask(
 }
 
 tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::ParseModuleTask::checkDependencies()
+lyric_build::internal::ParseArchetypeTask::checkDependencies()
 {
     // this task has no dependencies
     return absl::flat_hash_set<TaskKey>();
 }
 
 tempo_utils::Status
-lyric_build::internal::ParseModuleTask::parseModule(
+lyric_build::internal::ParseArchetypeTask::parseModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -158,7 +158,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
 }
 
 Option<tempo_utils::Status>
-lyric_build::internal::ParseModuleTask::runTask(
+lyric_build::internal::ParseArchetypeTask::runTask(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -168,10 +168,10 @@ lyric_build::internal::ParseModuleTask::runTask(
 }
 
 lyric_build::BaseTask *
-lyric_build::internal::new_parse_module_task(
+lyric_build::internal::new_parse_archetype_task(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new ParseModuleTask(generation, key, span);
+    return new ParseArchetypeTask(generation, key, std::move(span));
 }

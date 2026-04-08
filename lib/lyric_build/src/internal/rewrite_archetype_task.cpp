@@ -9,7 +9,7 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/build_macros.h>
-#include <lyric_build/internal/rewrite_module_task.h>
+#include <lyric_build/internal/rewrite_archetype_task.h>
 #include <lyric_build/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
@@ -22,16 +22,16 @@
 #include <tempo_config/container_conversions.h>
 #include <tempo_tracing/tracing_schema.h>
 
-lyric_build::internal::RewriteModuleTask::RewriteModuleTask(
+lyric_build::internal::RewriteArchetypeTask::RewriteArchetypeTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span)
+    : BaseTask(generation, key, std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::RewriteModuleTask::configure(const TaskSettings *config)
+lyric_build::internal::RewriteArchetypeTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -44,14 +44,14 @@ lyric_build::internal::RewriteModuleTask::configure(const TaskSettings *config)
 
     lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
 
-    // add dependency on parse_module
-    m_parseTarget = TaskKey("parse_module", taskId.getId());
+    // add dependency on parse_archetype
+    m_parseTarget = TaskKey("parse_archetype", taskId.getId());
 
     return {};
 }
 
 tempo_utils::Result<std::string>
-lyric_build::internal::RewriteModuleTask::configureTask(
+lyric_build::internal::RewriteArchetypeTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
 {
@@ -67,13 +67,13 @@ lyric_build::internal::RewriteModuleTask::configureTask(
 }
 
 tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::RewriteModuleTask::checkDependencies()
+lyric_build::internal::RewriteArchetypeTask::checkDependencies()
 {
     return absl::flat_hash_set<TaskKey>({m_parseTarget});
 }
 
 tempo_utils::Status
-lyric_build::internal::RewriteModuleTask::rewriteModule(
+lyric_build::internal::RewriteArchetypeTask::rewriteModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -154,7 +154,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
 }
 
 Option<tempo_utils::Status>
-lyric_build::internal::RewriteModuleTask::runTask(
+lyric_build::internal::RewriteArchetypeTask::runTask(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -164,10 +164,10 @@ lyric_build::internal::RewriteModuleTask::runTask(
 }
 
 lyric_build::BaseTask *
-lyric_build::internal::new_rewrite_module_task(
+lyric_build::internal::new_rewrite_archetype_task(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new RewriteModuleTask(generation, key, span);
+    return new RewriteArchetypeTask(generation, key, std::move(span));
 }

@@ -58,7 +58,7 @@ lyric_build::internal::CompileTask::configure(
         std::filesystem::path modulePath = "/";
         modulePath /= sourcePath;
         modulePath.replace_extension();
-        m_compileTargets.insert(TaskKey("compile_module", modulePath.string()));
+        m_compileTargets.insert(TaskKey("compile_object", modulePath.string()));
     }
 
     if (m_compileTargets.empty())

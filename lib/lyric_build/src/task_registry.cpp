@@ -1,19 +1,17 @@
 
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/internal/analyze_module_task.h>
+#include <lyric_build/internal/analyze_outline_task.h>
 #include <lyric_build/internal/archive_task.h>
 #include <lyric_build/internal/build_task.h>
 #include <lyric_build/internal/compile_task.h>
-#include <lyric_build/internal/compile_module_task.h>
+#include <lyric_build/internal/compile_object_task.h>
 #include <lyric_build/internal/compile_plugin_task.h>
 #include <lyric_build/internal/fetch_external_file_task.h>
 #include <lyric_build/internal/orchestrate_task.h>
-#include <lyric_build/internal/parse_module_task.h>
-#include <lyric_build/internal/provide_module_task.h>
-#include <lyric_build/internal/provide_plugin_task.h>
-#include <lyric_build/internal/rewrite_module_task.h>
-#include <lyric_build/internal/symbolize_module_task.h>
+#include <lyric_build/internal/parse_archetype_task.h>
+#include <lyric_build/internal/rewrite_archetype_task.h>
+#include <lyric_build/internal/symbolize_linkage_task.h>
 #include <lyric_build/task_registry.h>
 
 struct TaskDomain {
@@ -25,19 +23,17 @@ struct TaskDomain {
 };
 
 static const TaskDomain predefinedTaskDomains[] = {
-    {"analyze_module",      lyric_build::internal::new_analyze_module_task},
+    {"analyze_outline",     lyric_build::internal::new_analyze_outline_task},
     {"archive",             lyric_build::internal::new_archive_task},
     {"build",               lyric_build::internal::new_build_task},
     {"compile",             lyric_build::internal::new_compile_task},
-    {"compile_module",      lyric_build::internal::new_compile_module_task},
+    {"compile_object",      lyric_build::internal::new_compile_object_task},
     {"compile_plugin",      lyric_build::internal::new_compile_plugin_task},
     {"fetch_external_file", lyric_build::internal::new_fetch_external_file_task},
     {"orchestrate",         lyric_build::internal::new_orchestrate_task},
-    {"parse_module",        lyric_build::internal::new_parse_module_task},
-    {"provide_module",      lyric_build::internal::new_provide_module_task},
-    {"provide_plugin",      lyric_build::internal::new_provide_plugin_task},
-    {"rewrite_module",      lyric_build::internal::new_rewrite_module_task},
-    {"symbolize_module",    lyric_build::internal::new_symbolize_module_task},
+    {"parse_archetype",     lyric_build::internal::new_parse_archetype_task},
+    {"rewrite_archetype",   lyric_build::internal::new_rewrite_archetype_task},
+    {"symbolize_linkage",   lyric_build::internal::new_symbolize_linkage_task},
     {nullptr, nullptr},     // sentinel value, must be last
 };
 

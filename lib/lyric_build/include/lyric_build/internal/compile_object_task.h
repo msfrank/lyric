@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
-#define LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
+#ifndef LYRIC_BUILD_INTERNAL_COMPILE_OBJECT_TASK_H
+#define LYRIC_BUILD_INTERNAL_COMPILE_OBJECT_TASK_H
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
@@ -11,16 +11,16 @@
 
 namespace lyric_build::internal {
 
-    class CompileModuleTask : public BaseTask {
+    class CompileObjectTask : public BaseTask {
 
-        enum class CompileModulePhase {
+        enum class Phase {
             ANALYZE_IMPORTS,
-            COMPILE_MODULE,
+            COMPILE_OBJECT,
             COMPLETE,
         };
 
     public:
-        CompileModuleTask(
+        CompileObjectTask(
             const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
@@ -42,7 +42,7 @@ namespace lyric_build::internal {
         TaskKey m_symbolizeTarget;
         TaskKey m_pluginTarget;
         absl::flat_hash_set<TaskKey> m_compileTargets;
-        CompileModulePhase m_phase;
+        Phase m_phase;
 
         tempo_utils::Status configure(const lyric_build::TaskSettings *config);
         tempo_utils::Status analyzeImports(
@@ -55,10 +55,10 @@ namespace lyric_build::internal {
             lyric_build::BuildState *buildState);
     };
 
-    BaseTask *new_compile_module_task(
+    BaseTask *new_compile_object_task(
         const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 
-#endif // LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
+#endif // LYRIC_BUILD_INTERNAL_COMPILE_OBJECT_TASK_H

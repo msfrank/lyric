@@ -251,7 +251,7 @@ lyric_test::TestRunner::buildModuleInternal(
     lyric_common::ModuleLocation moduleLocation;
     TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
-    lyric_build::TaskId target("compile_module", moduleLocation.toString());
+    lyric_build::TaskId target("compile_object", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
@@ -280,7 +280,7 @@ lyric_test::TestRunner::compileModuleInternal(
     lyric_common::ModuleLocation moduleLocation;
     TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
-    lyric_build::TaskId target("compile_module", moduleLocation.toString());
+    lyric_build::TaskId target("compile_object", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
@@ -329,7 +329,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
     lyric_common::ModuleLocation moduleLocation;
     TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
-    lyric_build::TaskId target("analyze_module", moduleLocation.toString());
+    lyric_build::TaskId target("analyze_outline", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
@@ -378,7 +378,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     lyric_common::ModuleLocation moduleLocation;
     TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
-    lyric_build::TaskId target("symbolize_module", moduleLocation.toString());
+    lyric_build::TaskId target("symbolize_linkage", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));

@@ -11,8 +11,7 @@ set(TEST_CASES
     compile_plugin_task_tests.cpp
     fetch_external_file_task_tests.cpp
     lyric_metadata_tests.cpp
-    parse_module_task_tests.cpp
-    provide_plugin_task_tests.cpp
+    parse_archetype_task_tests.cpp
     )
 
 # define test suite driver
