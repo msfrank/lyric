@@ -13,11 +13,11 @@ class TestTask : public lyric_build::BaseTask {
 
 public:
     TestTask(
-        const tempo_utils::UUID &generation,
+        const lyric_build::BuildGeneration &generation,
         const lyric_build::TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-    tempo_utils::Result<std::string> configureTask(
+    tempo_utils::Result<lyric_build::TaskHash> configureTask(
         const lyric_build::TaskSettings *config,
         lyric_build::AbstractVirtualFilesystem *virtualFilesystem) override;
     tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>> checkDependencies() override;
@@ -35,7 +35,7 @@ private:
 };
 
 lyric_build::BaseTask *new_test_task(
-    const tempo_utils::UUID &generation,
+    const lyric_build::BuildGeneration &generation,
     const lyric_build::TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span);
 

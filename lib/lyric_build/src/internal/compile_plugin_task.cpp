@@ -24,7 +24,7 @@
 #include <tempo_utils/process_runner.h>
 
 lyric_build::internal::CompilePluginTask::CompilePluginTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span)
@@ -95,7 +95,7 @@ lyric_build::internal::CompilePluginTask::configure(const TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::CompilePluginTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -226,7 +226,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     auto artifactCache = buildState->getArtifactCache();
 
     // declare the artifact
-    ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    ArtifactId pluginArtifact(buildState->getGeneration(), taskHash, m_moduleLocation.toUrl());
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(pluginArtifact));
 
     // store the plugin object metadata in the cache
@@ -262,7 +262,7 @@ lyric_build::internal::CompilePluginTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_compile_plugin_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

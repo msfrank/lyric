@@ -14,11 +14,11 @@ namespace lyric_build::internal {
 
     public:
         OrchestrateTask(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-        tempo_utils::Result<std::string> configureTask(
+        tempo_utils::Result<TaskHash> configureTask(
             const TaskSettings *config,
             AbstractVirtualFilesystem *virtualFilesystem) override;
         tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
@@ -38,7 +38,7 @@ namespace lyric_build::internal {
     };
 
     BaseTask *new_orchestrate_task(
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

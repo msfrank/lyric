@@ -12,7 +12,7 @@
 #include <tempo_utils/log_message.h>
 
 lyric_build::internal::CompileTask::CompileTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span)
@@ -70,7 +70,7 @@ lyric_build::internal::CompileTask::configure(
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::CompileTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -109,7 +109,7 @@ lyric_build::internal::CompileTask::compile(
                 "dependent task {} has invalid hash", taskKey.toString());
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
-        tempo_utils::UUID generation;
+        BuildGeneration generation;
         TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(artifactTrace));
 
         std::vector<ArtifactId> targetArtifacts;
@@ -136,7 +136,7 @@ lyric_build::internal::CompileTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_compile_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

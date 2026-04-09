@@ -20,7 +20,7 @@ TEST(CodeFragment, ImmediateNil)
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_assembler::ObjectState objectState(
         location, origin, localModuleCache, systemModuleCache, shortcutResolver);
@@ -63,7 +63,7 @@ TEST(CodeFragment, UnconditionalJump)
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_assembler::ObjectState objectState(
         location, origin, localModuleCache, systemModuleCache, shortcutResolver);

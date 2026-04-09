@@ -169,7 +169,7 @@ lyric_build::BuildRunner::run()
             "uv_loop_close failed: {}", uv_err_name(ret));
 
     // determine the counts of created and cached tasks
-    auto generation = m_state->getGeneration().getUuid();
+    auto generation = m_state->getGeneration();
     for (const auto &entry : m_tasks) {
         auto state = m_state->loadState(entry.first);
         if (state.getGeneration() == generation) {
@@ -205,7 +205,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
         auto span = m_recorder->makeSpan();
         TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
-            m_state->getGeneration().getUuid(), key, span));
+            m_state->getGeneration(), key, span));
 
         m_tasks[key] = task;                            // task was created, add to tasks table
         TU_LOG_VV << "constructed new task " << key;

@@ -17,7 +17,7 @@ lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid)
     TU_ASSERT (m_uuid.isValid());
 }
 
-lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration &other)
+lyric_build::BuildGeneration::BuildGeneration(const BuildGeneration &other)
     : m_uuid(other.m_uuid)
 {
 }
@@ -25,13 +25,36 @@ lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration
 bool
 lyric_build::BuildGeneration::isValid() const
 {
-    return m_uuid.isValid();
+    return m_uuid.isValid() && !m_uuid.isNil();
 }
 
-tempo_utils::UUID
-lyric_build::BuildGeneration::getUuid() const
+std::vector<tu_uint8>
+lyric_build::BuildGeneration::toBytes() const
 {
-    return m_uuid;
+    return m_uuid.toBytes();
+}
+std::string
+lyric_build::BuildGeneration::toString() const
+{
+    return m_uuid.toCompactString();
+}
+
+bool
+lyric_build::BuildGeneration::operator==(const BuildGeneration &other) const
+{
+    return m_uuid.compare(other.m_uuid) == 0;
+}
+
+bool
+lyric_build::BuildGeneration::operator!=(const BuildGeneration &other) const
+{
+    return m_uuid.compare(other.m_uuid) != 0;
+}
+
+bool
+lyric_build::BuildGeneration::operator<(const BuildGeneration &other) const
+{
+    return m_uuid.compare(other.m_uuid) < 0;
 }
 
 lyric_build::BuildGeneration
@@ -41,138 +64,108 @@ lyric_build::BuildGeneration::create()
     return BuildGeneration(uuid);
 }
 
-lyric_build::TaskKey::TaskKey()
+lyric_build::BuildGeneration
+lyric_build::BuildGeneration::parse(std::string_view s)
 {
-}
-
-lyric_build::TaskKey::TaskKey(
-    const std::string &domain,
-    const std::string &id,
-    const tempo_config::ConfigMap &params)
-    : m_priv(std::make_shared<Priv>(domain, id, params))
-{
-}
-
-lyric_build::TaskKey::TaskKey(
-    const std::string &domain,
-    const std::vector<std::string> &parts,
-    const tempo_config::ConfigMap &params)
-    : TaskKey(domain, absl::StrJoin(parts, "/"), params)
-{
-}
-
-lyric_build::TaskKey::TaskKey(
-    const std::string &domain,
-    const std::filesystem::path &path,
-    const tempo_config::ConfigMap &params)
-    : TaskKey(domain, path.string(), params)
-{
-}
-
-lyric_build::TaskKey::TaskKey(const lyric_build::TaskKey &other)
-    : m_priv(other.m_priv)
-{
-}
-
-bool
-lyric_build::TaskKey::isValid() const
-{
-    return m_priv != nullptr;
-}
-
-std::string
-lyric_build::TaskKey::getDomain() const
-{
-    return m_priv? m_priv->domain : "";
-}
-
-std::string
-lyric_build::TaskKey::getId() const
-{
-    return m_priv? m_priv->id : "";
-}
-
-tempo_config::ConfigMap
-lyric_build::TaskKey::getParams() const
-{
-    return m_priv? m_priv->params : tempo_config::ConfigMap{};
-}
-
-std::string
-lyric_build::TaskKey::toString() const
-{
-    if (m_priv != nullptr)
-        return absl::StrCat(m_priv->domain, ":", m_priv->id, ":", m_priv->params.toString());
+    auto uuid = tempo_utils::UUID::parse(s);
+    if (uuid.isValid())
+        return BuildGeneration(uuid);
     return {};
 }
 
-int
-lyric_build::TaskKey::compare(const TaskKey &other) const
+lyric_build::TaskHash::TaskHash(std::vector<tu_uint8> taskHash)
+    : m_hash(std::make_shared<std::vector<tu_uint8>>(std::move(taskHash)))
 {
-    if (m_priv) {
-        if (other.m_priv == nullptr)
-            return 1;
-        auto domaincmp = m_priv->domain.compare(other.m_priv->domain);
-        if (domaincmp != 0)
-            return domaincmp;
-        auto idcmp = m_priv->id.compare(other.m_priv->id);
-        if (idcmp != 0)
-            return idcmp;
-        return m_priv->params.compare(other.m_priv->params);
-    }
-    return other.m_priv? -1 : 0;
+}
+
+lyric_build::TaskHash::TaskHash(const TaskHash &other)
+    : m_hash(other.m_hash)
+{
 }
 
 bool
-lyric_build::TaskKey::operator==(const TaskKey &other) const
+lyric_build::TaskHash::isValid()
+{
+    return m_hash != nullptr;
+}
+
+std::span<tu_uint8>
+lyric_build::TaskHash::bytesView() const
+{
+    if (m_hash == nullptr)
+        return {};
+    return std::span(m_hash->data(), m_hash->size());
+}
+
+std::vector<tu_uint8>
+lyric_build::TaskHash::toBytes() const
+{
+    if (m_hash == nullptr)
+        return {};
+    return *m_hash;
+}
+
+std::string
+lyric_build::TaskHash::toString() const
+{
+    if (m_hash == nullptr)
+        return {};
+    std::string_view sv((const char *) m_hash->data(), m_hash->size());
+    return absl::BytesToHexString(sv);
+}
+
+int
+lyric_build::TaskHash::compare(const TaskHash &other) const
+{
+    if (m_hash) {
+        if (other.m_hash == nullptr)
+            return 1;
+        auto size = std::min(m_hash->size(), other.m_hash->size());
+        return memcmp(m_hash->data(), other.m_hash->data(), size);
+    }
+    return other.m_hash? -1 : 0;
+}
+
+bool
+lyric_build::TaskHash::operator==(const TaskHash &other) const
 {
     return compare(other) == 0;
 }
 
 bool
-lyric_build::TaskKey::operator!=(const TaskKey &other) const
+lyric_build::TaskHash::operator!=(const TaskHash &other) const
 {
     return compare(other) != 0;
 }
 
 bool
-lyric_build::TaskKey::operator<(const TaskKey &other) const
+lyric_build::TaskHash::operator<(const TaskHash &other) const
 {
     return compare(other) < 0;
-}
-
-tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey)
-{
-    std::forward<tempo_utils::LogMessage>(message)
-        << "TaskKey(domain=" << taskKey.getDomain()
-        << ", id=" << taskKey.getId()
-        << ", params=" << taskKey.getParams().toString()
-        <<  ")";
-    return std::move(message);
-}
-
-
-lyric_build::TaskId::TaskId()
-{
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::string &id)
     : m_priv(std::make_shared<Priv>(domain, id))
 {
+    TU_ASSERT (!m_priv->domain.empty());
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::vector<std::string> &parts)
-    : m_priv(std::make_shared<Priv>(domain, absl::StrJoin(parts, "/")))
+    : TaskId(domain, absl::StrJoin(parts, "/"))
 {
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::filesystem::path &path)
-    : m_priv(std::make_shared<Priv>(domain, path.string()))
+    : TaskId(domain, path.string())
 {
 }
 
-lyric_build::TaskId::TaskId(const lyric_build::TaskId &other)
+lyric_build::TaskId::TaskId(const std::string &domain, const tempo_utils::UrlPath &urlPath)
+    : TaskId(domain, urlPath.toString())
+{
+}
+
+lyric_build::TaskId::TaskId(const TaskId &other)
     : m_priv(other.m_priv)
 {
 }
@@ -256,12 +249,136 @@ lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId)
     return std::move(message);
 }
 
+lyric_build::TaskKey::TaskKey(
+    const std::string &domain,
+    const std::string &id,
+    const tempo_config::ConfigMap &params)
+    : m_priv(std::make_shared<Priv>(domain, id, params))
+{
+    TU_ASSERT (!m_priv->domain.empty());
+}
+
+lyric_build::TaskKey::TaskKey(
+    const std::string &domain,
+    const std::vector<std::string> &parts,
+    const tempo_config::ConfigMap &params)
+    : TaskKey(domain, absl::StrJoin(parts, "/"), params)
+{
+}
+
+lyric_build::TaskKey::TaskKey(
+    const std::string &domain,
+    const std::filesystem::path &path,
+    const tempo_config::ConfigMap &params)
+    : TaskKey(domain, path.string(), params)
+{
+}
+
+lyric_build::TaskKey::TaskKey(
+    const TaskId &taskId,
+    const tempo_config::ConfigMap &params)
+    : TaskKey(taskId.getDomain(), taskId.getId(), params)
+{
+}
+
+lyric_build::TaskKey::TaskKey(const TaskKey &other)
+    : m_priv(other.m_priv)
+{
+}
+
+bool
+lyric_build::TaskKey::isValid() const
+{
+    return m_priv != nullptr;
+}
+
+std::string
+lyric_build::TaskKey::getDomain() const
+{
+    return m_priv? m_priv->domain : "";
+}
+
+std::string
+lyric_build::TaskKey::getId() const
+{
+    return m_priv? m_priv->id : "";
+}
+
+tempo_config::ConfigMap
+lyric_build::TaskKey::getParams() const
+{
+    return m_priv? m_priv->params : tempo_config::ConfigMap{};
+}
+
+std::string
+lyric_build::TaskKey::toString() const
+{
+    if (m_priv != nullptr)
+        return absl::StrCat(m_priv->domain, ":", m_priv->id, ":", m_priv->params.toString());
+    return {};
+}
+
+lyric_build::TaskId
+lyric_build::TaskKey::toTaskId() const
+{
+    if (m_priv != nullptr)
+        return TaskId(m_priv->domain, m_priv->id);
+    return {};
+
+}
+
+int
+lyric_build::TaskKey::compare(const TaskKey &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto domaincmp = m_priv->domain.compare(other.m_priv->domain);
+        if (domaincmp != 0)
+            return domaincmp;
+        auto idcmp = m_priv->id.compare(other.m_priv->id);
+        if (idcmp != 0)
+            return idcmp;
+        return m_priv->params.compare(other.m_priv->params);
+    }
+    return other.m_priv? -1 : 0;
+}
+
+bool
+lyric_build::TaskKey::operator==(const TaskKey &other) const
+{
+    return compare(other) == 0;
+}
+
+bool
+lyric_build::TaskKey::operator!=(const TaskKey &other) const
+{
+    return compare(other) != 0;
+}
+
+bool
+lyric_build::TaskKey::operator<(const TaskKey &other) const
+{
+    return compare(other) < 0;
+}
+
+tempo_utils::LogMessage&&
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey)
+{
+    std::forward<tempo_utils::LogMessage>(message)
+        << "TaskKey(domain=" << taskKey.getDomain()
+        << ", id=" << taskKey.getId()
+        << ", params=" << taskKey.getParams().toString()
+        <<  ")";
+    return std::move(message);
+}
+
 lyric_build::TaskState::TaskState()
     : m_status(Status::INVALID)
 {
 }
 
-lyric_build::TaskState::TaskState(Status status, const tempo_utils::UUID &generation, const std::string &hash)
+lyric_build::TaskState::TaskState(Status status, const BuildGeneration &generation, const std::string &hash)
     : m_status(status), m_generation(generation), m_hash(hash)
 {
 }
@@ -277,7 +394,7 @@ lyric_build::TaskState::getStatus() const
     return m_status;
 }
 
-tempo_utils::UUID
+lyric_build::BuildGeneration
 lyric_build::TaskState::getGeneration() const
 {
     return m_generation;
@@ -332,7 +449,7 @@ lyric_build::ArtifactId::ArtifactId()
 }
 
 lyric_build::ArtifactId::ArtifactId(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const std::string &hash,
     const tempo_utils::Url &url)
     : m_generation(generation),
@@ -342,14 +459,14 @@ lyric_build::ArtifactId::ArtifactId(
 }
 
 lyric_build::ArtifactId::ArtifactId(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const std::string &hash,
     const tempo_utils::UrlPath &path)
     : ArtifactId(generation, hash, tempo_utils::Url::fromRelative(path.toString()))
 {
 }
 
-lyric_build::ArtifactId::ArtifactId(const lyric_build::ArtifactId &other)
+lyric_build::ArtifactId::ArtifactId(const ArtifactId &other)
     : m_generation(other.m_generation),
       m_hash(other.m_hash),
       m_location(other.m_location)
@@ -362,7 +479,7 @@ lyric_build::ArtifactId::isValid() const
     return m_generation.isValid() && !m_hash.empty();
 }
 
-tempo_utils::UUID
+lyric_build::BuildGeneration
 lyric_build::ArtifactId::getGeneration() const
 {
     return m_generation;
@@ -392,7 +509,7 @@ lyric_build::ArtifactId::toString() const
 }
 
 bool
-lyric_build::ArtifactId::operator==(const lyric_build::ArtifactId &other) const
+lyric_build::ArtifactId::operator==(const ArtifactId &other) const
 {
     return m_generation == other.m_generation
         && m_hash == other.m_hash
@@ -400,19 +517,19 @@ lyric_build::ArtifactId::operator==(const lyric_build::ArtifactId &other) const
 }
 
 bool
-lyric_build::ArtifactId::operator!=(const lyric_build::ArtifactId &other) const
+lyric_build::ArtifactId::operator!=(const ArtifactId &other) const
 {
     return !(*this == other);
 }
 
 bool
-lyric_build::operator<(const lyric_build::ArtifactId &lhs, const lyric_build::ArtifactId &rhs)
+lyric_build::ArtifactId::operator<(const ArtifactId &other) const
 {
-    return lhs.toString() < rhs.toString();
+    return toString() < other.toString();
 }
 
 tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::ArtifactId &artifactId)
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const ArtifactId &artifactId)
 {
     std::forward<tempo_utils::LogMessage>(message) << artifactId.toString();
     return std::move(message);
@@ -429,7 +546,7 @@ lyric_build::TraceId::TraceId(const std::string &hash, const std::string &domain
 {
 }
 
-lyric_build::TraceId::TraceId(const lyric_build::TraceId &other)
+lyric_build::TraceId::TraceId(const TraceId &other)
     : m_hash(other.m_hash),
       m_domain(other.m_domain),
       m_id(other.m_id)
@@ -472,7 +589,7 @@ lyric_build::TraceId::toString() const
 }
 
 bool
-lyric_build::TraceId::operator==(const lyric_build::TraceId &other) const
+lyric_build::TraceId::operator==(const TraceId &other) const
 {
     return m_hash == other.m_hash
         && m_domain == other.m_domain
@@ -480,13 +597,13 @@ lyric_build::TraceId::operator==(const lyric_build::TraceId &other) const
 }
 
 bool
-lyric_build::TraceId::operator!=(const lyric_build::TraceId &other) const
+lyric_build::TraceId::operator!=(const TraceId &other) const
 {
     return !(*this == other);
 }
 
 tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::TraceId &traceId)
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const TraceId &traceId)
 {
     std::forward<tempo_utils::LogMessage>(message) << traceId.toString();
     return std::move(message);

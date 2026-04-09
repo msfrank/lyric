@@ -20,7 +20,7 @@
 #include "lyric_runtime/chain_loader.h"
 
 lyric_build::internal::ArchiveTask::ArchiveTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span)
@@ -81,7 +81,7 @@ lyric_build::internal::ArchiveTask::configure(const TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::ArchiveTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -151,7 +151,7 @@ archive_symbols(
                 "dependent task {} has invalid hash", taskKey.toString());
 
         lyric_build::TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
-        tempo_utils::UUID generation;
+        lyric_build::BuildGeneration generation;
         TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(artifactTrace));
         std::vector<lyric_build::ArtifactId> targetArtifacts;
         TU_ASSIGN_OR_RETURN (targetArtifacts, artifactCache->findArtifacts(generation, hash, {}, {}));
@@ -199,7 +199,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().toString()));
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -225,7 +225,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
     TU_ASSIGN_OR_RETURN (object, archiver.toObject());
 
     // declare the artifact
-    ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash,
+    ArtifactId moduleArtifact(buildState->getGeneration(), taskHash,
         tempo_utils::Url::fromString(m_archiveName));
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(moduleArtifact));
 
@@ -261,7 +261,7 @@ lyric_build::internal::ArchiveTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_archive_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

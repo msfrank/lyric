@@ -20,7 +20,7 @@
 #include <tempo_utils/file_reader.h>
 
 lyric_build::internal::ParseArchetypeTask::ParseArchetypeTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, std::move(span))
@@ -60,7 +60,7 @@ lyric_build::internal::ParseArchetypeTask::configure(const TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::ParseArchetypeTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -134,7 +134,7 @@ lyric_build::internal::ParseArchetypeTask::parseModule(
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
-    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, archetypeArtifactPath);
+    ArtifactId archetypeArtifact(buildState->getGeneration(), taskHash, archetypeArtifactPath);
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(archetypeArtifact));
 
     // store the archetype metadata in the build cache
@@ -169,7 +169,7 @@ lyric_build::internal::ParseArchetypeTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_parse_archetype_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

@@ -166,7 +166,7 @@ lyric_build::DependencyLoader::create(
         const auto &taskState = entry.second;
 
         TraceId traceId(taskState.getHash(), taskKey.getDomain(), taskKey.getId());
-        tempo_utils::UUID generation;
+        BuildGeneration generation;
         TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(traceId));
 
         std::vector<ArtifactId> artifactsFound;

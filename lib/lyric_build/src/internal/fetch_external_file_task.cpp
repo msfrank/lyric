@@ -15,7 +15,7 @@
 #include <tempo_utils/log_message.h>
 
 lyric_build::internal::FetchExternalFileTask::FetchExternalFileTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span)
@@ -71,7 +71,7 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::FetchExternalFileTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -107,7 +107,7 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     auto content = reader.getBytes();
 
     // declare the artifact
-    ArtifactId externalArtifact(buildState->getGeneration().getUuid(), taskHash, m_artifactPath);
+    ArtifactId externalArtifact(buildState->getGeneration(), taskHash, m_artifactPath);
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(externalArtifact));
 
     // serialize the file metadata
@@ -140,7 +140,7 @@ lyric_build::internal::FetchExternalFileTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_fetch_external_file_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

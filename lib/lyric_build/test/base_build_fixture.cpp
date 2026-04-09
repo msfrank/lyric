@@ -10,7 +10,7 @@
 void
 BaseBuildFixture::SetUp()
 {
-    m_generation = tempo_utils::UUID::randomUUID();
+    m_generation = lyric_build::BuildGeneration::create();
     m_recorder = tempo_tracing::TraceRecorder::create();
     m_span = m_recorder->makeSpan();
 

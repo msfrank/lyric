@@ -18,7 +18,7 @@ BaseAssemblerFixture::SetUp()
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     objectState = std::make_unique<lyric_assembler::ObjectState>(
         location, origin, localModuleCache, systemModuleCache, shortcutResolver);

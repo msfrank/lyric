@@ -23,9 +23,10 @@ namespace lyric_build {
         void hashValue(const std::string_view &s);
         void hashValue(const std::vector<std::string> &sl);
         tempo_utils::Status hashFile(const std::filesystem::path &path);
-        std::string finish();
 
-        static std::string uniqueHash();
+        TaskHash finish();
+
+        static TaskHash uniqueHash();
 
     private:
         tempo_security::Sha256Hash m_hasher;

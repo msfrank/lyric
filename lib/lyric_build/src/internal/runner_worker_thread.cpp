@@ -11,7 +11,7 @@ lyric_build::internal::configure_task(
     const TaskSettings *taskSettings,
     BuildState *state,
     AbstractVirtualFilesystem *vfs,
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     std::pair<bool,std::string> &result)
 {
     auto key = task->getKey();
@@ -64,7 +64,9 @@ lyric_build::internal::configure_task(
                 return {};
             }
             result.first = true;
-            result.second = configureResult.getResult();
+            auto taskHash = configureResult.getResult();
+            auto hashBytes = taskHash.bytesView();
+            result.second = std::string((const char *) hashBytes.data(), hashBytes.size());
             break;
         }
     }
@@ -87,7 +89,7 @@ lyric_build::internal::check_dependencies(
     const std::string &configHash,
     AbstractBuildRunner *runner,
     BuildState *state,
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     std::pair<bool,absl::flat_hash_map<TaskKey, TaskState>> &result)
 {
     auto key = task->getKey();
@@ -197,7 +199,7 @@ lyric_build::internal::check_for_existing_trace(
     AbstractBuildRunner *runner,
     BuildState *state,
     AbstractArtifactCache *artifactCache,
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     std::pair<bool,std::string> &result)
 {
     auto key = task->getKey();
@@ -245,7 +247,7 @@ lyric_build::internal::link_dependencies(
     AbstractBuildRunner *runner,
     BuildState *state,
     AbstractArtifactCache *artifactCache,
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const absl::flat_hash_map<TaskKey, TaskState> &depStates,
     bool &complete)
 {
@@ -255,7 +257,7 @@ lyric_build::internal::link_dependencies(
         auto depHash = depState.getHash();
         TraceId depTrace(depHash, depKey.getDomain(), depKey.getId());
 
-        tempo_utils::UUID targetGen;
+        BuildGeneration targetGen;
         TU_ASSIGN_OR_RETURN (targetGen, artifactCache->loadTrace(depTrace));
 
         std::vector<ArtifactId> dependentArtifacts;
@@ -292,7 +294,7 @@ lyric_build::internal::run_task(
     AbstractBuildRunner *runner,
     BuildState *state,
     AbstractArtifactCache *artifactCache,
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     bool &complete)
 {
     auto key = task->getKey();
@@ -350,7 +352,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
     auto artifactCache = thread->artifactCache;
 
     auto virtualFilesystem = state->getVirtualFilesystem();
-    auto generation = state->getGeneration().getUuid();
+    auto generation = state->getGeneration();
 
     // loop forever until cancelled
     for (;;) {

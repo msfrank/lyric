@@ -109,7 +109,7 @@ TYPED_TEST_SUITE(AbstractCache, Implementations);
 TYPED_TEST (AbstractCache, DeclareArtifact)
 {
     auto cache = this->fixture->getCache();
-    auto generation = tempo_utils::UUID::randomUUID();
+    auto generation = lyric_build::BuildGeneration::create();
     auto hash = "foo";
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
@@ -121,7 +121,7 @@ TYPED_TEST (AbstractCache, DeclareArtifact)
 TYPED_TEST (AbstractCache, StoreAndLoadMetadata)
 {
     auto cache = this->fixture->getCache();
-    auto generation = tempo_utils::UUID::randomUUID();
+    auto generation = lyric_build::BuildGeneration::create();
     auto hash = "foo";
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
@@ -151,7 +151,7 @@ TYPED_TEST (AbstractCache, StoreAndLoadMetadata)
 TYPED_TEST (AbstractCache, StoreAndLoadContent)
 {
     auto cache = this->fixture->getCache();
-    auto generation = tempo_utils::UUID::randomUUID();
+    auto generation = lyric_build::BuildGeneration::create();
     auto hash = "foo";
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
@@ -174,7 +174,7 @@ TYPED_TEST (AbstractCache, StoreAndLoadContent)
 TYPED_TEST (AbstractCache, LinkArtifactAndLoadMetadata)
 {
     auto cache = this->fixture->getCache();
-    auto generation = tempo_utils::UUID::randomUUID();
+    auto generation = lyric_build::BuildGeneration::create();
     auto hash = "foo";
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
@@ -207,7 +207,7 @@ TYPED_TEST (AbstractCache, LinkArtifactOverridingMetadataAndLoadMetadata)
 {
     auto cache = this->fixture->getCache();
 
-    auto generation1 = tempo_utils::UUID::randomUUID();
+    auto generation1 = lyric_build::BuildGeneration::create();
     auto hash = "foo";
     lyric_build::ArtifactId id(generation1, hash, tempo_utils::UrlPath::fromString("/file"));
 
@@ -224,7 +224,7 @@ TYPED_TEST (AbstractCache, LinkArtifactOverridingMetadataAndLoadMetadata)
     auto storeMetadataStatus = cache->storeMetadata(id, metadata);
     ASSERT_THAT (storeMetadataStatus, tempo_test::IsOk());
 
-    auto generation2 = tempo_utils::UUID::randomUUID();
+    auto generation2 = lyric_build::BuildGeneration::create();
     lyric_build::ArtifactId linkId(generation2, hash, tempo_utils::UrlPath::fromString("/link"));
 
     lyric_build::MetadataWriter writer2;

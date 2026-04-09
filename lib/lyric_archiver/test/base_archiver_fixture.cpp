@@ -18,7 +18,7 @@ BaseArchiverFixture::configure(std::string_view archiveUrlString)
     m_tester = std::make_unique<lyric_test::LyricTester>(m_testerOptions);
     TU_RETURN_IF_NOT_OK (m_tester->configure());
     m_originLocation = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
     TU_ASSERT (m_originLocation.isValid());
     m_archiverTester = std::make_unique<ArchiverTester>(m_originLocation, m_tester.get());
     return {};

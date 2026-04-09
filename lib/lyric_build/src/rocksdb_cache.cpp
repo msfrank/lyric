@@ -174,14 +174,14 @@ write_trace_id(const lyric_build::TraceId &traceId)
     return bytes;
 }
 
-inline tempo_utils::UUID
+inline lyric_build::BuildGeneration
 read_generation(const std::string &v)
 {
-    return tempo_utils::UUID::parse(v);
+    return lyric_build::BuildGeneration::parse(v);
 }
 
 inline std::string
-write_generation(const tempo_utils::UUID &generation)
+write_generation(const lyric_build::BuildGeneration &generation)
 {
     return generation.toString();
 }
@@ -201,7 +201,7 @@ read_artifact_id(const std::string &v)
     if (parts.size() != 4)
         return {};
     auto generation = read_generation(parts[0]);
-    if (generation.isNil())
+    if (!generation.isValid())
         return {};
     std::string hash;
     if (!absl::WebSafeBase64Unescape(parts[1], &hash))
@@ -628,7 +628,7 @@ lyric_build::RocksdbCache::linkArtifactOverridingMetadata(
 
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::RocksdbCache::findArtifacts(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const std::string &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
@@ -703,7 +703,7 @@ lyric_build::RocksdbCache::containsTrace(const TraceId &traceId)
     return status.ok();
 }
 
-tempo_utils::Result<tempo_utils::UUID>
+tempo_utils::Result<lyric_build::BuildGeneration>
 lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 {
     TU_ASSERT (m_db != nullptr);
@@ -724,7 +724,7 @@ lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 }
 
 tempo_utils::Status
-lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
+lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const BuildGeneration &generation)
 {
     TU_ASSERT (m_db != nullptr);
 

@@ -18,7 +18,7 @@
 #include <tempo_tracing/tracing_schema.h>
 
 lyric_build::internal::AnalyzeOutlineTask::AnalyzeOutlineTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, std::move(span)),
@@ -64,7 +64,7 @@ lyric_build::internal::AnalyzeOutlineTask::configure(const TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::AnalyzeOutlineTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -100,7 +100,7 @@ lyric_build::internal::AnalyzeOutlineTask::symbolizeImports(
     auto artifactCache = buildState->getArtifactCache();
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
-    tempo_utils::UUID generation;
+    BuildGeneration generation;
     TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(symbolizeTrace));
 
     tempo_utils::UrlPath linkageArtifactPath;
@@ -148,7 +148,7 @@ lyric_build::internal::AnalyzeOutlineTask::analyzeModule(
     auto artifactCache = buildState->getArtifactCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    tempo_utils::UUID generation;
+    BuildGeneration generation;
     TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
@@ -162,7 +162,7 @@ lyric_build::internal::AnalyzeOutlineTask::analyzeModule(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().toString()));
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -186,7 +186,7 @@ lyric_build::internal::AnalyzeOutlineTask::analyzeModule(
     tempo_utils::UrlPath outlineArtifactPath;
     TU_ASSIGN_OR_RETURN (outlineArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
-    ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, outlineArtifactPath);
+    ArtifactId outlineArtifact(buildState->getGeneration(), taskHash, outlineArtifactPath);
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(outlineArtifact));
 
     // store the outline object metadata in the cache
@@ -241,7 +241,7 @@ lyric_build::internal::AnalyzeOutlineTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_analyze_outline_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

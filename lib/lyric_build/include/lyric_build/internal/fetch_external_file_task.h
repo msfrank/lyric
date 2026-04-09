@@ -13,33 +13,33 @@ namespace lyric_build::internal {
 
     public:
         FetchExternalFileTask(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-        tempo_utils::Result<std::string> configureTask(
-            const lyric_build::TaskSettings *config,
+        tempo_utils::Result<TaskHash> configureTask(
+            const TaskSettings *config,
             AbstractVirtualFilesystem *virtualFilesystem) override;
         tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
         Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey, TaskState> &depStates,
-            lyric_build::BuildState *generation) override;
+            BuildState *generation) override;
 
     private:
         std::filesystem::path m_filePath;
         tempo_utils::UrlPath m_artifactPath;
         std::string m_contentType;
 
-        tempo_utils::Status configure(const lyric_build::TaskSettings *config);
+        tempo_utils::Status configure(const TaskSettings *config);
         tempo_utils::Status fetchExternalFile(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey, TaskState> &depStates,
-            lyric_build::BuildState *buildState);
+            BuildState *buildState);
     };
 
     BaseTask *new_fetch_external_file_task(
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

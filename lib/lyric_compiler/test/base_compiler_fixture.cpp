@@ -19,7 +19,7 @@ BaseCompilerFixture::runComputationSet(
         absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> &depStates,
         const lyric_build::TaskKey &mainKey)
 {
-    auto randomString = tempo_utils::UUID::randomUUID().toString();
+    auto randomString = tempo_utils::UUID::randomUUID().toCompactString();
     auto origin = lyric_common::ModuleLocation::fromString(
         absl::StrCat("tester://", randomString));
 

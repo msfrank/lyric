@@ -94,7 +94,7 @@ namespace lyric_build {
             const ArtifactId &srcId) = 0;
 
         virtual tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const std::string &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) = 0;
@@ -103,9 +103,9 @@ namespace lyric_build {
 
         virtual bool containsTrace(const TraceId &traceId) = 0;
 
-        virtual tempo_utils::Result<tempo_utils::UUID> loadTrace(const TraceId &traceId) = 0;
+        virtual tempo_utils::Result<BuildGeneration> loadTrace(const TraceId &traceId) = 0;
 
-        virtual tempo_utils::Status storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) = 0;
+        virtual tempo_utils::Status storeTrace(const TraceId &traceId, const BuildGeneration &generation) = 0;
 
         virtual bool containsDiagnostics(const TraceId &traceId) = 0;
 

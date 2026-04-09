@@ -34,7 +34,7 @@ namespace lyric_build {
             const lyric_common::ModuleLocation &location) override;
 
     private:
-        tempo_utils::UUID m_generation;
+        BuildGeneration m_generation;
         std::string m_hash;
         std::shared_ptr<AbstractArtifactCache> m_artifactCache;
     };

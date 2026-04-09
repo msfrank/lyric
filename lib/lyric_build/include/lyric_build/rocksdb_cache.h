@@ -59,7 +59,7 @@ namespace lyric_build {
             const ArtifactId &srcId) override;
 
         tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const std::string &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) override;
@@ -67,8 +67,8 @@ namespace lyric_build {
         tempo_utils::Result<std::vector<ArtifactId>> listArtifacts() override;
 
         bool containsTrace(const TraceId &traceId) override;
-        tempo_utils::Result<tempo_utils::UUID> loadTrace(const TraceId &traceId) override;
-        tempo_utils::Status storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;
+        tempo_utils::Result<BuildGeneration> loadTrace(const TraceId &traceId) override;
+        tempo_utils::Status storeTrace(const TraceId &traceId, const BuildGeneration &generation) override;
 
         bool containsDiagnostics(const TraceId &traceId) override;
         tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TraceId &traceId) override;

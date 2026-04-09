@@ -41,7 +41,7 @@ namespace lyric_build {
             const ArtifactId &srcId) override;
 
         tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const std::string &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) override;
@@ -49,8 +49,8 @@ namespace lyric_build {
         tempo_utils::Result<std::vector<ArtifactId>> listArtifacts() override;
 
         bool containsTrace(const TraceId &traceId) override;
-        tempo_utils::Result<tempo_utils::UUID> loadTrace(const TraceId &traceId) override;
-        tempo_utils::Status storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;
+        tempo_utils::Result<BuildGeneration> loadTrace(const TraceId &traceId) override;
+        tempo_utils::Status storeTrace(const TraceId &traceId, const BuildGeneration &generation) override;
 
         bool containsDiagnostics(const TraceId &traceId) override;
         tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TraceId &traceId) override;
@@ -65,7 +65,7 @@ namespace lyric_build {
         };
         absl::btree_map<ArtifactId,MetadataEntry> m_metadata ABSL_GUARDED_BY(m_lock);
         absl::btree_map<ArtifactId,std::shared_ptr<const tempo_utils::ImmutableBytes>> m_content ABSL_GUARDED_BY(m_lock);
-        absl::flat_hash_map<TraceId,tempo_utils::UUID> m_traces ABSL_GUARDED_BY(m_lock);
+        absl::flat_hash_map<TraceId,BuildGeneration> m_traces ABSL_GUARDED_BY(m_lock);
         absl::flat_hash_map<TraceId,tempo_tracing::TempoSpanset> m_diagnostics ABSL_GUARDED_BY(m_lock);
 
         tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> doLoadContent(

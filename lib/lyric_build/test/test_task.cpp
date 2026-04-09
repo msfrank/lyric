@@ -14,7 +14,7 @@
 #include "test_task.h"
 
 TestTask::TestTask(
-    const tempo_utils::UUID &generation,
+    const lyric_build::BuildGeneration &generation,
     const lyric_build::TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span)
@@ -45,7 +45,7 @@ TestTask::configure(const lyric_build::TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 TestTask::configureTask(
     const lyric_build::TaskSettings *config,
     lyric_build::AbstractVirtualFilesystem *virtualFilesystem)
@@ -96,7 +96,7 @@ TestTask::runTask(
 
 lyric_build::BaseTask *
 new_test_task(
-    const tempo_utils::UUID &generation,
+    const lyric_build::BuildGeneration &generation,
     const lyric_build::TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

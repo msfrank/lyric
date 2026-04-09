@@ -15,7 +15,7 @@ namespace lyric_build {
         explicit TaskRegistry(bool excludePredefinedDomains = false);
 
         using MakeTaskFunc = std::function<BaseTask*(
-            const tempo_utils::UUID &,                                  // generation
+            const BuildGeneration &,                                    // generation
             const TaskKey &,                                            // key
             std::shared_ptr<tempo_tracing::TraceSpan>)>;                // span
 
@@ -26,7 +26,7 @@ namespace lyric_build {
         void sealRegistry();
 
         tempo_utils::Result<BaseTask *> makeTask(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span) const;
 

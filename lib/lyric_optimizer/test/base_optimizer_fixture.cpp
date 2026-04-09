@@ -29,7 +29,7 @@ BaseOptimizerFixture::configure()
     auto shortcutResolver = builder->getShortcutResolver();
     auto recorder = tempo_tracing::TraceRecorder::create();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
         location, origin, localModuleCache, sharedModuleCache, shortcutResolver);

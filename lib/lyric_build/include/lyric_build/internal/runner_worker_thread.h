@@ -13,7 +13,7 @@ namespace lyric_build::internal {
         const TaskSettings *taskSettings,
         BuildState *state,
         AbstractVirtualFilesystem *vfs,
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         std::pair<bool,std::string> &result);
 
     tempo_utils::Status check_dependencies(
@@ -21,7 +21,7 @@ namespace lyric_build::internal {
         const std::string &configHash,
         AbstractBuildRunner *runner,
         BuildState *state,
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         std::pair<bool,absl::flat_hash_map<TaskKey, TaskState>> &depStates);
 
     tempo_utils::Status check_for_existing_trace(
@@ -31,7 +31,7 @@ namespace lyric_build::internal {
         AbstractBuildRunner *runner,
         BuildState *state,
         AbstractArtifactCache *artifactCache,
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         std::pair<bool,std::string> &result);
 
     tempo_utils::Status link_dependencies(
@@ -39,7 +39,7 @@ namespace lyric_build::internal {
         AbstractBuildRunner *runner,
         BuildState *state,
         AbstractArtifactCache *artifactCache,
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         const absl::flat_hash_map<TaskKey, TaskState> &depStates,
         bool &complete);
 
@@ -51,7 +51,7 @@ namespace lyric_build::internal {
         AbstractBuildRunner *runner,
         BuildState *state,
         AbstractArtifactCache *artifactCache,
-        const tempo_utils::UUID &generation,
+        const BuildGeneration &generation,
         bool &complete);
 
     tempo_utils::Status runner_worker_loop(const TaskThread *thread);

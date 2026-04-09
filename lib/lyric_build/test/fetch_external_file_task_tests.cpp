@@ -10,7 +10,6 @@
 #include <tempo_utils/file_writer.h>
 
 #include "base_build_fixture.h"
-#include "lyric_common/common_types.h"
 
 class FetchExternalFileTask : public BaseBuildFixture {
 protected:
@@ -56,15 +55,17 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFile)
     auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
+    auto hashBytes = taskHash.bytesView();
+    std::string hashString((const char *) hashBytes.data(), hashBytes.size());
 
     bool taskComplete;
-    auto runTaskStatus = task->run(taskHash, {}, m_state.get(), taskComplete);
+    auto runTaskStatus = task->run(hashString, {}, m_state.get(), taskComplete);
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
     auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/external.txt"));
+        m_state->getGeneration(), hashString, tempo_utils::Url::fromString("/external.txt"));
 
     auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
@@ -97,15 +98,17 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndArtifactPath
     auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
+    auto hashBytes = taskHash.bytesView();
+    std::string hashString((const char *) hashBytes.data(), hashBytes.size());
 
     bool taskComplete;
-    auto runTaskStatus = task->run(taskHash, {}, m_state.get(), taskComplete);
+    auto runTaskStatus = task->run(hashString, {}, m_state.get(), taskComplete);
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
     auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/artifact.txt"));
+        m_state->getGeneration(), hashString, tempo_utils::Url::fromString("/artifact.txt"));
 
     auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
@@ -138,15 +141,17 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndContentType)
     auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
+    auto hashBytes = taskHash.bytesView();
+    std::string hashString((const char *) hashBytes.data(), hashBytes.size());
 
     bool taskComplete;
-    auto runTaskStatus = task->run(taskHash, {}, m_state.get(), taskComplete);
+    auto runTaskStatus = task->run(hashString, {}, m_state.get(), taskComplete);
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
     auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/external.txt"));
+        m_state->getGeneration(), hashString, tempo_utils::Url::fromString("/external.txt"));
 
     auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
@@ -184,7 +189,7 @@ TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalFileIsNotAnAbsoluteP
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
-    tempo_utils::Result<std::string> configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kInvalidConfiguration));
 }
 
@@ -196,6 +201,6 @@ TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalFileIsMissing)
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
-    tempo_utils::Result<std::string> configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kMissingInput));
 }

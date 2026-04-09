@@ -23,7 +23,7 @@ lyric_build::TempDirectory::TempDirectory(
     : m_tempRoot(tempRoot)
 {
     TU_ASSERT (buildGen.isValid());
-    m_baseName = buildGen.getUuid().toString();
+    m_baseName = buildGen.toString();
     TU_ASSERT (!m_tempRoot.empty());
 }
 
@@ -36,7 +36,7 @@ lyric_build::TempDirectory::TempDirectory(
     TU_ASSERT (buildGen.isValid());
     TU_ASSERT (!taskHash.empty());
     m_baseName = absl::StrCat(
-        buildGen.getUuid().toString(),
+        buildGen.toString(),
         "_",
         absl::BytesToHexString(taskHash));
     TU_ASSERT (!m_tempRoot.empty());

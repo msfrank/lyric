@@ -18,12 +18,12 @@ namespace lyric_build {
 
     public:
         BaseTask(
-            const tempo_utils::UUID &generation,
+            const BuildGeneration &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
         virtual ~BaseTask();
 
-        tempo_utils::UUID getGeneration() const;
+        BuildGeneration getGeneration() const;
         TaskKey getKey() const;
         TaskId getId() const;
         tempo_config::ConfigMap getParams() const;
@@ -31,10 +31,29 @@ namespace lyric_build {
         std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
         TempDirectory *tempDirectory();
 
-        virtual tempo_utils::Result<std::string> configureTask(
+        /**
+         *
+         * @param configStore
+         * @param virtualFilesystem
+         * @return
+         */
+        virtual tempo_utils::Result<TaskHash> configureTask(
             const TaskSettings *configStore,
             AbstractVirtualFilesystem *virtualFilesystem) = 0;
+
+        /**
+         *
+         * @return
+         */
         virtual tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() = 0;
+
+        /**
+         *
+         * @param taskHash
+         * @param depStates
+         * @param buildState
+         * @return
+         */
         virtual Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
@@ -54,7 +73,7 @@ namespace lyric_build {
         std::shared_ptr<tempo_tracing::SpanLog> logStatus(const tempo_utils::Status &status);
 
     private:
-        tempo_utils::UUID m_generation;
+        BuildGeneration m_generation;
         TaskKey m_key;
         std::shared_ptr<tempo_tracing::TraceSpan> m_span;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_diagnostics;

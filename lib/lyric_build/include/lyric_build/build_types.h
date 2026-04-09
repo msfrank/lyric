@@ -1,7 +1,8 @@
 #ifndef LYRIC_BUILD_BUILD_TYPES_H
 #define LYRIC_BUILD_BUILD_TYPES_H
 
-#include <chrono>
+#include <array>
+
 #include <filesystem>
 
 #include <lyric_common/module_location.h>
@@ -39,51 +40,38 @@ namespace lyric_build {
         BuildGeneration(const BuildGeneration &other);
 
         bool isValid() const;
-        tempo_utils::UUID getUuid() const;
+        std::vector<tu_uint8> toBytes() const;
+        std::string toString() const;
+
+        bool operator==(const BuildGeneration &other) const;
+        bool operator!=(const BuildGeneration &other) const;
+        bool operator<(const BuildGeneration &other) const;
 
         static BuildGeneration create();
+        static BuildGeneration parse(std::string_view s);
 
     private:
         tempo_utils::UUID m_uuid;
     };
 
-    /**
-     * TaskKey is used internally to uniquely identify a task which is to be executed as part of a build.
-     */
-    class TaskKey {
-
+    class TaskHash {
     public:
-        TaskKey();
-        TaskKey(const std::string &domain, const std::string &id, const tempo_config::ConfigMap &params = {});
-        TaskKey(const std::string &domain, const std::vector<std::string> &parts, const tempo_config::ConfigMap &params = {});
-        TaskKey(const std::string &domain, const std::filesystem::path &path, const tempo_config::ConfigMap &params = {});
-        TaskKey(const TaskKey &other);
+        TaskHash() = default;
+        explicit TaskHash(std::vector<tu_uint8> taskHash);
+        TaskHash(const TaskHash &other);
 
-        bool isValid() const;
-        std::string getDomain() const;
-        std::string getId() const;
-        tempo_config::ConfigMap getParams() const;
-
+        bool isValid();
+        std::span<tu_uint8> bytesView() const;
+        std::vector<tu_uint8> toBytes() const;
         std::string toString() const;
 
-        bool operator==(const TaskKey &other) const;
-        bool operator!=(const TaskKey &other) const;
-        bool operator<(const TaskKey &other) const;
-
-        int compare(const TaskKey &other) const;
-
-        template <typename H>
-        friend H AbslHashValue(H h, const TaskKey &taskKey) {
-            return H::combine(std::move(h), taskKey.m_priv->domain, taskKey.m_priv->id, taskKey.m_priv->params);
-        }
+        int compare(const TaskHash &other) const;
+        bool operator==(const TaskHash &other) const;
+        bool operator!=(const TaskHash &other) const;
+        bool operator<(const TaskHash &other) const;
 
     private:
-        struct Priv {
-            std::string domain;
-            std::string id;
-            tempo_config::ConfigMap params;
-        };
-        std::shared_ptr<Priv> m_priv;
+        std::shared_ptr<std::vector<tu_uint8>> m_hash;
     };
 
     /**
@@ -92,10 +80,11 @@ namespace lyric_build {
     class TaskId {
 
     public:
-        TaskId();
-        TaskId(const std::string &domain, const std::string &id = {});
+        TaskId() = default;
+        explicit TaskId(const std::string &domain, const std::string &id = {});
         TaskId(const std::string &domain, const std::vector<std::string> &parts);
         TaskId(const std::string &domain, const std::filesystem::path &path);
+        TaskId(const std::string &domain, const tempo_utils::UrlPath &urlPath);
         TaskId(const TaskId &other);
 
         bool isValid() const;
@@ -126,6 +115,47 @@ namespace lyric_build {
     };
 
     /**
+     * TaskKey is used internally to uniquely identify a task which is to be executed as part of a build.
+     */
+    class TaskKey {
+
+    public:
+        TaskKey() = default;
+        explicit TaskKey(const TaskId &taskId, const tempo_config::ConfigMap &params = {});
+        TaskKey(const std::string &domain, const std::string &id, const tempo_config::ConfigMap &params = {});
+        TaskKey(const std::string &domain, const std::vector<std::string> &parts, const tempo_config::ConfigMap &params = {});
+        TaskKey(const std::string &domain, const std::filesystem::path &path, const tempo_config::ConfigMap &params = {});
+        TaskKey(const TaskKey &other);
+
+        bool isValid() const;
+        std::string getDomain() const;
+        std::string getId() const;
+        tempo_config::ConfigMap getParams() const;
+
+        std::string toString() const;
+        TaskId toTaskId() const;
+
+        bool operator==(const TaskKey &other) const;
+        bool operator!=(const TaskKey &other) const;
+        bool operator<(const TaskKey &other) const;
+
+        int compare(const TaskKey &other) const;
+
+        template <typename H>
+        friend H AbslHashValue(H h, const TaskKey &taskKey) {
+            return H::combine(std::move(h), taskKey.m_priv->domain, taskKey.m_priv->id, taskKey.m_priv->params);
+        }
+
+    private:
+        struct Priv {
+            std::string domain;
+            std::string id;
+            tempo_config::ConfigMap params;
+        };
+        std::shared_ptr<Priv> m_priv;
+    };
+
+    /**
      * TaskState contains the execution state for a task.
      */
     class TaskState {
@@ -141,18 +171,18 @@ namespace lyric_build {
         };
 
         TaskState();
-        TaskState(Status status, const tempo_utils::UUID &generation, const std::string &hash);
+        TaskState(Status status, const BuildGeneration &generation, const std::string &hash);
         TaskState(const TaskState &other);
 
         Status getStatus() const;
-        tempo_utils::UUID getGeneration() const;
+        BuildGeneration getGeneration() const;
         std::string getHash() const;
 
         std::string toString() const;
 
     private:
         Status m_status;
-        tempo_utils::UUID m_generation;
+        BuildGeneration m_generation;
         std::string m_hash;
     };
 
@@ -163,12 +193,12 @@ namespace lyric_build {
 
     public:
         ArtifactId();
-        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::Url &url);
-        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::UrlPath &path);
+        ArtifactId(const BuildGeneration &generation, const std::string &hash, const tempo_utils::Url &url);
+        ArtifactId(const BuildGeneration &generation, const std::string &hash, const tempo_utils::UrlPath &path);
         ArtifactId(const ArtifactId &other);
 
         bool isValid() const;
-        tempo_utils::UUID getGeneration() const;
+        BuildGeneration getGeneration() const;
         std::string getHash() const;
         tempo_utils::Url getLocation() const;
 
@@ -176,6 +206,7 @@ namespace lyric_build {
 
         bool operator==(const ArtifactId &other) const;
         bool operator!=(const ArtifactId &other) const;
+        bool operator<(const ArtifactId &other) const;
 
         template <typename H>
         friend H AbslHashValue(H h, const ArtifactId &artifactId) {
@@ -183,7 +214,7 @@ namespace lyric_build {
         }
 
     private:
-        tempo_utils::UUID m_generation;
+        BuildGeneration m_generation;
         std::string m_hash;
         tempo_utils::Url m_location;
     };
@@ -220,8 +251,6 @@ namespace lyric_build {
         std::string m_id;
     };
 
-    bool operator<(const ArtifactId &lhs, const ArtifactId &rhs);
-
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskState &state);
@@ -229,7 +258,6 @@ namespace lyric_build {
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TraceId &traceId);
 
     struct NamespaceAddress {
-    public:
         NamespaceAddress() : u32(METADATA_INVALID_OFFSET_U32) {};
         explicit NamespaceAddress(tu_uint32 u32) : u32(u32) {};
         NamespaceAddress(const NamespaceAddress &other) : u32(other.u32) {};
@@ -241,7 +269,6 @@ namespace lyric_build {
     };
 
     struct AttrAddress {
-    public:
         AttrAddress() : u32(METADATA_INVALID_OFFSET_U32) {};
         explicit AttrAddress(tu_uint32 u32) : u32(u32) {};
         AttrAddress(const AttrAddress &other) : u32(other.u32) {};

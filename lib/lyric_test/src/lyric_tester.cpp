@@ -111,7 +111,7 @@ lyric_test::LyricTester::runModule(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     // resolve the main location
     options.mainLocation = origin.resolve(moduleLocation);

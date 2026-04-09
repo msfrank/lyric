@@ -296,7 +296,7 @@ lyric_test::TestRunner::compileModuleInternal(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
@@ -345,7 +345,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());
@@ -394,7 +394,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());

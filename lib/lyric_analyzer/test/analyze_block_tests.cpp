@@ -32,7 +32,7 @@ TEST(AnalyzeBlock, NoDefinitions)
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
     auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toCompactString()));
 
     lyric_analyzer::AnalyzerOptions options;
     lyric_analyzer::LyricAnalyzer analyzer(origin, localModuleCache, systemModuleCache, options);

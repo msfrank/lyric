@@ -20,7 +20,7 @@
 #include <tempo_tracing/tracing_schema.h>
 
 lyric_build::internal::SymbolizeLinkageTask::SymbolizeLinkageTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, std::move(span))
@@ -54,7 +54,7 @@ lyric_build::internal::SymbolizeLinkageTask::configure(const TaskSettings *confi
     return {};
 }
 
-tempo_utils::Result<std::string>
+tempo_utils::Result<lyric_build::TaskHash>
 lyric_build::internal::SymbolizeLinkageTask::configureTask(
     const TaskSettings *config,
     AbstractVirtualFilesystem *virtualFilesystem)
@@ -91,7 +91,7 @@ lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
     auto artifactCache = buildState->getArtifactCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    tempo_utils::UUID generation;
+    BuildGeneration generation;
     TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
@@ -105,7 +105,7 @@ lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().toString()));
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -129,7 +129,7 @@ lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
-    ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, linkageArtifactPath);
+    ArtifactId linkageArtifact(buildState->getGeneration(), taskHash, linkageArtifactPath);
     TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(linkageArtifact));
 
     // store the object metadata in the build cache
@@ -164,7 +164,7 @@ lyric_build::internal::SymbolizeLinkageTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_symbolize_linkage_task(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

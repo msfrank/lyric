@@ -7,7 +7,7 @@
 #include <tempo_tracing/tracing_schema.h>
 
 lyric_build::BaseTask::BaseTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : m_generation(generation),
@@ -27,7 +27,7 @@ lyric_build::BaseTask::~BaseTask()
     }
 }
 
-tempo_utils::UUID
+lyric_build::BuildGeneration
 lyric_build::BaseTask::getGeneration() const
 {
     return m_generation;

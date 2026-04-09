@@ -16,11 +16,11 @@ lyric_build::ArtifactLoader::ArtifactLoader(
     const BuildGeneration &generation,
     const std::string &hash,
     std::shared_ptr<AbstractArtifactCache> artifactCache)
-    : m_generation(generation.getUuid()),
+    : m_generation(generation),
       m_hash(hash),
-      m_artifactCache(artifactCache)
+      m_artifactCache(std::move(artifactCache))
 {
-    TU_ASSERT (!m_generation.isNil());
+    TU_ASSERT (m_generation.isValid());
     TU_ASSERT (!m_hash.empty());
     TU_ASSERT (m_artifactCache != nullptr);
 }
@@ -28,9 +28,9 @@ lyric_build::ArtifactLoader::ArtifactLoader(
 lyric_build::ArtifactLoader::ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractArtifactCache> artifactCache)
     : m_generation(state.getGeneration()),
       m_hash(state.getHash()),
-      m_artifactCache(artifactCache)
+      m_artifactCache(std::move(artifactCache))
 {
-    TU_ASSERT (!m_generation.isNil());
+    TU_ASSERT (m_generation.isValid());
     TU_ASSERT (!m_hash.empty());
     TU_ASSERT (m_artifactCache != nullptr);
 }

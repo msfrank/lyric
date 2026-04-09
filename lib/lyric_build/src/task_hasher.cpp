@@ -60,24 +60,25 @@ lyric_build::TaskHasher::hashFile(const std::filesystem::path &path)
     return {};
 }
 
-std::string
+lyric_build::TaskHash
 lyric_build::TaskHasher::finish()
 {
-    return m_hasher.getResult();
+    auto result = m_hasher.getResult();
+    std::vector<tu_uint8> bytes(result.size());
+    memcpy(bytes.data(), result.data(), result.size());
+    return TaskHash(std::move(bytes));
 }
 
-std::string
+thread_local std::mt19937 task_hasher_randengine{std::random_device()()};
+
+lyric_build::TaskHash
 lyric_build::TaskHasher::uniqueHash()
 {
-    std::mt19937 randengine{std::random_device()()};
-    std::uniform_int_distribution<tu_uint64> chargen;
+    std::uniform_int_distribution<tu_uint8> chargen;
 
-    std::string result;
-    for (int i = 0; i < 4; i++) {
-        // FIXME: use absl random functions instead, use a single thread local instance
-        auto rd = chargen(randengine);
-        const tu_uint8 *bytes = (const tu_uint8 *) &rd;
-        result.append((const char *) bytes, 8);
+    std::vector<tu_uint8> bytes(32);
+    for (int i = 0; i < 32; i++) {
+        bytes[i] = chargen(task_hasher_randengine);
     }
-    return result;
+    return TaskHash(std::move(bytes));
 }

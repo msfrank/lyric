@@ -2,6 +2,7 @@
 #define LYRIC_BUILD_BUILD_STATE_H
 
 #include <shared_mutex>
+
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
@@ -10,9 +11,8 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/rocksdb_cache.h>
 #include <lyric_importer/module_cache.h>
+#include <lyric_importer/shortcut_resolver.h>
 #include <lyric_runtime/abstract_loader.h>
-
-#include "lyric_importer/shortcut_resolver.h"
 
 namespace lyric_build {
 

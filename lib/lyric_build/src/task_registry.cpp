@@ -17,7 +17,7 @@
 struct TaskDomain {
     const char *name;
     lyric_build::BaseTask* (*func)(
-        const tempo_utils::UUID &generation,
+        const lyric_build::BuildGeneration &generation,
         const lyric_build::TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 };
@@ -103,7 +103,7 @@ lyric_build::TaskRegistry::sealRegistry()
 
 tempo_utils::Result<lyric_build::BaseTask *>
 lyric_build::TaskRegistry::makeTask(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span) const
 {
@@ -115,7 +115,7 @@ lyric_build::TaskRegistry::makeTask(
     if (entry == m_makeTaskFuncs.cend())
         return BuildStatus::forCondition(
             BuildCondition::kInvalidConfiguration, "unknown task domain '{}'", domain);
-    BaseTask *task = entry->second(generation, key, span);
+    BaseTask *task = entry->second(generation, key, std::move(span));
     if (task == nullptr)
         return BuildStatus::forCondition(
             BuildCondition::kBuildInvariant, "invalid task domain '{}'", domain);

@@ -185,7 +185,7 @@ static lyric_build::ArtifactId
 parse_artifact_id(std::string_view sv)
 {
     std::vector<std::string> parts = absl::StrSplit(sv, absl::MaxSplits(':', 2));
-    auto generation = tempo_utils::UUID::parse(parts[0]);
+    auto generation = lyric_build::BuildGeneration::parse(parts[0]);
     auto hash = absl::HexStringToBytes(parts[1]);
     auto location = tempo_utils::Url::fromString(parts[2]);
     return lyric_build::ArtifactId(generation, hash, location);
@@ -199,7 +199,7 @@ parse_artifact_id(const std::filesystem::path &artifactPath, const std::filesyst
 
     if (it == path.end())
         return {};
-    auto generation = tempo_utils::UUID::parse(it->string());
+    auto generation = lyric_build::BuildGeneration::parse(it->string());
     it++;
 
     if (it == path.end())
@@ -514,7 +514,7 @@ lyric_build::FilesystemCache::linkArtifactOverridingMetadata(
 
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::FilesystemCache::findArtifacts(
-    const tempo_utils::UUID &generation,
+    const BuildGeneration &generation,
     const std::string &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
@@ -592,7 +592,7 @@ lyric_build::FilesystemCache::containsTrace(const TraceId &traceId)
     return std::filesystem::exists(tracePath);
 }
 
-tempo_utils::Result<tempo_utils::UUID>
+tempo_utils::Result<lyric_build::BuildGeneration>
 lyric_build::FilesystemCache::loadTrace(const TraceId &traceId)
 {
     boost::interprocess::sharable_lock lock(m_priv->shmem->mutex);
@@ -600,11 +600,11 @@ lyric_build::FilesystemCache::loadTrace(const TraceId &traceId)
     auto tracePath = make_trace_path(m_priv->tracesDirectory, traceId);
     tempo_utils::FileReader fileReader(tracePath);
     TU_RETURN_IF_NOT_OK (fileReader.getStatus());
-    return tempo_utils::UUID::parse(fileReader.getBytes()->getStringView());
+    return BuildGeneration::parse(fileReader.getBytes()->getStringView());
 }
 
 tempo_utils::Status
-lyric_build::FilesystemCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
+lyric_build::FilesystemCache::storeTrace(const TraceId &traceId, const BuildGeneration &generation)
 {
     boost::interprocess::scoped_lock lock(m_priv->shmem->mutex);
 

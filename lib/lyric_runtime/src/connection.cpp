@@ -243,7 +243,7 @@ lyric_runtime::Connection::Connection(
 
 lyric_runtime::Connection::~Connection()
 {
-    TU_LOG_WARN_IF (m_stream) << "connection " << m_id.toString() << "was not shut down cleanly";
+    TU_LOG_WARN_IF (m_stream) << "connection " << m_id.toCompactString() << "was not shut down cleanly";
 }
 
 tempo_utils::UUID

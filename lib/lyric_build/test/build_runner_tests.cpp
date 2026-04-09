@@ -69,7 +69,7 @@ TEST_F(BuildRunner, EnqueueNewTask)
 
     auto taskState = state->loadState(key);
     ASSERT_EQ (lyric_build::TaskState::Status::QUEUED, taskState.getStatus());
-    ASSERT_EQ (tempo_utils::UUID{}, taskState.getGeneration());
+    ASSERT_EQ (lyric_build::BuildGeneration{}, taskState.getGeneration());
     ASSERT_EQ ("", taskState.getHash());
 }
 
@@ -104,7 +104,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
 
     lyric_build::TaskKey key("test", std::string{"foo"});
 
-    auto priorGen = tempo_utils::UUID::randomUUID();
+    auto priorGen = lyric_build::BuildGeneration::create();
     std::string priorHash("foo");
     lyric_build::TaskState priorState(lyric_build::TaskState::Status::BLOCKED, priorGen, priorHash);
     state->storeState(key, priorState);

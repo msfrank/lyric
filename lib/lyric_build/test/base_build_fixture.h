@@ -14,7 +14,7 @@
 
 class BaseBuildFixture : public ::testing::Test {
 protected:
-    tempo_utils::UUID m_generation;
+    lyric_build::BuildGeneration m_generation;
     std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
     std::shared_ptr<tempo_tracing::TraceSpan> m_span;
     std::filesystem::path m_testerDirectory;
