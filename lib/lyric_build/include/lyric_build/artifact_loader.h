@@ -13,9 +13,9 @@ namespace lyric_build {
         ArtifactLoader();
         ArtifactLoader(
             const BuildGeneration &generation,
-            const std::string &hash,
+            const TaskHash &hash,
             std::shared_ptr<AbstractArtifactCache> artifactCache);
-        ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractArtifactCache> artifactCache);
+        ArtifactLoader(const TaskData &state, std::shared_ptr<AbstractArtifactCache> artifactCache);
         ArtifactLoader(const ArtifactLoader &other);
 
         tempo_utils::Result<bool> hasModule(
@@ -35,7 +35,7 @@ namespace lyric_build {
 
     private:
         BuildGeneration m_generation;
-        std::string m_hash;
+        TaskHash m_hash;
         std::shared_ptr<AbstractArtifactCache> m_artifactCache;
     };
 }

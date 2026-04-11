@@ -12,7 +12,7 @@ protected:
     void SetUp() override;
 
     tempo_utils::Result<lyric_runtime::InterpreterExit> runComputationSet(
-        absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> &depStates,
+        absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskData> &depStates,
         const lyric_build::TaskKey &mainKey);
 };
 

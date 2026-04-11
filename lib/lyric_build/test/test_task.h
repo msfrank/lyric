@@ -15,16 +15,12 @@ public:
     TestTask(
         const lyric_build::BuildGeneration &generation,
         const lyric_build::TaskKey &key,
+        std::weak_ptr<lyric_build::BuildState> buildState,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-    tempo_utils::Result<lyric_build::TaskHash> configureTask(
-        const lyric_build::TaskSettings *config,
-        lyric_build::AbstractVirtualFilesystem *virtualFilesystem) override;
-    tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>> checkDependencies() override;
-    Option<tempo_utils::Status> runTask(
-        const std::string &taskHash,
-        const absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> &depStates,
-        lyric_build::BuildState *generation) override;
+    tempo_utils::Status configureTask(const lyric_build::TaskSettings &taskSettings) override;
+    tempo_utils::Status deduplicateTask(lyric_build::TaskHash &taskHash) override;
+    tempo_utils::Status runTask(lyric_build::TempDirectory *tempDirectory) override;
 
 private:
     int64_t m_sleepTimeout;
@@ -37,6 +33,7 @@ private:
 lyric_build::BaseTask *new_test_task(
     const lyric_build::BuildGeneration &generation,
     const lyric_build::TaskKey &key,
+    std::weak_ptr<lyric_build::BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span);
 
 #endif // LYRIC_BUILD_TEST_TASK_H

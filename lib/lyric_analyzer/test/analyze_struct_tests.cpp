@@ -24,7 +24,7 @@ TEST_F(AnalyzeStruct, DeclareStruct)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -49,7 +49,7 @@ TEST_F(AnalyzeStruct, DeclareStructMemberVal)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -79,7 +79,7 @@ TEST_F(AnalyzeStruct, DeclareStructMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -129,7 +129,7 @@ TEST_F(AnalyzeStruct, DeclareStructImplMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

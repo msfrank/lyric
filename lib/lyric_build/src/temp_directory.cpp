@@ -30,15 +30,15 @@ lyric_build::TempDirectory::TempDirectory(
 lyric_build::TempDirectory::TempDirectory(
     const std::filesystem::path &tempRoot,
     const BuildGeneration &buildGen,
-    const std::string &taskHash)
+    const TaskHash &taskHash)
     : m_tempRoot(tempRoot)
 {
     TU_ASSERT (buildGen.isValid());
-    TU_ASSERT (!taskHash.empty());
+    TU_ASSERT (taskHash.isValid());
     m_baseName = absl::StrCat(
         buildGen.toString(),
         "_",
-        absl::BytesToHexString(taskHash));
+        taskHash.toString());
     TU_ASSERT (!m_tempRoot.empty());
 }
 

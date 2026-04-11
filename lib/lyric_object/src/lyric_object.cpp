@@ -6,6 +6,7 @@
 #include <lyric_object/object_types.h>
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
+#include <tempo_utils/memory_bytes.h>
 
 lyric_object::LyricObject::LyricObject()
 {
@@ -436,6 +437,14 @@ lyric_object::LyricObject::bytesView() const
     if (m_reader == nullptr)
         return {};
     return m_reader->bytesView();
+}
+
+std::shared_ptr<const tempo_utils::ImmutableBytes>
+lyric_object::LyricObject::toBytes() const
+{
+    if (m_bytes != nullptr)
+        return m_bytes;
+    return tempo_utils::MemoryBytes::copy(m_reader->bytesView());
 }
 
 std::string

@@ -7,7 +7,7 @@ lyric_build::TargetComputation::TargetComputation()
 {
 }
 
-lyric_build::TargetComputation::TargetComputation(const TaskId &id, const TaskState &state)
+lyric_build::TargetComputation::TargetComputation(const TaskId &id, const TaskData &state)
     : m_id(id),
       m_state(state)
 {
@@ -31,7 +31,7 @@ lyric_build::TargetComputation::getId() const
     return m_id;
 }
 
-lyric_build::TaskState
+lyric_build::TaskData
 lyric_build::TargetComputation::getState() const
 {
     return m_state;

@@ -24,7 +24,7 @@ TEST_F(AnalyzeClass, DeclareClass)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -51,7 +51,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVal)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -80,7 +80,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVar)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -109,7 +109,7 @@ TEST_F(AnalyzeClass, DeclareClassMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -159,7 +159,7 @@ TEST_F(AnalyzeClass, DeclareClassImplMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

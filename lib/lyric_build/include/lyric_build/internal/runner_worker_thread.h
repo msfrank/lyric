@@ -6,6 +6,18 @@
 
 namespace lyric_build::internal {
 
+    tempo_utils::Status set_task_blocked(
+        BaseTask *task,
+        BuildState *state,
+        BuildRunner *runner,
+        const absl::flat_hash_set<TaskKey> &taskDeps);
+
+    tempo_utils::Status set_task_failed(
+        BaseTask *task,
+        BuildState *state,
+        BuildRunner *runner,
+        const tempo_utils::Status &status);
+
 
     tempo_utils::Status configure_task(
         BaseTask *task,
@@ -13,46 +25,36 @@ namespace lyric_build::internal {
         const TaskSettings *taskSettings,
         BuildState *state,
         AbstractVirtualFilesystem *vfs,
-        const BuildGeneration &generation,
-        std::pair<bool,std::string> &result);
+        const BuildGeneration &generation);
 
     tempo_utils::Status check_dependencies(
         BaseTask *task,
-        const std::string &configHash,
         AbstractBuildRunner *runner,
         BuildState *state,
-        const BuildGeneration &generation,
-        std::pair<bool,absl::flat_hash_map<TaskKey, TaskState>> &depStates);
+        const BuildGeneration &generation);
 
-    tempo_utils::Status check_for_existing_trace(
+    tempo_utils::Status deduplicate_task(
         BaseTask *task,
-        const std::string &configHash,
-        const absl::flat_hash_map<TaskKey, TaskState> &depStates,
         AbstractBuildRunner *runner,
         BuildState *state,
         AbstractArtifactCache *artifactCache,
-        const BuildGeneration &generation,
-        std::pair<bool,std::string> &result);
+        const BuildGeneration &generation);
 
-    tempo_utils::Status link_dependencies(
-        const TaskKey &key,
-        AbstractBuildRunner *runner,
-        BuildState *state,
-        AbstractArtifactCache *artifactCache,
-        const BuildGeneration &generation,
-        const absl::flat_hash_map<TaskKey, TaskState> &depStates,
-        bool &complete);
+    // tempo_utils::Status link_dependencies(
+    //     const TaskKey &key,
+    //     AbstractBuildRunner *runner,
+    //     BuildState *state,
+    //     AbstractArtifactCache *artifactCache,
+    //     const BuildGeneration &generation,
+    //     const absl::flat_hash_map<TaskKey, TaskData> &depStates,
+    //     bool &complete);
 
     tempo_utils::Status run_task(
         BaseTask *task,
-        const std::string &configHash,
-        const absl::flat_hash_map<TaskKey, TaskState> &depStates,
-        const std::string &taskHash,
         AbstractBuildRunner *runner,
         BuildState *state,
         AbstractArtifactCache *artifactCache,
-        const BuildGeneration &generation,
-        bool &complete);
+        const BuildGeneration &generation);
 
     tempo_utils::Status runner_worker_loop(const TaskThread *thread);
 

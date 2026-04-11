@@ -7,10 +7,6 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_build::BuildGeneration::BuildGeneration()
-{
-}
-
 lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid)
     : m_uuid(uuid)
 {
@@ -37,6 +33,12 @@ std::string
 lyric_build::BuildGeneration::toString() const
 {
     return m_uuid.toCompactString();
+}
+
+int
+lyric_build::BuildGeneration::compare(const BuildGeneration &other) const
+{
+    return m_uuid.compare(other.m_uuid);
 }
 
 bool
@@ -84,7 +86,7 @@ lyric_build::TaskHash::TaskHash(const TaskHash &other)
 }
 
 bool
-lyric_build::TaskHash::isValid()
+lyric_build::TaskHash::isValid() const
 {
     return m_hash != nullptr;
 }
@@ -142,6 +144,19 @@ bool
 lyric_build::TaskHash::operator<(const TaskHash &other) const
 {
     return compare(other) < 0;
+}
+
+lyric_build::TaskHash
+lyric_build::TaskHash::parse(std::string_view s)
+{
+    std::string out;
+    if (!absl::HexStringToBytes(s, &out))
+        return {};
+    std::vector<tu_uint8> bytes(out.size());
+    for (int i = 0; i < out.size(); ++i) {
+        bytes[i] = out[i];
+    }
+    return TaskHash(std::move(bytes));
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::string &id)
@@ -373,159 +388,256 @@ lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKe
     return std::move(message);
 }
 
-lyric_build::TaskState::TaskState()
-    : m_status(Status::INVALID)
+lyric_build::TaskReference::TaskReference(const BuildGeneration &generation, const TaskKey &key)
+    : m_priv(std::make_shared<Priv>(generation, key))
 {
 }
 
-lyric_build::TaskState::TaskState(Status status, const BuildGeneration &generation, const std::string &hash)
-    : m_status(status), m_generation(generation), m_hash(hash)
+lyric_build::TaskReference::TaskReference(const TaskReference &other)
+    : m_priv(other.m_priv)
 {
 }
 
-lyric_build::TaskState::TaskState(const lyric_build::TaskState &other)
-    : m_status(other.m_status), m_generation(other.m_generation), m_hash(other.m_hash)
+bool
+lyric_build::TaskReference::isValid() const
 {
-}
-
-lyric_build::TaskState::Status
-lyric_build::TaskState::getStatus() const
-{
-    return m_status;
+    return m_priv != nullptr;
 }
 
 lyric_build::BuildGeneration
-lyric_build::TaskState::getGeneration() const
+lyric_build::TaskReference::getGeneration() const
 {
-    return m_generation;
+    if (m_priv != nullptr)
+        return m_priv->generation;
+    return {};
+}
+
+lyric_build::TaskKey
+lyric_build::TaskReference::getKey() const
+{
+    if (m_priv != nullptr)
+        return m_priv->key;
+    return {};
 }
 
 std::string
-lyric_build::TaskState::getHash() const
+lyric_build::TaskReference::toString() const
 {
-    return m_hash;
+    if (m_priv != nullptr)
+        return absl::StrCat(m_priv->generation.toString(), ":", m_priv->key.toString());
+    return {};
+}
+
+int
+lyric_build::TaskReference::compare(const TaskReference &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto generationcmp = m_priv->generation.compare(other.m_priv->generation);
+        if (generationcmp != 0)
+            return generationcmp;
+        return m_priv->key.compare(other.m_priv->key);
+    }
+    return other.m_priv? -1 : 0;
+}
+
+bool
+lyric_build::TaskReference::operator==(const TaskReference &other) const
+{
+    return compare(other) == 0;
+}
+
+bool
+lyric_build::TaskReference::operator!=(const TaskReference &other) const
+{
+    return compare(other) != 0;
+}
+
+bool
+lyric_build::TaskReference::operator<(const TaskReference &other) const
+{
+    return compare(other) < 0;
+}
+
+lyric_build::TaskData::TaskData(TaskState state, const BuildGeneration &generation)
+    : m_priv(std::make_shared<Priv>(state, generation))
+{
+}
+
+lyric_build::TaskData::TaskData(TaskState state, const BuildGeneration &generation, const TaskHash &hash)
+    : m_priv(std::make_shared<Priv>(state, generation, hash))
+{
+}
+
+lyric_build::TaskData::TaskData(const TaskData &other)
+    : m_priv(other.m_priv)
+{
+}
+
+lyric_build::TaskState
+lyric_build::TaskData::getState() const
+{
+    if (m_priv != nullptr)
+        return m_priv->state;
+    return TaskState::INVALID;
+}
+
+lyric_build::BuildGeneration
+lyric_build::TaskData::getGeneration() const
+{
+    if (m_priv != nullptr)
+        return m_priv->generation;
+    return {};
+}
+
+lyric_build::TaskHash
+lyric_build::TaskData::getHash() const
+{
+    if (m_priv != nullptr)
+        return m_priv->hash;
+    return {};
 }
 
 std::string
-lyric_build::TaskState::toString() const
+lyric_build::TaskData::toString() const
 {
-    char const *valueStatus = nullptr;
-    switch (m_status) {
-        case TaskState::Status::INVALID:
-            valueStatus = "INVALID";
+    if (m_priv == nullptr)
+        return "TaskData(INVALID)";
+
+    char const *statusValue = nullptr;
+    switch (m_priv->state) {
+        case TaskState::INVALID:
+            statusValue = "INVALID";
             break;
-        case lyric_build::TaskState::Status::QUEUED:
-            valueStatus = "QUEUED";
+        case TaskState::QUEUED:
+            statusValue = "QUEUED";
             break;
-        case lyric_build::TaskState::Status::RUNNING:
-            valueStatus = "RUNNING";
+        case TaskState::RUNNING:
+            statusValue = "RUNNING";
             break;
-        case lyric_build::TaskState::Status::BLOCKED:
-            valueStatus = "BLOCKED";
+        case TaskState::BLOCKED:
+            statusValue = "BLOCKED";
             break;
-        case lyric_build::TaskState::Status::COMPLETED:
-            valueStatus = "COMPLETED";
+        case TaskState::COMPLETED:
+            statusValue = "COMPLETED";
             break;
-        case TaskState::Status::FAILED:
-            valueStatus = "FAILED";
+        case TaskState::FAILED:
+            statusValue = "FAILED";
             break;
     }
-    return absl::Substitute("TaskState(status=$0, generation=$1, hash=$2)",
-        valueStatus, m_generation.toString(), absl::BytesToHexString(m_hash));
+    return absl::Substitute("TaskData(status=$0, generation=$1, hash=$2)",
+        statusValue, m_priv->generation.toString(), m_priv->hash.toString());
 }
 
 tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::TaskState &state)
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::TaskData &state)
 {
     std::forward<tempo_utils::LogMessage>(message) << state.toString();
     return std::move(message);
 }
 
-lyric_build::ArtifactId::ArtifactId()
-    : m_generation(),
-      m_hash(),
-      m_location()
-{
-}
-
 lyric_build::ArtifactId::ArtifactId(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     const tempo_utils::Url &url)
-    : m_generation(generation),
-      m_hash(hash),
-      m_location(url)
+    : m_priv(std::make_shared<Priv>(generation, hash, url))
 {
+    TU_ASSERT (m_priv->generation.isValid());
+    TU_ASSERT (m_priv->hash.isValid());
 }
 
 lyric_build::ArtifactId::ArtifactId(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     const tempo_utils::UrlPath &path)
     : ArtifactId(generation, hash, tempo_utils::Url::fromRelative(path.toString()))
 {
 }
 
 lyric_build::ArtifactId::ArtifactId(const ArtifactId &other)
-    : m_generation(other.m_generation),
-      m_hash(other.m_hash),
-      m_location(other.m_location)
+    : m_priv(other.m_priv)
 {
 }
 
 bool
 lyric_build::ArtifactId::isValid() const
 {
-    return m_generation.isValid() && !m_hash.empty();
+    return m_priv != nullptr;
 }
 
 lyric_build::BuildGeneration
 lyric_build::ArtifactId::getGeneration() const
 {
-    return m_generation;
+    if (m_priv != nullptr)
+        return m_priv->generation;
+    return {};
 }
 
-std::string
+lyric_build::TaskHash
 lyric_build::ArtifactId::getHash() const
 {
-    return m_hash;
+    if (m_priv != nullptr)
+        return m_priv->hash;
+    return {};
 }
 
 tempo_utils::Url
 lyric_build::ArtifactId::getLocation() const
 {
-    return m_location;
+    if (m_priv != nullptr)
+        return m_priv->location;
+    return {};
 }
 
 std::string
 lyric_build::ArtifactId::toString() const
 {
+    if (m_priv == nullptr)
+        return {};
     return absl::StrCat(
-        m_generation.toString(),
+        m_priv->generation.toString(),
         ":",
-        absl::BytesToHexString(m_hash),
+        m_priv->hash.toString(),
         ":",
-        m_location.toString());
+        m_priv->location.toString());
+}
+
+int
+lyric_build::ArtifactId::compare(const ArtifactId &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto generationcmp = m_priv->generation.compare(other.m_priv->generation);
+        if (generationcmp != 0)
+            return generationcmp;
+        auto hashcmp = m_priv->hash.compare(other.m_priv->hash);
+        if (hashcmp != 0)
+            return hashcmp;
+        auto loc = m_priv->location.toString();
+        auto otherloc = other.m_priv->location.toString();
+        return loc.compare(otherloc);
+    }
+    return other.m_priv? -1 : 0;
 }
 
 bool
 lyric_build::ArtifactId::operator==(const ArtifactId &other) const
 {
-    return m_generation == other.m_generation
-        && m_hash == other.m_hash
-        && m_location == other.m_location;
+    return compare(other) == 0;
 }
 
 bool
 lyric_build::ArtifactId::operator!=(const ArtifactId &other) const
 {
-    return !(*this == other);
+    return compare(other) != 0;
 }
 
 bool
 lyric_build::ArtifactId::operator<(const ArtifactId &other) const
 {
-    return toString() < other.toString();
+    return compare(other) < 0;
 }
 
 tempo_utils::LogMessage&&
@@ -535,71 +647,81 @@ lyric_build::operator<<(tempo_utils::LogMessage &&message, const ArtifactId &art
     return std::move(message);
 }
 
-lyric_build::TraceId::TraceId()
+lyric_build::TraceId::TraceId(const TaskHash &hash, const TaskKey &key)
+    : m_priv(std::make_shared<Priv>(hash, key))
 {
-}
-
-lyric_build::TraceId::TraceId(const std::string &hash, const std::string &domain, const std::string &id)
-    : m_hash(hash),
-      m_domain(domain),
-      m_id(id)
-{
+    TU_ASSERT (m_priv->hash.isValid());
+    TU_ASSERT (m_priv->key.isValid());
 }
 
 lyric_build::TraceId::TraceId(const TraceId &other)
-    : m_hash(other.m_hash),
-      m_domain(other.m_domain),
-      m_id(other.m_id)
+    : m_priv(other.m_priv)
 {
 }
 
 bool
 lyric_build::TraceId::isValid() const
 {
-    return !m_hash.empty() && !m_domain.empty();
+    return m_priv != nullptr;
 }
 
-std::string
+lyric_build::TaskHash
 lyric_build::TraceId::getHash() const
 {
-    return m_hash;
+    if (m_priv != nullptr)
+        return m_priv->hash;
+    return {};
 }
 
-std::string
-lyric_build::TraceId::getDomain() const
+lyric_build::TaskKey
+lyric_build::TraceId::getKey() const
 {
-    return m_domain;
-}
-
-std::string
-lyric_build::TraceId::getId() const
-{
-    return m_id;
+    if (m_priv != nullptr)
+        return m_priv->key;
+    return {};
 }
 
 std::string
 lyric_build::TraceId::toString() const
 {
+    if (m_priv == nullptr)
+        return {};
     return absl::StrCat(
-        absl::BytesToHexString(m_hash),
+        m_priv->hash.toString(),
         ":",
-        m_domain,
-        ":",
-        m_id);
+        m_priv->key.toString());
+}
+
+int
+lyric_build::TraceId::compare(const TraceId &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto hashcmp = m_priv->hash.compare(other.m_priv->hash);
+        if (hashcmp != 0)
+            return hashcmp;
+        return m_priv->key.compare(other.m_priv->key);
+    }
+    return other.m_priv? -1 : 0;
 }
 
 bool
 lyric_build::TraceId::operator==(const TraceId &other) const
 {
-    return m_hash == other.m_hash
-        && m_domain == other.m_domain
-        && m_id == other.m_id;
+    return compare(other) == 0;
 }
 
 bool
 lyric_build::TraceId::operator!=(const TraceId &other) const
 {
-    return !(*this == other);
+    return compare(other) != 0;
+}
+
+bool
+lyric_build::TraceId::operator<(const TraceId &other) const
+{
+    return compare(other) < 0;
 }
 
 tempo_utils::LogMessage&&

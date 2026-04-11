@@ -12,6 +12,8 @@
 #include <tempo_utils/memory_bytes.h>
 #include <tempo_utils/tempdir_maker.h>
 
+#include "lyric_build/task_hasher.h"
+
 class CacheFixture {
 public:
     virtual ~CacheFixture() = default;
@@ -110,7 +112,7 @@ TYPED_TEST (AbstractCache, DeclareArtifact)
 {
     auto cache = this->fixture->getCache();
     auto generation = lyric_build::BuildGeneration::create();
-    auto hash = "foo";
+    auto hash = lyric_build::TaskHasher::uniqueHash();
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
     auto declareArtifactStatus = cache->declareArtifact(id);
@@ -122,7 +124,7 @@ TYPED_TEST (AbstractCache, StoreAndLoadMetadata)
 {
     auto cache = this->fixture->getCache();
     auto generation = lyric_build::BuildGeneration::create();
-    auto hash = "foo";
+    auto hash = lyric_build::TaskHasher::uniqueHash();
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
     auto declareArtifactStatus = cache->declareArtifact(id);
@@ -152,7 +154,7 @@ TYPED_TEST (AbstractCache, StoreAndLoadContent)
 {
     auto cache = this->fixture->getCache();
     auto generation = lyric_build::BuildGeneration::create();
-    auto hash = "foo";
+    auto hash = lyric_build::TaskHasher::uniqueHash();
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
     auto declareArtifactStatus = cache->declareArtifact(id);
@@ -175,7 +177,7 @@ TYPED_TEST (AbstractCache, LinkArtifactAndLoadMetadata)
 {
     auto cache = this->fixture->getCache();
     auto generation = lyric_build::BuildGeneration::create();
-    auto hash = "foo";
+    auto hash = lyric_build::TaskHasher::uniqueHash();
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
     auto declareArtifactStatus = cache->declareArtifact(id);
@@ -208,7 +210,7 @@ TYPED_TEST (AbstractCache, LinkArtifactOverridingMetadataAndLoadMetadata)
     auto cache = this->fixture->getCache();
 
     auto generation1 = lyric_build::BuildGeneration::create();
-    auto hash = "foo";
+    auto hash = lyric_build::TaskHasher::uniqueHash();
     lyric_build::ArtifactId id(generation1, hash, tempo_utils::UrlPath::fromString("/file"));
 
     auto declareArtifactStatus = cache->declareArtifact(id);

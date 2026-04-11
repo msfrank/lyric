@@ -11,19 +11,18 @@
 
 class CompilePluginTask : public BaseBuildFixture {
 protected:
-    tempo_utils::Status configure() override {
+    void configure() override {
         tempo_config::ConfigNode rootNode;
         TU_ASSIGN_OR_RAISE (rootNode, tempo_config::read_config_string(R"({
             "global": {},
             "domain": {},
             "tasks": {}
         })"));
-        m_config = std::make_unique<lyric_build::TaskSettings>(rootNode.toMap());
-        return {};
+        taskSettings = lyric_build::TaskSettings(rootNode.toMap());
     }
 };
 
-TEST_F(CompilePluginTask, RunSucceeds)
+TEST_F(CompilePluginTask, TaskSucceeds)
 {
     writeNamedFile("plugin", "foo_plugin.cpp", R"(
         int forty_two() { return 42; }
@@ -40,23 +39,22 @@ TEST_F(CompilePluginTask, RunSucceeds)
             }},
         }
     }});
-    auto *task = lyric_build::internal::new_compile_plugin_task(m_generation, key, m_span);
-    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
-    ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
-    auto taskHash = configureTaskResult.getResult();
-    auto hashBytes = taskHash.bytesView();
-    std::string hashString((const char *) hashBytes.data(), hashBytes.size());
+    auto *task = lyric_build::internal::new_compile_plugin_task(generation, key, buildState, span);
+    ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
-    bool taskComplete;
-    auto runTaskStatus = task->run(hashString, {}, m_state.get(), taskComplete);
-    ASSERT_TRUE (taskComplete);
-    ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
+    lyric_build::TaskHash taskHash;
+    ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
+    ASSERT_TRUE (taskHash.isValid());
+    task->setTaskHash(taskHash);
+
+    auto *tmp = tempDirectory();
+    ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());
 }
 
 TEST_F(CompilePluginTask, ConfigureTaskFailsWhenNoPluginSourcesSpecified)
 {
     lyric_build::TaskKey key(std::string("compile_plugin"), std::string("foo"));
-    auto *task = lyric_build::internal::new_compile_plugin_task(m_generation, key, m_span);
-    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
-    ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kInvalidConfiguration));
+    auto *task = lyric_build::internal::new_compile_plugin_task(generation, key, buildState, span);
+    auto status = task->configureTask(taskSettings);
+    ASSERT_THAT (status, tempo_test::ContainsStatus(lyric_build::BuildCondition::kInvalidConfiguration));
 }

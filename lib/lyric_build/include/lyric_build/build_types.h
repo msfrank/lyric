@@ -28,14 +28,23 @@ namespace lyric_build {
         LinkOverride,
     };
 
+    enum class TaskState {
+        INVALID,
+        QUEUED,
+        RUNNING,
+        BLOCKED,
+        COMPLETED,
+        FAILED,
+    };
+
     /**
      * BuildGeneration contains the globally-unique id which identifies the build invocation
      * and a timestamp indicating when the build invocation occurred.
      */
-    class BuildGeneration {
+    class BuildGeneration final {
 
     public:
-        BuildGeneration();
+        BuildGeneration() = default;
         explicit BuildGeneration(const tempo_utils::UUID &uuid);
         BuildGeneration(const BuildGeneration &other);
 
@@ -43,6 +52,7 @@ namespace lyric_build {
         std::vector<tu_uint8> toBytes() const;
         std::string toString() const;
 
+        int compare(const BuildGeneration &other) const;
         bool operator==(const BuildGeneration &other) const;
         bool operator!=(const BuildGeneration &other) const;
         bool operator<(const BuildGeneration &other) const;
@@ -50,17 +60,22 @@ namespace lyric_build {
         static BuildGeneration create();
         static BuildGeneration parse(std::string_view s);
 
+        template <typename H>
+        friend H AbslHashValue(H h, const BuildGeneration &generation) {
+            return H::combine(std::move(h), generation.m_uuid);
+        }
+
     private:
         tempo_utils::UUID m_uuid;
     };
 
-    class TaskHash {
+    class TaskHash final {
     public:
         TaskHash() = default;
         explicit TaskHash(std::vector<tu_uint8> taskHash);
         TaskHash(const TaskHash &other);
 
-        bool isValid();
+        bool isValid() const;
         std::span<tu_uint8> bytesView() const;
         std::vector<tu_uint8> toBytes() const;
         std::string toString() const;
@@ -70,6 +85,15 @@ namespace lyric_build {
         bool operator!=(const TaskHash &other) const;
         bool operator<(const TaskHash &other) const;
 
+        static TaskHash parse(std::string_view s);
+
+        template <typename H>
+        friend H AbslHashValue(H h, const TaskHash &taskHash) {
+            if (taskHash.m_hash)
+                return H::combine(std::move(h), *taskHash.m_hash);
+            return H::combine(std::move(h), taskHash.m_hash);
+        }
+
     private:
         std::shared_ptr<std::vector<tu_uint8>> m_hash;
     };
@@ -77,7 +101,7 @@ namespace lyric_build {
     /**
      * TaskId describes a task executed by the build system.
      */
-    class TaskId {
+    class TaskId final {
 
     public:
         TaskId() = default;
@@ -103,7 +127,9 @@ namespace lyric_build {
 
         template <typename H>
         friend H AbslHashValue(H h, const TaskId &taskId) {
-            return H::combine(std::move(h), taskId.m_priv->domain, taskId.m_priv->id);
+            if (taskId.m_priv)
+                return H::combine(std::move(h), taskId.m_priv->domain, taskId.m_priv->id);
+            return H::combine(std::move(h), taskId.m_priv);
         }
 
     private:
@@ -117,7 +143,7 @@ namespace lyric_build {
     /**
      * TaskKey is used internally to uniquely identify a task which is to be executed as part of a build.
      */
-    class TaskKey {
+    class TaskKey final {
 
     public:
         TaskKey() = default;
@@ -135,15 +161,16 @@ namespace lyric_build {
         std::string toString() const;
         TaskId toTaskId() const;
 
+        int compare(const TaskKey &other) const;
         bool operator==(const TaskKey &other) const;
         bool operator!=(const TaskKey &other) const;
         bool operator<(const TaskKey &other) const;
 
-        int compare(const TaskKey &other) const;
-
         template <typename H>
         friend H AbslHashValue(H h, const TaskKey &taskKey) {
-            return H::combine(std::move(h), taskKey.m_priv->domain, taskKey.m_priv->id, taskKey.m_priv->params);
+            if (taskKey.m_priv)
+                return H::combine(std::move(h), taskKey.m_priv->domain, taskKey.m_priv->id, taskKey.m_priv->params);
+            return H::combine(std::move(h), taskKey.m_priv);
         }
 
     private:
@@ -156,108 +183,150 @@ namespace lyric_build {
     };
 
     /**
-     * TaskState contains the execution state for a task.
+     * TaskReference identifies a task within a specific build generation.
      */
-    class TaskState {
+    class TaskReference final {
 
     public:
-        enum class Status {
-            INVALID,
-            QUEUED,
-            RUNNING,
-            BLOCKED,
-            COMPLETED,
-            FAILED,
-        };
+        TaskReference() = default;
+        TaskReference(const BuildGeneration &generation, const TaskKey &key);
+        TaskReference(const TaskReference &other);
 
-        TaskState();
-        TaskState(Status status, const BuildGeneration &generation, const std::string &hash);
-        TaskState(const TaskState &other);
-
-        Status getStatus() const;
+        bool isValid() const;
         BuildGeneration getGeneration() const;
-        std::string getHash() const;
+        TaskKey getKey() const;
+
+        std::string toString() const;
+
+        int compare(const TaskReference &other) const;
+        bool operator==(const TaskReference &other) const;
+        bool operator!=(const TaskReference &other) const;
+        bool operator<(const TaskReference &other) const;
+
+        template <typename H>
+        friend H AbslHashValue(H h, const TaskReference &ref) {
+            if (ref.m_priv)
+                return H::combine(std::move(h), ref.m_priv->generation, ref.m_priv->key);
+            return H::combine(std::move(h), ref.m_priv);
+        }
+
+    private:
+        struct Priv {
+            BuildGeneration generation;
+            TaskKey key;
+        };
+        std::shared_ptr<Priv> m_priv;
+    };
+
+    /**
+     * TaskData contains the execution state for a task.
+     */
+    class TaskData final {
+    public:
+        TaskData() = default;
+        TaskData(TaskState state, const BuildGeneration &generation);
+        TaskData(TaskState state, const BuildGeneration &generation, const TaskHash &hash);
+        TaskData(const TaskData &other);
+
+        TaskState getState() const;
+        BuildGeneration getGeneration() const;
+        TaskHash getHash() const;
 
         std::string toString() const;
 
     private:
-        Status m_status;
-        BuildGeneration m_generation;
-        std::string m_hash;
+        struct Priv {
+            TaskState state;
+            BuildGeneration generation;
+            TaskHash hash;
+        };
+        std::shared_ptr<Priv> m_priv;
     };
 
     /**
      * ArtifactId uniquely identifies an artifact in the build cache.
      */
-    class ArtifactId {
+    class ArtifactId final {
 
     public:
-        ArtifactId();
-        ArtifactId(const BuildGeneration &generation, const std::string &hash, const tempo_utils::Url &url);
-        ArtifactId(const BuildGeneration &generation, const std::string &hash, const tempo_utils::UrlPath &path);
+        ArtifactId() = default;
+        ArtifactId(const BuildGeneration &generation, const TaskHash &hash, const tempo_utils::Url &url);
+        ArtifactId(const BuildGeneration &generation, const TaskHash &hash, const tempo_utils::UrlPath &path);
         ArtifactId(const ArtifactId &other);
 
         bool isValid() const;
         BuildGeneration getGeneration() const;
-        std::string getHash() const;
+        TaskHash getHash() const;
         tempo_utils::Url getLocation() const;
 
         std::string toString() const;
 
+        int compare(const ArtifactId &other) const;
         bool operator==(const ArtifactId &other) const;
         bool operator!=(const ArtifactId &other) const;
         bool operator<(const ArtifactId &other) const;
 
         template <typename H>
         friend H AbslHashValue(H h, const ArtifactId &artifactId) {
-            return H::combine(std::move(h), artifactId.m_generation, artifactId.m_hash, artifactId.m_location);
+            if (artifactId.m_priv)
+                return H::combine(std::move(h), artifactId.m_priv->generation, artifactId.m_priv->hash, artifactId.m_priv->location);
+            return H::combine(std::move(h), artifactId.m_priv);
         }
 
     private:
-        BuildGeneration m_generation;
-        std::string m_hash;
-        tempo_utils::Url m_location;
+        struct Priv {
+            BuildGeneration generation;
+            TaskHash hash;
+            tempo_utils::Url location;
+        };
+        std::shared_ptr<Priv> m_priv;
     };
 
     /**
      * TraceId identifies the generation containing the build artifacts for the specified task id
      * (the domain and id) with the specified task hash.
      */
-    class TraceId {
+    class TraceId final {
 
     public:
-        TraceId();
-        TraceId(const std::string &hash, const std::string &domain, const std::string &id);
+        TraceId() = default;
+        TraceId(const TaskHash &hash, const TaskKey &key);
         TraceId(const TraceId &other);
 
         bool isValid() const;
-        std::string getHash() const;
-        std::string getDomain() const;
-        std::string getId() const;
+        TaskHash getHash() const;
+        TaskKey getKey() const;
 
         std::string toString() const;
 
+        int compare(const TraceId &other) const;
         bool operator==(const TraceId &other) const;
         bool operator!=(const TraceId &other) const;
+        bool operator<(const TraceId &other) const;
 
         template <typename H>
         friend H AbslHashValue(H h, const TraceId &traceId) {
-            return H::combine(std::move(h), traceId.m_hash, traceId.m_domain, traceId.m_id);
+            if (traceId.m_priv)
+                return H::combine(std::move(h), traceId.m_priv->hash, traceId.m_priv->key);
+            return H::combine(std::move(h), traceId.m_priv);
         }
 
     private:
-        std::string m_hash;
-        std::string m_domain;
-        std::string m_id;
+        struct Priv {
+            TaskHash hash;
+            TaskKey key;
+        };
+        std::shared_ptr<Priv> m_priv;
     };
+
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey);
-    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskState &state);
+    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskData &state);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const ArtifactId &artifactId);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TraceId &traceId);
 
-    struct NamespaceAddress {
+    struct NamespaceAddress final {
         NamespaceAddress() : u32(METADATA_INVALID_OFFSET_U32) {};
         explicit NamespaceAddress(tu_uint32 u32) : u32(u32) {};
         NamespaceAddress(const NamespaceAddress &other) : u32(other.u32) {};
@@ -268,7 +337,7 @@ namespace lyric_build {
         tu_uint32 u32 = METADATA_INVALID_OFFSET_U32;
     };
 
-    struct AttrAddress {
+    struct AttrAddress final {
         AttrAddress() : u32(METADATA_INVALID_OFFSET_U32) {};
         explicit AttrAddress(tu_uint32 u32) : u32(u32) {};
         AttrAddress(const AttrAddress &other) : u32(other.u32) {};
@@ -279,7 +348,7 @@ namespace lyric_build {
         tu_uint32 u32 = METADATA_INVALID_OFFSET_U32;
     };
 
-    class AttrId {
+    class AttrId final {
     public:
         AttrId();
         AttrId(const NamespaceAddress &address, tu_uint32 type);

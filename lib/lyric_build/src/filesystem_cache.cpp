@@ -13,6 +13,7 @@
 #include <lyric_build/filesystem_cache.h>
 #include <lyric_build/metadata_matcher.h>
 #include <lyric_build/metadata_writer.h>
+#include <tempo_security/sha256_hash.h>
 #include <tempo_utils/file_lock.h>
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/file_result.h>
@@ -159,8 +160,7 @@ make_artifact_path(const std::filesystem::path &baseDirectory, const lyric_build
 
     auto path = baseDirectory
         / artifactId.getGeneration().toString()
-        / absl::BytesToHexString(artifactId.getHash());
-
+        / artifactId.getHash().toString();
 
     auto schemePart = location.hasScheme()? location.getScheme() : "_";
     path /= schemePart;
@@ -186,7 +186,7 @@ parse_artifact_id(std::string_view sv)
 {
     std::vector<std::string> parts = absl::StrSplit(sv, absl::MaxSplits(':', 2));
     auto generation = lyric_build::BuildGeneration::parse(parts[0]);
-    auto hash = absl::HexStringToBytes(parts[1]);
+    auto hash = lyric_build::TaskHash::parse(parts[1]);
     auto location = tempo_utils::Url::fromString(parts[2]);
     return lyric_build::ArtifactId(generation, hash, location);
 }
@@ -204,7 +204,7 @@ parse_artifact_id(const std::filesystem::path &artifactPath, const std::filesyst
 
     if (it == path.end())
         return {};
-    auto hash = absl::HexStringToBytes(it->string());
+    auto hash = lyric_build::TaskHash::parse(it->string());
     it++;
 
     if (it == path.end())
@@ -515,7 +515,7 @@ lyric_build::FilesystemCache::linkArtifactOverridingMetadata(
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::FilesystemCache::findArtifacts(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
 {
@@ -528,7 +528,7 @@ lyric_build::FilesystemCache::findArtifacts(
 
     auto searchRoot = m_priv->metadataDirectory
         / generation.toString()
-        / absl::BytesToHexString(hash);
+        / hash.toString();
     std::filesystem::recursive_directory_iterator baseIterator(searchRoot, ec);
     if (ec)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -576,11 +576,21 @@ static std::filesystem::path
 make_trace_path(const std::filesystem::path &baseDirectory, const lyric_build::TraceId &traceId)
 {
     TU_ASSERT (traceId.isValid());
+    auto hash = traceId.getHash();
+    auto key = traceId.getKey();
+    auto params = key.getParams();
 
     auto path = baseDirectory
-        / absl::BytesToHexString(traceId.getHash())
-        / traceId.getDomain()
-        / traceId.getId();
+        / hash.toString()
+        / key.getDomain()
+        / key.getId();
+    if (!params.mapEmpty()) {
+        auto hashedParams = tempo_security::Sha256Hash::hash(params.toString());
+        path /= absl::BytesToHexString(hashedParams);
+    } else {
+        path /= "_";
+    }
+
     return path;
 }
 
@@ -615,31 +625,53 @@ lyric_build::FilesystemCache::storeTrace(const TraceId &traceId, const BuildGene
     return fileWriter.getStatus();
 }
 
+static std::filesystem::path
+make_diagnostics_path(const std::filesystem::path &baseDirectory, const lyric_build::TaskReference &taskRef)
+{
+    TU_ASSERT (taskRef.isValid());
+    auto generation = taskRef.getGeneration();
+    auto key = taskRef.getKey();
+    auto params = key.getParams();
+
+    auto path = baseDirectory
+        / generation.toString()
+        / key.getDomain()
+        / key.getId();
+    if (!params.mapEmpty()) {
+        auto hashedParams = tempo_security::Sha256Hash::hash(params.toString());
+        path /= absl::BytesToHexString(hashedParams);
+    } else {
+        path /= "_";
+    }
+
+    return path;
+}
+
 bool
-lyric_build::FilesystemCache::containsDiagnostics(const TraceId &traceId)
+lyric_build::FilesystemCache::containsDiagnostics(const TaskReference &taskRef)
 {
     boost::interprocess::sharable_lock lock(m_priv->shmem->mutex);
-    auto diagnosticPath = make_trace_path(m_priv->diagnosticsDirectory, traceId);
+    auto diagnosticPath = make_diagnostics_path(m_priv->diagnosticsDirectory, taskRef);
     return std::filesystem::exists(diagnosticPath);
 }
 
 tempo_utils::Result<tempo_tracing::TempoSpanset>
-lyric_build::FilesystemCache::loadDiagnostics(const TraceId &traceId)
+lyric_build::FilesystemCache::loadDiagnostics(const TaskReference &taskRef)
 {
     boost::interprocess::sharable_lock lock(m_priv->shmem->mutex);
 
-    auto diagnosticPath = make_trace_path(m_priv->diagnosticsDirectory, traceId);
+    auto diagnosticPath = make_diagnostics_path(m_priv->diagnosticsDirectory, taskRef);
     tempo_utils::FileReader fileReader(diagnosticPath);
     TU_RETURN_IF_NOT_OK (fileReader.getStatus());
     return tempo_tracing::TempoSpanset(fileReader.getBytes());
 }
 
 tempo_utils::Status
-lyric_build::FilesystemCache::storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset)
+lyric_build::FilesystemCache::storeDiagnostics(const TaskReference &taskRef, const tempo_tracing::TempoSpanset &spanset)
 {
     boost::interprocess::scoped_lock lock(m_priv->shmem->mutex);
 
-    auto diagnosticPath = make_trace_path(m_priv->diagnosticsDirectory, traceId);
+    auto diagnosticPath = make_diagnostics_path(m_priv->diagnosticsDirectory, taskRef);
     TU_RETURN_IF_NOT_OK (create_intermediate_directories(diagnosticPath));
     tempo_utils::FileWriter fileWriter(
         diagnosticPath, spanset.bytesView(), tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);

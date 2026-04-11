@@ -15,33 +15,24 @@ namespace lyric_build::internal {
         ParseArchetypeTask(
             const BuildGeneration &generation,
             const TaskKey &key,
+            std::weak_ptr<BuildState> buildState,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-        tempo_utils::Result<TaskHash> configureTask(
-            const TaskSettings *config,
-            AbstractVirtualFilesystem *virtualFilesystem) override;
-        tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
-        Option<tempo_utils::Status> runTask(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation) override;
+        tempo_utils::Status configureTask(const TaskSettings &taskSettings) override;
+        tempo_utils::Status deduplicateTask(TaskHash &taskHash) override;
+        tempo_utils::Status runTask(TempDirectory *tempDirectory) override;
 
     private:
         lyric_common::ModuleLocation m_moduleLocation;
         tempo_utils::UrlPath m_sourcePath;
         lyric_parser::ParserOptions m_parserOptions;
-        std::string m_resourceId;
-
-        tempo_utils::Status configure(const TaskSettings *config);
-        tempo_utils::Status parseModule(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation);
+        Resource m_resource;
     };
 
     BaseTask *new_parse_archetype_task(
         const BuildGeneration &generation,
         const TaskKey &key,
+        std::weak_ptr<BuildState> buildState,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 

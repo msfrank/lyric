@@ -35,7 +35,7 @@ TEST(LyricBuilder, ComputeSingleTestTargetFails)
     TU_LOG_INFO << key << "=" << computeTargetResult;
     ASSERT_TRUE (computeTargetResult.isResult());
     auto state = computeTargetResult.getResult();
-    ASSERT_TRUE (state.getStatus() == lyric_build::TaskState::Status::FAILED);
+    ASSERT_TRUE (state.getStatus() == lyric_build::TaskState::FAILED);
 }
 
 TEST(LyricBuilder, ComputeTestTargetWithDependencies)
@@ -62,7 +62,7 @@ TEST(LyricBuilder, ComputeTestTargetWithDependencies)
     TU_LOG_INFO << key << "=" << computeTargetResult;
     ASSERT_TRUE (computeTargetResult.isResult());
     auto state = computeTargetResult.getResult();
-    ASSERT_TRUE (state.getStatus() == lyric_build::TaskState::Status::COMPLETED);
+    ASSERT_TRUE (state.getStatus() == lyric_build::TaskState::COMPLETED);
 }
 
 int

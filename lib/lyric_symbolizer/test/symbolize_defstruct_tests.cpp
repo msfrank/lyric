@@ -19,7 +19,7 @@ TEST_F(SymbolizeDefstruct, DeclareDefstruct)
         }
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
@@ -40,7 +40,7 @@ TEST_F(SymbolizeDefstruct, DeclareStructDefaultInit)
         }
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
@@ -61,7 +61,7 @@ TEST_F(SymbolizeDefstruct, DeclareStructNamedInit)
         }
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();

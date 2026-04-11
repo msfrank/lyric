@@ -1,6 +1,7 @@
 
 #include <lyric_parser/internal/archetype_reader.h>
 #include <lyric_parser/lyric_archetype.h>
+#include <tempo_utils/memory_bytes.h>
 
 lyric_parser::LyricArchetype::LyricArchetype()
 {
@@ -100,6 +101,14 @@ lyric_parser::LyricArchetype::bytesView() const
     if (!isValid())
         return {};
     return m_reader->bytesView();
+}
+
+std::shared_ptr<const tempo_utils::ImmutableBytes>
+lyric_parser::LyricArchetype::toBytes() const
+{
+    if (m_bytes != nullptr)
+        return m_bytes;
+    return tempo_utils::MemoryBytes::copy(m_reader->bytesView());
 }
 
 std::string

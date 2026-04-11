@@ -20,7 +20,7 @@ TEST_F(AnalyzeTypename, DeclareTypename)
         defstruct Foo{}
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -43,7 +43,7 @@ TEST_F(AnalyzeTypename, DeclareAliasWithTypenames)
         defstruct Bar{}
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

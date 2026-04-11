@@ -22,50 +22,50 @@ namespace lyric_test {
                 enum class Type {
                     Invalid,
                     MatchSpanset,
-                    MatchStatus,
+                    MatchState,
                 };
         public:
-            explicit TestComputationMatcher(lyric_build::TaskState::Status status);
+            explicit TestComputationMatcher(lyric_build::TaskState state);
             explicit TestComputationMatcher(const Matcher<tempo_tracing::TempoSpanset> &spansetMatcher);
 
-            bool MatchAndExplain(const lyric_test::TestComputation &testComputation, std::ostream *os) const;
+            bool MatchAndExplain(const TestComputation &testComputation, std::ostream *os) const;
             void DescribeTo(std::ostream *os) const;
             void DescribeNegationTo(std::ostream *os) const;
 
-            using MatchesType = lyric_test::TestComputation;
+            using MatchesType = TestComputation;
             using is_gtest_matcher = void;
 
         private:
             Type m_type;
             Matcher<tempo_tracing::TempoSpanset> m_matcher;
-            lyric_build::TaskState::Status m_status;
+            lyric_build::TaskState m_state;
         };
 
-        Matcher<lyric_test::SymbolizeModule> SymbolizeModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::SymbolizeModule> SymbolizeModule(lyric_build::TaskState state);
         Matcher<lyric_test::SymbolizeModule> SymbolizeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
 
-        Matcher<lyric_test::AnalyzeModule> AnalyzeModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::AnalyzeModule> AnalyzeModule(lyric_build::TaskState state);
         Matcher<lyric_test::AnalyzeModule> AnalyzeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
 
-        Matcher<lyric_test::CompileModule> CompileModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::CompileModule> CompileModule(lyric_build::TaskState state);
         Matcher<lyric_test::CompileModule> CompileModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
 
         class RunModuleMatcher {
 
         public:
             explicit RunModuleMatcher(const Matcher<lyric_runtime::DataCell> &matcher);
-            bool MatchAndExplain(const lyric_test::RunModule &runModule, std::ostream *os) const;
+            bool MatchAndExplain(const RunModule &runModule, std::ostream *os) const;
             void DescribeTo(std::ostream *os) const;
             void DescribeNegationTo(std::ostream *os) const;
 
-            using MatchesType = lyric_test::RunModule;
+            using MatchesType = RunModule;
             using is_gtest_matcher = void;
 
         private:
             Matcher<lyric_runtime::DataCell> m_matcher;
         };
 
-        Matcher<lyric_test::RunModule> RunModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::RunModule> RunModule(lyric_build::TaskState state);
         Matcher<lyric_test::RunModule> RunModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
         Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::DataCell> &matcher);
     }

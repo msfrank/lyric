@@ -32,6 +32,7 @@ namespace lyric_parser {
 
         std::shared_ptr<const internal::ArchetypeReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
+        std::shared_ptr<const tempo_utils::ImmutableBytes> toBytes() const;
 
         std::string dumpJson() const;
 

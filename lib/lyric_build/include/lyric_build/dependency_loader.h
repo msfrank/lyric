@@ -5,6 +5,7 @@
 #include <lyric_runtime/library_plugin.h>
 
 #include "abstract_artifact_cache.h"
+#include "base_task.h"
 #include "build_types.h"
 #include "target_computation.h"
 #include "temp_directory.h"
@@ -16,7 +17,11 @@ namespace lyric_build {
     public:
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
             const lyric_common::ModuleLocation &origin,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            const BaseTask *task,
+            TempDirectory *tempDirectory);
+        static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
+            const lyric_common::ModuleLocation &origin,
+            const absl::flat_hash_map<TaskKey,TaskData> &depStates,
             std::shared_ptr<AbstractArtifactCache> artifactCache,
             TempDirectory *tempDirectory);
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(

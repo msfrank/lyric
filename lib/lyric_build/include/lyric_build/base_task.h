@@ -7,7 +7,6 @@
 #include <tempo_tracing/trace_span.h>
 
 #include "build_state.h"
-#include "build_result.h"
 #include "build_types.h"
 #include "task_settings.h"
 #include "temp_directory.h"
@@ -20,52 +19,78 @@ namespace lyric_build {
         BaseTask(
             const BuildGeneration &generation,
             const TaskKey &key,
+            std::weak_ptr<BuildState> buildState,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
         virtual ~BaseTask();
 
         BuildGeneration getGeneration() const;
         TaskKey getKey() const;
         TaskId getId() const;
+        TaskReference getReference() const;
         tempo_config::ConfigMap getParams() const;
 
+        std::shared_ptr<BuildState> getBuildState() const;
+
         std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
-        TempDirectory *tempDirectory();
+
+        TaskState getState() const;
+        void setState(TaskState state);
+
+        void requestDependency(const TaskKey &depKey);
+        bool hasDependency(const TaskKey &depKey) const;
+        bool dependenciesEmpty() const;
+        absl::flat_hash_set<TaskKey>::const_iterator dependenciesBegin() const;
+        absl::flat_hash_set<TaskKey>::const_iterator dependenciesEnd() const;
+        int numDependencies() const;
+
+        void markCompleted(const TaskKey &depKey, const TaskData &depState);
+        bool hasCompleted(const TaskKey &depKey) const;
+        TaskData getCompleted(const TaskKey &depKey) const;
+        absl::btree_map<TaskKey,TaskData>::const_iterator completedBegin() const;
+        absl::btree_map<TaskKey,TaskData>::const_iterator completedEnd() const;
+        int numCompleted() const;
+
+        bool hasTaskHash() const;
+        TaskHash getTaskHash() const;
+        void setTaskHash(const TaskHash &taskHash);
+
+        tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> getContent(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            bool followLinks = false);
+        tempo_utils::Result<LyricMetadata> getMetadata(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            bool followLinks = false);
+
+        tempo_utils::Status storeArtifact(const tempo_utils::UrlPath &path,
+            std::shared_ptr<const tempo_utils::ImmutableBytes> content,
+            const LyricMetadata &metadata = {});
 
         /**
          *
-         * @param configStore
-         * @param virtualFilesystem
+         * @param taskSettings
          * @return
          */
-        virtual tempo_utils::Result<TaskHash> configureTask(
-            const TaskSettings *configStore,
-            AbstractVirtualFilesystem *virtualFilesystem) = 0;
+        virtual tempo_utils::Status configureTask(const TaskSettings &taskSettings) = 0;
 
         /**
-         *
-         * @return
-         */
-        virtual tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() = 0;
-
-        /**
-         *
          * @param taskHash
-         * @param depStates
-         * @param buildState
          * @return
          */
-        virtual Option<tempo_utils::Status> runTask(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState) = 0;
+        virtual tempo_utils::Status deduplicateTask(TaskHash &taskHash) = 0;
 
-        tempo_utils::Status run(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState,
-            bool &complete);
+        /**
+         *
+         * @param tempDirectory
+         * @return
+         */
+        virtual tempo_utils::Status runTask(TempDirectory *tempDirectory) = 0;
 
-        tempo_utils::Status cancel(const std::string &taskHash, BuildState *buildState);
+        tempo_utils::Status run();
+
+        tempo_utils::Status cancel();
+        tempo_utils::Status fail(const tempo_utils::Status &status);
 
         std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
@@ -75,21 +100,17 @@ namespace lyric_build {
     private:
         BuildGeneration m_generation;
         TaskKey m_key;
+        std::weak_ptr<BuildState> m_buildState;
         std::shared_ptr<tempo_tracing::TraceSpan> m_span;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_diagnostics;
         std::unique_ptr<TempDirectory> m_tempDirectory;
 
-        enum class State {
-            READY,
-            ACTIVE,
-            DONE,
-        };
-        State m_state;
+        TaskState m_state;
+        absl::flat_hash_set<TaskKey> m_dependencies;
+        absl::btree_map<TaskKey,TaskData> m_completed;
+        std::optional<TaskHash> m_hash;
 
-        tempo_utils::Status complete(
-            const std::string &taskHash,
-            BuildState *buildState,
-            const tempo_utils::Status &status);
+        tempo_utils::Status complete(const tempo_utils::Status &status);
 
     public:
         /**

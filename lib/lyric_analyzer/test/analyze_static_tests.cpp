@@ -20,7 +20,7 @@ TEST_F(AnalyzeStatic, DeclareStaticVal)
         global val Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -41,7 +41,7 @@ TEST_F(AnalyzeStatic, DeclareStaticVar)
         global var Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

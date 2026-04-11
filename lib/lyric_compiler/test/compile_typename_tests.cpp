@@ -19,7 +19,7 @@ TEST_F(CompileTypename, CompileTypenameResolvedToStruct)
         defstruct Foo{}
     )");
     ASSERT_THAT (compileModuleResult,
-        tempo_test::ContainsResult(CompileModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(CompileModule(lyric_build::TaskState::COMPLETED)));
 
     auto compileModule = compileModuleResult.getResult();
     auto object = compileModule.getModule();

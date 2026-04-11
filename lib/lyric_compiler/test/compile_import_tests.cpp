@@ -12,7 +12,7 @@ class CompileImport : public BaseCompilerFixture {};
 
 TEST_F(CompileImport, EvaluateImportSingleRelativeLocation)
 {
-    absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> depStates;
+    absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskData> depStates;
 
     auto compileDep1Result = m_tester->compileModule(R"(
         def Return42(): Int {
@@ -46,7 +46,7 @@ TEST_F(CompileImport, EvaluateImportSingleRelativeLocation)
 
 TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
 {
-    absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> depStates;
+    absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskData> depStates;
 
     auto compileDep1Result = m_tester->compileModule(R"(
         def Dep1(): Int {

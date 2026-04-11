@@ -68,9 +68,9 @@ TEST_F(BuildRunner, EnqueueNewTask)
     ASSERT_EQ (key, readyItem.task->getKey());
 
     auto taskState = state->loadState(key);
-    ASSERT_EQ (lyric_build::TaskState::Status::QUEUED, taskState.getStatus());
+    ASSERT_EQ (lyric_build::TaskState::QUEUED, taskState.getState());
     ASSERT_EQ (lyric_build::BuildGeneration{}, taskState.getGeneration());
-    ASSERT_EQ ("", taskState.getHash());
+    ASSERT_EQ (lyric_build::TaskHash{}, taskState.getHash());
 }
 
 TEST_F(BuildRunner, EnqueueExistingTaskReturnsExistingTask)
@@ -105,8 +105,8 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
     lyric_build::TaskKey key("test", std::string{"foo"});
 
     auto priorGen = lyric_build::BuildGeneration::create();
-    std::string priorHash("foo");
-    lyric_build::TaskState priorState(lyric_build::TaskState::Status::BLOCKED, priorGen, priorHash);
+    auto priorHash = lyric_build::TaskHash::parse("foo");
+    lyric_build::TaskData priorState(lyric_build::TaskState::BLOCKED, priorGen, priorHash);
     state->storeState(key, priorState);
 
     auto enqueueTaskStatus1 = runner->enqueueTask(key);
@@ -117,7 +117,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
     ASSERT_EQ (key, readyItem.task->getKey());
 
     auto newState = state->loadState(key);
-    ASSERT_EQ (lyric_build::TaskState::Status::QUEUED, newState.getStatus());
+    ASSERT_EQ (lyric_build::TaskState::QUEUED, newState.getState());
     ASSERT_EQ (priorGen, newState.getGeneration());
     ASSERT_EQ (priorHash, newState.getHash());
 }

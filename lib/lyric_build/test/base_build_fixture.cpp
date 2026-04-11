@@ -10,32 +10,32 @@
 void
 BaseBuildFixture::SetUp()
 {
-    m_generation = lyric_build::BuildGeneration::create();
+    generation = lyric_build::BuildGeneration::create();
     m_recorder = tempo_tracing::TraceRecorder::create();
-    m_span = m_recorder->makeSpan();
+    span = m_recorder->makeSpan();
 
     tempo_utils::TempdirMaker tempdirMaker(std::filesystem::current_path(), "tester.XXXXXXXX");
     TU_RAISE_IF_NOT_OK (tempdirMaker.getStatus());
-    m_testerDirectory = tempdirMaker.getTempdir();
+    testerDirectory = tempdirMaker.getTempdir();
 
-    TU_LOG_INFO << "created tester directory " << m_testerDirectory;
+    TU_LOG_INFO << "created tester directory " << testerDirectory;
 
-    TU_ASSIGN_OR_RAISE (m_vfs, lyric_build::LocalFilesystem::create(m_testerDirectory));
+    TU_ASSIGN_OR_RAISE (m_vfs, lyric_build::LocalFilesystem::create(testerDirectory));
 
     auto buildgen = lyric_build::BuildGeneration::create();
     auto cache = std::make_shared<lyric_build::MemoryCache>();
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    m_state = std::make_unique<lyric_build::BuildState>(buildgen,
+    buildState = std::make_shared<lyric_build::BuildState>(buildgen,
         std::static_pointer_cast<lyric_build::AbstractArtifactCache>(cache),
         bootstrapLoader,
         std::shared_ptr<lyric_runtime::AbstractLoader>{},
         lyric_importer::ModuleCache::create(emptyLoader),
         std::make_shared<lyric_importer::ShortcutResolver>(),
         m_vfs,
-        m_testerDirectory);
+        testerDirectory);
 
-    TU_RAISE_IF_NOT_OK (configure());
+    configure();
 }
 
 std::filesystem::path
@@ -45,7 +45,7 @@ BaseBuildFixture::writeNamedFile(
     std::string_view content)
 {
     auto relativePath = baseDir / path;
-    auto absolutePath = m_testerDirectory / relativePath;
+    auto absolutePath = testerDirectory / relativePath;
     auto parentPath = absolutePath.parent_path();
     std::error_code ec;
     if (!std::filesystem::create_directories(parentPath, ec) && ec) {
@@ -70,7 +70,7 @@ BaseBuildFixture::writeTempFile(
     const std::filesystem::path &templatePath,
     std::string_view content)
 {
-    auto absolutePath = m_testerDirectory / baseDir / templatePath;
+    auto absolutePath = testerDirectory / baseDir / templatePath;
     auto parentPath = absolutePath.parent_path();
     std::error_code ec;
     if (!std::filesystem::create_directories(parentPath, ec) && ec) {
@@ -87,12 +87,22 @@ BaseBuildFixture::writeTempFile(
         throw tempo_utils::StatusException(status);
     }
 
-    return std::filesystem::relative(tempfileMaker.getTempfile(), m_testerDirectory);
+    return std::filesystem::relative(tempfileMaker.getTempfile(), testerDirectory);
 }
 
-tempo_utils::Status
+void
 BaseBuildFixture::configure()
 {
-    m_config = std::make_unique<lyric_build::TaskSettings>();
-    return {};
+    taskSettings = lyric_build::TaskSettings();
+}
+
+
+lyric_build::TempDirectory *
+BaseBuildFixture::tempDirectory()
+{
+    if (m_tmp == nullptr) {
+        m_tmp = std::make_unique<lyric_build::TempDirectory>(testerDirectory, "tmp");
+    }
+    return m_tmp.get();
+
 }

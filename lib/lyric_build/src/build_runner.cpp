@@ -205,7 +205,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
         auto span = m_recorder->makeSpan();
         TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
-            m_state->getGeneration(), key, span));
+            m_state->getGeneration(), key, m_state, span));
 
         m_tasks[key] = task;                            // task was created, add to tasks table
         TU_LOG_VV << "constructed new task " << key;
@@ -226,7 +226,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     auto prevState = m_state->loadState(key);
 
     // create the new task state
-    auto state = TaskState(TaskState::Status::QUEUED, prevState.getGeneration(), prevState.getHash());
+    auto state = TaskData(TaskState::QUEUED, prevState.getGeneration(), prevState.getHash());
 
     // store the new task state
     m_state->storeState(key, state);
@@ -579,8 +579,8 @@ on_async_notify(uv_async_t *async)
                 auto key = stateChanged->getKey();
                 auto state = stateChanged->getState();
                 TU_LOG_VV << "task " << key << " state changed to " << state;
-                if (state.getStatus() != lyric_build::TaskState::Status::COMPLETED
-                    && state.getStatus() != lyric_build::TaskState::Status::FAILED)
+                if (state.getState() != lyric_build::TaskState::COMPLETED
+                    && state.getState() != lyric_build::TaskState::FAILED)
                     break;
                 auto status = runner->restartDeps(key);
                 if (status.notOk()) {

@@ -14,24 +14,24 @@ lyric_build::ArtifactLoader::ArtifactLoader()
 
 lyric_build::ArtifactLoader::ArtifactLoader(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     std::shared_ptr<AbstractArtifactCache> artifactCache)
     : m_generation(generation),
       m_hash(hash),
       m_artifactCache(std::move(artifactCache))
 {
     TU_ASSERT (m_generation.isValid());
-    TU_ASSERT (!m_hash.empty());
+    TU_ASSERT (m_hash.isValid());
     TU_ASSERT (m_artifactCache != nullptr);
 }
 
-lyric_build::ArtifactLoader::ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractArtifactCache> artifactCache)
+lyric_build::ArtifactLoader::ArtifactLoader(const TaskData &state, std::shared_ptr<AbstractArtifactCache> artifactCache)
     : m_generation(state.getGeneration()),
       m_hash(state.getHash()),
       m_artifactCache(std::move(artifactCache))
 {
     TU_ASSERT (m_generation.isValid());
-    TU_ASSERT (!m_hash.empty());
+    TU_ASSERT (m_hash.isValid());
     TU_ASSERT (m_artifactCache != nullptr);
 }
 

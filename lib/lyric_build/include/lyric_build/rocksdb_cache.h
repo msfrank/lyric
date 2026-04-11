@@ -60,7 +60,7 @@ namespace lyric_build {
 
         tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
             const BuildGeneration &generation,
-            const std::string &hash,
+            const TaskHash &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) override;
 
@@ -70,9 +70,9 @@ namespace lyric_build {
         tempo_utils::Result<BuildGeneration> loadTrace(const TraceId &traceId) override;
         tempo_utils::Status storeTrace(const TraceId &traceId, const BuildGeneration &generation) override;
 
-        bool containsDiagnostics(const TraceId &traceId) override;
-        tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TraceId &traceId) override;
-        tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
+        bool containsDiagnostics(const TaskReference &taskRef) override;
+        tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TaskReference &taskRef) override;
+        tempo_utils::Status storeDiagnostics(const TaskReference &taskRef, const tempo_tracing::TempoSpanset &spanset) override;
 
     private:
         bool m_copyReadBuffers;

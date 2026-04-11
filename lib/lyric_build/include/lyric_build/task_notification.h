@@ -40,14 +40,14 @@ namespace lyric_build {
     class NotifyStateChanged : public TaskNotification {
 
     public:
-        NotifyStateChanged(const TaskKey &key, const TaskState &state);
+        NotifyStateChanged(const TaskKey &key, const TaskData &state);
         TaskKey getKey() const;
-        TaskState getState() const;
+        TaskData getState() const;
         std::string toString() const override;
 
     private:
         TaskKey m_key;
-        TaskState m_state;
+        TaskData m_state;
     };
 
     class NotifyTaskRequested : public TaskNotification {

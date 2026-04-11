@@ -17,16 +17,12 @@ namespace lyric_build::internal {
         SymbolizeLinkageTask(
             const BuildGeneration &generation,
             const TaskKey &key,
+            std::weak_ptr<BuildState> buildState,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
-        tempo_utils::Result<TaskHash> configureTask(
-            const TaskSettings *config,
-            AbstractVirtualFilesystem *virtualFilesystem) override;
-        tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
-        Option<tempo_utils::Status> runTask(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState) override;
+        tempo_utils::Status configureTask(const TaskSettings &taskSettings) override;
+        tempo_utils::Status deduplicateTask(TaskHash &taskHash) override;
+        tempo_utils::Status runTask(TempDirectory *tempDirectory) override;
 
     private:
         lyric_common::ModuleLocation m_moduleLocation;
@@ -34,17 +30,12 @@ namespace lyric_build::internal {
         lyric_assembler::ObjectStateOptions m_objectStateOptions;
         lyric_symbolizer::SymbolizerOptions m_symbolizerOptions;
         TaskKey m_parseTarget;
-
-        tempo_utils::Status configure(const TaskSettings *config);
-        tempo_utils::Status symbolizeModule(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState);
     };
 
     BaseTask *new_symbolize_linkage_task(
         const BuildGeneration &generation,
         const TaskKey &key,
+        std::weak_ptr<BuildState> buildState,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 

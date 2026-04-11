@@ -148,7 +148,7 @@ lyric_build::DependencyLoader::loadResource(const lyric_common::ModuleLocation &
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
     const lyric_common::ModuleLocation &origin,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    const absl::flat_hash_map<TaskKey,TaskData> &depStates,
     std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory)
 {
@@ -165,7 +165,7 @@ lyric_build::DependencyLoader::create(
         const auto &taskKey = entry.first;
         const auto &taskState = entry.second;
 
-        TraceId traceId(taskState.getHash(), taskKey.getDomain(), taskKey.getId());
+        TraceId traceId(taskState.getHash(), taskKey);
         BuildGeneration generation;
         TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(traceId));
 
@@ -278,10 +278,27 @@ lyric_build::DependencyLoader::create(
     std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory)
 {
-    absl::flat_hash_map<TaskKey,TaskState> depStates;
+    absl::flat_hash_map<TaskKey,TaskData> depStates;
     for (auto it = targetComputationSet.targetsBegin(); it != targetComputationSet.targetsEnd(); it++) {
         TaskKey taskKey(it->first.getDomain(), it->first.getId());
         depStates[taskKey] = it->second.getState();
     }
+    return create(origin, depStates, artifactCache, tempDirectory);
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
+lyric_build::DependencyLoader::create(
+    const lyric_common::ModuleLocation &origin,
+    const BaseTask *task,
+    TempDirectory *tempDirectory)
+{
+    auto buildState = task->getBuildState();
+    auto artifactCache = buildState->getArtifactCache();
+
+    absl::flat_hash_map<TaskKey,TaskData> depStates;
+    for (auto it = task->completedBegin(); it != task->completedEnd(); ++it) {
+        depStates[it->first] = it->second;
+    }
+
     return create(origin, depStates, artifactCache, tempDirectory);
 }

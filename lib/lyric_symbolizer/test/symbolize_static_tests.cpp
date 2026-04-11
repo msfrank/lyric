@@ -18,7 +18,7 @@ TEST_F(SymbolizeStatic, DeclareStaticVal)
         global val Static: Int = 0
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
@@ -36,7 +36,7 @@ TEST_F(SymbolizeStatic, DeclareStaticVar)
         global var Static: Int = 0
     )");
     ASSERT_THAT (symbolizeModuleResult,
-                 tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();

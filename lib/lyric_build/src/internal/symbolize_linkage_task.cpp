@@ -22,15 +22,17 @@
 lyric_build::internal::SymbolizeLinkageTask::SymbolizeLinkageTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, std::move(span))
+    : BaseTask(generation, key, std::move(buildState), std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::SymbolizeLinkageTask::configure(const TaskSettings *config)
+lyric_build::internal::SymbolizeLinkageTask::configureTask(const TaskSettings &taskSettings)
 {
     auto taskId = getId();
+    auto settings = taskSettings.merge(TaskSettings({}, {}, {{taskId, getParams()}}));
 
     auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
     if (!modulePath.isValid())
@@ -43,10 +45,11 @@ lyric_build::internal::SymbolizeLinkageTask::configure(const TaskSettings *confi
 
     // set the symbolizer prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
-        config, taskId, "preludeLocation"));
+        settings, taskId, "preludeLocation"));
 
     // add dependency on parse_archetype
     m_parseTarget = TaskKey("parse_archetype", taskId.getId());
+    requestDependency(m_parseTarget);
 
     // extend visitor registry to include assembler and compiler vocabularies
     TU_ASSIGN_OR_RETURN (m_symbolizerOptions.visitorRegistry, make_build_visitors());
@@ -54,62 +57,40 @@ lyric_build::internal::SymbolizeLinkageTask::configure(const TaskSettings *confi
     return {};
 }
 
-tempo_utils::Result<lyric_build::TaskHash>
-lyric_build::internal::SymbolizeLinkageTask::configureTask(
-    const TaskSettings *config,
-    AbstractVirtualFilesystem *virtualFilesystem)
+tempo_utils::Status
+lyric_build::internal::SymbolizeLinkageTask::deduplicateTask(TaskHash &taskHash)
 {
-    auto key = getKey();
-    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
-    TU_RETURN_IF_NOT_OK (configure(&merged));
-
     TaskHasher taskHasher(getKey());
     taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
-    auto hash = taskHasher.finish();
-
-    return hash;
-}
-
-tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::SymbolizeLinkageTask::checkDependencies()
-{
-    return absl::flat_hash_set<TaskKey>({m_parseTarget});
+    taskHasher.hashTask(this);
+    taskHash = taskHasher.finish();
+    return {};
 }
 
 tempo_utils::Status
-lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::SymbolizeLinkageTask::runTask(TempDirectory *tempDirectory)
 {
-    if (!depStates.contains(m_parseTarget))
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "missing state for dependent task {}", m_parseTarget.toString());
-
     // get the archetype artifact from the cache
-    auto artifactCache = buildState->getArtifactCache();
-    auto parseHash = depStates.at(m_parseTarget).getHash();
-    TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    BuildGeneration generation;
-    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
-
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
-    ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (content, getContent(m_parseTarget, archetypeArtifactPath));
     lyric_parser::LyricArchetype archetype(content);
 
     // define the module origin
+    auto generation = getGeneration();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.build://", buildState->getGeneration().toString()));
+        absl::StrCat("dev.zuri.build://", generation.toString()));
+
+    auto buildState = getBuildState();
+    auto artifactCache = buildState->getArtifactCache();
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, this, tempDirectory));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer
@@ -125,14 +106,12 @@ lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
     TU_ASSIGN_OR_RETURN (object, symbolizer.symbolizeModule(
         m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics()));
 
-    // declare the artifact
+    // declare the linkage artifact path
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
-    ArtifactId linkageArtifact(buildState->getGeneration(), taskHash, linkageArtifactPath);
-    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(linkageArtifact));
 
-    // store the object metadata in the build cache
+    // construct the linkage metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
@@ -140,33 +119,21 @@ lyric_build::internal::SymbolizeLinkageTask::symbolizeModule(
     LyricMetadata linkageMetadata;
     TU_ASSIGN_OR_RETURN (linkageMetadata, writer.toMetadata());
 
-    //
-    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(linkageArtifact, linkageMetadata));
-
     // store the linkage object content in the build cache
-    auto linkageBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(linkageArtifact, linkageBytes));
+    auto linkageBytes = object.toBytes();
+    TU_RETURN_IF_NOT_OK (storeArtifact(linkageArtifactPath, linkageBytes, linkageMetadata));
 
-    logInfo("stored linkage at {}", linkageArtifact.toString());
+    logInfo("stored linkage {}", linkageArtifactPath.toString());
 
     return {};
-}
-
-Option<tempo_utils::Status>
-lyric_build::internal::SymbolizeLinkageTask::runTask(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
-{
-    auto status = symbolizeModule(taskHash, depStates, buildState);
-    return Option(status);
 }
 
 lyric_build::BaseTask *
 lyric_build::internal::new_symbolize_linkage_task(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new SymbolizeLinkageTask(generation, key, std::move(span));
+    return new SymbolizeLinkageTask(generation, key, std::move(buildState), std::move(span));
 }

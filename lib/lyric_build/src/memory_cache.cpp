@@ -210,7 +210,7 @@ lyric_build::MemoryCache::linkArtifactOverridingMetadata(
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::MemoryCache::findArtifacts(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
 {
@@ -284,27 +284,27 @@ lyric_build::MemoryCache::storeTrace(const TraceId &traceId, const BuildGenerati
 }
 
 bool
-lyric_build::MemoryCache::containsDiagnostics(const TraceId &traceId)
+lyric_build::MemoryCache::containsDiagnostics(const TaskReference &taskRef)
 {
     absl::MutexLock locker(&m_lock);
-    return m_diagnostics.contains(traceId);
+    return m_diagnostics.contains(taskRef);
 }
 
 tempo_utils::Result<tempo_tracing::TempoSpanset>
-lyric_build::MemoryCache::loadDiagnostics(const TraceId &traceId)
+lyric_build::MemoryCache::loadDiagnostics(const TaskReference &taskRef)
 {
     absl::MutexLock locker(&m_lock);
-    auto entry = m_diagnostics.find(traceId);
+    auto entry = m_diagnostics.find(taskRef);
     if (entry == m_diagnostics.cend())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "missing diagnostic {}", traceId.toString());
+            "missing diagnostic {}", taskRef.toString());
     return entry->second;
 }
 
 tempo_utils::Status
-lyric_build::MemoryCache::storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset)
+lyric_build::MemoryCache::storeDiagnostics(const TaskReference &taskRef, const tempo_tracing::TempoSpanset &spanset)
 {
     absl::MutexLock locker(&m_lock);
-    m_diagnostics.insert_or_assign(traceId, spanset);
+    m_diagnostics.insert_or_assign(taskRef, spanset);
     return {};
 }

@@ -58,12 +58,11 @@ namespace lyric_build {
     tempo_utils::Status parse_config(
         T &dst,
         const tempo_config::AbstractConverter<T> &converter,
-        const TaskSettings *settings,
+        const TaskSettings &settings,
         std::string_view domain,
         std::string_view key)
     {
-        TU_ASSERT (settings != nullptr);
-        auto node = settings->resolveDomainNode(domain, key);
+        auto node = settings.resolveDomainNode(domain, key);
         return converter.convertValue(node, dst);
     }
 
@@ -71,12 +70,11 @@ namespace lyric_build {
     tempo_utils::Status parse_config(
         T &dst,
         const tempo_config::AbstractConverter<T> &converter,
-        const TaskSettings *settings,
+        const TaskSettings &settings,
         const TaskId &task,
         std::string_view key)
     {
-        TU_ASSERT (settings != nullptr);
-        auto node = settings->resolveTaskNode(task, key);
+        auto node = settings.resolveTaskNode(task, key);
         return converter.convertValue(node, dst);
     }
 }

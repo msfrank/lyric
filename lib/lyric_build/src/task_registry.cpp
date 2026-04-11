@@ -19,20 +19,21 @@ struct TaskDomain {
     lyric_build::BaseTask* (*func)(
         const lyric_build::BuildGeneration &generation,
         const lyric_build::TaskKey &key,
+        std::weak_ptr<lyric_build::BuildState> buildState,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 };
 
 static const TaskDomain predefinedTaskDomains[] = {
     {"analyze_outline",     lyric_build::internal::new_analyze_outline_task},
-    {"archive",             lyric_build::internal::new_archive_task},
-    {"build",               lyric_build::internal::new_build_task},
-    {"compile",             lyric_build::internal::new_compile_task},
+    //{"archive",             lyric_build::internal::new_archive_task},
+    //{"build",               lyric_build::internal::new_build_task},
+    //{"compile",             lyric_build::internal::new_compile_task},
     {"compile_object",      lyric_build::internal::new_compile_object_task},
     {"compile_plugin",      lyric_build::internal::new_compile_plugin_task},
     {"fetch_external_file", lyric_build::internal::new_fetch_external_file_task},
-    {"orchestrate",         lyric_build::internal::new_orchestrate_task},
+    //{"orchestrate",         lyric_build::internal::new_orchestrate_task},
     {"parse_archetype",     lyric_build::internal::new_parse_archetype_task},
-    {"rewrite_archetype",   lyric_build::internal::new_rewrite_archetype_task},
+    //{"rewrite_archetype",   lyric_build::internal::new_rewrite_archetype_task},
     {"symbolize_linkage",   lyric_build::internal::new_symbolize_linkage_task},
     {nullptr, nullptr},     // sentinel value, must be last
 };
@@ -105,6 +106,7 @@ tempo_utils::Result<lyric_build::BaseTask *>
 lyric_build::TaskRegistry::makeTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span) const
 {
     if (!m_isSealed)
@@ -115,7 +117,7 @@ lyric_build::TaskRegistry::makeTask(
     if (entry == m_makeTaskFuncs.cend())
         return BuildStatus::forCondition(
             BuildCondition::kInvalidConfiguration, "unknown task domain '{}'", domain);
-    BaseTask *task = entry->second(generation, key, std::move(span));
+    BaseTask *task = entry->second(generation, key, std::move(buildState), std::move(span));
     if (task == nullptr)
         return BuildStatus::forCondition(
             BuildCondition::kBuildInvariant, "invalid task domain '{}'", domain);

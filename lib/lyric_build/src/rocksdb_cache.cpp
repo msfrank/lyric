@@ -8,6 +8,7 @@
 #include <lyric_build/metadata_matcher.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/rocksdb_cache.h>
+#include <tempo_security/sha256_hash.h>
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/bytes_iterator.h>
 #include <tempo_utils/log_message.h>
@@ -140,54 +141,67 @@ lyric_build::RocksdbCache::initializeCache(const std::filesystem::path &buildRoo
 }
 
 // trace id has the following format:
-//   <config-hash> ':' <task-domain> ':' <task-id>
+//   <task-hash> ':' <task-domain> ':' <task-id> ':' [ <task-params ]
 //
-// * config-hash must be a SHA-256 hash which is base64 encoded
+// * task-hash must be a SHA-256 hash which is hex encoded
 // * task-domain and task-id must be percent encoded
-
-inline lyric_build::TraceId
-read_trace_id(const std::string &v)
-{
-    std::vector<std::string> parts = absl::StrSplit(v, ":");
-    if (parts.size() != 3)
-        return {};
-
-    std::string hash;
-    if (!absl::WebSafeBase64Unescape(parts[0], &hash))
-        return {};
-    auto taskDomain = tempo_utils::percent_decode_utf8(parts[1]);
-    auto taskId = tempo_utils::percent_decode_utf8(parts[2]);
-
-    return lyric_build::TraceId(hash, taskDomain, taskId);
-}
+// * if present, task-params must be a SHA-256 hash which is hex-encoded
 
 inline std::string
 write_trace_id(const lyric_build::TraceId &traceId)
 {
     if (!traceId.isValid())
         return {};
-    auto bytes = absl::WebSafeBase64Escape(traceId.getHash());
+    auto hash = traceId.getHash();
+    auto key = traceId.getKey();
+    auto params = key.getParams();
+
+    auto bytes = hash.toString();
     bytes.push_back(':');
-    bytes.append(tempo_utils::percent_encode_utf8(traceId.getDomain()));
+    bytes.append(tempo_utils::percent_encode_utf8(key.getDomain()));
     bytes.push_back(':');
-    bytes.append(tempo_utils::percent_encode_utf8(traceId.getId()));
+    bytes.append(tempo_utils::percent_encode_utf8(key.getId()));
+    bytes.push_back(':');
+    if (!params.mapEmpty()) {
+        auto hashedParams = tempo_security::Sha256Hash::hash(params.toString());
+        bytes.append(absl::BytesToHexString(hashedParams));
+    }
+
     return bytes;
 }
 
-inline lyric_build::BuildGeneration
-read_generation(const std::string &v)
-{
-    return lyric_build::BuildGeneration::parse(v);
-}
+// task reference has the following format:
+//   <build-generation> ':' <task-domain> ':' <task-id> ':' [ <task-params ]
+//
+// * build-generation must be a UUID which is hex encoded in compact form
+// * task-domain and task-id must be percent encoded
+// * if present, task-params must be a SHA-256 hash which is hex-encoded
 
 inline std::string
-write_generation(const lyric_build::BuildGeneration &generation)
+write_task_reference(const lyric_build::TaskReference &taskRef)
 {
-    return generation.toString();
+    if (!taskRef.isValid())
+        return {};
+    auto generation = taskRef.getGeneration();
+    auto key = taskRef.getKey();
+    auto params = key.getParams();
+
+    auto bytes = generation.toString();
+    bytes.push_back(':');
+    bytes.append(tempo_utils::percent_encode_utf8(key.getDomain()));
+    bytes.push_back(':');
+    bytes.append(tempo_utils::percent_encode_utf8(key.getId()));
+    bytes.push_back(':');
+    if (!params.mapEmpty()) {
+        auto hashedParams = tempo_security::Sha256Hash::hash(params.toString());
+        bytes.append(absl::BytesToHexString(hashedParams));
+    }
+
+    return bytes;
 }
 
 // artifact id has the following format:
-//   <generation> ':' <config-hash> ':' <location-origin> ':' <location-path>
+//   <generation> ':' <task-hash> ':' <location-origin> ':' <location-path>
 //
 // * generation must be a UUID in lowercase hex with no surrounding braces.
 // * config-hash must be a SHA-256 hash which is base64 encoded.
@@ -200,12 +214,14 @@ read_artifact_id(const std::string &v)
     std::vector<std::string> parts = absl::StrSplit(v, ":");
     if (parts.size() != 4)
         return {};
-    auto generation = read_generation(parts[0]);
+    auto generation = lyric_build::BuildGeneration::parse(parts[0]);
     if (!generation.isValid())
         return {};
-    std::string hash;
-    if (!absl::WebSafeBase64Unescape(parts[1], &hash))
+
+    auto hash = lyric_build::TaskHash::parse(parts[1]);
+    if (!hash.isValid())
         return {};
+
     if (parts[3].empty())
         return {};
 
@@ -226,8 +242,8 @@ write_artifact_id(const lyric_build::ArtifactId &artifactId)
         return {};
 
     std::string bytes;
-    absl::StrAppend(&bytes, write_generation(artifactId.getGeneration()), ":");
-    absl::StrAppend(&bytes, absl::WebSafeBase64Escape(artifactId.getHash()), ":");
+    absl::StrAppend(&bytes, artifactId.getGeneration().toString(), ":");
+    absl::StrAppend(&bytes, artifactId.getHash().toString(), ":");
 
     auto location = artifactId.getLocation();
     if (!location.isValid())
@@ -629,7 +645,7 @@ lyric_build::RocksdbCache::linkArtifactOverridingMetadata(
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::RocksdbCache::findArtifacts(
     const BuildGeneration &generation,
-    const std::string &hash,
+    const TaskHash &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
 {
@@ -720,7 +736,7 @@ lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "RocksDB Get failed; {}", status.ToString());
 
-    return read_generation(e);
+    return BuildGeneration::parse(e);
 }
 
 tempo_utils::Status
@@ -734,7 +750,7 @@ lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const BuildGenerat
     std::string s = write_trace_id(traceId);
     rocksdb::Slice k(s);
 
-    std::string g = write_generation(generation);
+    std::string g = generation.toString();
     auto v = rocksdb::Slice(g);
     status = m_db->Put(options, m_traces, k, v);
     if (!status.ok())
@@ -744,14 +760,14 @@ lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const BuildGenerat
 }
 
 bool
-lyric_build::RocksdbCache::containsDiagnostics(const TraceId &traceId)
+lyric_build::RocksdbCache::containsDiagnostics(const TaskReference &taskRef)
 {
     TU_ASSERT (m_db != nullptr);
 
     rocksdb::ReadOptions options;
     rocksdb::Status status;
 
-    std::string s = write_trace_id(traceId);
+    std::string s = write_task_reference(taskRef);
     rocksdb::Slice k(s);
 
     std::string v;
@@ -760,14 +776,14 @@ lyric_build::RocksdbCache::containsDiagnostics(const TraceId &traceId)
 }
 
 tempo_utils::Result<tempo_tracing::TempoSpanset>
-lyric_build::RocksdbCache::loadDiagnostics(const TraceId &traceId)
+lyric_build::RocksdbCache::loadDiagnostics(const TaskReference &taskRef)
 {
     TU_ASSERT (m_db != nullptr);
 
     rocksdb::ReadOptions options;
     rocksdb::Status status;
 
-    std::string s = write_trace_id(traceId);
+    std::string s = write_task_reference(taskRef);
     rocksdb::Slice k(s);
 
     std::string v;
@@ -782,14 +798,14 @@ lyric_build::RocksdbCache::loadDiagnostics(const TraceId &traceId)
 }
 
 tempo_utils::Status
-lyric_build::RocksdbCache::storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset)
+lyric_build::RocksdbCache::storeDiagnostics(const TaskReference &taskRef, const tempo_tracing::TempoSpanset &spanset)
 {
     TU_ASSERT (m_db != nullptr);
 
     rocksdb::WriteOptions options;
     rocksdb::Status status;
 
-    std::string s = write_trace_id(traceId);
+    std::string s = write_task_reference(taskRef);
     rocksdb::Slice k(s);
 
     auto bytes = spanset.bytesView();

@@ -17,6 +17,7 @@ namespace lyric_build {
         using MakeTaskFunc = std::function<BaseTask*(
             const BuildGeneration &,                                    // generation
             const TaskKey &,                                            // key
+            std::weak_ptr<BuildState>,                                  // build state
             std::shared_ptr<tempo_tracing::TraceSpan>)>;                // span
 
         tempo_utils::Status registerTaskDomain(std::string_view domain, MakeTaskFunc func);
@@ -28,6 +29,7 @@ namespace lyric_build {
         tempo_utils::Result<BaseTask *> makeTask(
             const BuildGeneration &generation,
             const TaskKey &key,
+            std::weak_ptr<BuildState> buildState,
             std::shared_ptr<tempo_tracing::TraceSpan> span) const;
 
     private:

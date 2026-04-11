@@ -17,7 +17,7 @@ lyric_build::TaskNotification::getType() const
     return m_type;
 }
 
-lyric_build::NotifyStateChanged::NotifyStateChanged(const TaskKey &key, const TaskState &state)
+lyric_build::NotifyStateChanged::NotifyStateChanged(const TaskKey &key, const TaskData &state)
     : lyric_build::TaskNotification(lyric_build::NotificationType::STATE_CHANGED),
       m_key(key),
       m_state(state)
@@ -30,7 +30,7 @@ lyric_build::NotifyStateChanged::getKey() const
     return m_key;
 }
 
-lyric_build::TaskState
+lyric_build::TaskData
 lyric_build::NotifyStateChanged::getState() const
 {
     return m_state;

@@ -22,15 +22,17 @@
 lyric_build::internal::ParseArchetypeTask::ParseArchetypeTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, std::move(span))
+    : BaseTask(generation, key, std::move(buildState), std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::ParseArchetypeTask::configure(const TaskSettings *config)
+lyric_build::internal::ParseArchetypeTask::configureTask(const TaskSettings &taskSettings)
 {
     auto taskId = getId();
+    auto settings = taskSettings.merge(TaskSettings({}, {}, {{taskId, getParams()}}));
 
     auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
     if (!modulePath.isValid() || !modulePath.isAbsolute())
@@ -44,69 +46,52 @@ lyric_build::internal::ParseArchetypeTask::configure(const TaskSettings *config)
     sourcePath.replace_extension(lyric_common::kSourceFileDotSuffix);
     tempo_config::UrlPathParser sourcePathParser(tempo_utils::UrlPath::fromString(sourcePath.string()));
     TU_RETURN_IF_NOT_OK(parse_config(m_sourcePath, sourcePathParser,
-        config, taskId, "sourcePath"));
+        settings, taskId, "sourcePath"));
 
     // determine the base path containing source files
     tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
     tempo_utils::UrlPath sourceBasePath;
     TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
-        config, taskId, "sourceBasePath"));
+        settings, taskId, "sourceBasePath"));
 
     // if the source base path was specified then augment the source path
     if (sourceBasePath.isValid()) {
         m_sourcePath = sourceBasePath.toAbsolute().traverse(m_sourcePath.toRelative());
     }
 
-    return {};
-}
-
-tempo_utils::Result<lyric_build::TaskHash>
-lyric_build::internal::ParseArchetypeTask::configureTask(
-    const TaskSettings *config,
-    AbstractVirtualFilesystem *virtualFilesystem)
-{
-    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
-    TU_RETURN_IF_NOT_OK (configure(&merged));
+    auto buildState = getBuildState();
+    auto vfs = buildState->getVirtualFilesystem();
 
     // try to fetch the content at the specified url
     Option<Resource> resourceOption;
-    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourcePath));
+    TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(m_sourcePath));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
         return BuildStatus::forCondition(BuildCondition::kMissingInput,
             "resource {} not found", m_sourcePath.toString());
-    auto resource = resourceOption.getValue();
+    m_resource = resourceOption.getValue();
 
-    // store the resource id so we can load it when running the task
-    m_resourceId = resource.id;
-
-    // generate the task hash
-    TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(resource.entityTag);
-    auto hash = taskHasher.finish();
-
-    return hash;
-}
-
-tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::ParseArchetypeTask::checkDependencies()
-{
-    // this task has no dependencies
-    return absl::flat_hash_set<TaskKey>();
+    return {};
 }
 
 tempo_utils::Status
-lyric_build::internal::ParseArchetypeTask::parseModule(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::ParseArchetypeTask::deduplicateTask(TaskHash &taskHash)
 {
-    auto artifactCache = buildState->getArtifactCache();
-    auto virtualFilesystem = buildState->getVirtualFilesystem();
+    TaskHasher taskHasher(getKey());
+    taskHasher.hashValue(m_resource.entityTag);
+    taskHash = taskHasher.finish();
+    return {};
+}
+
+tempo_utils::Status
+lyric_build::internal::ParseArchetypeTask::runTask(TempDirectory *tempDirectory)
+{
+    auto buildState = getBuildState();
+    auto vfs = buildState->getVirtualFilesystem();
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> bytes;
-    TU_ASSIGN_OR_RETURN (bytes, virtualFilesystem->loadResource(m_resourceId));
+    TU_ASSIGN_OR_RETURN (bytes, vfs->loadResource(m_resource.id));
 
     // parse the source file
     lyric_parser::LyricParser parser(m_parserOptions);
@@ -130,14 +115,12 @@ lyric_build::internal::ParseArchetypeTask::parseModule(
     TU_ASSIGN_OR_RETURN (archetype, rewriter.rewriteArchetype(
         archetype, sourceUrl, macroRewriteDriverBuilder, traceDiagnostics()));
 
-    // declare the artifact
+    // declare the archetype artifact path
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
-    ArtifactId archetypeArtifact(buildState->getGeneration(), taskHash, archetypeArtifactPath);
-    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(archetypeArtifact));
 
-    // store the archetype metadata in the build cache
+    // construct the archetype metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentUrl, sourceUrl);
@@ -146,32 +129,22 @@ lyric_build::internal::ParseArchetypeTask::parseModule(
     LyricMetadata archetypeMetadata;
     TU_ASSIGN_OR_RETURN (archetypeMetadata, writer.toMetadata());
 
-    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(archetypeArtifact, archetypeMetadata));
-
     // store the archetype content in the build cache
-    auto archetypeBytes = archetype.bytesView();
-    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(archetypeArtifact, archetypeBytes));
+    auto archetypeBytes = archetype.toBytes();
+    TU_RETURN_IF_NOT_OK (storeArtifact(archetypeArtifactPath, archetypeBytes, archetypeMetadata));
 
-    logInfo("stored archetype at {}", archetypeArtifact.toString());
+    logInfo("stored archetype {}", archetypeArtifactPath.toString());
 
     return {};
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::ParseArchetypeTask::runTask(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
-{
-    auto status = parseModule(taskHash, depStates, buildState);
-    return Option(status);
-}
 
 lyric_build::BaseTask *
 lyric_build::internal::new_parse_archetype_task(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new ParseArchetypeTask(generation, key, std::move(span));
+    return new ParseArchetypeTask(generation, key, std::move(buildState), std::move(span));
 }

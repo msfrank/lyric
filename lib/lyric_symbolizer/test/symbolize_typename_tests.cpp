@@ -19,7 +19,7 @@ TEST_F(SymbolizeTypename, DeclareTypename)
         defstruct Foo{}
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
@@ -42,7 +42,7 @@ TEST_F(SymbolizeTypename, DeclareAliasWithTypenames)
         defstruct Bar {}
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();

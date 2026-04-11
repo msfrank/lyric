@@ -9,17 +9,17 @@ namespace lyric_build {
     class TargetComputation {
     public:
         TargetComputation();
-        TargetComputation(const TaskId &id, const TaskState &state);
+        TargetComputation(const TaskId &id, const TaskData &state);
         TargetComputation(const TargetComputation &other);
 
         bool isValid() const;
 
         TaskId getId() const;
-        TaskState getState() const;
+        TaskData getState() const;
 
     private:
         TaskId m_id;
-        TaskState m_state;
+        TaskData m_state;
     };
 
     class TargetComputationSet {

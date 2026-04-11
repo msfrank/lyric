@@ -1,7 +1,8 @@
 #include <random>
 
-#include <lyric_build/task_hasher.h>
+#include <lyric_build/base_task.h>
 #include <lyric_build/build_types.h>
+#include <lyric_build/task_hasher.h>
 #include <tempo_utils/file_reader.h>
 
 lyric_build::TaskHasher::TaskHasher(const TaskKey &key)
@@ -9,12 +10,6 @@ lyric_build::TaskHasher::TaskHasher(const TaskKey &key)
     // initialize hasher with task domain and task id (but not params)
     m_hasher.addData(key.getDomain());
     m_hasher.addData(key.getId());
-}
-
-void
-lyric_build::TaskHasher::hashValue(const TaskKey &key)
-{
-    m_hasher.addData(key.toString());
 }
 
 void
@@ -37,9 +32,15 @@ lyric_build::TaskHasher::hashValue(double dbl)
 }
 
 void
-lyric_build::TaskHasher::hashValue(const std::string_view &s)
+lyric_build::TaskHasher::hashValue(std::string_view sv)
 {
-    m_hasher.addData(s);
+    m_hasher.addData(sv);
+}
+
+void
+lyric_build::TaskHasher::hashValue(std::span<const tu_uint8> sp)
+{
+    m_hasher.addData(sp);
 }
 
 void
@@ -58,6 +59,23 @@ lyric_build::TaskHasher::hashFile(const std::filesystem::path &path)
     auto bytes = reader.getBytes();
     m_hasher.addData(std::string_view((const char *) bytes->getData(), bytes->getSize()));
     return {};
+}
+
+void
+lyric_build::TaskHasher::hashTask(const TaskKey &key, const TaskData &data)
+{
+    m_hasher.addData(key.toString());
+    auto hash = data.getHash();
+    m_hasher.addData(hash.bytesView());
+}
+
+void
+lyric_build::TaskHasher::hashTask(const BaseTask *task)
+{
+    TU_NOTNULL (task);
+    for (auto it = task->completedBegin(); it != task->completedEnd(); it++) {
+        hashTask(it->first, it->second);
+    }
 }
 
 lyric_build::TaskHash

@@ -24,7 +24,7 @@ TEST_F(AnalyzeEnum, DeclareEnum)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -52,7 +52,7 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -82,7 +82,7 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -117,7 +117,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -147,7 +147,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -197,7 +197,7 @@ TEST_F(AnalyzeEnum, DeclareEnumImplMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

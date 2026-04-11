@@ -259,7 +259,7 @@ lyric_test::TestRunner::buildModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::FAILED)
         return BuildModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     return BuildModule(shared_from_this(), targetComputation,
@@ -288,11 +288,12 @@ lyric_test::TestRunner::compileModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::FAILED)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
+    auto diagnostics = targetComputationSet.getDiagnostics();
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
@@ -307,12 +308,10 @@ lyric_test::TestRunner::compileModuleInternal(
     Option<lyric_object::LyricObject> objectOption;
     auto objectLocation = origin.resolve(moduleLocation);
     TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
-    if (objectOption.isEmpty())
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "dependency loader is missing object {}", objectLocation.toString());
 
-    return CompileModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), objectOption.getValue());
+    if (objectOption.hasValue())
+        return CompileModule(shared_from_this(), targetComputation, diagnostics, objectOption.getValue());
+    return CompileModule(shared_from_this(), targetComputation, diagnostics);
 }
 
 tempo_utils::Result<lyric_test::AnalyzeModule>
@@ -337,11 +336,12 @@ lyric_test::TestRunner::analyzeModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::FAILED)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
+    auto diagnostics = targetComputationSet.getDiagnostics();
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
@@ -356,12 +356,10 @@ lyric_test::TestRunner::analyzeModuleInternal(
     Option<lyric_object::LyricObject> objectOption;
     auto objectLocation = origin.resolve(moduleLocation);
     TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
-    if (objectOption.isEmpty())
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "dependency loader is missing object {}", objectLocation.toString());
 
-    return AnalyzeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), objectOption.getValue());
+    if (objectOption.hasValue())
+        return AnalyzeModule(shared_from_this(), targetComputation, diagnostics, objectOption.getValue());
+    return AnalyzeModule(shared_from_this(), targetComputation, diagnostics);
 }
 
 tempo_utils::Result<lyric_test::SymbolizeModule>
@@ -386,11 +384,12 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::FAILED)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
+    auto diagnostics = targetComputationSet.getDiagnostics();
 
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
@@ -405,12 +404,10 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     Option<lyric_object::LyricObject> objectOption;
     auto objectLocation = origin.resolve(moduleLocation);
     TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
-    if (objectOption.isEmpty())
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "dependency loader is missing object {}", objectLocation.toString());
 
-    return SymbolizeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), objectOption.getValue());
+    if (objectOption.hasValue())
+        return SymbolizeModule(shared_from_this(), targetComputation, diagnostics, objectOption.getValue());
+    return SymbolizeModule(shared_from_this(), targetComputation, diagnostics);
 }
 
 std::filesystem::path
@@ -428,12 +425,11 @@ lyric_test::TestRunner::getBuilder() const
 tempo_tracing::TempoSpanset
 lyric_test::TestRunner::getDiagnostics(const lyric_build::TargetComputation &computation) const
 {
-    auto targetHash = computation.getState().getHash();
-    auto targetId = computation.getId();
-    lyric_build::TraceId traceId(targetHash, targetId.getDomain(), targetId.getId());
+    auto data = computation.getState();
+    lyric_build::TaskReference taskRef(data.getGeneration(), lyric_build::TaskKey(computation.getId()));
 
     auto cache = m_builder->getArtifactCache();
-    return cache->loadDiagnostics(traceId).orElse(tempo_tracing::TempoSpanset());
+    return cache->loadDiagnostics(taskRef).orElse(tempo_tracing::TempoSpanset());
 }
 
 bool

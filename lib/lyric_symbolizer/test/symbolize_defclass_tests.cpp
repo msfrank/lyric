@@ -19,7 +19,7 @@ TEST_F(SymbolizeDefclass, DeclareDefclass)
         }
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();

@@ -24,7 +24,7 @@ TEST_F(AnalyzeInstance, DeclareInstance)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -52,7 +52,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -83,7 +83,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -113,7 +113,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVar)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -143,7 +143,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -193,7 +193,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceImplMethod)
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

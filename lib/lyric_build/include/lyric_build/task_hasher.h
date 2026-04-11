@@ -10,19 +10,22 @@
 #include "build_types.h"
 
 namespace lyric_build {
+    class BaseTask;
 
     class TaskHasher {
 
     public:
         explicit TaskHasher(const TaskKey &key);
 
-        void hashValue(const TaskKey &key);
         void hashValue(bool b);
         void hashValue(int64_t i64);
         void hashValue(double dbl);
-        void hashValue(const std::string_view &s);
+        void hashValue(std::string_view sv);
+        void hashValue(std::span<const tu_uint8> sp);
         void hashValue(const std::vector<std::string> &sl);
         tempo_utils::Status hashFile(const std::filesystem::path &path);
+        void hashTask(const TaskKey &key, const TaskData &data);
+        void hashTask(const BaseTask *task);
 
         TaskHash finish();
 

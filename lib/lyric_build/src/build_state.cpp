@@ -93,23 +93,32 @@ lyric_build::BuildState::getTempRoot() const
     return m_tempRoot;
 }
 
-lyric_build::TaskState
+lyric_build::TaskData
 lyric_build::BuildState::loadState(const TaskKey &key)
 {
-    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    std::shared_lock lock(m_mutex);
 
     if (m_states.contains(key))
         return m_states[key];
     return {};
 }
 
-absl::flat_hash_map<lyric_build::TaskKey, lyric_build::TaskState>
+absl::flat_hash_map<lyric_build::TaskKey, lyric_build::TaskData>
 lyric_build::BuildState::loadStates(const absl::flat_hash_set<TaskKey> &keys)
 {
-    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    return loadStates(keys.cbegin(), keys.cend());
+}
 
-    absl::flat_hash_map<TaskKey,TaskState> states;
-    for (const auto &key : keys) {
+absl::flat_hash_map<lyric_build::TaskKey, lyric_build::TaskData>
+lyric_build::BuildState::loadStates(
+    absl::flat_hash_set<TaskKey>::const_iterator begin,
+    absl::flat_hash_set<TaskKey>::const_iterator end)
+{
+    std::shared_lock lock(m_mutex);
+
+    absl::flat_hash_map<TaskKey,TaskData> states;
+    for (; begin != end; begin++) {
+        const auto &key = *begin;
         if (m_states.contains(key))
             states[key] = m_states[key];
     }
@@ -117,8 +126,8 @@ lyric_build::BuildState::loadStates(const absl::flat_hash_set<TaskKey> &keys)
 }
 
 void
-lyric_build::BuildState::storeState(const TaskKey &key, const TaskState &state)
+lyric_build::BuildState::storeState(const TaskKey &key, const TaskData &state)
 {
-    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    std::unique_lock lock(m_mutex);
     m_states[key] = state;
 }

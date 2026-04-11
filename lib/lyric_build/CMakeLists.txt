@@ -104,28 +104,28 @@ target_sources(lyric_build PRIVATE
 
     include/lyric_build/internal/analyze_outline_task.h
     src/internal/analyze_outline_task.cpp
-    include/lyric_build/internal/archive_task.h
-    src/internal/archive_task.cpp
+    #include/lyric_build/internal/archive_task.h
+    #src/internal/archive_task.cpp
     include/lyric_build/internal/build_macros.h
     src/internal/build_macros.cpp
-    include/lyric_build/internal/build_task.h
-    src/internal/build_task.cpp
+    #include/lyric_build/internal/build_task.h
+    #src/internal/build_task.cpp
     include/lyric_build/internal/compile_object_task.h
     src/internal/compile_object_task.cpp
     include/lyric_build/internal/compile_plugin_task.h
     src/internal/compile_plugin_task.cpp
-    include/lyric_build/internal/compile_task.h
-    src/internal/compile_task.cpp
+    #include/lyric_build/internal/compile_task.h
+    #src/internal/compile_task.cpp
     include/lyric_build/internal/fetch_external_file_task.h
     src/internal/fetch_external_file_task.cpp
     include/lyric_build/internal/metadata_reader.h
     src/internal/metadata_reader.cpp
-    include/lyric_build/internal/orchestrate_task.h
-    src/internal/orchestrate_task.cpp
+    #include/lyric_build/internal/orchestrate_task.h
+    #src/internal/orchestrate_task.cpp
     include/lyric_build/internal/parse_archetype_task.h
     src/internal/parse_archetype_task.cpp
-    include/lyric_build/internal/rewrite_archetype_task.h
-    src/internal/rewrite_archetype_task.cpp
+    #include/lyric_build/internal/rewrite_archetype_task.h
+    #src/internal/rewrite_archetype_task.cpp
     include/lyric_build/internal/runner_worker_thread.h
     src/internal/runner_worker_thread.cpp
     include/lyric_build/internal/symbolize_linkage_task.h

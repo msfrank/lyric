@@ -21,7 +21,7 @@ TEST_F(AnalyzeFunction, DeclareFunction)
         def Identity(x: Int): Int { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
@@ -49,7 +49,7 @@ TEST_F(AnalyzeFunction, DeclareGenericFunction)
         def Identity[T](x: T): T { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

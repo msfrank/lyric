@@ -39,9 +39,12 @@ namespace lyric_build {
         std::shared_ptr<AbstractVirtualFilesystem> getVirtualFilesystem() const;
         std::filesystem::path getTempRoot() const;
 
-        TaskState loadState(const TaskKey &key);
-        absl::flat_hash_map<TaskKey,TaskState> loadStates(const absl::flat_hash_set<TaskKey> &keys);
-        void storeState(const TaskKey &key, const TaskState &state);
+        TaskData loadState(const TaskKey &key);
+        absl::flat_hash_map<TaskKey,TaskData> loadStates(const absl::flat_hash_set<TaskKey> &keys);
+        absl::flat_hash_map<TaskKey,TaskData> loadStates(
+            absl::flat_hash_set<TaskKey>::const_iterator begin,
+            absl::flat_hash_set<TaskKey>::const_iterator end);
+        void storeState(const TaskKey &key, const TaskData &state);
 
     private:
         BuildGeneration m_buildGen;
@@ -54,7 +57,7 @@ namespace lyric_build {
         std::shared_ptr<AbstractVirtualFilesystem> m_virtualFilesystem;
         std::filesystem::path m_tempRoot;
 
-        absl::flat_hash_map<TaskKey,TaskState> m_states;
+        absl::flat_hash_map<TaskKey,TaskData> m_states;
         std::shared_mutex m_mutex;
     };
 }

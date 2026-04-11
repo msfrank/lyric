@@ -13,7 +13,7 @@ namespace lyric_build {
         TempDirectory(
             const std::filesystem::path &tempRoot,
             const BuildGeneration &buildGen,
-            const std::string &taskHash);
+            const TaskHash &taskHash);
 
         std::filesystem::path getRoot() const;
 

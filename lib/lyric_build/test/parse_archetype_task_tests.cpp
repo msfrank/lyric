@@ -13,37 +13,35 @@
 
 class ParseArchetypeTask : public BaseBuildFixture {
 protected:
-    tempo_utils::Status configure() override {
+    void configure() override {
         tempo_config::ConfigNode rootNode;
         TU_ASSIGN_OR_RAISE (rootNode, tempo_config::read_config_string(R"({
             "global": {},
             "domain": {},
             "tasks": {}
         })"));
-        m_config = std::make_unique<lyric_build::TaskSettings>(rootNode.toMap());
-        return {};
+        taskSettings = lyric_build::TaskSettings(rootNode.toMap());
     }
 };
 
-TEST_F(ParseArchetypeTask, ConfigureTask)
+TEST_F(ParseArchetypeTask, TaskSucceeds)
 {
     writeNamedFile({}, "mod.ly", "nil");
 
     lyric_build::TaskKey key(std::string("parse_archetype"), std::string("/mod"));
-    auto *task = lyric_build::internal::new_parse_archetype_task(m_generation, key, m_span);
-    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
-    ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
-    auto taskHash = configureTaskResult.getResult();
-    auto hashBytes = taskHash.bytesView();
-    std::string hashString((const char *) hashBytes.data(), hashBytes.size());
+    auto *task = lyric_build::internal::new_parse_archetype_task(generation, key, buildState, span);
+    ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
-    auto runTaskStatusOption = task->runTask(hashString, {}, m_state.get());
-    ASSERT_TRUE (runTaskStatusOption.hasValue());
-    ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
+    lyric_build::TaskHash taskHash;
+    ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
+    ASSERT_TRUE (taskHash.isValid());
+    task->setTaskHash(taskHash);
 
-    auto artifactCache = m_state->getArtifactCache();
-    lyric_build::ArtifactId artifactId(
-        m_state->getGeneration(), hashString, tempo_utils::Url::fromString("/mod.lyi"));
+    auto *tmp = tempDirectory();
+    ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());
+
+    auto artifactCache = buildState->getArtifactCache();
+    lyric_build::ArtifactId artifactId(generation, taskHash, tempo_utils::Url::fromString("/mod.lyi"));
 
     auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
@@ -64,7 +62,7 @@ TEST_F(ParseArchetypeTask, ConfigureTask)
 TEST_F(ParseArchetypeTask, ConfigureTaskFailsWhenSourceFileIsMissing)
 {
     lyric_build::TaskKey key(std::string("parse_archetype"), std::string("/mod"));
-    auto *task = lyric_build::internal::new_parse_archetype_task(m_generation, key, m_span);
-    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
-    ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kMissingInput));
+    auto *task = lyric_build::internal::new_parse_archetype_task(generation, key, buildState, span);
+    auto status = task->configureTask(taskSettings);
+    ASSERT_THAT (status, tempo_test::ContainsStatus(lyric_build::BuildCondition::kMissingInput));
 }

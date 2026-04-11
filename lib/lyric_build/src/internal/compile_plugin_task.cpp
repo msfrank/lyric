@@ -26,15 +26,17 @@
 lyric_build::internal::CompilePluginTask::CompilePluginTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span)
+    : BaseTask(generation, key, std::move(buildState), std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::CompilePluginTask::configure(const TaskSettings *config)
+lyric_build::internal::CompilePluginTask::configureTask(const TaskSettings &taskSettings)
 {
     auto taskId = getId();
+    auto settings = taskSettings.merge(TaskSettings({}, {}, {{taskId, getParams()}}));
 
     auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
     if (!modulePath.isValid())
@@ -46,13 +48,13 @@ lyric_build::internal::CompilePluginTask::configure(const TaskSettings *config)
     // determine the base path containing plugin source files
     tempo_config::UrlPathParser pluginSourceBasePathParser(tempo_utils::UrlPath{});
     TU_RETURN_IF_NOT_OK(parse_config(m_pluginSourceBasePath, pluginSourceBasePathParser,
-        config, taskId, "pluginSourceBasePath"));
+        settings, taskId, "pluginSourceBasePath"));
 
     //
     // config below comes only from the task section, it is not resolved from domain or global sections
     //
 
-    auto taskSection = config->getTaskSection(taskId);
+    auto taskSection = settings.getTaskSection(taskId);
 
     // parse plugin sources
     tempo_config::UrlPathParser pluginSourcePathParser;
@@ -95,15 +97,11 @@ lyric_build::internal::CompilePluginTask::configure(const TaskSettings *config)
     return {};
 }
 
-tempo_utils::Result<lyric_build::TaskHash>
-lyric_build::internal::CompilePluginTask::configureTask(
-    const TaskSettings *config,
-    AbstractVirtualFilesystem *virtualFilesystem)
+tempo_utils::Status
+lyric_build::internal::CompilePluginTask::deduplicateTask(TaskHash &taskHash)
 {
-    auto key = getKey();
-    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
-
-    TU_RETURN_IF_NOT_OK (configure(&merged));
+    auto buildState = getBuildState();
+    auto vfs = buildState->getVirtualFilesystem();
 
     TaskHasher taskHasher(getKey());
 
@@ -113,7 +111,7 @@ lyric_build::internal::CompilePluginTask::configureTask(
     });
     for (const auto &pluginSourcePath : sortedPluginSourcePaths) {
         Option<Resource> resourceOption;
-        TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(pluginSourcePath));
+        TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(pluginSourcePath));
         // fail the task if the resource was not found
         if (resourceOption.isEmpty())
             return BuildStatus::forCondition(BuildCondition::kMissingInput,
@@ -140,25 +138,15 @@ lyric_build::internal::CompilePluginTask::configureTask(
         taskHasher.hashValue(libraryDirectory.string());
     }
 
-    auto hash = taskHasher.finish();
-
-    return hash;
-}
-
-tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::CompilePluginTask::checkDependencies()
-{
-    return absl::flat_hash_set<TaskKey>{};
+    taskHash = taskHasher.finish();
+    return {};
 }
 
 tempo_utils::Status
-lyric_build::internal::CompilePluginTask::compilePlugin(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::CompilePluginTask::runTask(TempDirectory *tempDirectory)
 {
+    auto buildState = getBuildState();
     auto vfs = buildState->getVirtualFilesystem();
-    auto *tmp = tempDirectory();
 
     // copy sources to temp directory
     std::vector<std::filesystem::path> pluginSources;
@@ -172,14 +160,14 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
         std::shared_ptr<const tempo_utils::ImmutableBytes> content;
         TU_ASSIGN_OR_RETURN (content, vfs->loadResource(resource.id));
         std::filesystem::path pluginSource;
-        TU_ASSIGN_OR_RETURN (pluginSource, tmp->putContent(pluginSourcePath, content));
+        TU_ASSIGN_OR_RETURN (pluginSource, tempDirectory->putContent(pluginSourcePath, content));
         pluginSources.push_back(std::move(pluginSource));
     }
 
     // create the parent directories for the plugin in the temp directory
     auto modulePath = m_moduleLocation.getPath();
     std::filesystem::path pluginDirectory;
-    TU_ASSIGN_OR_RETURN (pluginDirectory, tmp->makeDirectory(modulePath.getInit()));
+    TU_ASSIGN_OR_RETURN (pluginDirectory, tempDirectory->makeDirectory(modulePath.getInit()));
 
     // generate the plugin filename
     auto pluginFilename = lyric_common::pluginFilename(modulePath.getLast().partView());
@@ -223,13 +211,9 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_LOG_V << compilerProcess.getChildError();
     TU_LOG_V << "----------------";
 
-    auto artifactCache = buildState->getArtifactCache();
+    auto pluginArtifactPath = modulePath.getInit().traverse(tempo_utils::UrlPath::fromString(pluginFilename));
 
-    // declare the artifact
-    ArtifactId pluginArtifact(buildState->getGeneration(), taskHash, m_moduleLocation.toUrl());
-    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(pluginArtifact));
-
-    // store the plugin object metadata in the cache
+    // construct the plugin metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
@@ -237,34 +221,22 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     LyricMetadata pluginMetadata;
     TU_ASSIGN_OR_RETURN (pluginMetadata, writer.toMetadata());
 
-    //
-    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(pluginArtifact, pluginMetadata));
-
     // store the plugin content in the cache
     tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
     TU_RETURN_IF_NOT_OK (reader.getStatus());
-    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(pluginArtifact, reader.getBytes()));
+    TU_RETURN_IF_NOT_OK (storeArtifact(pluginArtifactPath, reader.getBytes(), pluginMetadata));
 
-    logInfo("stored plugin at ", pluginArtifact.toString());
+    logInfo("stored plugin ", pluginArtifactPath.toString());
 
     return {};
-}
-
-Option<tempo_utils::Status>
-lyric_build::internal::CompilePluginTask::runTask(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
-{
-    auto status =  compilePlugin(taskHash, depStates, buildState);
-    return Option(status);
 }
 
 lyric_build::BaseTask *
 lyric_build::internal::new_compile_plugin_task(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new CompilePluginTask(generation, key, span);
+    return new CompilePluginTask(generation, key, std::move(buildState), std::move(span));
 }

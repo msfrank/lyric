@@ -25,7 +25,7 @@ TEST_F(SymbolizeBlock, NoDefinitionsOrImports)
         1 + 1
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
@@ -45,7 +45,7 @@ TEST_F(SymbolizeBlock, DeclareImport)
         mod1.Foo()
     )");
     ASSERT_THAT (symbolizeModuleResult,
-        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();

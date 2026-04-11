@@ -1,9 +1,9 @@
 
 #include <lyric_test/test_run_matchers.h>
 
-lyric_test::matchers::TestComputationMatcher::TestComputationMatcher(lyric_build::TaskState::Status status)
-    : m_type(Type::MatchStatus),
-      m_status(status)
+lyric_test::matchers::TestComputationMatcher::TestComputationMatcher(lyric_build::TaskState state)
+    : m_type(Type::MatchState),
+      m_state(state)
 {
 }
 
@@ -23,8 +23,8 @@ lyric_test::matchers::TestComputationMatcher::MatchAndExplain(
         return false;
     auto computation = testComputation.getComputation();
     switch (m_type) {
-        case Type::MatchStatus:
-            return computation.getState().getStatus() == m_status;
+        case Type::MatchState:
+            return computation.getState().getState() == m_state;
         case Type::MatchSpanset:
             return m_matcher.Matches(testComputation.getDiagnostics()->getSpanset());
         default:
@@ -32,20 +32,20 @@ lyric_test::matchers::TestComputationMatcher::MatchAndExplain(
     }
 }
 
-inline std::string status_to_string(lyric_build::TaskState::Status status)
+inline std::string task_state_to_string(lyric_build::TaskState state)
 {
-    switch (status) {
-        case lyric_build::TaskState::Status::COMPLETED:
+    switch (state) {
+        case lyric_build::TaskState::COMPLETED:
             return "COMPLETED";
-        case lyric_build::TaskState::Status::FAILED:
+        case lyric_build::TaskState::FAILED:
             return "FAILED";
-        case lyric_build::TaskState::Status::BLOCKED:
+        case lyric_build::TaskState::BLOCKED:
             return "BLOCKED";
-        case lyric_build::TaskState::Status::QUEUED:
+        case lyric_build::TaskState::QUEUED:
             return "QUEUED";
-        case lyric_build::TaskState::Status::RUNNING:
+        case lyric_build::TaskState::RUNNING:
             return "RUNNING";
-        case lyric_build::TaskState::Status::INVALID:
+        case lyric_build::TaskState::INVALID:
             return "INVALID";
     }
 }
@@ -54,8 +54,8 @@ void
 lyric_test::matchers::TestComputationMatcher::DescribeTo(std::ostream *os) const
 {
     switch (m_type) {
-        case Type::MatchStatus:
-            *os << "computation status is " << status_to_string(m_status);
+        case Type::MatchState:
+            *os << "computation state is " << task_state_to_string(m_state);
             break;
         case Type::MatchSpanset:
             m_matcher.DescribeTo(os);
@@ -70,8 +70,8 @@ void
 lyric_test::matchers::TestComputationMatcher::DescribeNegationTo(std::ostream *os) const
 {
     switch (m_type) {
-        case Type::MatchStatus:
-            *os << "computation status is not " << status_to_string(m_status);
+        case Type::MatchState:
+            *os << "computation state is not " << task_state_to_string(m_state);
             break;
         case Type::MatchSpanset:
             m_matcher.DescribeNegationTo(os);
@@ -109,7 +109,7 @@ lyric_test::operator<<(std::ostream& os, const TestComputation &testComputation)
 }
 
 Matcher<lyric_test::SymbolizeModule>
-lyric_test::matchers::SymbolizeModule(lyric_build::TaskState::Status status)
+lyric_test::matchers::SymbolizeModule(lyric_build::TaskState status)
 {
     return TestComputationMatcher(status);
 }
@@ -121,7 +121,7 @@ lyric_test::matchers::SymbolizeModule(const Matcher<tempo_tracing::TempoSpanset>
 }
 
 Matcher<lyric_test::AnalyzeModule>
-lyric_test::matchers::AnalyzeModule(lyric_build::TaskState::Status status)
+lyric_test::matchers::AnalyzeModule(lyric_build::TaskState status)
 {
     return TestComputationMatcher(status);
 }
@@ -133,7 +133,7 @@ lyric_test::matchers::AnalyzeModule(const Matcher<tempo_tracing::TempoSpanset> &
 }
 
 Matcher<lyric_test::CompileModule>
-lyric_test::matchers::CompileModule(lyric_build::TaskState::Status status)
+lyric_test::matchers::CompileModule(lyric_build::TaskState status)
 {
     return TestComputationMatcher(status);
 }

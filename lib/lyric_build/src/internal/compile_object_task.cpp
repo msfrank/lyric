@@ -24,14 +24,15 @@
 lyric_build::internal::CompileObjectTask::CompileObjectTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, std::move(span)),
-      m_phase(Phase::ANALYZE_IMPORTS)
+    : BaseTask(generation, key, std::move(buildState), std::move(span)),
+      m_phase(Phase::Initial)
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileObjectTask::configure(const TaskSettings *config)
+lyric_build::internal::CompileObjectTask::initial(const TaskSettings &settings)
 {
     auto taskId = getId();
 
@@ -48,78 +49,38 @@ lyric_build::internal::CompileObjectTask::configure(const TaskSettings *config)
 
     // set the compiler prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
-        config, taskId, "preludeLocation"));
+        settings, taskId, "preludeLocation"));
 
     // check for environment modules
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.environmentModules, environmentModulesParser,
-        config, taskId, "environmentModules"));
+        settings, taskId, "environmentModules"));
 
     // configure the parse_archetype dependency
     m_parseTarget = TaskKey("parse_archetype", taskId.getId());
+    requestDependency(m_parseTarget);
 
     // configure the symbolize_linkage dependency
     m_symbolizeTarget = TaskKey("symbolize_linkage", taskId.getId(), tempo_config::ConfigMap({
         {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
     }));
-
-    // set initial dependencies for task
-    m_compileTargets.insert(m_parseTarget);
-    m_compileTargets.insert(m_symbolizeTarget);
+    requestDependency(m_symbolizeTarget);
 
     // extend visitor registry to include assembler and compiler vocabularies
     TU_ASSIGN_OR_RETURN (m_compilerOptions.visitorRegistry, make_build_visitors());
 
+    m_phase = Phase::AnalyzeImports;
     return {};
 }
 
-tempo_utils::Result<lyric_build::TaskHash>
-lyric_build::internal::CompileObjectTask::configureTask(
-    const TaskSettings *config,
-    AbstractVirtualFilesystem *virtualFilesystem)
-{
-    auto key = getKey();
-    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
-
-    TU_RETURN_IF_NOT_OK (configure(&merged));
-
-    TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
-    taskHasher.hashValue(m_moduleLocation.toString());
-    auto hash = taskHasher.finish();
-
-    return hash;
-}
-
-tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::CompileObjectTask::checkDependencies()
-{
-    TU_LOG_VV << "task " << getKey() << " needs dependencies: " << m_compileTargets;
-    return m_compileTargets;
-}
-
 tempo_utils::Status
-lyric_build::internal::CompileObjectTask::analyzeImports(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::CompileObjectTask::analyzeImports()
 {
-    auto artifactCache = buildState->getArtifactCache();
-
-    if (!depStates.contains(m_parseTarget))
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "missing state for dependent task {}", m_parseTarget.toString());
-
-    const auto &parseHash = depStates.at(m_parseTarget).getHash();
-    TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    BuildGeneration parseGeneration;
-    TU_ASSIGN_OR_RETURN (parseGeneration, artifactCache->loadTrace(parseTrace));
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
-    ArtifactId archetypeArtifact(parseGeneration, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> archetypeContent;
-    TU_ASSIGN_OR_RETURN (archetypeContent, artifactCache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (archetypeContent, getContent(m_parseTarget, archetypeArtifactPath, true));
     lyric_parser::LyricArchetype archetype(archetypeContent);
 
     // check for a plugin pragma
@@ -131,27 +92,18 @@ lyric_build::internal::CompileObjectTask::analyzeImports(
         }
     }
 
-    if (!depStates.contains(m_symbolizeTarget))
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "missing state for dependent task {}", m_symbolizeTarget.toString());
-
-    const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
-    TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
-    BuildGeneration symbolizeGeneration;
-    TU_ASSIGN_OR_RETURN (symbolizeGeneration, artifactCache->loadTrace(symbolizeTrace));
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
-    ArtifactId symbolizeArtifact(symbolizeGeneration, symbolizeHash, linkageArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> symbolizeContent;
-    TU_ASSIGN_OR_RETURN (symbolizeContent, artifactCache->loadContentFollowingLinks(symbolizeArtifact));
-    lyric_object::LyricObject object(symbolizeContent);
+    TU_ASSIGN_OR_RETURN (symbolizeContent, getContent(m_symbolizeTarget, linkageArtifactPath, true));
+    lyric_object::LyricObject linkage(symbolizeContent);
 
     // check for any imports from modules in the src directory
     absl::flat_hash_set<TaskKey> analyzeTargets;
-    for (int i = 0; i < object.numImports(); i++) {
-        auto import_ = object.getImport(i);
+    for (int i = 0; i < linkage.numImports(); i++) {
+        auto import_ = linkage.getImport(i);
         auto location = import_.getImportLocation();
         if (!location.isValid())
             return BuildStatus::forCondition(BuildCondition::kTaskFailure,
@@ -169,47 +121,62 @@ lyric_build::internal::CompileObjectTask::analyzeImports(
             }
             mapBuilder = mapBuilder.put("environmentModules", seqBuilder.buildNode());
         }
-        analyzeTargets.insert(TaskKey("analyze_outline", importPath, mapBuilder.buildMap()));
+        TaskKey analyzeImport("analyze_outline", importPath, mapBuilder.buildMap());
+        requestDependency(analyzeImport);
     }
 
-    m_compileTargets.insert(analyzeTargets.cbegin(), analyzeTargets.cend());
-
+    m_phase = Phase::Complete;
     return {};
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileObjectTask::compileModule(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::CompileObjectTask::configureTask(const TaskSettings &taskSettings)
 {
-    if (!depStates.contains(m_parseTarget))
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "missing state for dependent task {}", m_parseTarget.toString());
+    auto settings = taskSettings.merge(TaskSettings({}, {}, {{getId(), getParams()}}));
+    switch (m_phase) {
+        case Phase::Initial:
+            return initial(settings);
+        case Phase::AnalyzeImports:
+            return analyzeImports();
+        case Phase::Complete:
+            return {};
+    }
+}
 
+tempo_utils::Status
+lyric_build::internal::CompileObjectTask::deduplicateTask(TaskHash &taskHash)
+{
+    TaskHasher taskHasher(getKey());
+    taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
+    taskHasher.hashValue(m_moduleLocation.toString());
+    taskHasher.hashTask(this);
+    taskHash = taskHasher.finish();
+    return {};
+}
+
+tempo_utils::Status
+lyric_build::internal::CompileObjectTask::runTask(TempDirectory *tempDirectory)
+{
     // get the archetype artifact from the cache
-    auto artifactCache = buildState->getArtifactCache();
-    const auto &parseHash = depStates.at(m_parseTarget).getHash();
-    TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    BuildGeneration generation;
-    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
-
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
-    ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (content, getContent(m_parseTarget, archetypeArtifactPath, true));
     lyric_parser::LyricArchetype archetype(content);
 
     // define the module origin
+    auto generation = getGeneration();
     auto origin = lyric_common::ModuleLocation::fromString(
-        absl::StrCat("dev.zuri.build://", buildState->getGeneration().toString()));
+        absl::StrCat("dev.zuri.build://", generation.toString()));
+
+    auto buildState = getBuildState();
+    auto artifactCache = buildState->getArtifactCache();
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, this, tempDirectory));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure compiler
@@ -225,14 +192,12 @@ lyric_build::internal::CompileObjectTask::compileModule(
     TU_ASSIGN_OR_RETURN (object, compiler.compileModule(m_moduleLocation,
         archetype, m_objectStateOptions, traceDiagnostics()));
 
-    // declare the artifact
+    // declare the object artifact path
     tempo_utils::UrlPath objectArtifactPath;
     TU_ASSIGN_OR_RETURN (objectArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
-    ArtifactId objectArtifact(buildState->getGeneration(), taskHash, objectArtifactPath);
-    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(objectArtifact));
 
-    // serialize the object metadata
+    // construct the object metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
@@ -240,80 +205,21 @@ lyric_build::internal::CompileObjectTask::compileModule(
     LyricMetadata objectMetadata;
     TU_ASSIGN_OR_RETURN (objectMetadata, writer.toMetadata());
 
-    // store the object metadata in the build cache
-    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(objectArtifact, objectMetadata));
-
     // store the object content in the build cache
-    auto objectBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(objectArtifact, objectBytes));
+    auto objectBytes = object.toBytes();
+    TU_RETURN_IF_NOT_OK (storeArtifact(objectArtifactPath, objectBytes, objectMetadata));
 
-    logInfo("stored object at {}", objectArtifact.toString());
-
-    // if a plugin was provided then pull the plugin artifacts forward
-    if (m_pluginTarget.isValid()) {
-        TU_ASSERT (depStates.contains(m_pluginTarget));
-        const auto &taskState = depStates.at(m_pluginTarget);
-
-        // if the target state is not completed, then fail the task
-        if (taskState.getStatus() != TaskState::Status::COMPLETED)
-            return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "dependent task {} did not complete", m_pluginTarget.toString());
-
-        auto hash = taskState.getHash();
-        if (hash.empty())
-            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "dependent task {} has invalid hash", m_pluginTarget.toString());
-
-        TraceId pluginTrace(hash, m_pluginTarget.getDomain(), m_pluginTarget.getId());
-        TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(pluginTrace));
-
-        std::vector<ArtifactId> pluginArtifacts;
-        TU_ASSIGN_OR_RETURN (pluginArtifacts, artifactCache->findArtifacts(generation, hash, {}, {}));
-
-        for (const auto &srcId : pluginArtifacts) {
-            ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
-            TU_RETURN_IF_NOT_OK (artifactCache->linkArtifact(dstId, srcId));
-        }
-    }
+    logInfo("stored object {}", objectArtifactPath.toString());
 
     return {};
-}
-
-Option<tempo_utils::Status>
-lyric_build::internal::CompileObjectTask::runTask(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
-{
-    auto numDependencies = m_compileTargets.size();
-    tempo_utils::Status status;
-    switch (m_phase) {
-        case Phase::ANALYZE_IMPORTS:
-            status = analyzeImports(taskHash, depStates, buildState);
-            if (!status.isOk())
-                return Option(status);
-            m_phase = Phase::COMPILE_OBJECT;
-            if (m_compileTargets.size() > numDependencies)
-                return {};
-            [[fallthrough]];
-        case Phase::COMPILE_OBJECT:
-            status =  compileModule(taskHash, depStates, buildState);
-            m_phase = Phase::COMPLETE;
-            return Option(status);
-        case Phase::COMPLETE:
-            status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "encountered invalid task phase");
-            return Option(status);
-        default:
-            TU_UNREACHABLE();
-    }
 }
 
 lyric_build::BaseTask *
 lyric_build::internal::new_compile_object_task(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new CompileObjectTask(generation, key, std::move(span));
+    return new CompileObjectTask(generation, key, std::move(buildState), std::move(span));
 }

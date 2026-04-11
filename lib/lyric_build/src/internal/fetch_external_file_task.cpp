@@ -12,33 +12,32 @@
 #include <tempo_config/parse_config.h>
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/file_reader.h>
-#include <tempo_utils/log_message.h>
 
 lyric_build::internal::FetchExternalFileTask::FetchExternalFileTask(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : BaseTask(generation, key, span)
+    : BaseTask(generation, key, std::move(buildState), std::move(span))
 {
 }
 
 tempo_utils::Status
-lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *config)
+lyric_build::internal::FetchExternalFileTask::configureTask(const TaskSettings &taskSettings)
 {
     auto taskId = getId();
+    auto settings = taskSettings.merge(TaskSettings({}, {}, {{taskId, getParams()}}));
 
-    auto artifactPath = tempo_utils::UrlPath::fromString(taskId.getId());
-    if (!artifactPath.isValid())
+    m_artifactPath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!m_artifactPath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id must be a valid url path");
-
-    m_artifactPath = std::move(artifactPath);
 
     //
     // config below comes only from the task section, it is not resolved from domain or global sections
     //
 
-    auto taskSection = config->getTaskSection(taskId);
+    auto taskSection = settings.getTaskSection(taskId);
 
     // parse file path
     tempo_config::PathParser filePathparser;
@@ -69,36 +68,22 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
         taskSection, "artifactPath"));
 
     return {};
-}
 
-tempo_utils::Result<lyric_build::TaskHash>
-lyric_build::internal::FetchExternalFileTask::configureTask(
-    const TaskSettings *config,
-    AbstractVirtualFilesystem *virtualFilesystem)
-{
-    auto key = getKey();
-    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
-
-    TU_RETURN_IF_NOT_OK (configure(&merged));
-
-    TaskHasher taskHasher(getKey());
-    TU_RETURN_IF_NOT_OK (taskHasher.hashFile(m_filePath));
-    auto hash = taskHasher.finish();
-    return hash;
-}
-
-tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
-lyric_build::internal::FetchExternalFileTask::checkDependencies()
-{
-    return absl::flat_hash_set<lyric_build::TaskKey>{};
 }
 
 tempo_utils::Status
-lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+lyric_build::internal::FetchExternalFileTask::deduplicateTask(TaskHash &taskHash)
 {
+    TaskHasher taskHasher(getKey());
+    TU_RETURN_IF_NOT_OK (taskHasher.hashFile(m_filePath));
+    taskHash = taskHasher.finish();
+    return {};
+}
+
+tempo_utils::Status
+lyric_build::internal::FetchExternalFileTask::runTask(TempDirectory *tempDirectory)
+{
+    auto buildState = getBuildState();
     auto artifactCache = buildState->getArtifactCache();
     auto vfs = buildState->getVirtualFilesystem();
 
@@ -106,43 +91,27 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     TU_RETURN_IF_NOT_OK (reader.getStatus());
     auto content = reader.getBytes();
 
-    // declare the artifact
-    ArtifactId externalArtifact(buildState->getGeneration(), taskHash, m_artifactPath);
-    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(externalArtifact));
-
-    // serialize the file metadata
+    // construct the file artifact metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, m_contentType);
     LyricMetadata externalMetadata;
     TU_ASSIGN_OR_RETURN (externalMetadata, writer.toMetadata());
 
-    // store the file metadata in the build cache
-    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(externalArtifact, externalMetadata));
-
     // store the file content in the build cache
-    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(externalArtifact, content));
+    TU_RETURN_IF_NOT_OK (storeArtifact(m_artifactPath, content, externalMetadata));
 
-    logInfo("stored external content at {}", externalArtifact.toString());
+    logInfo("stored external content {}", m_artifactPath.toString());
 
     return {};
-}
-
-Option<tempo_utils::Status>
-lyric_build::internal::FetchExternalFileTask::runTask(
-    const std::string &taskHash,
-    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
-{
-    auto status = fetchExternalFile(taskHash, depStates, buildState);
-    return Option(status);
 }
 
 lyric_build::BaseTask *
 lyric_build::internal::new_fetch_external_file_task(
     const BuildGeneration &generation,
     const TaskKey &key,
+    std::weak_ptr<BuildState> buildState,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
-    return new FetchExternalFileTask(generation, key, span);
+    return new FetchExternalFileTask(generation, key, std::move(buildState), std::move(span));
 }
