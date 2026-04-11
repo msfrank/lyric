@@ -3,6 +3,7 @@
 
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_conversions.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>

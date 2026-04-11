@@ -5,6 +5,7 @@
 #include <tempo_utils/log_message.h>
 
 #include <lyric_build/base_task.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
@@ -57,11 +58,6 @@ lyric_build::BuildRunner::BuildRunner(
 
 lyric_build::BuildRunner::~BuildRunner()
 {
-    // clean up tasks
-    for (const auto &pair : m_tasks) {
-        delete pair.second;
-    }
-
     // clean up notifications
     while (!m_notifications->empty()) {
         m_notifications->pop();
@@ -168,16 +164,10 @@ lyric_build::BuildRunner::run()
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "uv_loop_close failed: {}", uv_err_name(ret));
 
-    // determine the counts of created and cached tasks
-    auto generation = m_state->getGeneration();
-    for (const auto &entry : m_tasks) {
-        auto state = m_state->loadState(entry.first);
-        if (state.getGeneration() == generation) {
-            m_totalTasksCreated++;
-        } else {
-            m_totalTasksCached++;
-        }
-    }
+    // update the counts of created and cached tasks
+    auto taskStatistics = m_state->getTaskStatistics();
+    m_totalTasksCreated += taskStatistics.totalTasksCreated;
+    m_totalTasksCached += taskStatistics.totalTasksCached;
 
     // we are done
     std::unique_lock locker(m_statusLock);
@@ -199,21 +189,22 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     //      state to: {QUEUED, current generation, current hash}
     //   4. the task is already queued. if so, then do nothing.
 
-    std::unique_lock<std::shared_mutex> locker(m_tasksRWlock);
 
     BaseTask *task;
-    if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
-        auto span = m_recorder->makeSpan();
-        TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
-            m_state->getGeneration(), key, m_state, span));
+    TU_ASSIGN_OR_RETURN (task, m_state->getOrMakeTask(key, m_registry, m_recorder));
 
-        m_tasks[key] = task;                            // task was created, add to tasks table
-        TU_LOG_VV << "constructed new task " << key;
-    } else {
-        task = m_tasks[key];                            // otherwise get handle to existing task
-    }
-
-    locker.unlock();                                    // unlock tasks rwlock before enqueuing task
+    // std::unique_lock<std::shared_mutex> locker(m_tasksRWlock);
+    // if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
+    //     auto span = m_recorder->makeSpan();
+    //     TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
+    //         m_state->getGeneration(), key, m_state, span));
+    //
+    //     m_tasks[key] = task;                            // task was created, add to tasks table
+    //     TU_LOG_VV << "constructed new task " << key;
+    // } else {
+    //     task = m_tasks[key];                            // otherwise get handle to existing task
+    // }
+    // locker.unlock();                                    // unlock tasks rwlock before enqueuing task
 
     m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
 
@@ -225,11 +216,8 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     // look up the prior task state, which may not exist
     auto prevState = m_state->loadState(key);
 
-    // create the new task state
-    auto state = TaskData(TaskState::QUEUED, prevState.getGeneration(), prevState.getHash());
-
-    // store the new task state
-    m_state->storeState(key, state);
+    // set the new task state
+    task->setState(TaskState::QUEUED);
     ReadyItem item = {ReadyItem::Type::TASK, task};
 
     m_ready.push(item);                                 // enqueue new ready task item

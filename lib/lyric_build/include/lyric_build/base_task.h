@@ -13,6 +13,10 @@
 
 namespace lyric_build {
 
+    namespace internal {
+        class RunnerWorker;
+    }
+
     class BaseTask {
 
     public:
@@ -23,49 +27,26 @@ namespace lyric_build {
             std::shared_ptr<tempo_tracing::TraceSpan> span);
         virtual ~BaseTask();
 
+        /*
+         * constant data accessor methods which are safe to call from any thread
+         */
+
         BuildGeneration getGeneration() const;
         TaskKey getKey() const;
         TaskId getId() const;
         TaskReference getReference() const;
         tempo_config::ConfigMap getParams() const;
 
-        std::shared_ptr<BuildState> getBuildState() const;
+        /*
+         * mutable data accessor methods which are safe to call from any thread
+         */
 
-        std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
-
+        TaskData getData() const;
         TaskState getState() const;
-        void setState(TaskState state);
-
-        void requestDependency(const TaskKey &depKey);
-        bool hasDependency(const TaskKey &depKey) const;
-        bool dependenciesEmpty() const;
-        absl::flat_hash_set<TaskKey>::const_iterator dependenciesBegin() const;
-        absl::flat_hash_set<TaskKey>::const_iterator dependenciesEnd() const;
-        int numDependencies() const;
-
-        void markCompleted(const TaskKey &depKey, const TaskData &depState);
-        bool hasCompleted(const TaskKey &depKey) const;
-        TaskData getCompleted(const TaskKey &depKey) const;
-        absl::btree_map<TaskKey,TaskData>::const_iterator completedBegin() const;
-        absl::btree_map<TaskKey,TaskData>::const_iterator completedEnd() const;
-        int numCompleted() const;
-
-        bool hasTaskHash() const;
-        TaskHash getTaskHash() const;
-        void setTaskHash(const TaskHash &taskHash);
-
-        tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> getContent(
-            const TaskKey &key,
-            const tempo_utils::UrlPath &path,
-            bool followLinks = false);
-        tempo_utils::Result<LyricMetadata> getMetadata(
-            const TaskKey &key,
-            const tempo_utils::UrlPath &path,
-            bool followLinks = false);
-
-        tempo_utils::Status storeArtifact(const tempo_utils::UrlPath &path,
-            std::shared_ptr<const tempo_utils::ImmutableBytes> content,
-            const LyricMetadata &metadata = {});
+        TaskData setState(TaskState state);
+        bool hasHash() const;
+        TaskHash getHash() const;
+        TaskData setHash(const TaskHash &taskHash);
 
         /**
          *
@@ -92,6 +73,42 @@ namespace lyric_build {
         tempo_utils::Status cancel();
         tempo_utils::Status fail(const tempo_utils::Status &status);
 
+    protected:
+
+        /*
+         *
+         */
+
+        std::shared_ptr<BuildState> getBuildState() const;
+        std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
+
+        void requestDependency(const TaskKey &depKey);
+        bool hasDependency(const TaskKey &depKey) const;
+        bool dependenciesEmpty() const;
+        absl::flat_hash_set<TaskKey>::const_iterator dependenciesBegin() const;
+        absl::flat_hash_set<TaskKey>::const_iterator dependenciesEnd() const;
+        int numDependencies() const;
+
+        void markCompleted(const TaskKey &depKey, const TaskData &depState);
+        bool hasCompleted(const TaskKey &depKey) const;
+        TaskData getCompleted(const TaskKey &depKey) const;
+        absl::btree_map<TaskKey,TaskData>::const_iterator completedBegin() const;
+        absl::btree_map<TaskKey,TaskData>::const_iterator completedEnd() const;
+        int numCompleted() const;
+
+        tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> getContent(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            bool followLinks = false);
+        tempo_utils::Result<LyricMetadata> getMetadata(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            bool followLinks = false);
+
+        tempo_utils::Status storeArtifact(const tempo_utils::UrlPath &path,
+            std::shared_ptr<const tempo_utils::ImmutableBytes> content,
+            const LyricMetadata &metadata = {});
+
         std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logError(std::string_view message);
@@ -105,12 +122,20 @@ namespace lyric_build {
         std::shared_ptr<tempo_tracing::TraceRecorder> m_diagnostics;
         std::unique_ptr<TempDirectory> m_tempDirectory;
 
-        TaskState m_state;
         absl::flat_hash_set<TaskKey> m_dependencies;
         absl::btree_map<TaskKey,TaskData> m_completed;
-        std::optional<TaskHash> m_hash;
+
+        std::unique_ptr<absl::Mutex> m_lock;
+        TaskState m_state ABSL_GUARDED_BY(m_lock);
+        std::optional<TaskHash> m_hash ABSL_GUARDED_BY(m_lock);
 
         tempo_utils::Status complete(const tempo_utils::Status &status);
+
+        friend class BuildRunner;
+        friend class BuildState;
+        friend class DependencyLoader;
+        friend class TaskHasher;
+        friend class internal::RunnerWorker;
 
     public:
         /**

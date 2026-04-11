@@ -1,39 +1,51 @@
 
-#include <absl/strings/escaping.h>
 #include <lyric_build/build_result.h>
 #include <lyric_build/internal/runner_worker_thread.h>
 #include <tempo_security/sha256_hash.h>
 
-tempo_utils::Status
-lyric_build::internal::set_task_blocked(
-    BaseTask *task,
-    BuildState *state,
-    BuildRunner *runner,
-    const absl::flat_hash_set<TaskKey> &taskDeps)
+inline bool
+task_is_finished(lyric_build::BaseTask *task)
 {
-    task->setState(TaskState::BLOCKED);
-    auto generation = task->getGeneration();
-    auto taskState = TaskData(TaskState::BLOCKED, generation);
-    auto key = task->getKey();
-    state->storeState(key, taskState);
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState)));
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyTaskBlocked>(key, taskDeps)));
-    return {};
+    TU_NOTNULL (task);
+    auto state = task->getState();
+    switch (state) {
+        case lyric_build::TaskState::COMPLETED:
+        case lyric_build::TaskState::FAILED:
+            return true;
+        default:
+            return false;
+    }
 }
 
-tempo_utils::Status
-lyric_build::internal::set_task_failed(
-    BaseTask *task,
-    BuildState *state,
-    BuildRunner *runner,
-    const tempo_utils::Status &status)
+inline bool
+task_is_blocked_or_finished(lyric_build::BaseTask *task)
 {
-    auto generation = task->getGeneration();
-    auto taskState = TaskData(TaskState::FAILED, generation);
-    auto key = task->getKey();
-    state->storeState(key, taskState);
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState)));
-    return task->fail(status);
+    TU_NOTNULL (task);
+    auto state = task->getState();
+    switch (state) {
+        case lyric_build::TaskState::BLOCKED:
+        case lyric_build::TaskState::COMPLETED:
+        case lyric_build::TaskState::FAILED:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Construct RunnerWorker.
+ *
+ * @param taskThread The `TaskThread`.
+ */
+lyric_build::internal::RunnerWorker::RunnerWorker(const TaskThread *taskThread)
+{
+    TU_NOTNULL (taskThread);
+    m_runner = taskThread->runner;
+    m_taskSettings = taskThread->taskSettings;
+    m_artifactCache = taskThread->artifactCache;
+    m_buildState = taskThread->buildState;
+    m_virtualFilesystem = m_buildState->getVirtualFilesystem();
+    m_generation = m_buildState->getGeneration();
 }
 
 /**
@@ -44,38 +56,24 @@ lyric_build::internal::set_task_failed(
  * This function will be called repeatedly until either `result` is empty, or every dependency specified
  * in the set has completed (meaning every dependency was passed in to this function via `completed`).
  *
- * @param task
- * @param runner
- * @param taskSettings
- * @param state
- * @param vfs
- * @param generation
- * @param result
+ * @param task The `BaseTask` to configure.
  * @return
  */
 tempo_utils::Status
-lyric_build::internal::configure_task(
-    BaseTask *task,
-    AbstractBuildRunner *runner,
-    const TaskSettings *taskSettings,
-    BuildState *state,
-    AbstractVirtualFilesystem *vfs,
-    const BuildGeneration &generation)
+lyric_build::internal::RunnerWorker::configureTask(BaseTask *task)
 {
     auto key = task->getKey();
-    auto prevState = state->loadState(key);
-
-    TU_LOG_VV << "task " << key << " has previous state " << prevState;
+    auto prevState = task->getState();
 
     // try to configure the task if it is not configured
-    switch (prevState.getState()) {
+    switch (prevState) {
 
         // if task is blocked, then we have already configured it
         case TaskState::BLOCKED:
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "cannot configure blocked task {}", key.toString());
 
-        // if task is running then abort the thread
+            // if task is running then abort the thread
         case TaskState::RUNNING:
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "cannot configure running task {}", key.toString());
@@ -92,14 +90,13 @@ lyric_build::internal::configure_task(
     }
 
     // try configuring the task
-    auto status = task->configureTask(*taskSettings);
+    auto status = task->configureTask(*m_taskSettings);
 
     // if configuration fails then report error and set task state to failed
     if (status.notOk()) {
         TU_LOG_VV << "configuration of " << key << " failed: " << status;
-        auto taskState = TaskData(TaskState::FAILED, generation, {});
-        state->storeState(key, taskState);
-        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
+        auto data = task->setState(TaskState::FAILED);
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
         return task->fail(status);
     }
 
@@ -107,11 +104,7 @@ lyric_build::internal::configure_task(
 }
 
 tempo_utils::Status
-lyric_build::internal::check_dependencies(
-    BaseTask *task,
-    AbstractBuildRunner *runner,
-    BuildState *state,
-    const BuildGeneration &generation)
+lyric_build::internal::RunnerWorker::checkDependencies(BaseTask *task)
 {
     auto key = task->getKey();
 
@@ -124,7 +117,7 @@ lyric_build::internal::check_dependencies(
 
     // load the current state of all dependent tasks
     absl::flat_hash_set<TaskKey> taskDeps(task->dependenciesBegin(), task->dependenciesEnd());
-    auto depStates = state->loadStates(taskDeps);
+    auto depStates = m_buildState->loadStates(taskDeps);
     TU_LOG_VV << "task " << key << " requests dependencies: " << taskDeps;
 
     for (const auto &depKey : taskDeps) {
@@ -132,7 +125,7 @@ lyric_build::internal::check_dependencies(
 
         if (!depStates.contains(depKey)) {
             // if dependency has never been run, there is no previous state in the cache
-            depState = TaskData(TaskState::INVALID, generation);
+            depState = TaskData(TaskState::INVALID, m_generation);
         } else {
             depState = depStates[depKey];
         }
@@ -156,7 +149,7 @@ lyric_build::internal::check_dependencies(
 
             // task dependency failed, determine if we can re-run the task, otherwise add to failedDeps
             case TaskState::FAILED: {
-                if (depState.getGeneration() == generation) {
+                if (depState.getGeneration() == m_generation) {
                     failedDeps[depKey] = depState;
                 } else {
                     pendingDeps.insert(depKey);
@@ -170,9 +163,8 @@ lyric_build::internal::check_dependencies(
     if (!failedDeps.empty()) {
         TU_LOG_VV << "task " << key << " failed due to " << (tu_uint32) failedDeps.size()
             << " failed dependencies: " << failedDeps;
-        auto taskState = TaskData(TaskState::FAILED, generation, {});
-        state->storeState(key, taskState);
-        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
+        auto data = task->setState(TaskState::FAILED);
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
         return task->cancel();
     }
 
@@ -180,22 +172,16 @@ lyric_build::internal::check_dependencies(
     if (!pendingDeps.empty()) {
         TU_LOG_VV << "task " << key << " blocked due to " << (tu_uint32) pendingDeps.size()
             << " pending dependencies: " << pendingDeps;
-        auto taskState = TaskData(TaskState::BLOCKED, generation);
-        state->storeState(key, taskState);
-        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
-        runner->enqueueNotification(std::make_unique<NotifyTaskBlocked>(key, taskDeps));
+        auto data = task->setState(TaskState::BLOCKED);
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyTaskBlocked>(key, taskDeps)));
     }
 
     return {};
 }
 
 tempo_utils::Status
-lyric_build::internal::deduplicate_task(
-    BaseTask *task,
-    AbstractBuildRunner *runner,
-    BuildState *state,
-    AbstractArtifactCache *artifactCache,
-    const BuildGeneration &generation)
+lyric_build::internal::RunnerWorker::deduplicateTask(BaseTask *task)
 {
     auto key = task->getKey();
 
@@ -207,161 +193,70 @@ lyric_build::internal::deduplicate_task(
     // if deduplicate fails then report error and set task state to failed
     if (status.notOk()) {
         TU_LOG_VV << "deduplication of " << key << " failed: " << status;
-        auto taskState = TaskData(TaskState::FAILED, generation);
-        state->storeState(key, taskState);
-        TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState)));
+        auto data = task->setState(TaskState::FAILED);
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
         return task->fail(status);
     }
 
-    task->setTaskHash(hash);
+    task->setHash(hash);
 
     // if a trace does not exist for the given hash and key, then return immediately
     TraceId traceId(hash, key);
-    if (!artifactCache->containsTrace(traceId))
+    if (!m_artifactCache->containsTrace(traceId))
         return {};
 
     // FIXME: pull forward artifacts from the trace?
 
     // complete the task and record the trace
     TU_LOG_VV << "task " << key << " completed using trace " << hash.toString();
-    auto currState = TaskData(TaskState::COMPLETED, generation, hash);
-    state->storeState(key, currState);
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState)));
+    auto data = task->setState(TaskState::COMPLETED);
+    TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
 
     return {};
 }
 
-// tempo_utils::Status
-// lyric_build::internal::link_dependencies(
-//     const TaskKey &key,
-//     AbstractBuildRunner *runner,
-//     BuildState *state,
-//     AbstractArtifactCache *artifactCache,
-//     const BuildGeneration &generation,
-//     const absl::flat_hash_map<TaskKey, TaskData> &depStates,
-//     bool &complete)
-// {
-//     for (const auto &entry : depStates) {
-//         const auto &depKey = entry.first;
-//         const auto &depState = entry.second;
-//         auto depHash = depState.getHash();
-//         TraceId depTrace(depHash, depKey.getDomain(), depKey.getId());
-//
-//         BuildGeneration targetGen;
-//         TU_ASSIGN_OR_RETURN (targetGen, artifactCache->loadTrace(depTrace));
-//
-//         std::vector<ArtifactId> dependentArtifacts;
-//         TU_ASSIGN_OR_RETURN (dependentArtifacts, artifactCache->findArtifacts(targetGen, depHash, {}, {}));
-//
-//         for (const auto &srcId : dependentArtifacts) {
-//             ArtifactId dstId(generation, depHash, srcId.getLocation());
-//             if (dstId != srcId) {
-//                 auto status = artifactCache->linkArtifact(dstId, srcId);
-//
-//                 // if any dependent artifacts fail to link, then mark the task failed
-//                 if (!status.isOk()) {
-//                     TU_LOG_VV << "task " << key << " failed: " << status;
-//                     auto taskState = TaskData(TaskState::FAILED, generation, {});
-//                     state->storeState(key, taskState);
-//                     runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
-//                     complete = false;
-//                     return {};
-//                 }
-//             }
-//         }
-//     }
-//
-//     complete = true;
-//     return {};
-// }
-
 tempo_utils::Status
-lyric_build::internal::run_task(
-    BaseTask *task,
-    AbstractBuildRunner *runner,
-    BuildState *state,
-    AbstractArtifactCache *artifactCache,
-    const BuildGeneration &generation)
+lyric_build::internal::RunnerWorker::runTask(BaseTask *task)
 {
     auto key = task->getKey();
-    auto hash = task->getTaskHash();
+    auto hash = task->getHash();
 
     // change task to running
-    auto currState = TaskData(TaskState::RUNNING, generation, hash);
-    state->storeState(key, currState);
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState)));
+    auto data = task->setState(TaskState::RUNNING);
+    TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
 
     // run the task
     auto taskStatus = task->run();
 
     // if the task returned status, then mark the task failed and return incomplete
     if (taskStatus.notOk()) {
-        currState = TaskData(TaskState::FAILED, generation, hash);
         TU_LOG_VV << "task " << key << " failed: " << taskStatus;
-        state->storeState(key, currState);
-        TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState)));
+        data = task->setState(TaskState::FAILED);
+        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
         return task->fail(taskStatus);
     }
 
     // otherwise the task completed successfully
     TraceId traceId(hash, key);
-    currState = TaskData(TaskState::COMPLETED, generation, hash);
-    artifactCache->storeTrace(traceId, generation);
+    TU_RETURN_IF_NOT_OK (m_artifactCache->storeTrace(traceId, m_generation));
+
     TU_LOG_VV << "task " << key << " completed with new trace " << traceId.toString();
-    state->storeState(key, currState);
-    TU_RETURN_IF_NOT_OK (runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState)));
+    data = task->setState(TaskState::COMPLETED);
+    TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
 
     return {};
 }
 
-inline bool
-task_is_finished(lyric_build::BaseTask *task, lyric_build::BuildState *state)
-{
-    TU_NOTNULL (task);
-    TU_NOTNULL (state);
-    auto taskData = state->loadState(task->getKey());
-    switch (taskData.getState()) {
-        case lyric_build::TaskState::COMPLETED:
-        case lyric_build::TaskState::FAILED:
-            return true;
-        default:
-            return false;
-    }
-}
-
-inline bool
-task_is_blocked_or_finished(lyric_build::BaseTask *task, lyric_build::BuildState *state)
-{
-    TU_NOTNULL (task);
-    TU_NOTNULL (state);
-    auto taskData = state->loadState(task->getKey());
-    switch (taskData.getState()) {
-        case lyric_build::TaskState::BLOCKED:
-        case lyric_build::TaskState::COMPLETED:
-        case lyric_build::TaskState::FAILED:
-            return true;
-        default:
-            return false;
-    }
-}
-
 tempo_utils::Status
-lyric_build::internal::runner_worker_loop(const TaskThread *thread)
+lyric_build::internal::RunnerWorker::runUntilCancelled()
 {
-    auto *runner = thread->runner;
-
-    const auto *taskSettings = thread->taskSettings;
-    auto state = thread->buildState;
-    auto artifactCache = thread->artifactCache;
-
-    auto virtualFilesystem = state->getVirtualFilesystem();
-    auto generation = state->getGeneration();
+    auto generation = m_buildState->getGeneration();
 
     // loop forever until cancelled
     for (;;) {
 
         // fetch next task from the ready queue
-        auto item = runner->waitForNextReady(-1);
+        auto item = m_runner->waitForNextReady(-1);
 
         // if next task is shutdown, then break the loop
         if (item.type == ReadyItem::Type::SHUTDOWN)
@@ -379,7 +274,8 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
         // dequeue task and get the previous state, if any
         auto *task = item.task;
         auto key = task->getKey();
-        auto prevState = state->loadState(key);
+        auto prevState = task->getData();
+
         TU_LOG_VV << "dequeued next task " << key << " with previous state " << prevState;
 
         // if task was created in the current generation and is COMPLETED or FAILED then fetch next task
@@ -387,7 +283,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
             case TaskState::COMPLETED:
             case TaskState::FAILED:
                 if (prevState.getGeneration() == generation) {
-                    runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, prevState));
+                    m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, prevState));
                     continue;
                 }
                 [[fallthrough]];
@@ -396,7 +292,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
         }
 
         // if task hash is not present then perform configuration and deduplication
-        if (!task->hasTaskHash()) {
+        if (!task->hasHash()) {
 
             // repeatedly try to configure the task until either:
             //   1. all dependency tasks have completed
@@ -404,30 +300,29 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
             bool fetchNext = false;
             for (;;) {
                 if (!task->dependenciesEmpty()) {
-                    TU_RETURN_IF_NOT_OK (check_dependencies(task, runner, state.get(), generation));
-                    if ((fetchNext = task_is_blocked_or_finished(task, state.get())))
+                    TU_RETURN_IF_NOT_OK (checkDependencies(task));
+                    if ((fetchNext = task_is_blocked_or_finished(task)))
                         break;
                 }
-                TU_RETURN_IF_NOT_OK (configure_task(task, runner, taskSettings, state.get(),
-                    virtualFilesystem.get(), generation));
+                TU_RETURN_IF_NOT_OK (configureTask(task));
                 if (task->dependenciesEmpty())
                     break;
             }
 
             // if task is blocked or finished then fetch next task
-            if (fetchNext || task_is_blocked_or_finished(task, state.get()))
+            if (fetchNext || task_is_blocked_or_finished(task))
                 continue;
 
             // otherwise perform deduplication
-            TU_RETURN_IF_NOT_OK (deduplicate_task(task, runner, state.get(), artifactCache.get(), generation));
+            TU_RETURN_IF_NOT_OK (deduplicateTask(task));
 
             // if task is finished then fetch next task
-            if (task_is_finished(task, state.get()))
+            if (task_is_finished(task))
                 continue;
         }
 
         // run the task
-        TU_RETURN_IF_NOT_OK (run_task(task, runner, state.get(), artifactCache.get(), generation));
+        TU_RETURN_IF_NOT_OK (runTask(task));
     }
 
     return {};
@@ -438,15 +333,15 @@ lyric_build::internal::runner_worker_thread(void *arg)
 {
     TU_ASSERT (arg != nullptr);
     const auto *thread = static_cast<TaskThread *>(arg);
-    auto *runner = thread->runner;
 
     TU_LOG_VV << "starting up worker thread " << thread->index;
 
-    auto status = runner_worker_loop(thread);
-    if (!status.isOk())
-        TU_LOG_VV << "worker thread " << thread->index << " failed: " << status;
+    RunnerWorker worker(thread);
+    auto status = worker.runUntilCancelled();
+
+    TU_LOG_ERROR_IF (status.notOk()) << "worker thread " << thread->index << " failed: " << status;
 
     // notify main loop that thread is cancelled
-    runner->enqueueNotification(std::make_unique<NotifyThreadCancelled>(thread->index));
+    thread->runner->enqueueNotification(std::make_unique<NotifyThreadCancelled>(thread->index));
     TU_LOG_VV << "shutting down worker thread " << thread->index;
 }

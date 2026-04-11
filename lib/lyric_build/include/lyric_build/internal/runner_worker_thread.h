@@ -24,7 +24,6 @@ namespace lyric_build::internal {
         AbstractBuildRunner *runner,
         const TaskSettings *taskSettings,
         BuildState *state,
-        AbstractVirtualFilesystem *vfs,
         const BuildGeneration &generation);
 
     tempo_utils::Status check_dependencies(
@@ -40,15 +39,6 @@ namespace lyric_build::internal {
         AbstractArtifactCache *artifactCache,
         const BuildGeneration &generation);
 
-    // tempo_utils::Status link_dependencies(
-    //     const TaskKey &key,
-    //     AbstractBuildRunner *runner,
-    //     BuildState *state,
-    //     AbstractArtifactCache *artifactCache,
-    //     const BuildGeneration &generation,
-    //     const absl::flat_hash_map<TaskKey, TaskData> &depStates,
-    //     bool &complete);
-
     tempo_utils::Status run_task(
         BaseTask *task,
         AbstractBuildRunner *runner,
@@ -57,6 +47,26 @@ namespace lyric_build::internal {
         const BuildGeneration &generation);
 
     tempo_utils::Status runner_worker_loop(const TaskThread *thread);
+
+    class RunnerWorker {
+    public:
+        explicit RunnerWorker(const TaskThread *taskThread);
+
+        tempo_utils::Status configureTask(BaseTask *task);
+        tempo_utils::Status checkDependencies(BaseTask *task);
+        tempo_utils::Status deduplicateTask(BaseTask *task);
+        tempo_utils::Status runTask(BaseTask *task);
+
+        tempo_utils::Status runUntilCancelled();
+
+    private:
+        AbstractBuildRunner *m_runner;
+        const TaskSettings *m_taskSettings;
+        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
+        std::shared_ptr<BuildState> m_buildState;
+        std::shared_ptr<AbstractVirtualFilesystem> m_virtualFilesystem;
+        BuildGeneration m_generation;
+    };
 
     void runner_worker_thread(void *arg);
 

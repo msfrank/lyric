@@ -144,9 +144,6 @@ namespace lyric_build {
         RunnerState m_runnerState;                          // runner state
         tempo_utils::Status m_shutdownStatus;               // shutdown status
 
-        std::shared_mutex m_tasksRWlock;                    // readwrite lock around the tasks map
-        absl::flat_hash_map<TaskKey, BaseTask *> m_tasks;   // map of build tasks
-
         std::timed_mutex m_readyLock;                       // lock around the ready queue
         std::queue<ReadyItem> m_ready;                      // queue of ready items in FIFO order
         absl::flat_hash_set<TaskKey> m_queued;              // set of ready tasks which are in the queue

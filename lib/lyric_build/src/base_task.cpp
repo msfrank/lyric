@@ -1,9 +1,9 @@
 
 #include <lyric_build/base_task.h>
-#include <lyric_build/build_types.h>
 #include <lyric_build/build_attrs.h>
+#include <lyric_build/build_result.h>
+#include <lyric_build/build_types.h>
 #include <tempo_tracing/trace_recorder.h>
-#include <tempo_tracing/tracing_result.h>
 #include <tempo_tracing/tracing_schema.h>
 
 lyric_build::BaseTask::BaseTask(
@@ -15,6 +15,7 @@ lyric_build::BaseTask::BaseTask(
       m_key(key),
       m_buildState(std::move(buildState)),
       m_span(std::move(span)),
+      m_lock(std::make_unique<absl::Mutex>()),
       m_state(TaskState::INVALID)
 {
     TU_ASSERT (m_key.isValid());
@@ -79,16 +80,49 @@ lyric_build::BaseTask::traceDiagnostics()
     return m_diagnostics;
 }
 
+lyric_build::TaskData
+lyric_build::BaseTask::getData() const
+{
+    absl::ReaderMutexLock locker(m_lock.get());
+    return TaskData(m_state, m_generation, m_hash.value_or(TaskHash{}));
+}
+
 lyric_build::TaskState
 lyric_build::BaseTask::getState() const
 {
+    absl::ReaderMutexLock locker(m_lock.get());
     return m_state;
 }
 
-void
+lyric_build::TaskData
 lyric_build::BaseTask::setState(TaskState state)
 {
+    absl::WriterMutexLock locker(m_lock.get());
     m_state = state;
+    return TaskData(m_state, m_generation, m_hash.value_or(TaskHash{}));
+}
+
+bool
+lyric_build::BaseTask::hasHash() const
+{
+    absl::ReaderMutexLock locker(m_lock.get());
+    return m_hash.has_value();
+}
+
+lyric_build::TaskHash
+lyric_build::BaseTask::getHash() const
+{
+    absl::ReaderMutexLock locker(m_lock.get());
+    return m_hash.value_or(TaskHash{});
+}
+
+lyric_build::TaskData
+lyric_build::BaseTask::setHash(const TaskHash &taskHash)
+{
+    absl::WriterMutexLock locker(m_lock.get());
+    TU_ASSERT (!m_hash.has_value());
+    m_hash = taskHash;
+    return TaskData(m_state, m_generation, taskHash);
 }
 
 void
@@ -169,25 +203,6 @@ int
 lyric_build::BaseTask::numCompleted() const
 {
     return m_completed.size();
-}
-
-bool
-lyric_build::BaseTask::hasTaskHash() const
-{
-    return m_hash.has_value();
-}
-
-lyric_build::TaskHash
-lyric_build::BaseTask::getTaskHash() const
-{
-    return m_hash.value_or(TaskHash{});
-}
-
-void
-lyric_build::BaseTask::setTaskHash(const TaskHash &taskHash)
-{
-    TU_ASSERT (!m_hash.has_value());
-    m_hash = taskHash;
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>

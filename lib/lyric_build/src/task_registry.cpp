@@ -1,5 +1,6 @@
 
 #include <lyric_build/base_task.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/internal/analyze_outline_task.h>
 #include <lyric_build/internal/archive_task.h>

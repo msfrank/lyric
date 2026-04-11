@@ -34,7 +34,7 @@ protected:
         buildgen = lyric_build::BuildGeneration::create();
         cache = std::make_shared<lyric_build::MemoryCache>();
         auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
-        state = std::make_shared<lyric_build::BuildState>(buildgen,
+        state = lyric_build::BuildState::create(buildgen,
             std::static_pointer_cast<lyric_build::AbstractArtifactCache>(cache),
             std::make_shared<lyric_bootstrap::BootstrapLoader>(),
             std::shared_ptr<lyric_runtime::AbstractLoader>{},
@@ -69,7 +69,7 @@ TEST_F(BuildRunner, EnqueueNewTask)
 
     auto taskState = state->loadState(key);
     ASSERT_EQ (lyric_build::TaskState::QUEUED, taskState.getState());
-    ASSERT_EQ (lyric_build::BuildGeneration{}, taskState.getGeneration());
+    ASSERT_EQ (buildgen, taskState.getGeneration());
     ASSERT_EQ (lyric_build::TaskHash{}, taskState.getHash());
 }
 
@@ -103,23 +103,26 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
     taskRegistry.sealRegistry();
 
     lyric_build::TaskKey key("test", std::string{"foo"});
+    ASSERT_THAT (runner->enqueueTask(key), tempo_test::IsOk());
 
-    auto priorGen = lyric_build::BuildGeneration::create();
-    auto priorHash = lyric_build::TaskHash::parse("foo");
-    lyric_build::TaskData priorState(lyric_build::TaskState::BLOCKED, priorGen, priorHash);
-    state->storeState(key, priorState);
+    auto readyItem1 = runner->waitForNextReady(0);
+    ASSERT_EQ (lyric_build::ReadyItem::Type::TASK, readyItem1.type);
+    ASSERT_EQ (key, readyItem1.task->getKey());
 
-    auto enqueueTaskStatus1 = runner->enqueueTask(key);
-    ASSERT_THAT (enqueueTaskStatus1, tempo_test::IsOk());
+    auto *task1 = readyItem1.task;
+    auto state1 = task1->getState();
+    ASSERT_EQ (lyric_build::TaskState::QUEUED, state1);
 
-    auto readyItem = runner->waitForNextReady(0);
-    ASSERT_EQ (lyric_build::ReadyItem::Type::TASK, readyItem.type);
-    ASSERT_EQ (key, readyItem.task->getKey());
+    task1->setState(lyric_build::TaskState::BLOCKED);
+    ASSERT_THAT (runner->enqueueTask(key), tempo_test::IsOk());
 
-    auto newState = state->loadState(key);
-    ASSERT_EQ (lyric_build::TaskState::QUEUED, newState.getState());
-    ASSERT_EQ (priorGen, newState.getGeneration());
-    ASSERT_EQ (priorHash, newState.getHash());
+    auto readyItem2 = runner->waitForNextReady(0);
+    ASSERT_EQ (lyric_build::ReadyItem::Type::TASK, readyItem2.type);
+    ASSERT_EQ (key, readyItem2.task->getKey());
+
+    auto *task2 = readyItem2.task;
+    auto state2 = task2->getState();
+    ASSERT_EQ (lyric_build::TaskState::QUEUED, state2);
 }
 
 TEST_F(BuildRunner, ShutdownEnqueuesShutdownForEachThread) {

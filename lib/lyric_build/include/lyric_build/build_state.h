@@ -7,19 +7,47 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <lyric_bootstrap/bootstrap_loader.h>
-#include <lyric_build/abstract_virtual_filesystem.h>
-#include <lyric_build/build_types.h>
-#include <lyric_build/rocksdb_cache.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_importer/shortcut_resolver.h>
 #include <lyric_runtime/abstract_loader.h>
+#include <tempo_tracing/trace_recorder.h>
+
+#include "abstract_artifact_cache.h"
+#include "abstract_virtual_filesystem.h"
+#include "build_types.h"
 
 namespace lyric_build {
 
-    class BuildState {
+    class BaseTask;
+    class TaskRegistry;
+
+    struct TaskStatistics {
+        int totalTasksCreated = 0;
+        int totalTasksCached = 0;
+    };
+
+    class BuildState : public std::enable_shared_from_this<BuildState> {
+
+        struct Priv {
+            BuildGeneration buildGen;
+            std::shared_ptr<AbstractArtifactCache> artifactCache;
+            std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader;
+            std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
+            std::shared_ptr<lyric_runtime::AbstractLoader> loaderChain;
+            std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache;
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
+            std::shared_ptr<AbstractVirtualFilesystem> virtualFilesystem;
+            std::filesystem::path tempRoot;
+
+            absl::Mutex lock;
+            absl::flat_hash_map<TaskKey, BaseTask *> tasks;
+        };
 
     public:
-        BuildState(
+        explicit BuildState(std::unique_ptr<Priv> priv);
+        virtual ~BuildState();
+
+        static std::shared_ptr<BuildState> create(
             const BuildGeneration &buildGen,
             std::shared_ptr<AbstractArtifactCache> artifactCache,
             std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
@@ -44,21 +72,18 @@ namespace lyric_build {
         absl::flat_hash_map<TaskKey,TaskData> loadStates(
             absl::flat_hash_set<TaskKey>::const_iterator begin,
             absl::flat_hash_set<TaskKey>::const_iterator end);
-        void storeState(const TaskKey &key, const TaskData &state);
+
+        TaskStatistics getTaskStatistics();
 
     private:
-        BuildGeneration m_buildGen;
-        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
-        std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
-        std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
-        std::shared_ptr<lyric_runtime::AbstractLoader> m_loaderChain;
-        std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
-        std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
-        std::shared_ptr<AbstractVirtualFilesystem> m_virtualFilesystem;
-        std::filesystem::path m_tempRoot;
+        std::unique_ptr<Priv> m_priv;
 
-        absl::flat_hash_map<TaskKey,TaskData> m_states;
-        std::shared_mutex m_mutex;
+        tempo_utils::Result<BaseTask *> getOrMakeTask(
+            const TaskKey &key,
+            TaskRegistry *registry,
+            std::shared_ptr<tempo_tracing::TraceRecorder> &recorder);
+
+        friend class BuildRunner;
     };
 }
 

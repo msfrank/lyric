@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 
 #include <lyric_build/build_attrs.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/internal/fetch_external_file_task.h>
-#include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_test/result_matchers.h>
@@ -55,7 +55,7 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFile)
     lyric_build::TaskHash taskHash;
     ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
     ASSERT_TRUE (taskHash.isValid());
-    task->setTaskHash(taskHash);
+    task->setHash(taskHash);
 
     auto *tmp = tempDirectory();
     ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());
@@ -96,7 +96,7 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFileAndArtifactPat
     lyric_build::TaskHash taskHash;
     ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
     ASSERT_TRUE (taskHash.isValid());
-    task->setTaskHash(taskHash);
+    task->setHash(taskHash);
 
     auto *tmp = tempDirectory();
     ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());
@@ -137,7 +137,7 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFileAndContentType
     lyric_build::TaskHash taskHash;
     ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
     ASSERT_TRUE (taskHash.isValid());
-    task->setTaskHash(taskHash);
+    task->setHash(taskHash);
 
     auto *tmp = tempDirectory();
     ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());

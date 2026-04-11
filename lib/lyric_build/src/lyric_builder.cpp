@@ -237,7 +237,7 @@ lyric_build::LyricBuilder::computeTargets(
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
-    auto state = std::make_shared<BuildState>(buildGen, m_artifactCache,
+    auto state = BuildState::create(buildGen, m_artifactCache,
         m_bootstrapLoader, m_fallbackLoader, m_sharedModuleCache, shortcuts,
         m_virtualFilesystem, m_tempRoot);
 
