@@ -109,6 +109,18 @@ namespace lyric_build {
             std::shared_ptr<const tempo_utils::ImmutableBytes> content,
             const LyricMetadata &metadata = {});
 
+        tempo_utils::Status linkArtifact(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            const tempo_utils::UrlPath &overrideDestinationPath = {});
+        tempo_utils::Status linkArtifactOverridingMetadata(
+            const TaskKey &key,
+            const tempo_utils::UrlPath &path,
+            const LyricMetadata &overrideMetadata,
+            const tempo_utils::UrlPath &overrideDestinationPath = {});
+
+
+
         std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logError(std::string_view message);

@@ -288,6 +288,77 @@ lyric_build::BaseTask::storeArtifact(
 }
 
 tempo_utils::Status
+lyric_build::BaseTask::linkArtifact(
+    const TaskKey &key,
+    const tempo_utils::UrlPath &path,
+    const tempo_utils::UrlPath &overrideDestinationPath)
+{
+    auto entry = m_completed.find(key);
+    if (entry == m_completed.cend())
+        return BuildStatus::forCondition(BuildCondition::kMissingInput,
+            "missing input {}; dependent task {} is not available", path.toString(), key.toString());
+    auto &data = entry->second;
+
+    auto buildState = m_buildState.lock();
+    if (buildState == nullptr)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid task {}; missing build state", m_key.toString());
+
+    if (!m_hash.has_value())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid task {}; missing task hash", m_key.toString());
+    auto taskHash = m_hash.value();
+
+    auto dstPath = overrideDestinationPath.isValid()? overrideDestinationPath : path;
+
+    auto artifactCache = buildState->getArtifactCache();
+    TraceId traceId(data.getHash(), key);
+    BuildGeneration generation;
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(traceId));
+
+    ArtifactId srcId(generation, data.getHash(), path);
+    ArtifactId dstId(getGeneration(), taskHash, dstPath);
+
+    return artifactCache->linkArtifact(dstId, srcId);
+}
+
+tempo_utils::Status
+lyric_build::BaseTask::linkArtifactOverridingMetadata(
+    const TaskKey &key,
+    const tempo_utils::UrlPath &path,
+    const LyricMetadata &overrideMetadata,
+    const tempo_utils::UrlPath &overrideDestinationPath)
+{
+    auto entry = m_completed.find(key);
+    if (entry == m_completed.cend())
+        return BuildStatus::forCondition(BuildCondition::kMissingInput,
+            "missing input {}; dependent task {} is not available", path.toString(), key.toString());
+    auto &data = entry->second;
+
+    auto buildState = m_buildState.lock();
+    if (buildState == nullptr)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid task {}; missing build state", m_key.toString());
+
+    if (!m_hash.has_value())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid task {}; missing task hash", m_key.toString());
+    auto taskHash = m_hash.value();
+
+    auto dstPath = overrideDestinationPath.isValid()? overrideDestinationPath : path;
+
+    auto artifactCache = buildState->getArtifactCache();
+    TraceId traceId(data.getHash(), key);
+    BuildGeneration generation;
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(traceId));
+
+    ArtifactId srcId(generation, data.getHash(), path);
+    ArtifactId dstId(getGeneration(), taskHash, dstPath);
+
+    return artifactCache->linkArtifactOverridingMetadata(dstId, overrideMetadata, srcId);
+}
+
+tempo_utils::Status
 lyric_build::BaseTask::run()
 {
     if (m_state == TaskState::COMPLETED || m_state == TaskState::FAILED)
