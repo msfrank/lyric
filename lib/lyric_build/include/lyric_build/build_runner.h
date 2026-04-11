@@ -49,14 +49,14 @@ namespace lyric_build {
 
         virtual tempo_utils::Status enqueueTask(const TaskKey &key) = 0;
 
-        virtual ReadyItem waitForNextReady(int timeout) = 0;
+        virtual ReadyItem waitForNextReady(int timeout) noexcept = 0;
 
         virtual tempo_utils::Status enqueueNotification(std::unique_ptr<TaskNotification> notification) = 0;
     };
 
     struct TaskThread {
         AbstractBuildRunner *runner = nullptr;
-        const TaskSettings *taskSettings = nullptr;
+        TaskSettings taskSettings;
         std::shared_ptr<BuildState> buildState;
         std::shared_ptr<AbstractArtifactCache> artifactCache;
         int index = -1;
@@ -72,7 +72,7 @@ namespace lyric_build {
 
     public:
         BuildRunner(
-            const TaskSettings *taskSettings,
+            const TaskSettings &taskSettings,
             std::shared_ptr<BuildState> buildState,
             std::shared_ptr<AbstractArtifactCache> artifactCache,
             TaskRegistry *taskRegistry,
@@ -82,13 +82,13 @@ namespace lyric_build {
             void *onNotificationData);
         ~BuildRunner() override;
 
-        const TaskSettings *getConfig() const;
+        TaskSettings getTaskSettings() const;
         std::shared_ptr<BuildState> getState() const;
         std::shared_ptr<AbstractArtifactCache> getArtifactCache() const;
         TaskRegistry *getRegistry() const;
 
         tempo_utils::Status enqueueTask(const TaskKey &key) override;
-        ReadyItem waitForNextReady(int timeout) override;
+        ReadyItem waitForNextReady(int timeout) noexcept override;
 
         tempo_utils::Status enqueueNotification(std::unique_ptr<TaskNotification> notification) override;
         std::unique_ptr<std::queue<std::unique_ptr<TaskNotification>>> takeNotifications();
@@ -109,11 +109,11 @@ namespace lyric_build {
         int getTotalTasksCreated() const;
         int getTotalTasksCached() const;
 
-        tempo_utils::Status shutdown(const tempo_utils::Status &shutdownStatus = {});
+        tempo_utils::Status shutdown(const tempo_utils::Status &shutdownStatus = {}) noexcept;
 
     private:
 
-        const TaskSettings *m_config;
+        TaskSettings m_taskSettings;
         std::shared_ptr<BuildState> m_state;
         std::shared_ptr<AbstractArtifactCache> m_artifactCache;
         TaskRegistry *m_registry;
@@ -135,32 +135,35 @@ namespace lyric_build {
         uv_loop_t m_loop;                                   // uv main loop handle
         uv_async_t m_asyncNotify;                           // async handle to process notifications in the main loop
 
-        std::mutex m_threadsLock;                           // lock around threads
-        std::vector<TaskThread> m_threads;                  // array containing thread data
+        absl::Mutex m_threadsLock;                           // lock around threads
+        std::vector<TaskThread> m_threads
+            ABSL_GUARDED_BY(m_threadsLock);                 // array containing thread data
 
         // members below can be accessed from multiple threads after acquiring the appropriate lock
 
-        std::mutex m_statusLock;                            // lock around runnerState and shutdownStatus
-        RunnerState m_runnerState;                          // runner state
-        tempo_utils::Status m_shutdownStatus;               // shutdown status
+        absl::Mutex m_statusLock;                           // lock around runnerState and shutdownStatus
+        RunnerState m_runnerState
+            ABSL_GUARDED_BY(m_statusLock);                  // runner state
+        tempo_utils::Status m_shutdownStatus
+            ABSL_GUARDED_BY(m_statusLock);                  // shutdown status
 
-        std::timed_mutex m_readyLock;                       // lock around the ready queue
-        std::queue<ReadyItem> m_ready;                      // queue of ready items in FIFO order
-        absl::flat_hash_set<TaskKey> m_queued;              // set of ready tasks which are in the queue
+        absl::Mutex m_readyLock;                            // lock around the ready queue
+        absl::CondVar m_readyWaiter;                        // condition variable which signals when there is a ready task
+        std::queue<ReadyItem> m_ready
+            ABSL_GUARDED_BY(m_readyLock);                   // queue of ready items in FIFO order
+        absl::flat_hash_set<TaskKey> m_queued
+            ABSL_GUARDED_BY(m_readyLock);                   // set of ready tasks which are in the queue
+        std::mt19937 m_randengine
+            ABSL_GUARDED_BY(m_readyLock);                   // rng used for generating timeouts
 
-        std::mutex m_waitLock;                              // lock around the readyWaiter
-        std::condition_variable m_readyWaiter;              // condition variable which signals when there is a ready task
-
-        std::timed_mutex m_notificationLock;                // lock around the notifications queue
+        absl::Mutex m_notificationLock;                     // lock around the notifications queue
         std::unique_ptr<
-            std::queue<
-                std::unique_ptr<TaskNotification>>>
-        m_notifications;                                    // queue of notifications in FIFO order
+            std::queue<std::unique_ptr<TaskNotification>>
+        > m_notifications
+            ABSL_GUARDED_BY(m_notificationLock);            // queue of notifications in FIFO order
 
-        std::mutex m_randLock;                              // lock around the random engine
-        std::mt19937 m_randengine;                          // random number generator engine
 
-        // members below are only accessed by the monitor thread
+        // members below are unsynchronized and can only be accessed by the monitor thread
 
         absl::flat_hash_map<
             TaskKey,

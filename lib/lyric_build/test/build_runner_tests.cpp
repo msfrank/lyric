@@ -44,7 +44,7 @@ protected:
             std::filesystem::current_path());
 
         runner = std::make_unique<lyric_build::BuildRunner>(
-            &taskSettings, state, cache, &taskRegistry, 1, 1000, on_notification, nullptr);
+            taskSettings, state, cache, &taskRegistry, 1, 1000, on_notification, nullptr);
     }
 };
 
@@ -130,7 +130,7 @@ TEST_F(BuildRunner, ShutdownEnqueuesShutdownForEachThread) {
     int numThreads = 4;
     // create new runner with multiple threads
     runner = std::make_unique<lyric_build::BuildRunner>(
-        &taskSettings, state, cache, &taskRegistry, numThreads, 1000, on_notification, nullptr);
+        taskSettings, state, cache, &taskRegistry, numThreads, 1000, on_notification, nullptr);
 
     runner->shutdown();
 

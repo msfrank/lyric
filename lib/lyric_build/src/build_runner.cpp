@@ -2,26 +2,23 @@
 
 #include <absl/strings/escaping.h>
 
-#include <tempo_utils/log_message.h>
-
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_result.h>
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
+#include <lyric_build/internal/runner_worker_thread.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/task_notification.h>
-#include <lyric_build/task_registry.h>
 #include <tempo_security/sha256_hash.h>
-
-#include "lyric_build/internal/runner_worker_thread.h"
+#include <tempo_utils/log_message.h>
 
 // forward declarations for uv callbacks
 static void on_async_close(uv_handle_t *handle);
 static void on_async_notify(uv_async_t *async);
 
 lyric_build::BuildRunner::BuildRunner(
-    const TaskSettings *configStore,
+    const TaskSettings &taskSettings,
     std::shared_ptr<BuildState> buildState,
     std::shared_ptr<AbstractArtifactCache> artifactCache,
     TaskRegistry *taskRegistry,
@@ -29,7 +26,7 @@ lyric_build::BuildRunner::BuildRunner(
     int waitTimeoutInMs,
     TaskNotificationFunc onNotificationFunc,
     void *onNotificationData)
-    : m_config(configStore),
+    : m_taskSettings(taskSettings),
       m_state(std::move(buildState)),
       m_artifactCache(std::move(artifactCache)),
       m_registry(taskRegistry),
@@ -39,10 +36,10 @@ lyric_build::BuildRunner::BuildRunner(
       m_waitTimeoutInMs(waitTimeoutInMs),
       m_loop(nullptr),
       m_asyncNotify(nullptr),
+      m_randengine(std::random_device()()),
       m_onNotificationFunc(onNotificationFunc),
       m_onNotificationData(onNotificationData)
 {
-    TU_ASSERT (m_config != nullptr);
     TU_ASSERT (m_state != nullptr);
     TU_ASSERT (m_artifactCache != nullptr);
     TU_ASSERT (m_registry != nullptr);
@@ -64,10 +61,10 @@ lyric_build::BuildRunner::~BuildRunner()
     }
 }
 
-const lyric_build::TaskSettings *
-lyric_build::BuildRunner::getConfig() const
+lyric_build::TaskSettings
+lyric_build::BuildRunner::getTaskSettings() const
 {
-    return m_config;
+    return m_taskSettings;
 }
 
 std::shared_ptr<lyric_build::BuildState>
@@ -120,7 +117,7 @@ lyric_build::BuildRunner::run()
         auto &thread = m_threads[i];
         thread.runner = this;
         thread.index = i;
-        thread.taskSettings = getConfig();
+        thread.taskSettings = m_taskSettings;
         thread.buildState = getState();
         thread.artifactCache = getArtifactCache();
         thread.running = false;
@@ -170,7 +167,7 @@ lyric_build::BuildRunner::run()
     m_totalTasksCached += taskStatistics.totalTasksCached;
 
     // we are done
-    std::unique_lock locker(m_statusLock);
+    absl::MutexLock locker(&m_statusLock);
     m_runnerState = RunnerState::Done;
 
     return m_shutdownStatus;
@@ -193,87 +190,82 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
     BaseTask *task;
     TU_ASSIGN_OR_RETURN (task, m_state->getOrMakeTask(key, m_registry, m_recorder));
 
-    // std::unique_lock<std::shared_mutex> locker(m_tasksRWlock);
-    // if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
-    //     auto span = m_recorder->makeSpan();
-    //     TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
-    //         m_state->getGeneration(), key, m_state, span));
-    //
-    //     m_tasks[key] = task;                            // task was created, add to tasks table
-    //     TU_LOG_VV << "constructed new task " << key;
-    // } else {
-    //     task = m_tasks[key];                            // otherwise get handle to existing task
-    // }
-    // locker.unlock();                                    // unlock tasks rwlock before enqueuing task
+    {
+        absl::MutexLock locker(&m_readyLock);           // acquire ready lock before modifying ready queue
 
-    m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
+        if (m_queued.contains(key)) {
+            TU_LOG_VV << "task " << key << " is already enqueued, ignoring";
+            return {};
+        }
 
-    if (m_queued.contains(key)) {
-        TU_LOG_VV << "task " << key << " is already enqueued, ignoring";
-        return {};
+        // look up the prior task state, which may not exist
+        //auto prevState = m_state->loadState(key);
+
+        // set the task state to queued
+        task->setState(TaskState::QUEUED);
+        ReadyItem item = {ReadyItem::Type::TASK, task};
+
+        m_ready.push(item);                             // enqueue new ready task item
+        m_queued.insert(key);                           // add task key to the queued set
     }
 
-    // look up the prior task state, which may not exist
-    auto prevState = m_state->loadState(key);
-
-    // set the new task state
-    task->setState(TaskState::QUEUED);
-    ReadyItem item = {ReadyItem::Type::TASK, task};
-
-    m_ready.push(item);                                 // enqueue new ready task item
-    m_queued.insert(key);                               // add task key to the queued set
-    m_readyLock.unlock();                               // explicitly release ready lock before signaling waiter
-    m_readyWaiter.notify_one();                         // signal a waiting task worker
+    m_readyWaiter.Signal();                             // signal a waiting task worker
 
     TU_LOG_VV << "enqueued task " << task->getKey();
     return {};                           // return true, ready lock is released implicitly on return
 }
 
 lyric_build::ReadyItem
-lyric_build::BuildRunner::waitForNextReady(int timeout)
+lyric_build::BuildRunner::waitForNextReady(int timeout) noexcept
 {
-    // first try to acquire ready lock and check if ready queue is not empty
-    if (m_readyLock.try_lock()) {
-        if (!m_ready.empty()) {                         // if queue is not empty, then pop next task
-            auto item = m_ready.front();
-            m_ready.pop();
-            if (item.type == ReadyItem::Type::TASK) {   // if item is task then remove key from queued set
-                m_queued.erase(item.task->getKey());
-            }
-            m_readyLock.unlock();                       // explicitly unlock ready lock after modifying queue
-            TU_LOG_VV << "optimistic pop";
-            return item;                                // return next item, which may be nullptr
+    // acquire ready lock and attempt an optimistic pop
+    m_readyLock.Lock();
+
+    // !!!!!! ------ BEGIN CRITICAL SECTION ------ !!!!!!
+
+    if (!m_ready.empty()) {                         // if queue is not empty, then pop next task
+        auto item = m_ready.front();
+        m_ready.pop();
+        if (item.type == ReadyItem::Type::TASK) {
+            m_queued.erase(item.task->getKey());    // if item is task then remove key from queued set
         }
-        m_readyLock.unlock();                           // explicitly unlock ready lock after checking queue
+        m_readyLock.Unlock();                       // unlock ready lock after modifying ready queue and queued set
+        TU_LOG_VV << "optimistic pop";
+        return item;                                // return ready item
     }
 
     // if timeout is less than 0, then generate a timeout
     if (timeout < 0) {
-        std::unique_lock<std::mutex> randLocker(m_randLock);
-        std::uniform_int_distribution<int> randgen(m_waitTimeoutInMs / 2, m_waitTimeoutInMs);
+        std::uniform_int_distribution randgen(m_waitTimeoutInMs / 2, m_waitTimeoutInMs);
         timeout = randgen(m_randengine);
     }
 
-    // if optimistic check failed, then acquire wait lock and wait for ready condition
-    std::unique_lock<std::mutex> waitLocker(m_waitLock);
-    m_readyWaiter.wait_for(waitLocker, std::chrono::milliseconds(timeout));
-    waitLocker.unlock();
+    // !!!!!! ------ END CRITICAL SECTION ------ !!!!!!
 
-    lyric_build::ReadyItem timedout = {ReadyItem::Type::TIMEOUT, nullptr};
+    // queue was empty, so release ready lock and wait for condition or timeout
+    m_readyWaiter.WaitWithTimeout(&m_readyLock, absl::Milliseconds(timeout));
 
-    std::unique_lock<std::timed_mutex> readyLocker(m_readyLock);    // acquire lock to modify ready queue
+    // !!!!!! ------ START CRITICAL SECTION ------ !!!!!!
 
-    // there is a race between optimistic check and wait condition so we check if queue is empty
+
+    // check if queue is empty (meaning the wait timed out)
     if (m_ready.empty()) {
+        m_readyLock.Unlock();                               // release ready lock after checking ready queue
         TU_LOG_VV << "ready queue is empty";
-        return timedout;                                // return wait timeout
+        return {ReadyItem::Type::TIMEOUT, nullptr};         // return timeout item
     }
 
-    auto item = m_ready.front();                        // otherwise queue is not empty, so pop next item
+    auto item = m_ready.front();                            // otherwise queue is not empty, so pop next item
     m_ready.pop();
-    if (item.type == ReadyItem::Type::TASK) {               // if item is task then remove key from queued set
-        m_queued.erase(item.task->getKey());
+    if (item.type == ReadyItem::Type::TASK) {
+        m_queued.erase(item.task->getKey());                // if item is task then remove key from queued set
     }
+
+    // release ready lock after modifying ready queue and queued set
+    m_readyLock.Unlock();
+
+    // !!!!!! ------ END CRITICAL SECTION ------ !!!!!!
+
     TU_LOG_VV << "dequeued next ready item";
     return item;
 };
@@ -283,12 +275,14 @@ lyric_build::BuildRunner::enqueueNotification(std::unique_ptr<TaskNotification> 
 {
     TU_ASSERT (notification != nullptr);
 
-    std::unique_lock locker(m_notificationLock);  // acquire lock for notifications queue
-    TU_LOG_VV << "enqueuing notification " << notification->toString();
-    m_notifications->push(std::move(notification));                  // enqueue the notification
-    locker.unlock();                                                // explicitly release lock before signaling main loop
+    {
+        absl::MutexLock locker(&m_notificationLock);            // acquire lock for notifications queue
+        TU_LOG_VV << "enqueuing notification "
+            << notification->toString();
+        m_notifications->push(std::move(notification));         // enqueue the notification
+    }
 
-    auto result = uv_async_send(&m_asyncNotify);                    // signal the async callback to process notification
+    auto result = uv_async_send(&m_asyncNotify);                // signal the async callback to process notification
     if (result < 0)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "uv_async_send failed: {}", uv_err_name(result));
@@ -299,10 +293,13 @@ lyric_build::BuildRunner::enqueueNotification(std::unique_ptr<TaskNotification> 
 std::unique_ptr<std::queue<std::unique_ptr<lyric_build::TaskNotification>>>
 lyric_build::BuildRunner::takeNotifications()
 {
-    std::unique_lock locker(m_notificationLock);                // acquire lock for notifications queue
+    absl::MutexLock locker(&m_notificationLock);        // acquire lock for notifications queue
+
+    // swap queues
     auto notifications = std::make_unique<std::queue<std::unique_ptr<TaskNotification>>>();
-    notifications.swap(m_notifications);                        // swap queues
-    return notifications;                            // return the pending notifications
+    notifications.swap(m_notifications);
+
+    return notifications;                               // return the pending notifications
 }
 
 std::shared_ptr<tempo_tracing::TraceSpan>
@@ -442,7 +439,7 @@ lyric_build::BuildRunner::joinThread(int index)
     auto &thread = m_threads[index];
 
     {
-        std::unique_lock locker(m_threadsLock);
+        absl::MutexLock locker(&m_threadsLock);
         if (!thread.running)
             return;
         thread.running = false;
@@ -455,7 +452,7 @@ lyric_build::BuildRunner::joinThread(int index)
 
     // if all threads are cancelled then stop the main loop
     {
-        std::unique_lock locker(m_threadsLock);
+        absl::MutexLock locker(&m_threadsLock);
         thread.joined = true;
         for (auto &curr : m_threads) {
             if (curr.running || !curr.joined)
@@ -500,10 +497,10 @@ lyric_build::BuildRunner::getTotalTasksCached() const
  * @return
  */
 tempo_utils::Status
-lyric_build::BuildRunner::shutdown(const tempo_utils::Status &shutdownStatus)
+lyric_build::BuildRunner::shutdown(const tempo_utils::Status &shutdownStatus) noexcept
 {
     {
-        std::unique_lock locker(m_statusLock);
+        absl::MutexLock locker(&m_statusLock);
 
         switch (m_runnerState) {
             case RunnerState::Ready:
@@ -523,10 +520,10 @@ lyric_build::BuildRunner::shutdown(const tempo_utils::Status &shutdownStatus)
 
     TU_LOG_VV << "starting shutdown";
     for (tu_uint32 i = 0; i < m_threads.size(); i++) {
-        m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
+        m_readyLock.Lock();                                 // acquire ready lock before modifying ready queue
         m_ready.push(item);                                 // enqueue shutdown item
-        m_readyLock.unlock();                               // explicitly release ready lock before signaling waiter
-        m_readyWaiter.notify_one();                         // signal a waiting task worker
+        m_readyLock.Unlock();                               // explicitly release ready lock before signaling waiter
+        m_readyWaiter.Signal();                             // signal a waiting task worker
     }
 
     return {};

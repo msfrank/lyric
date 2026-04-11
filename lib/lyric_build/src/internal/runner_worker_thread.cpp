@@ -90,7 +90,7 @@ lyric_build::internal::RunnerWorker::configureTask(BaseTask *task)
     }
 
     // try configuring the task
-    auto status = task->configureTask(*m_taskSettings);
+    auto status = task->configureTask(m_taskSettings);
 
     // if configuration fails then report error and set task state to failed
     if (status.notOk()) {

@@ -61,7 +61,7 @@ namespace lyric_build::internal {
 
     private:
         AbstractBuildRunner *m_runner;
-        const TaskSettings *m_taskSettings;
+        TaskSettings m_taskSettings;
         std::shared_ptr<AbstractArtifactCache> m_artifactCache;
         std::shared_ptr<BuildState> m_buildState;
         std::shared_ptr<AbstractVirtualFilesystem> m_virtualFilesystem;

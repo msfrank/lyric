@@ -242,7 +242,7 @@ lyric_build::LyricBuilder::computeTargets(
         m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
-    BuildRunner runner(&taskSettings, state, m_artifactCache, m_taskRegistry.get(),
+    BuildRunner runner(taskSettings, state, m_artifactCache, m_taskRegistry.get(),
         m_numThreads, m_waitTimeoutInMs, on_notification, this);
 
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
