@@ -10,19 +10,19 @@ lyric_common::SymbolUrl::SymbolUrl()
 {
 }
 
-lyric_common::SymbolUrl::SymbolUrl(const lyric_common::SymbolPath &path)
+lyric_common::SymbolUrl::SymbolUrl(const SymbolPath &path)
     : m_location(),
       m_path(path)
 {
 }
 
-lyric_common::SymbolUrl::SymbolUrl(const ModuleLocation &location, const lyric_common::SymbolPath &path)
+lyric_common::SymbolUrl::SymbolUrl(const ModuleLocation &location, const SymbolPath &path)
     : m_location(location),
       m_path(path)
 {
 }
 
-lyric_common::SymbolUrl::SymbolUrl(const lyric_common::SymbolUrl &other)
+lyric_common::SymbolUrl::SymbolUrl(const SymbolUrl &other)
     : m_location(other.m_location),
       m_path(other.m_path)
 {
@@ -114,13 +114,13 @@ lyric_common::SymbolUrl::toUrl() const
 }
 
 bool
-lyric_common::SymbolUrl::operator==(const lyric_common::SymbolUrl &other) const
+lyric_common::SymbolUrl::operator==(const SymbolUrl &other) const
 {
     return m_location == other.m_location && m_path == other.m_path;
 }
 
 bool
-lyric_common::SymbolUrl::operator!=(const lyric_common::SymbolUrl &other) const
+lyric_common::SymbolUrl::operator!=(const SymbolUrl &other) const
 {
     return !(*this == other);
 }
@@ -150,13 +150,13 @@ lyric_common::SymbolUrl::fromUrl(const tempo_utils::Url &url)
 }
 
 bool
-lyric_common::operator<(const lyric_common::SymbolUrl &lhs, const lyric_common::SymbolUrl &rhs)
+lyric_common::operator<(const SymbolUrl &lhs, const SymbolUrl &rhs)
 {
     return lhs.toString() < rhs.toString();
 }
 
 tempo_utils::LogMessage&&
-lyric_common::operator<<(tempo_utils::LogMessage &&message, const lyric_common::SymbolUrl &symbolUrl)
+lyric_common::operator<<(tempo_utils::LogMessage &&message, const SymbolUrl &symbolUrl)
 {
     std::forward<tempo_utils::LogMessage>(message) << symbolUrl.toString();
     return std::move(message);

@@ -14,7 +14,7 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
       m_objectLocation(objectLocation),
       m_object(object),
       m_pluginLocation(pluginLocation),
-      m_plugin(plugin),
+      m_plugin(std::move(plugin)),
       m_data(nullptr),
       m_actionDescriptors(this, lyric_object::LinkageSection::Action),
       m_callDescriptors(this, lyric_object::LinkageSection::Call),
@@ -72,6 +72,9 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
                 m_traps[i] = entry->second;
             }
         }
+    } else {
+        m_numTraps = 0;
+        m_traps = nullptr;
     }
 }
 

@@ -1,11 +1,11 @@
 
-#include "base_build_fixture.h"
-
 #include <lyric_build/memory_cache.h>
 #include <lyric_runtime/static_loader.h>
 #include <tempo_utils/file_writer.h>
 #include <tempo_utils/tempdir_maker.h>
 #include <tempo_utils/tempfile_maker.h>
+
+#include "base_build_fixture.h"
 
 void
 BaseBuildFixture::SetUp()
