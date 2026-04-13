@@ -20,8 +20,8 @@ namespace lyric_runtime {
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
-        tempo_utils::StatusCode errorStatusCode() override;
-        std::string errorMessage() override;
+        tempo_utils::StatusCode statusCode() override;
+        std::string statusMessage() override;
         std::string toString() const override;
 
         DataCell stringAt(int index) const;

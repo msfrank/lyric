@@ -61,7 +61,7 @@ lyric_runtime::StatusRef::setField(const DataCell &field, const DataCell &value,
 }
 
 tempo_utils::StatusCode
-lyric_runtime::StatusRef::errorStatusCode()
+lyric_runtime::StatusRef::statusCode()
 {
     return m_statusCode;
 }
@@ -100,7 +100,7 @@ lyric_runtime::StatusRef::setStatusCode(tempo_utils::StatusCode statusCode)
 }
 
 std::string
-lyric_runtime::StatusRef::errorMessage()
+lyric_runtime::StatusRef::statusMessage()
 {
     std::string message;
     m_message->utf8Value(message);

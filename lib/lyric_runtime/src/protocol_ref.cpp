@@ -159,13 +159,13 @@ lyric_runtime::ProtocolRef::hashValue(absl::HashState state)
 }
 
 tempo_utils::StatusCode
-lyric_runtime::ProtocolRef::errorStatusCode()
+lyric_runtime::ProtocolRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::ProtocolRef::errorMessage()
+lyric_runtime::ProtocolRef::statusMessage()
 {
     return {};
 }

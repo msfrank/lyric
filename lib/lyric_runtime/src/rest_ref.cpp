@@ -118,13 +118,13 @@ lyric_runtime::RestRef::hashValue(absl::HashState state)
 }
 
 tempo_utils::StatusCode
-lyric_runtime::RestRef::errorStatusCode()
+lyric_runtime::RestRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::RestRef::errorMessage()
+lyric_runtime::RestRef::statusMessage()
 {
     return {};
 }

@@ -167,18 +167,18 @@ namespace lyric_runtime {
         virtual bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) = 0;
 
         /**
-         * Returns the error status code. If the ref is not a subtype of Status then the method must return kOk.
+         * Returns the status code. If the ref is not a subtype of Status then the method must return kOk.
          *
          * @return The `tempo_utils::StatusCode` containing the error status code.
          */
-        virtual tempo_utils::StatusCode errorStatusCode() = 0;
+        virtual tempo_utils::StatusCode statusCode() = 0;
 
         /**
-         * Returns the error message. If the ref is not a subtype of Status then the method must return empty string.
+         * Returns the status message. If the ref is not a subtype of Status then the method must return empty string.
          *
          * @return The `std::string` containing the error message.
          */
-        virtual std::string errorMessage() = 0;
+        virtual std::string statusMessage() = 0;
 
         /**
          * Generate a human-readable representation which describes the ref.

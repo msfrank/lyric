@@ -17,11 +17,12 @@ namespace lyric_runtime {
         bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
         std::string toString() const override;
 
-        tempo_utils::StatusCode errorStatusCode() override;
+        tempo_utils::StatusCode statusCode() override;
+        std::string statusMessage() override;
+
         DataCell getStatusCode() const;
         void setStatusCode(tempo_utils::StatusCode statusCode);
 
-        std::string errorMessage() override;
         DataCell getMessage() const;
         void setMessage(const DataCell &message);
 

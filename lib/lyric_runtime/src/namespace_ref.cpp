@@ -117,13 +117,13 @@ lyric_runtime::NamespaceRef::hashValue(absl::HashState state)
 }
 
 tempo_utils::StatusCode
-lyric_runtime::NamespaceRef::errorStatusCode()
+lyric_runtime::NamespaceRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::NamespaceRef::errorMessage()
+lyric_runtime::NamespaceRef::statusMessage()
 {
     return {};
 }

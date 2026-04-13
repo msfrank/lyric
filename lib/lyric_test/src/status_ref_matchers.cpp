@@ -53,14 +53,14 @@ lyric_test::matchers::StatusRefMatcher::MatchAndExplain(
             if (cell.type != lyric_runtime::DataCellType::STATUS)
                 return false;
             auto *status = cell.data.status;
-            auto message = status->errorMessage();
+            auto message = status->statusMessage();
             return m_message == message;
         }
         case MatcherType::STATUS_CODE: {
             if (cell.type != lyric_runtime::DataCellType::STATUS)
                 return false;
             auto *status = cell.data.status;
-            auto statusCode = status->errorStatusCode();
+            auto statusCode = status->statusCode();
             return m_code == statusCode;
         }
         case MatcherType::STATUS_SYMBOL: {

@@ -94,13 +94,13 @@ lyric_runtime::UrlRef::hashValue(absl::HashState state)
 }
 
 tempo_utils::StatusCode
-lyric_runtime::UrlRef::errorStatusCode()
+lyric_runtime::UrlRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::UrlRef::errorMessage()
+lyric_runtime::UrlRef::statusMessage()
 {
     return {};
 }

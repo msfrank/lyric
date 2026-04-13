@@ -126,13 +126,13 @@ lyric_runtime::BaseRef::applyClosure(Task *task, std::vector<DataCell> &args, ly
 }
 
 tempo_utils::StatusCode
-lyric_runtime::BaseRef::errorStatusCode()
+lyric_runtime::BaseRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::BaseRef::errorMessage()
+lyric_runtime::BaseRef::statusMessage()
 {
     return {};
 }

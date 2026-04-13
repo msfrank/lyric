@@ -114,13 +114,13 @@ lyric_runtime::BytesRef::hashValue(absl::HashState state)
 }
 
 tempo_utils::StatusCode
-lyric_runtime::BytesRef::errorStatusCode()
+lyric_runtime::BytesRef::statusCode()
 {
     return tempo_utils::StatusCode::kOk;
 }
 
 std::string
-lyric_runtime::BytesRef::errorMessage()
+lyric_runtime::BytesRef::statusMessage()
 {
     return {};
 }
