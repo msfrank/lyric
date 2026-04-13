@@ -76,6 +76,7 @@ void
 lyric_runtime::StatusRef::setStatusCode(tempo_utils::StatusCode statusCode)
 {
     switch (statusCode) {
+        case tempo_utils::StatusCode::kOk:
         case tempo_utils::StatusCode::kCancelled:
         case tempo_utils::StatusCode::kInvalidArgument:
         case tempo_utils::StatusCode::kDeadlineExceeded:

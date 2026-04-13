@@ -234,6 +234,7 @@ struct BuilderState {
     std::vector<CoreInstance *> instances;
     std::vector<CoreProtocol *> protocols;
     std::vector<CoreSymbol *> symbols;
+    std::vector<std::string> strings;
 
     absl::flat_hash_map<lyric_common::SymbolPath,tu_uint32> symboltable;
 
@@ -480,6 +481,12 @@ struct BuilderState {
 
     //CoreSymbol *addSymbol()
     tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;
+
+    /*
+     * literals
+     */
+
+    tu_uint32 addLiteralString(std::string_view utf8);
 
     // serialize the state
     lyric_object::LyricObject toObject() const;

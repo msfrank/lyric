@@ -31,6 +31,7 @@ namespace lyric_assembler {
         Descriptor,
         Enum,
         Equality,
+        Error,
         Float,
         Idea,
         Instance,
@@ -59,6 +60,7 @@ namespace lyric_assembler {
         Url,
 
         // statuses
+        Ok,
         Cancelled,
         InvalidArgument,
         DeadlineExceeded,

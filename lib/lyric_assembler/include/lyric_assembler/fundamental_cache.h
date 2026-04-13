@@ -37,6 +37,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalDescriptor;
         lyric_common::SymbolUrl m_fundamentalEnum;
         lyric_common::SymbolUrl m_fundamentalEquality;
+        lyric_common::SymbolUrl m_fundamentalError;
         lyric_common::SymbolUrl m_fundamentalFloat;
         lyric_common::SymbolUrl m_fundamentalIdea;
         lyric_common::SymbolUrl m_fundamentalInt;
@@ -64,6 +65,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalUnwrap;
         lyric_common::SymbolUrl m_fundamentalUrl;
 
+        lyric_common::SymbolUrl m_fundamentalOk;
         lyric_common::SymbolUrl m_fundamentalCancelled;
         lyric_common::SymbolUrl m_fundamentalInvalidArgument;
         lyric_common::SymbolUrl m_fundamentalDeadlineExceeded;

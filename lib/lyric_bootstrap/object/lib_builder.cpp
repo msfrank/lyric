@@ -164,39 +164,43 @@ main(int argc, char *argv[])
     build_core_Object(state, ObjectClass);
     build_core_Record(state, RecordStruct);
 
-    // core status structs
+    // status struct hierarchy
     auto *StatusStruct = build_core_Status(
         state, IntExistential->existentialType, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kCancelled,
-        "Cancelled", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kInvalidArgument,
-        "InvalidArgument", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kDeadlineExceeded,
-        "DeadlineExceeded", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kNotFound,
-        "NotFound", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kAlreadyExists,
-        "AlreadyExists", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kPermissionDenied,
-        "PermissionDenied", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kUnauthenticated,
-        "Unauthenticated", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kResourceExhausted,
-        "ResourceExhausted", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kFailedPrecondition,
-        "FailedPrecondition", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kAborted,
-        "Aborted", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kUnavailable,
-        "Unavailable", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kOutOfRange,
-        "OutOfRange", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kUnimplemented,
-        "Unimplemented", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kInternal,
-        "Internal", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code(tempo_utils::StatusCode::kUnknown,
-        "Unknown", state, StatusStruct, StringExistential->existentialType);
+    build_core_Ok(state, StatusStruct);
+    auto *ErrorStruct = build_core_Error(state, StatusStruct,
+        IntExistential->existentialType, StringExistential->existentialType);
+
+    build_core_Error_code(tempo_utils::StatusCode::kCancelled,
+        "Cancelled", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kInvalidArgument,
+        "InvalidArgument", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kDeadlineExceeded,
+        "DeadlineExceeded", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kNotFound,
+        "NotFound", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kAlreadyExists,
+        "AlreadyExists", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kPermissionDenied,
+        "PermissionDenied", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kUnauthenticated,
+        "Unauthenticated", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kResourceExhausted,
+        "ResourceExhausted", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kFailedPrecondition,
+        "FailedPrecondition", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kAborted,
+        "Aborted", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kUnavailable,
+        "Unavailable", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kOutOfRange,
+        "OutOfRange", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kUnimplemented,
+        "Unimplemented", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kInternal,
+        "Internal", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kUnknown,
+        "Unknown", state, ErrorStruct, StringExistential->existentialType);
 
     // define core instances
     build_core_BoolInstance(state, BoolExistential->existentialType, SingletonInstance,

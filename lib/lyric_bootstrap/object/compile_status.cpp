@@ -32,12 +32,13 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
         state.writeTrap(code, "StatusCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.setStructAllocator(StatusStruct, "StatusAlloc");
-        state.addStructCtor(StatusStruct,
+        auto *ctor = state.addStructCtor(StatusStruct,
             {
                 make_list_param("code", IntType),
                 make_list_param("message", StringType),
             },
             code);
+        ctor->flags |= lyo1::CallFlags::Hidden;
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -55,18 +56,79 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     return StatusStruct;
 }
 
-const CoreType *
-build_core_Status_code(
-    tempo_utils::StatusCode statusCode,
-    std::string_view statusName,
+void
+build_core_Ok(BuilderState &state, const CoreStruct *StatusStruct)
+{
+    lyric_common::SymbolPath structPath({"Ok"});
+
+    auto *OkStruct = state.addStruct(structPath, lyo1::StructFlags::Final, StatusStruct);
+    state.addStructSealedSubtype(StatusStruct, OkStruct);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.loadReceiver();
+        // load the status code immediate
+        code.loadInt(static_cast<tu_int64>(tempo_utils::StatusCode::kOk));
+        // load the message argument
+        auto literal_index = state.addLiteralString("Ok");
+        code.loadString(literal_index);
+        // call parent ctor
+        code.callVirtual(StatusStruct->structCtor->call_index, 2);
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addStructCtor(OkStruct,
+            {},
+            code);
+    }
+}
+
+const CoreStruct *
+build_core_Error(
     BuilderState &state,
     const CoreStruct *StatusStruct,
+    const CoreType *IntType,
     const CoreType *StringType)
 {
-    lyric_common::SymbolPath structPath({std::string(statusName)});
+    lyric_common::SymbolPath structPath({"Error"});
 
-    auto *StatusCodeStruct = state.addStruct(structPath, lyo1::StructFlags::NONE, StatusStruct);
-    state.addStructSealedSubtype(StatusStruct, StatusCodeStruct);
+    auto *ErrorStruct = state.addStruct(structPath, lyo1::StructFlags::Sealed, StatusStruct);
+    state.addStructSealedSubtype(StatusStruct, ErrorStruct);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.loadReceiver();
+        // load the status code argument
+        code.loadArgument(0);
+        // load the message argument
+        code.loadArgument(1);
+        // call parent ctor
+        code.callVirtual(StatusStruct->structCtor->call_index, 2);
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        auto *ctor = state.addStructCtor(ErrorStruct,
+            {
+                make_list_param("code", IntType),
+                make_list_param("message", StringType),
+            },
+            code);
+        ctor->flags |= lyo1::CallFlags::Hidden;
+    }
+
+    return ErrorStruct;
+}
+
+const CoreType *
+build_core_Error_code(
+    tempo_utils::StatusCode statusCode,
+    std::string_view name,
+    BuilderState &state,
+    const CoreStruct *ErrorStruct,
+    const CoreType *StringType)
+{
+    TU_ASSERT (statusCode != tempo_utils::StatusCode::kOk);
+
+    lyric_common::SymbolPath structPath({std::string(name)});
+
+    auto *ErrorCodeStruct = state.addStruct(structPath, lyo1::StructFlags::NONE, ErrorStruct);
+    state.addStructSealedSubtype(ErrorStruct, ErrorCodeStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -76,14 +138,14 @@ build_core_Status_code(
         // load the message argument
         code.loadArgument(0);
         // call parent ctor
-        code.callVirtual(StatusCodeStruct->superStruct->structCtor->call_index, 2);
+        code.callVirtual(ErrorStruct->structCtor->call_index, 2);
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addStructCtor(StatusCodeStruct,
+        state.addStructCtor(ErrorCodeStruct,
             {
                 make_named_param("message", StringType),
             },
             code);
     }
 
-    return StatusCodeStruct->structType;
+    return ErrorCodeStruct->structType;
 }

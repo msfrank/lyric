@@ -29,7 +29,7 @@ TEST_F(StatusTests, TestEvaluateStatusCode)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(1))));
+            RunModule(DataCellInt(static_cast<tu_int64>(tempo_utils::StatusCode::kCancelled)))));
 }
 
 TEST_F(StatusTests, TestEvaluateStatusMessage)
@@ -42,4 +42,40 @@ TEST_F(StatusTests, TestEvaluateStatusMessage)
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
             RunModule(DataCellString("operation was cancelled"))));
+}
+
+TEST_F(StatusTests, TestEvaluateNewOk)
+{
+    auto result = runModule(R"(
+        val status: Status = Ok{}
+        status
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(StatusRef(lyric_bootstrap::preludeSymbol("Ok")))));
+}
+
+TEST_F(StatusTests, TestEvaluateOkCode)
+{
+    auto result = runModule(R"(
+        val status: Status = Ok{}
+        status.GetCode()
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(DataCellInt(static_cast<tu_int64>(tempo_utils::StatusCode::kOk)))));
+}
+
+TEST_F(StatusTests, TestEvaluateOkMessage)
+{
+    auto result = runModule(R"(
+        val status: Status = Ok{}
+        status.GetMessage()
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(DataCellString("Ok"))));
 }

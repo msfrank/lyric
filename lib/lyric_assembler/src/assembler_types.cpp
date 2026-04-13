@@ -34,6 +34,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Enum";
         case FundamentalSymbol::Equality:
             return "Equality";
+        case FundamentalSymbol::Error:
+            return "Error";
         case FundamentalSymbol::Float:
             return "Float";
         case FundamentalSymbol::Idea:
@@ -87,6 +89,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
         case FundamentalSymbol::Url:
             return "Url";
 
+        case FundamentalSymbol::Ok:
+            return "Ok";
         case FundamentalSymbol::Cancelled:
             return "Cancelled";
         case FundamentalSymbol::InvalidArgument:

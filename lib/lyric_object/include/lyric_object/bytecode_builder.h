@@ -46,6 +46,7 @@ namespace lyric_object {
         tempo_utils::Status loadReceiver();
 
         tempo_utils::Status loadLiteral(tu_uint32 address);
+        tempo_utils::Status loadString(tu_uint32 address);
         tempo_utils::Status loadField(tu_uint32 address);
         tempo_utils::Status loadStatic(tu_uint32 address);
         tempo_utils::Status loadEnum(tu_uint32 address);

@@ -35,6 +35,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Enum));
     m_fundamentalEquality = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Equality));
+    m_fundamentalError = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Error));
     m_fundamentalFloat = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Float));
     m_fundamentalIdea = lyric_common::SymbolUrl(preludeLocation,
@@ -89,6 +91,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Url));
 
     // cache symbol urls for statuses
+    m_fundamentalOk = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Ok));
     m_fundamentalCancelled = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Cancelled));
     m_fundamentalInvalidArgument = lyric_common::SymbolUrl(preludeLocation,
@@ -245,6 +249,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalEnum;
         case FundamentalSymbol::Equality:
             return m_fundamentalEquality;
+        case FundamentalSymbol::Error:
+            return m_fundamentalError;
         case FundamentalSymbol::Float:
             return m_fundamentalFloat;
         case FundamentalSymbol::Idea:
@@ -298,6 +304,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
         case FundamentalSymbol::Url:
             return m_fundamentalUrl;
 
+        case FundamentalSymbol::Ok:
+            return m_fundamentalOk;
         case FundamentalSymbol::Cancelled:
             return m_fundamentalCancelled;
         case FundamentalSymbol::InvalidArgument:

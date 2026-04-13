@@ -226,6 +226,15 @@ lyric_object::BytecodeBuilder::loadLiteral(tu_uint32 address)
 }
 
 tempo_utils::Status
+lyric_object::BytecodeBuilder::loadString(tu_uint32 address)
+{
+    auto status = writeOpcode(Opcode::OP_STRING);
+    if (!status.isOk())
+        return status;
+    return writeU32(address);
+}
+
+tempo_utils::Status
 lyric_object::BytecodeBuilder::loadField(tu_uint32 address)
 {
     auto status = writeOpcode(Opcode::OP_LOAD);
