@@ -170,14 +170,12 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 currentCoro->pushData(DataCell(op.operands.immediate_chr.chr));
                 break;
 
-            // push literal onto the stack
-            case lyric_object::Opcode::OP_LITERAL: {
-                // auto status = segmentManager->pushLiteralOntoStack(
-                //     currentCoro->peekSP(), op.operands.address_u32.address, currentCoro);
-                // if (status.notOk())
-                //     return onError(op, status);
-                //break;
-                TU_UNREACHABLE();
+            // push bytes ref onto the stack
+            case lyric_object::Opcode::OP_BYTES: {
+                auto status = heapManager->loadLiteralBytesOntoStack(op.operands.address_u32.address);
+                if (status.notOk())
+                    return onError(op, status);
+                break;
             }
 
             // push string ref onto the stack

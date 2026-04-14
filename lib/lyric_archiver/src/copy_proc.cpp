@@ -546,9 +546,9 @@ lyric_archiver::copy_proc(
                 TU_RETURN_IF_NOT_OK (data.fragment->immediateChar(op.operands.immediate_chr.chr));
                 break;
 
+            case lyric_object::Opcode::OP_BYTES:
             case lyric_object::Opcode::OP_STRING:
             case lyric_object::Opcode::OP_URL:
-            case lyric_object::Opcode::OP_LITERAL:
                 TU_RETURN_IF_NOT_OK (apply_literal(op, data));
                 break;
 

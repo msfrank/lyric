@@ -241,9 +241,9 @@ lyric_archiver::scan_proc(
             case lyric_object::Opcode::OP_I64:
             case lyric_object::Opcode::OP_DBL:
             case lyric_object::Opcode::OP_CHR:
+            case lyric_object::Opcode::OP_BYTES:
             case lyric_object::Opcode::OP_STRING:
             case lyric_object::Opcode::OP_URL:
-            case lyric_object::Opcode::OP_LITERAL:
             case lyric_object::Opcode::OP_SYNTHETIC:
             case lyric_object::Opcode::OP_POP:
             case lyric_object::Opcode::OP_DUP:

@@ -12,8 +12,6 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_importer/shortcut_resolver.h>
 #include <lyric_runtime/abstract_loader.h>
-#include <lyric_runtime/literal_cell.h>
-#include <lyric_runtime/trap_index.h>
 
 #include "abstract_symbol.h"
 #include "assembler_result.h"

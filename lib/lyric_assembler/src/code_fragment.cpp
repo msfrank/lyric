@@ -240,16 +240,6 @@ lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::loadLiteral(LiteralHandle *literal)
-{
-    TU_UNREACHABLE();
-    // Statement statement;
-    // statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_LITERAL, literal);
-    // m_statements.push_back(std::move(statement));
-    // return {};
-}
-
-tempo_utils::Status
 lyric_assembler::CodeFragment::loadData(AbstractSymbol *symbol)
 {
     Statement statement;

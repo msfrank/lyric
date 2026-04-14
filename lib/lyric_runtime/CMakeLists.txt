@@ -29,7 +29,6 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/interpreter_result.h
     include/lyric_runtime/interpreter_state.h
     include/lyric_runtime/library_plugin.h
-    include/lyric_runtime/literal_cell.h
     include/lyric_runtime/lyric_runtime.h
     include/lyric_runtime/namespace_ref.h
     include/lyric_runtime/native_interface.h
@@ -71,7 +70,6 @@ target_sources(lyric_runtime PRIVATE
     src/interpreter_result.cpp
     src/interpreter_state.cpp
     src/library_plugin.cpp
-    src/literal_cell.cpp
     src/namespace_ref.cpp
     src/native_interface.cpp
     src/port_multiplexer.cpp

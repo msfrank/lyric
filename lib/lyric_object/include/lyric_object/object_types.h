@@ -255,7 +255,7 @@ namespace lyric_object {
         OP_I64,
         OP_DBL,
         OP_CHR,
-        OP_LITERAL,
+        OP_BYTES,
         OP_STRING,
         OP_URL,
         OP_STATIC,

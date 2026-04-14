@@ -217,9 +217,9 @@ lyric_object::BytecodeBuilder::loadReceiver()
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::loadLiteral(tu_uint32 address)
+lyric_object::BytecodeBuilder::loadBytes(tu_uint32 address)
 {
-    auto status = writeOpcode(Opcode::OP_LITERAL);
+    auto status = writeOpcode(Opcode::OP_BYTES);
     if (!status.isOk())
         return status;
     return writeU32(address);

@@ -733,7 +733,7 @@ lyric_assembler::LoadLiteralInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     switch (m_opcode) {
-        case lyric_object::Opcode::OP_LITERAL:
+        case lyric_object::Opcode::OP_BYTES:
         case lyric_object::Opcode::OP_STRING:
         case lyric_object::Opcode::OP_URL: {
             tu_uint32 address;

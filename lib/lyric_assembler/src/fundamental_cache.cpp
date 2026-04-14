@@ -410,28 +410,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
     }
 }
 
-// lyric_common::SymbolUrl
-// lyric_assembler::FundamentalCache::getFundamentalUrl(const lyric_runtime::LiteralCell &literalCell) const
-// {
-//     switch (literalCell.type) {
-//         case lyric_runtime::LiteralCellType::NIL:
-//             return getFundamentalUrl(FundamentalSymbol::Nil);
-//         case lyric_runtime::LiteralCellType::UNDEF:
-//             return getFundamentalUrl(FundamentalSymbol::Undef);
-//         case lyric_runtime::LiteralCellType::BOOL:
-//             return getFundamentalUrl(FundamentalSymbol::Bool);
-//         case lyric_runtime::LiteralCellType::I64:
-//             return getFundamentalUrl(FundamentalSymbol::Int);
-//         case lyric_runtime::LiteralCellType::DBL:
-//             return getFundamentalUrl(FundamentalSymbol::Float);
-//         case lyric_runtime::LiteralCellType::CHAR32:
-//             return getFundamentalUrl(FundamentalSymbol::Char);
-//         case lyric_runtime::LiteralCellType::INVALID:
-//         default:
-//             return {};
-//     }
-// }
-
 lyric_common::SymbolUrl
 lyric_assembler::FundamentalCache::getFunctionUrl(int arity) const
 {

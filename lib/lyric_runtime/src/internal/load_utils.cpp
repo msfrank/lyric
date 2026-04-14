@@ -2,21 +2,6 @@
 #include <lyric_runtime/internal/load_utils.h>
 #include <lyric_runtime/internal/resolve_link.h>
 
-// tempo_utils::Status
-// lyric_runtime::internal::push_literal_onto_stack(
-//     const BytecodeSegment *sp,
-//     tu_uint32 address,
-//     StackfulCoroutine *currentCoro,
-//     SegmentManagerData *segmentManagerData)
-// {
-//     InterpreterStatus status;
-//     auto literal = resolve_literal(sp, address, segmentManagerData, status);
-//     if (!literal.isValid())
-//         return status;
-//     currentCoro->pushData(DataCell::forLiteral(literal));
-//     return {};
-// }
-
 tempo_utils::Status
 lyric_runtime::internal::push_descriptor_onto_stack(
     const BytecodeSegment *sp,

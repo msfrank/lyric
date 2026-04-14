@@ -2,11 +2,7 @@
 #define LYRIC_RUNTIME_RUNTIME_TYPES_H
 
 #include <lyric_common/module_location.h>
-#include <lyric_common/symbol_url.h>
 #include <lyric_object/object_types.h>
-#include <tempo_utils/option_template.h>
-
-#include "literal_cell.h"
 
 #if defined(TARGET_OS_MAC)
 #define PLUGIN_FILE_SUFFIX      "dylib"

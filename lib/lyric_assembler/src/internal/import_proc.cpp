@@ -60,55 +60,6 @@ apply_url(const lyric_object::OpCell &op, ImportProcData &data)
 }
 
 static tempo_utils::Status
-apply_literal(const lyric_object::OpCell &op, ImportProcData &data)
-{
-    if (op.opcode != lyric_object::Opcode::OP_LITERAL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
-
-    TU_UNREACHABLE();
-    // auto *literalCache = data.state->literalCache();
-    //
-    // auto literal = data.object.getLiteral(op.operands.address_u32.address);
-    //
-    // lyric_assembler::LiteralHandle *literalHandle;
-    //
-    // switch (literal.getValueType()) {
-    //     case lyric_object::ValueType::String: {
-    //         std::string str(literal.stringValue());
-    //         return data.fragment->loadString(str);
-    //     }
-    //     case lyric_object::ValueType::Url: {
-    //         auto url = tempo_utils::Url::fromString(literal.stringValue());
-    //         return data.fragment->loadUrl(url);
-    //     }
-    //     case lyric_object::ValueType::Nil:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeNil());
-    //         break;
-    //     case lyric_object::ValueType::Undef:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeUndef());
-    //         break;
-    //     case lyric_object::ValueType::Char:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeChar(literal.charValue()));
-    //         break;
-    //     case lyric_object::ValueType::Bool:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeBool(literal.boolValue()));
-    //         break;
-    //     case lyric_object::ValueType::Int64:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeInteger(literal.int64Value()));
-    //         break;
-    //     case lyric_object::ValueType::Float64:
-    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeFloat(literal.float64Value()));
-    //         break;
-    //     default:
-    //         return lyric_assembler::AssemblerStatus::forCondition(
-    //             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid literal");
-    // }
-    //
-    // return data.fragment->loadLiteral(literalHandle);
-}
-
-static tempo_utils::Status
 apply_synthetic(const lyric_object::OpCell &op, ImportProcData &data)
 {
     const auto &operands = op.operands.type_u8;
@@ -560,9 +511,6 @@ lyric_assembler::internal::import_proc(
                 break;
             case lyric_object::Opcode::OP_URL:
                 TU_RETURN_IF_NOT_OK (apply_url(op, data));
-                break;
-            case lyric_object::Opcode::OP_LITERAL:
-                TU_RETURN_IF_NOT_OK (apply_literal(op, data));
                 break;
 
             case lyric_object::Opcode::OP_SYNTHETIC:
