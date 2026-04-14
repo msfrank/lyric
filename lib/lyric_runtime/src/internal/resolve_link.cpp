@@ -241,62 +241,81 @@ lyric_runtime::internal::resolve_descriptor(
     return DataCell::forDescriptor(descriptorEntry);
 }
 
-lyric_runtime::LiteralCell
-lyric_runtime::internal::resolve_literal(
+std::string_view
+lyric_runtime::internal::resolve_string(
     const BytecodeSegment *sp,
     tu_uint32 address,
-    SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (sp != nullptr);
 
-    lyric_object::LyricObject literalObject;
-    tu_uint32 literalIndex;
+    auto object = sp->getObject();
+    auto offset = lyric_object::GET_DESCRIPTOR_OFFSET(address);
 
-    if (lyric_object::IS_NEAR(address)) {
-        literalObject = sp->getObject();
-        literalIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
-    } else {
-        auto index = lyric_object::GET_LINK_OFFSET(address);
-        const auto *linkage = resolve_link(sp, index, segmentManagerData, status);
-        if (linkage == nullptr)
-            return {};          // failed to resolve dynamic link
-        if (linkage->linkage != lyric_object::LinkageSection::Literal) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "invalid linkage for literal");
-            return {};          // wrong descriptor type
-        }
-        auto *segment = segmentManagerData->segments[linkage->object];
-        literalObject = segment->getObject();
-        literalIndex = linkage->value;
-    }
-
-    auto literal = literalObject.getLiteral(literalIndex);
-    if (!literal.isValid()) {
+    if (object.numStrings() <= offset) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing literal");
+            InterpreterCondition::kRuntimeInvariant, "missing string");
         return {};
     }
-
-    switch (literal.getValueType()) {
-        case lyric_object::ValueType::Nil:
-            return LiteralCell::nil();
-        case lyric_object::ValueType::Bool:
-            return LiteralCell(literal.boolValue());
-        case lyric_object::ValueType::Int64:
-            return LiteralCell(literal.int64Value());
-        case lyric_object::ValueType::Float64:
-            return LiteralCell(literal.float64Value());
-        case lyric_object::ValueType::Char:
-            return LiteralCell(literal.charValue());
-        case lyric_object::ValueType::String:
-            return LiteralCell(literal.stringValue());
-        default:
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "unknown literal type");
-            return {};
-    }
+    return object.getString(offset);
 }
+
+// lyric_runtime::LiteralCell
+// lyric_runtime::internal::resolve_literal(
+//     const BytecodeSegment *sp,
+//     tu_uint32 address,
+//     SegmentManagerData *segmentManagerData,
+//     tempo_utils::Status &status)
+// {
+//     TU_ASSERT (sp != nullptr);
+//
+//     lyric_object::LyricObject literalObject;
+//     tu_uint32 literalIndex;
+//
+//     if (lyric_object::IS_NEAR(address)) {
+//         literalObject = sp->getObject();
+//         literalIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
+//     } else {
+//         auto index = lyric_object::GET_LINK_OFFSET(address);
+//         const auto *linkage = resolve_link(sp, index, segmentManagerData, status);
+//         if (linkage == nullptr)
+//             return {};          // failed to resolve dynamic link
+//         if (linkage->linkage != lyric_object::LinkageSection::Literal) {
+//             status = InterpreterStatus::forCondition(
+//                 InterpreterCondition::kRuntimeInvariant, "invalid linkage for literal");
+//             return {};          // wrong descriptor type
+//         }
+//         auto *segment = segmentManagerData->segments[linkage->object];
+//         literalObject = segment->getObject();
+//         literalIndex = linkage->value;
+//     }
+//
+//     auto literal = literalObject.getLiteral(literalIndex);
+//     if (!literal.isValid()) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "missing literal");
+//         return {};
+//     }
+//
+//     switch (literal.getValueType()) {
+//         case lyric_object::ValueType::Nil:
+//             return LiteralCell::nil();
+//         case lyric_object::ValueType::Bool:
+//             return LiteralCell(literal.boolValue());
+//         case lyric_object::ValueType::Int64:
+//             return LiteralCell(literal.int64Value());
+//         case lyric_object::ValueType::Float64:
+//             return LiteralCell(literal.float64Value());
+//         case lyric_object::ValueType::Char:
+//             return LiteralCell(literal.charValue());
+//         case lyric_object::ValueType::String:
+//             return LiteralCell(literal.stringValue());
+//         default:
+//             status = InterpreterStatus::forCondition(
+//                 InterpreterCondition::kRuntimeInvariant, "unknown literal type");
+//             return {};
+//     }
+// }
 
 /**
  * Resolves the receiver descriptor for the call at the specified `address`.

@@ -7,7 +7,7 @@ namespace lyric_runtime {
 
     class BytesRef final : public AbstractRef {
     public:
-        BytesRef(const ExistentialTable *etable, const LiteralCell &literal);
+        BytesRef(const ExistentialTable *etable, std::string_view literal);
         BytesRef(const ExistentialTable *etable, const tu_uint8 *data, int32_t size);
         ~BytesRef() override;
 

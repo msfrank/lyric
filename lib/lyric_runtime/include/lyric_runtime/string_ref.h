@@ -7,7 +7,7 @@ namespace lyric_runtime {
 
     class StringRef final : public AbstractRef {
     public:
-        StringRef(const ExistentialTable *etable, const LiteralCell &literal);
+        StringRef(const ExistentialTable *etable, std::string_view literal);
         StringRef(const ExistentialTable *etable, const char *data, int32_t size);
         ~StringRef() override;
 

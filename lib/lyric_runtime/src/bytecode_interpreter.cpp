@@ -11,8 +11,6 @@
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
 
-
-
 #define TIME_SLICE                      64
 #define FAST_POLL_ITERATIONS            4
 #define MAX_INTERPRETER_RECURSION       128
@@ -174,11 +172,12 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // push literal onto the stack
             case lyric_object::Opcode::OP_LITERAL: {
-                auto status = segmentManager->pushLiteralOntoStack(
-                    currentCoro->peekSP(), op.operands.address_u32.address, currentCoro);
-                if (status.notOk())
-                    return onError(op, status);
-                break;
+                // auto status = segmentManager->pushLiteralOntoStack(
+                //     currentCoro->peekSP(), op.operands.address_u32.address, currentCoro);
+                // if (status.notOk())
+                //     return onError(op, status);
+                //break;
+                TU_UNREACHABLE();
             }
 
             // push string ref onto the stack

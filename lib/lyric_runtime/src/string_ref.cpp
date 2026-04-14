@@ -30,16 +30,15 @@ make_end_iterator(const lyric_runtime::StringRef *ref)
     return utf8::iterator(data + size, data, data + size);
 }
 
-lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const LiteralCell &literal)
+lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, std::string_view literal)
     : m_etable(etable),
       m_owned(false),
       m_permanent(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (literal.type == LiteralCellType::UTF8);
-    m_data = literal.literal.utf8.data;
-    m_size = literal.literal.utf8.size;
+    m_data = literal.data();
+    m_size = literal.size();
 }
 
 lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *src, int32_t size)

@@ -4,7 +4,6 @@
 #include <tempo_utils/log_message.h>
 
 #include "runtime_types.h"
-#include "literal_cell.h"
 
 namespace lyric_runtime {
 
@@ -66,7 +65,6 @@ namespace lyric_runtime {
         static DataCell nil();
         static DataCell undef();
 
-        static DataCell forLiteral(const LiteralCell &literal);
         static DataCell forBytes(BytesRef *bytes);
         static DataCell forDescriptor(DescriptorEntry *descriptor);
         static DataCell forNamespace(NamespaceRef *ns);

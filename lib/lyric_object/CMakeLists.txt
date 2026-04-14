@@ -24,7 +24,6 @@ set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/instance_walker.h
     include/lyric_object/intersection_type_walker.h
     include/lyric_object/link_walker.h
-    include/lyric_object/literal_walker.h
     include/lyric_object/lyric_object.h
     include/lyric_object/namespace_walker.h
     include/lyric_object/object_result.h
@@ -92,7 +91,6 @@ target_sources(lyric_object PRIVATE
     src/instance_walker.cpp
     src/intersection_type_walker.cpp
     src/link_walker.cpp
-    src/literal_walker.cpp
     src/lyric_object.cpp
     src/namespace_walker.cpp
     src/object_result.cpp

@@ -6,15 +6,14 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const LiteralCell &literal)
+lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, std::string_view literal)
     : m_etable(etable),
       m_owned(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (literal.type == LiteralCellType::BYTES);
-    m_data = literal.literal.bytes.data;
-    m_size = literal.literal.bytes.size;
+    m_data = (const tu_uint8 *) literal.data();
+    m_size = literal.size();
 }
 
 lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const tu_uint8 *src, int32_t size)

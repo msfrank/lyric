@@ -122,6 +122,15 @@ lyric_runtime::SegmentManager::resolveLink(
     return internal::resolve_link(sp, index, &m_data, status);
 }
 
+const std::string_view
+lyric_runtime::SegmentManager::resolveString(
+    const BytecodeSegment *sp,
+    tu_uint32 index,
+    tempo_utils::Status &status)
+{
+    return internal::resolve_string(sp, index, status);
+}
+
 lyric_runtime::DataCell
 lyric_runtime::SegmentManager::resolveDescriptor(
     const BytecodeSegment *sp,
@@ -132,14 +141,14 @@ lyric_runtime::SegmentManager::resolveDescriptor(
     return internal::resolve_descriptor(sp, section, address, &m_data, status);
 }
 
-lyric_runtime::LiteralCell
-lyric_runtime::SegmentManager::resolveLiteral(
-    const BytecodeSegment *sp,
-    tu_uint32 address,
-    tempo_utils::Status &status)
-{
-    return internal::resolve_literal(sp, address, &m_data, status);
-}
+// lyric_runtime::LiteralCell
+// lyric_runtime::SegmentManager::resolveLiteral(
+//     const BytecodeSegment *sp,
+//     tu_uint32 address,
+//     tempo_utils::Status &status)
+// {
+//     return internal::resolve_literal(sp, address, &m_data, status);
+// }
 
 lyric_runtime::DataCell
 lyric_runtime::SegmentManager::resolveReceiver(
@@ -198,14 +207,14 @@ lyric_runtime::SegmentManager::resolveStructVirtualTable(
     return internal::get_struct_virtual_table(descriptor, &m_data, status);
 }
 
-tempo_utils::Status
-lyric_runtime::SegmentManager::pushLiteralOntoStack(
-    const BytecodeSegment *sp,
-    tu_uint32 address,
-    StackfulCoroutine *currentCoro)
-{
-    return internal::push_literal_onto_stack(sp, address, currentCoro, &m_data);
-}
+// tempo_utils::Status
+// lyric_runtime::SegmentManager::pushLiteralOntoStack(
+//     const BytecodeSegment *sp,
+//     tu_uint32 address,
+//     StackfulCoroutine *currentCoro)
+// {
+//     return internal::push_literal_onto_stack(sp, address, currentCoro, &m_data);
+// }
 
 tempo_utils::Status
 lyric_runtime::SegmentManager::pushDescriptorOntoStack(

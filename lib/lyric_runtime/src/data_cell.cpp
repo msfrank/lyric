@@ -181,41 +181,41 @@ lyric_runtime::DataCell::undef()
     return cell;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forLiteral(const LiteralCell &literal)
-{
-    DataCell cell;
-    switch (literal.type) {
-        case LiteralCellType::INVALID:
-            cell.type = DataCellType::INVALID;
-            break;
-        case LiteralCellType::NIL:
-            cell.type = DataCellType::NIL;
-            break;
-        case LiteralCellType::UNDEF:
-            cell.type = DataCellType::UNDEF;
-            break;
-        case LiteralCellType::BOOL:
-            cell.type = DataCellType::BOOL;
-            cell.data.b = literal.literal.b;
-            break;
-        case LiteralCellType::I64:
-            cell.type = DataCellType::I64;
-            cell.data.i64 = literal.literal.i64;
-            break;
-        case LiteralCellType::DBL:
-            cell.type = DataCellType::DBL;
-            cell.data.dbl = literal.literal.dbl;
-            break;
-        case LiteralCellType::CHAR32:
-            cell.type = DataCellType::CHAR32;
-            cell.data.chr = literal.literal.chr;
-            break;
-        default:
-            TU_UNREACHABLE();
-    }
-    return cell;
-}
+// lyric_runtime::DataCell
+// lyric_runtime::DataCell::forLiteral(const LiteralCell &literal)
+// {
+//     DataCell cell;
+//     switch (literal.type) {
+//         case LiteralCellType::INVALID:
+//             cell.type = DataCellType::INVALID;
+//             break;
+//         case LiteralCellType::NIL:
+//             cell.type = DataCellType::NIL;
+//             break;
+//         case LiteralCellType::UNDEF:
+//             cell.type = DataCellType::UNDEF;
+//             break;
+//         case LiteralCellType::BOOL:
+//             cell.type = DataCellType::BOOL;
+//             cell.data.b = literal.literal.b;
+//             break;
+//         case LiteralCellType::I64:
+//             cell.type = DataCellType::I64;
+//             cell.data.i64 = literal.literal.i64;
+//             break;
+//         case LiteralCellType::DBL:
+//             cell.type = DataCellType::DBL;
+//             cell.data.dbl = literal.literal.dbl;
+//             break;
+//         case LiteralCellType::CHAR32:
+//             cell.type = DataCellType::CHAR32;
+//             cell.data.chr = literal.literal.chr;
+//             break;
+//         default:
+//             TU_UNREACHABLE();
+//     }
+//     return cell;
+// }
 
 lyric_runtime::DataCell
 lyric_runtime::DataCell::forDescriptor(DescriptorEntry *descriptor)

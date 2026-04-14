@@ -18,7 +18,6 @@
 #include "impl_walker.h"
 #include "instance_walker.h"
 #include "link_walker.h"
-#include "literal_walker.h"
 #include "namespace_walker.h"
 #include "object_types.h"
 #include "plugin_walker.h"
@@ -79,9 +78,6 @@ namespace lyric_object {
         LinkWalker getLink(tu_uint32 index) const;
         int numLinks() const;
 
-        LiteralWalker getLiteral(tu_uint32 index) const;
-        int numLiterals() const;
-
         NamespaceWalker getNamespace(tu_uint32 index) const;
         int numNamespaces() const;
 
@@ -109,7 +105,10 @@ namespace lyric_object {
         bool hasPlugin() const;
         PluginWalker getPlugin() const;
 
-        const uint8_t *getBytecodeData() const;
+        std::string_view getString(tu_uint32 index) const;
+        int numStrings() const;
+
+        const tu_uint8 *getBytecodeData() const;
         uint32_t getBytecodeSize() const;
 
         std::shared_ptr<const internal::ObjectReader> getReader() const;

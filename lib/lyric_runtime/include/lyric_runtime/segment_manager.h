@@ -51,13 +51,14 @@ namespace lyric_runtime {
             tu_uint32 index,
             tempo_utils::Status &status);
 
+        virtual const std::string_view resolveString(
+            const BytecodeSegment *sp,
+            tu_uint32 index,
+            tempo_utils::Status &status);
+
         virtual DataCell resolveDescriptor(
             const BytecodeSegment *sp,
             lyric_object::LinkageSection section,
-            tu_uint32 address,
-            tempo_utils::Status &status);
-        virtual LiteralCell resolveLiteral(
-            const BytecodeSegment *sp,
             tu_uint32 address,
             tempo_utils::Status &status);
 
@@ -87,10 +88,6 @@ namespace lyric_runtime {
             const DataCell &descriptor,
             tempo_utils::Status &status);
 
-        virtual tempo_utils::Status pushLiteralOntoStack(
-            const BytecodeSegment *sp,
-            tu_uint32 address,
-            StackfulCoroutine *currentCoro);
         virtual tempo_utils::Status pushDescriptorOntoStack(
             const BytecodeSegment *sp,
             tu_uint8 section,

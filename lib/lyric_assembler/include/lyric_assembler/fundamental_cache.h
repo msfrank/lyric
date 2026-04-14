@@ -16,7 +16,6 @@ namespace lyric_assembler {
 
         lyric_common::TypeDef getFundamentalType(FundamentalSymbol fundamental) const;
         lyric_common::SymbolUrl getFundamentalUrl(FundamentalSymbol fundamental) const;
-        lyric_common::SymbolUrl getFundamentalUrl(const lyric_runtime::LiteralCell &literalCell) const;
         lyric_common::SymbolUrl getFunctionUrl(int arity) const;
         lyric_common::SymbolUrl getTupleUrl(int arity) const;
 

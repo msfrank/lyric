@@ -26,29 +26,6 @@ enum DescriptorSection : uint8 {
     Binding,
 }
 
-enum TrueFalseNilUndef  : uint8 { Nil = 0, Undef, False, True }
-
-table TFNUValue         { tfnu: TrueFalseNilUndef; }    // true, false, nil, or undef value
-table Int64Value        { i64: int64; }                 // int64 value
-table Float64Value      { dbl: float64; }               // float64 value
-table CharValue         { chr: int32; }                 // char value encoded as a utf32 code unit
-table StringValue       { str: string; }                // utf-8 encoded string value
-table BytesValue        { bytes: [ubyte]; }             // bytes value
-
-union Value {
-    TFNUValue,
-    Int64Value,
-    Float64Value,
-    CharValue,
-    StringValue,
-    BytesValue,
-}
-
-// FIXME: add constants to symbol table
-table LiteralDescriptor {
-    literal_value: Value;                        // the value of the literal
-}
-
 enum IntrinsicType : uint8 {
     Invalid,
     Nil,
@@ -612,7 +589,6 @@ table Object {
     types: [TypeDescriptor];                    // array of type descriptors
     templates: [TemplateDescriptor];            // array of template descriptors
     existentials: [ExistentialDescriptor];      // array of existential descriptors
-    literals: [LiteralDescriptor];              // array of literal descriptors
     statics: [StaticDescriptor];                // array of static descriptors
     calls: [CallDescriptor];                    // array of call descriptors
     fields: [FieldDescriptor];                  // array of field descriptors
@@ -633,6 +609,8 @@ table Object {
     plugin: PluginDescriptor;                   // describes the optional plugin associated with the module
 
     symbol_table: SymbolTable;                  // symbol table maps fully qualified symbol name to descriptor
+
+    strings: [string];                          // array of utf8 string literals
 
     bytecode: [uint8];                          // the bytecode for this object
 }

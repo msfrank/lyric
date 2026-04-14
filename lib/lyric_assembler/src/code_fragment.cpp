@@ -217,7 +217,7 @@ lyric_assembler::CodeFragment::loadString(const std::string &str)
     auto *state = m_procHandle->objectState();
     auto *literalCache = state->literalCache();
     LiteralHandle *literal;
-    TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(str));
+    TU_ASSIGN_OR_RETURN (literal, literalCache->getOrMakeLiteral(str));
 
     Statement statement;
     statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_STRING, literal);
@@ -231,7 +231,7 @@ lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
     auto *state = m_procHandle->objectState();
     auto *literalCache = state->literalCache();
     LiteralHandle *literal;
-    TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(url.toString()));
+    TU_ASSIGN_OR_RETURN (literal, literalCache->getOrMakeLiteral(url));
 
     Statement statement;
     statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_URL, literal);
@@ -242,10 +242,11 @@ lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadLiteral(LiteralHandle *literal)
 {
-    Statement statement;
-    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_LITERAL, literal);
-    m_statements.push_back(std::move(statement));
-    return {};
+    TU_UNREACHABLE();
+    // Statement statement;
+    // statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_LITERAL, literal);
+    // m_statements.push_back(std::move(statement));
+    // return {};
 }
 
 tempo_utils::Status

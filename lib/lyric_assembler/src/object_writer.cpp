@@ -898,10 +898,6 @@ lyric_assembler::ObjectWriter::toObject() const
     internal::LinksOffset linksOffset;
     TU_RETURN_IF_NOT_OK (internal::write_links(m_links, *this, m_importOffsets, buffer, linksOffset));
 
-    // serialize array of literal descriptors
-    internal::LiteralsOffset literalsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_literals(m_literals, *this, buffer, literalsOffset));
-
     // serialize array of namespace descriptors
     internal::NamespacesOffset namespacesOffset;
     TU_RETURN_IF_NOT_OK (internal::write_namespaces(
@@ -972,7 +968,11 @@ lyric_assembler::ObjectWriter::toObject() const
             hash_type, /* plugin_hash= */ 0, trapsOffset, flags);
     }
 
-    // serialize vectors
+    // serialize strings table
+    internal::LiteralsOffset literalsOffset;
+    TU_RETURN_IF_NOT_OK (internal::write_literals(m_literals, *this, buffer, literalsOffset));
+
+    // serialize bytecode
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
     // build assembly from buffer
@@ -995,7 +995,6 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_imports(importsOffset);
     objectBuilder.add_instances(instancesOffset);
     objectBuilder.add_links(linksOffset);
-    objectBuilder.add_literals(literalsOffset);
     objectBuilder.add_namespaces(namespacesOffset);
     objectBuilder.add_protocols(protocolsOffset);
     objectBuilder.add_statics(staticsOffset);
@@ -1006,6 +1005,8 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_plugin(optionalPluginOffset);
     objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);
     objectBuilder.add_symbol_table(sortedSymbolTableOffset.Union());
+
+    objectBuilder.add_strings(literalsOffset);
 
     objectBuilder.add_bytecode(bytecodeOffset);
 

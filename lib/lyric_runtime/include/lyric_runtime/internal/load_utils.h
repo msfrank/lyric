@@ -5,12 +5,6 @@
 
 namespace lyric_runtime::internal {
 
-    tempo_utils::Status push_literal_onto_stack(
-        const BytecodeSegment *sp,
-        tu_uint32 address,
-        StackfulCoroutine *currentCoro,
-        SegmentManagerData *segmentManagerData);
-
     tempo_utils::Status push_descriptor_onto_stack(
         const BytecodeSegment *sp,
         tu_uint8 section,

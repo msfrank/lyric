@@ -26,10 +26,9 @@ namespace lyric_runtime::internal {
         SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 
-    LiteralCell resolve_literal(
+    std::string_view resolve_string(
         const BytecodeSegment *sp,
         tu_uint32 address,
-        SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 
     DataCell resolve_receiver(

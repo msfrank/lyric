@@ -3,7 +3,6 @@
 
 #include <tempo_utils/result.h>
 
-#include "assembler_types.h"
 #include "literal_handle.h"
 
 namespace lyric_assembler {
@@ -13,21 +12,17 @@ namespace lyric_assembler {
         LiteralCache();
         ~LiteralCache();
 
-        tempo_utils::Result<LiteralHandle *> makeNil();
-        tempo_utils::Result<LiteralHandle *> makeUndef();
-        tempo_utils::Result<LiteralHandle *> makeBool(bool b);
-        tempo_utils::Result<LiteralHandle *> makeInteger(tu_int64 i64);
-        tempo_utils::Result<LiteralHandle *> makeFloat(double dbl);
-        tempo_utils::Result<LiteralHandle *> makeChar(char32_t chr);
-        tempo_utils::Result<LiteralHandle *> makeUtf8(const std::string &utf8);
+        tempo_utils::Result<LiteralHandle *> getOrMakeLiteral(std::string_view utf8);
+        tempo_utils::Result<LiteralHandle *> getOrMakeLiteral(std::span<const tu_uint8> bytes);
+        tempo_utils::Result<LiteralHandle *> getOrMakeLiteral(const tempo_utils::Url &url);
 
         std::vector<LiteralHandle *>::const_iterator literalsBegin() const;
         std::vector<LiteralHandle *>::const_iterator literalsEnd() const;
+        int numLiterals() const;
 
     private:
         std::vector<LiteralHandle *> m_literals;
-        absl::flat_hash_map<lyric_runtime::LiteralCell, tu_uint32> m_literalcache;
-        absl::flat_hash_map<std::string, tu_uint32> m_stringcache;
+        absl::flat_hash_map<std::string_view, tu_uint32> m_stringcache;
     };
 }
 

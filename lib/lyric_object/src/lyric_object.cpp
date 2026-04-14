@@ -5,7 +5,6 @@
 #include <lyric_object/lyric_object.h>
 #include <lyric_object/object_types.h>
 #include <tempo_utils/big_endian.h>
-#include <tempo_utils/log_stream.h>
 #include <tempo_utils/memory_bytes.h>
 
 lyric_object::LyricObject::LyricObject()
@@ -65,7 +64,7 @@ int
 lyric_object::LyricObject::numActions() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numActions();
 }
 
@@ -81,7 +80,7 @@ int
 lyric_object::LyricObject::numBindings() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numBindings();
 }
 
@@ -97,7 +96,7 @@ int
 lyric_object::LyricObject::numCalls() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numCalls();
 }
 
@@ -113,7 +112,7 @@ int
 lyric_object::LyricObject::numClasses() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numClasses();
 }
 
@@ -129,7 +128,7 @@ int
 lyric_object::LyricObject::numConcepts() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numConcepts();
 }
 
@@ -145,7 +144,7 @@ int
 lyric_object::LyricObject::numEnums() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numEnums();
 }
 
@@ -161,7 +160,7 @@ int
 lyric_object::LyricObject::numExistentials() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numExistentials();
 }
 
@@ -177,7 +176,7 @@ int
 lyric_object::LyricObject::numFields() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numFields();
 }
 
@@ -193,7 +192,7 @@ int
 lyric_object::LyricObject::numImpls() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numImpls();
 }
 
@@ -209,7 +208,7 @@ int
 lyric_object::LyricObject::numImports() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numImports();
 }
 
@@ -225,7 +224,7 @@ int
 lyric_object::LyricObject::numInstances() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numInstances();
 }
 
@@ -241,24 +240,24 @@ int
 lyric_object::LyricObject::numLinks() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numLinks();
 }
 
-lyric_object::LiteralWalker
-lyric_object::LyricObject::getLiteral(tu_uint32 index) const
+std::string_view
+lyric_object::LyricObject::getString(tu_uint32 index) const
 {
     if (m_reader == nullptr)
         return {};
-    return LiteralWalker(m_reader, index);
+    return m_reader->getString(index);
 }
 
 int
-lyric_object::LyricObject::numLiterals() const
+lyric_object::LyricObject::numStrings() const
 {
     if (m_reader == nullptr)
-        return {};
-    return m_reader->numLiterals();
+        return 0;
+    return m_reader->numStrings();
 }
 
 lyric_object::NamespaceWalker
@@ -273,7 +272,7 @@ int
 lyric_object::LyricObject::numNamespaces() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numNamespaces();
 }
 
@@ -289,7 +288,7 @@ int
 lyric_object::LyricObject::numProtocols() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numProtocols();
 }
 
@@ -305,7 +304,7 @@ int
 lyric_object::LyricObject::numStatics() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numStatics();
 }
 
@@ -321,7 +320,7 @@ int
 lyric_object::LyricObject::numStructs() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numStructs();
 }
 
@@ -337,7 +336,7 @@ int
 lyric_object::LyricObject::numTemplates() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numTemplates();
 }
 
@@ -353,7 +352,7 @@ int
 lyric_object::LyricObject::numTypes() const
 {
     if (m_reader == nullptr)
-        return {};
+        return 0;
     return m_reader->numTypes();
 }
 
@@ -409,7 +408,7 @@ lyric_object::LyricObject::getPlugin() const
 }
 
 
-const uint8_t *
+const tu_uint8 *
 lyric_object::LyricObject::getBytecodeData() const
 {
     if (m_reader == nullptr)

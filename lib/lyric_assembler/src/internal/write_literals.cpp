@@ -8,71 +8,16 @@ lyric_assembler::internal::write_literals(
     flatbuffers::FlatBufferBuilder &buffer,
     LiteralsOffset &literalsOffset)
 {
-    std::vector<flatbuffers::Offset<lyo1::LiteralDescriptor>> literals_vector;
+    std::vector<std::string> literals_vector;
 
     for (const auto *literalHandle : literals) {
-
-        switch (literalHandle->getType()) {
-            case lyric_runtime::LiteralCellType::NIL: {
-                auto value = lyo1::CreateTFNUValue(buffer, lyo1::TrueFalseNilUndef::Nil);
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::TFNUValue, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::UNDEF: {
-                auto value = lyo1::CreateTFNUValue(buffer, lyo1::TrueFalseNilUndef::Undef);
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::TFNUValue, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::BOOL: {
-                auto value = lyo1::CreateTFNUValue(buffer,
-                    literalHandle->getBool() ? lyo1::TrueFalseNilUndef::True : lyo1::TrueFalseNilUndef::False);
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::TFNUValue, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::I64: {
-                auto value = lyo1::CreateInt64Value(buffer, literalHandle->getInt64());
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::Int64Value, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::DBL: {
-                auto value = lyo1::CreateFloat64Value(buffer, literalHandle->getDouble());
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::Float64Value, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::CHAR32: {
-                auto value = lyo1::CreateCharValue(buffer, literalHandle->getUChar32());
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::CharValue, value.Union()));
-                break;
-            }
-            case lyric_runtime::LiteralCellType::UTF8: {
-                auto utf8 = literalHandle->getUtf8();
-                auto str = buffer.CreateString(utf8->data(), utf8->size());
-                auto value = lyo1::CreateStringValue(buffer, str);
-                literals_vector.push_back(
-                    lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::StringValue, value.Union()));
-                break;
-            }
-            default:
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "invalid literal");
-        }
+        TU_NOTNULL (literalHandle);
+        auto literalValue = literalHandle->getLiteral();
+        literals_vector.push_back(std::move(literalValue));
     }
 
     // create the literals vector
-    literalsOffset = buffer.CreateVector(literals_vector);
+    literalsOffset = buffer.CreateVectorOfStrings(literals_vector);
 
     return {};
 }

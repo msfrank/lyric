@@ -197,24 +197,6 @@ lyric_object::internal::ObjectReader::numExistentials() const
     return m_object->existentials() ? m_object->existentials()->size() : 0;
 }
 
-const lyo1::LiteralDescriptor *
-lyric_object::internal::ObjectReader::getLiteral(tu_uint32 index) const
-{
-    if (m_object == nullptr)
-        return nullptr;
-    if (m_object->literals() && index < m_object->literals()->size())
-        return m_object->literals()->Get(index);
-    return nullptr;
-}
-
-tu_uint32
-lyric_object::internal::ObjectReader::numLiterals() const
-{
-    if (m_object == nullptr)
-        return 0;
-    return m_object->literals() ? m_object->literals()->size() : 0;
-}
-
 const lyo1::CallDescriptor *
 lyric_object::internal::ObjectReader::getCall(tu_uint32 index) const
 {
@@ -577,6 +559,24 @@ lyric_object::internal::ObjectReader::getPlugin() const
     if (m_object->plugin() == nullptr)
         return nullptr;
     return m_object->plugin();
+}
+
+std::string_view
+lyric_object::internal::ObjectReader::getString(tu_uint32 index) const
+{
+    if (m_object == nullptr)
+        return {};
+    if (m_object->strings() && index < m_object->strings()->size())
+        return m_object->strings()->Get(index)->string_view();
+    return {};
+}
+
+tu_uint32
+lyric_object::internal::ObjectReader::numStrings() const
+{
+    if (m_object == nullptr)
+        return 0;
+    return m_object->strings() ? m_object->strings()->size() : 0;
 }
 
 const uint8_t *

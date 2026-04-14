@@ -1712,7 +1712,7 @@ BuilderState::toObject() const
     std::vector<flatbuffers::Offset<lyo1::ProtocolDescriptor>> protocols_vector;
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> symbols_vector;
     std::vector<flatbuffers::Offset<lyo1::SortedSymbolIdentifier>> sorted_symbol_identifiers_vector;
-    std::vector<flatbuffers::Offset<lyo1::LiteralDescriptor>> literals_vector;
+    std::vector<std::string> strings_vector;
     std::vector<uint8_t> bytecode;
 
     // write the type descriptors
@@ -1996,14 +1996,6 @@ BuilderState::toObject() const
             buffer, fb_fullyQualifiedName, iterator->second));
     }
 
-    // write the literal descriptors
-    for (auto iterator = strings.cbegin(); iterator != strings.cend(); iterator++) {
-        const auto &utf8 = *iterator;
-        auto str = buffer.CreateString(utf8.data(), utf8.size());
-        auto value = lyo1::CreateStringValue(buffer, str);
-        literals_vector.push_back(lyo1::CreateLiteralDescriptor(buffer, lyo1::Value::StringValue, value.Union()));
-    }
-
     // write the plugin descriptor
     flatbuffers::Offset<lyo1::PluginDescriptor> pluginOffset = 0;
     auto pluginPath = location.getPath();
@@ -2034,7 +2026,7 @@ BuilderState::toObject() const
     auto enumsOffset = buffer.CreateVector(enums_vector);
     auto protocolsOffset = buffer.CreateVector(protocols_vector);
     auto symbolsOffset = buffer.CreateVector(symbols_vector);
-    auto literalsOffset = buffer.CreateVector(literals_vector);
+    auto stringsOffset = buffer.CreateVectorOfStrings(strings);
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
     // serialize the symbol table
@@ -2064,10 +2056,10 @@ BuilderState::toObject() const
     objectBuilder.add_enums(enumsOffset);
     objectBuilder.add_protocols(protocolsOffset);
     objectBuilder.add_symbols(symbolsOffset);
-    objectBuilder.add_literals(literalsOffset);
     objectBuilder.add_plugin(pluginOffset);
     objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);
     objectBuilder.add_symbol_table(symbolTableOffset.Union());
+    objectBuilder.add_strings(stringsOffset);
     objectBuilder.add_bytecode(bytecodeOffset);
     auto object = objectBuilder.Finish();
     buffer.Finish(object, lyo1::ObjectIdentifier());

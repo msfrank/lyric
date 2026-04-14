@@ -7,7 +7,7 @@ namespace lyric_runtime {
 
     class UrlRef final : public AbstractRef {
     public:
-        UrlRef(const ExistentialTable *etable, const LiteralCell &literal);
+        UrlRef(const ExistentialTable *etable, std::string_view literal);
         UrlRef(const ExistentialTable *etable, const tempo_utils::Url &url);
         ~UrlRef() override;
 
@@ -49,7 +49,6 @@ namespace lyric_runtime {
 
     private:
         const ExistentialTable *m_etable;
-        bool m_owned;
         tempo_utils::Url m_url;
         bool m_reachable;
     };

@@ -33,9 +33,6 @@ namespace lyric_object::internal {
         const lyo1::ExistentialDescriptor *getExistential(tu_uint32 index) const;
         tu_uint32 numExistentials() const;
 
-        const lyo1::LiteralDescriptor *getLiteral(tu_uint32 index) const;
-        tu_uint32 numLiterals() const;
-
         const lyo1::CallDescriptor *getCall(tu_uint32 index) const;
         tu_uint32 numCalls() const;
 
@@ -91,6 +88,9 @@ namespace lyric_object::internal {
 
         bool hasPlugin() const;
         const lyo1::PluginDescriptor *getPlugin() const;
+
+        std::string_view getString(tu_uint32 index) const;
+        tu_uint32 numStrings() const;
 
         const uint8_t *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;

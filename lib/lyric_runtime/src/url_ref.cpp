@@ -6,28 +6,20 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, const LiteralCell &literal)
+lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, std::string_view literal)
     : m_etable(etable),
-      m_owned(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (literal.type == LiteralCellType::UTF8);
-
-    m_owned = false;
-    const auto &utf8 = literal.literal.utf8;
-    std::string_view sv(utf8.data, utf8.size);
-    m_url = tempo_utils::Url::fromString(sv);
+    m_url = tempo_utils::Url::fromString(literal);
 }
 
 lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, const tempo_utils::Url &url)
     : m_etable(etable),
-      m_owned(true),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (url.isValid());
-    m_owned = true;
     m_url = url;
 }
 

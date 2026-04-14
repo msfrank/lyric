@@ -3,14 +3,12 @@
 
 #include <flatbuffers/flatbuffers.h>
 
-#include <lyric_object/generated/object.h>
-
 #include "../literal_cache.h"
 #include "../object_writer.h"
 
 namespace lyric_assembler::internal {
 
-    using LiteralsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::LiteralDescriptor>>>;
+    using LiteralsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>>;
 
     tempo_utils::Status write_literals(
         const std::vector<const LiteralHandle *> &literals,

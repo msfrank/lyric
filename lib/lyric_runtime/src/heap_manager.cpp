@@ -41,9 +41,8 @@ lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
     auto *sp = currentCoro->peekSP();
     TU_ASSERT (sp != nullptr);
 
-    LiteralCell literal;
     tempo_utils::Status status;
-    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    auto literal = m_segmentManager->resolveString(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
     auto *instance = new StringRef(m_preludeTables.StringTable, literal);
@@ -84,9 +83,8 @@ lyric_runtime::HeapManager::loadLiteralUrlOntoStack(tu_uint32 address)
     auto *sp = currentCoro->peekSP();
     TU_ASSERT (sp != nullptr);
 
-    LiteralCell literal;
     tempo_utils::Status status;
-    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    auto literal = m_segmentManager->resolveString(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
     auto *instance = new UrlRef(m_preludeTables.UrlTable, literal);
@@ -127,9 +125,8 @@ lyric_runtime::HeapManager::loadLiteralBytesOntoStack(tu_uint32 address)
     auto *sp = currentCoro->peekSP();
     TU_ASSERT (sp != nullptr);
 
-    LiteralCell literal;
     tempo_utils::Status status;
-    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    auto literal = m_segmentManager->resolveString(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
     auto *instance = new BytesRef(m_preludeTables.BytesTable, literal);

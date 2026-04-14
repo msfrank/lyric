@@ -35,12 +35,11 @@ apply_string(const lyric_object::OpCell &op, ImportProcData &data)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
-    auto literal = data.object.getLiteral(op.operands.address_u32.address);
-    if (literal.getValueType() != lyric_object::ValueType::String)
+    auto literal = data.object.getString(op.operands.address_u32.address);
+    if (literal.empty())
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid string literal");
-    std::string str(literal.stringValue());
-
+    std::string str(literal);
     return data.fragment->loadString(str);
 }
 
@@ -51,11 +50,11 @@ apply_url(const lyric_object::OpCell &op, ImportProcData &data)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
-    auto literal = data.object.getLiteral(op.operands.address_u32.address);
-    if (literal.getValueType() != lyric_object::ValueType::Url)
+    auto literal = data.object.getString(op.operands.address_u32.address);
+    if (literal.empty())
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid url literal");
-    auto url = tempo_utils::Url::fromString(literal.stringValue());
+    auto url = tempo_utils::Url::fromString(literal);
 
     return data.fragment->loadUrl(url);
 }
@@ -67,45 +66,46 @@ apply_literal(const lyric_object::OpCell &op, ImportProcData &data)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
-    auto *literalCache = data.state->literalCache();
-
-    auto literal = data.object.getLiteral(op.operands.address_u32.address);
-
-    lyric_assembler::LiteralHandle *literalHandle;
-
-    switch (literal.getValueType()) {
-        case lyric_object::ValueType::String: {
-            std::string str(literal.stringValue());
-            return data.fragment->loadString(str);
-        }
-        case lyric_object::ValueType::Url: {
-            auto url = tempo_utils::Url::fromString(literal.stringValue());
-            return data.fragment->loadUrl(url);
-        }
-        case lyric_object::ValueType::Nil:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeNil());
-            break;
-        case lyric_object::ValueType::Undef:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeUndef());
-            break;
-        case lyric_object::ValueType::Char:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeChar(literal.charValue()));
-            break;
-        case lyric_object::ValueType::Bool:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeBool(literal.boolValue()));
-            break;
-        case lyric_object::ValueType::Int64:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeInteger(literal.int64Value()));
-            break;
-        case lyric_object::ValueType::Float64:
-            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeFloat(literal.float64Value()));
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid literal");
-    }
-
-    return data.fragment->loadLiteral(literalHandle);
+    TU_UNREACHABLE();
+    // auto *literalCache = data.state->literalCache();
+    //
+    // auto literal = data.object.getLiteral(op.operands.address_u32.address);
+    //
+    // lyric_assembler::LiteralHandle *literalHandle;
+    //
+    // switch (literal.getValueType()) {
+    //     case lyric_object::ValueType::String: {
+    //         std::string str(literal.stringValue());
+    //         return data.fragment->loadString(str);
+    //     }
+    //     case lyric_object::ValueType::Url: {
+    //         auto url = tempo_utils::Url::fromString(literal.stringValue());
+    //         return data.fragment->loadUrl(url);
+    //     }
+    //     case lyric_object::ValueType::Nil:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeNil());
+    //         break;
+    //     case lyric_object::ValueType::Undef:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeUndef());
+    //         break;
+    //     case lyric_object::ValueType::Char:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeChar(literal.charValue()));
+    //         break;
+    //     case lyric_object::ValueType::Bool:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeBool(literal.boolValue()));
+    //         break;
+    //     case lyric_object::ValueType::Int64:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeInteger(literal.int64Value()));
+    //         break;
+    //     case lyric_object::ValueType::Float64:
+    //         TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeFloat(literal.float64Value()));
+    //         break;
+    //     default:
+    //         return lyric_assembler::AssemblerStatus::forCondition(
+    //             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid literal");
+    // }
+    //
+    // return data.fragment->loadLiteral(literalHandle);
 }
 
 static tempo_utils::Status
