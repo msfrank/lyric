@@ -121,6 +121,7 @@ namespace lyric_runtime {
             std::shared_ptr<Promise> promise,
             tu_uint64 deadline = 0);
 
+        tempo_utils::Status registerTarget(std::shared_ptr<Promise> promise);
         tempo_utils::Status registerWorker(Task *workerTask, std::shared_ptr<Promise> promise);
         tempo_utils::Status registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
         tempo_utils::Status registerRead(

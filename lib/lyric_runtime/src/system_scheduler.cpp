@@ -512,7 +512,7 @@ lyric_runtime::SystemScheduler::registerAsync(
     auto *waiter = new Waiter(async, promise);
 
     // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
+    promise->pending(waiter);
 
     // link the waiter to the async handle
     handle->data = waiter;
@@ -522,6 +522,33 @@ lyric_runtime::SystemScheduler::registerAsync(
 
     // return async handle
     return async;
+}
+
+tempo_utils::Status
+lyric_runtime::SystemScheduler::registerTarget(std::shared_ptr<Promise> promise)
+{
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
+
+    // initialize the async handle
+    auto *handle = (uv_async_t *) malloc(sizeof(uv_async_t));
+    uv_async_init(m_loop, handle, on_async_complete);
+    auto async = std::make_shared<AsyncHandle>(handle, on_async_close);
+
+    // allocate a new waiter
+    auto *waiter = new Waiter(async, promise);
+
+    // link the waiter and the async handle to the promise and set the promise state to Target
+    promise->target(async, waiter);
+
+    // link the waiter to the async handle
+    handle->data = waiter;
+
+    // attach waiter to the end of the global waiters list
+    attachWaiter(waiter);
+
+    // return async handle
+    return {};
 }
 
 void
@@ -546,7 +573,7 @@ lyric_runtime::SystemScheduler::registerWorker(Task *workerTask, std::shared_ptr
     auto *waiter = new Waiter((uv_handle_t *) monitor, promise);
 
     // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
+    promise->pending(waiter);
 
     // link the waiter to the async handle
     monitor->data = waiter;
@@ -582,7 +609,7 @@ lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_pt
     auto *waiter = new Waiter((uv_handle_t *) timer, promise);
 
     // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
+    promise->pending(waiter);
 
     // link the waiter to the timer handle
     timer->data = waiter;
@@ -629,7 +656,7 @@ lyric_runtime::SystemScheduler::registerRead(
     auto *waiter = new Waiter(req, promise);
 
     // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
+    promise->pending(waiter);
 
     // link the waiter to the fs request
     req->data = waiter;
@@ -673,7 +700,7 @@ lyric_runtime::SystemScheduler::registerWrite(
     auto *waiter = new Waiter(req, promise);
 
     // link the waiter to the promise and set the promise state to Pending
-    promise->attach(waiter);
+    promise->pending(waiter);
 
     // link the waiter to the fs request
     req->data = waiter;

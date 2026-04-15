@@ -127,3 +127,238 @@ TEST_F (SystemScheduler, RegisterTimer)
     auto result = promise->getResult();
     ASSERT_THAT (result, DataCellBool(true));
 }
+
+class AllOfOps : public lyric_runtime::PromiseOperations {
+public:
+    void onPartial(
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsBegin,
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsEnd,
+        std::shared_ptr<lyric_runtime::AsyncHandle> &done) override {
+        int numdeps = 0;
+        int numdone = 0;
+        for (; depsBegin != depsEnd; ++depsBegin) {
+            numdeps++;
+            switch ((*depsBegin)->getState()) {
+                case lyric_runtime::Promise::State::Completed:
+                case lyric_runtime::Promise::State::Rejected:
+                    numdone++;
+                    break;
+                default:
+                    break;
+            }
+        }
+        TU_LOG_INFO << numdone << " of " << numdeps << " completed";
+        if (numdone == numdeps) {
+            TU_LOG_INFO << "sending signal";
+            done->sendSignal();
+        }
+    }
+    void onAccept(
+        lyric_runtime::Promise *promise,
+        const lyric_runtime::Waiter *waiter,
+        lyric_runtime::InterpreterState *state) override
+    {
+        TU_LOG_INFO << "all deps completed";
+        promise->complete(lyric_runtime::DataCell(true));
+        auto *loop = state->mainLoop();
+        uv_stop(loop);
+    }
+};
+
+void on_allof_accept(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
+{
+    promise->complete(lyric_runtime::DataCell(true));
+}
+
+TEST_F (SystemScheduler, RegisterAllOfTarget)
+{
+    auto *systemScheduler = state->systemScheduler();
+    auto *loop = systemScheduler->systemLoop();
+
+    auto timer1 = lyric_runtime::Promise::create(on_allof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(25, timer1), tempo_test::IsOk());
+
+    auto timer2 = lyric_runtime::Promise::create(on_allof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(50, timer2), tempo_test::IsOk());
+
+    auto timer3 = lyric_runtime::Promise::create(on_allof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(100, timer3), tempo_test::IsOk());
+
+    auto ops = std::make_unique<AllOfOps>();
+    auto target = lyric_runtime::Promise::create(std::move(ops));
+    ASSERT_THAT (systemScheduler->registerTarget(target), tempo_test::IsOk());
+
+    ASSERT_THAT (timer1->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer2->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer3->forward(target), tempo_test::IsOk());
+
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    std::vector timers{timer1->getState(), timer2->getState(), timer3->getState()};
+    ASSERT_THAT (timers, ::testing::Each(lyric_runtime::Promise::State::Completed));
+    ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
+
+    auto result = target->getResult();
+    ASSERT_THAT (result, DataCellBool(true));
+}
+
+class AnyOfOps : public lyric_runtime::PromiseOperations {
+public:
+    void onPartial(
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsBegin,
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsEnd,
+        std::shared_ptr<lyric_runtime::AsyncHandle> &done) override {
+        int numdeps = 0;
+        int numdone = 0;
+        for (; depsBegin != depsEnd; ++depsBegin) {
+            numdeps++;
+            switch ((*depsBegin)->getState()) {
+                case lyric_runtime::Promise::State::Completed:
+                case lyric_runtime::Promise::State::Rejected:
+                    numdone++;
+                    break;
+                default:
+                    break;
+            }
+        }
+        TU_LOG_INFO << numdone << " of " << numdeps << " completed";
+        if (numdone > 0) {
+            TU_LOG_INFO << "sending signal";
+            done->sendSignal();
+        }
+    }
+    void onAccept(
+        lyric_runtime::Promise *promise,
+        const lyric_runtime::Waiter *waiter,
+        lyric_runtime::InterpreterState *state) override
+    {
+        TU_LOG_INFO << "any deps completed";
+        promise->complete(lyric_runtime::DataCell(true));
+        auto *loop = state->mainLoop();
+        uv_stop(loop);
+    }
+};
+
+void on_anyof_accept(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
+{
+    promise->complete(lyric_runtime::DataCell(true));
+}
+
+TEST_F (SystemScheduler, RegisterAnyOfTarget)
+{
+    auto *systemScheduler = state->systemScheduler();
+    auto *loop = systemScheduler->systemLoop();
+
+    auto timer1 = lyric_runtime::Promise::create(on_anyof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(25, timer1), tempo_test::IsOk());
+
+    auto timer2 = lyric_runtime::Promise::create(on_anyof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(50, timer2), tempo_test::IsOk());
+
+    auto timer3 = lyric_runtime::Promise::create(on_anyof_accept);
+    ASSERT_THAT (systemScheduler->registerTimer(100, timer3), tempo_test::IsOk());
+
+    auto ops = std::make_unique<AnyOfOps>();
+    auto target = lyric_runtime::Promise::create(std::move(ops));
+    ASSERT_THAT (systemScheduler->registerTarget(target), tempo_test::IsOk());
+
+    ASSERT_THAT (timer1->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer2->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer3->forward(target), tempo_test::IsOk());
+
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    std::vector timers{timer1->getState(), timer2->getState(), timer3->getState()};
+    ASSERT_THAT (timers, ::testing::Contains(lyric_runtime::Promise::State::Completed));
+    ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
+
+    auto result = target->getResult();
+    ASSERT_THAT (result, DataCellBool(true));
+}
+
+class FirstCompletedOps : public lyric_runtime::PromiseOperations {
+public:
+    void onPartial(
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsBegin,
+        std::vector<std::shared_ptr<lyric_runtime::Promise>>::const_iterator depsEnd,
+        std::shared_ptr<lyric_runtime::AsyncHandle> &done) override {
+        int numdeps = 0;
+        int numcompleted = 0;
+        int numrejected = 0;
+        for (; depsBegin != depsEnd; ++depsBegin) {
+            const auto &promise = *depsBegin;
+            numdeps++;
+            switch (promise->getState()) {
+                case lyric_runtime::Promise::State::Completed: {
+                    if (promise->getResult() == lyric_runtime::DataCell(true)) {
+                        numcompleted++;
+                        break;
+                    }
+                    [[fallthrough]];
+                }
+                case lyric_runtime::Promise::State::Rejected:
+                    numrejected++;
+                    break;
+                default:
+                    break;
+            }
+        }
+        TU_LOG_INFO << numcompleted << " completed, " << numrejected << " rejected out of " << numdeps << " total";
+        if (numcompleted > 0) {
+            TU_LOG_INFO << "sending signal";
+            done->sendSignal();
+        }
+    }
+    void onAccept(
+        lyric_runtime::Promise *promise,
+        const lyric_runtime::Waiter *waiter,
+        lyric_runtime::InterpreterState *state) override
+    {
+        TU_LOG_INFO << "first dep completed";
+        promise->complete(lyric_runtime::DataCell(true));
+        auto *loop = state->mainLoop();
+        uv_stop(loop);
+    }
+};
+
+void on_first_completed_true(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
+{
+    promise->complete(lyric_runtime::DataCell(true));
+}
+
+void on_first_completed_false(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
+{
+    promise->complete(lyric_runtime::DataCell(false));
+}
+
+TEST_F (SystemScheduler, RegisterFirstCompletedTarget)
+{
+    auto *systemScheduler = state->systemScheduler();
+    auto *loop = systemScheduler->systemLoop();
+
+    auto timer1 = lyric_runtime::Promise::create(on_first_completed_false);
+    ASSERT_THAT (systemScheduler->registerTimer(25, timer1), tempo_test::IsOk());
+
+    auto timer2 = lyric_runtime::Promise::create(on_first_completed_true);
+    ASSERT_THAT (systemScheduler->registerTimer(50, timer2), tempo_test::IsOk());
+
+    auto timer3 = lyric_runtime::Promise::create(on_first_completed_false);
+    ASSERT_THAT (systemScheduler->registerTimer(100, timer3), tempo_test::IsOk());
+
+    auto ops = std::make_unique<FirstCompletedOps>();
+    auto target = lyric_runtime::Promise::create(std::move(ops));
+    ASSERT_THAT (systemScheduler->registerTarget(target), tempo_test::IsOk());
+
+    ASSERT_THAT (timer1->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer2->forward(target), tempo_test::IsOk());
+    ASSERT_THAT (timer3->forward(target), tempo_test::IsOk());
+
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    std::vector timers{timer1->getState(), timer2->getState(), timer3->getState()};
+    ASSERT_THAT (timers, ::testing::Contains(lyric_runtime::Promise::State::Completed));
+    ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
+
+    auto result = target->getResult();
+    ASSERT_THAT (result, DataCellBool(true));
+}

@@ -2,8 +2,18 @@
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/promise.h>
+#include <lyric_runtime/system_scheduler.h>
 
-lyric_runtime::Promise::Promise(std::unique_ptr<PromiseOperations> ops)
+void
+lyric_runtime::PromiseOperations::onPartial(
+    std::vector<std::shared_ptr<Promise>>::const_iterator depsBegin,
+    std::vector<std::shared_ptr<Promise>>::const_iterator depsEnd,
+    std::shared_ptr<AsyncHandle> &done)
+{
+    done->sendSignal();
+}
+
+lyric_runtime::Promise::Promise(std::unique_ptr<PromiseOperations> ops, Private)
     : m_ops(std::move(ops)),
       m_state(State::Initial),
       m_waiter(nullptr)
@@ -41,7 +51,7 @@ private:
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::create(std::unique_ptr<PromiseOperations> ops)
 {
-    return std::make_shared<Promise>(std::move(ops));
+    return std::make_shared<Promise>(std::move(ops), Private{});
 }
 
 /**
@@ -59,7 +69,7 @@ lyric_runtime::Promise::create(AcceptCallback accept)
     } else {
         ops = std::make_unique<PromiseOperations>();
     }
-    return std::make_shared<Promise>(std::move(ops));
+    return std::make_shared<Promise>(std::move(ops), Private{});
 }
 
 /**
@@ -103,23 +113,74 @@ lyric_runtime::Promise::getResult() const
     return m_result;
 }
 
-void
-lyric_runtime::Promise::attach(Waiter *waiter)
+tempo_utils::Status
+lyric_runtime::Promise::pending(Waiter *waiter)
 {
-    TU_ASSERT (waiter != nullptr);
-    TU_ASSERT (m_state == State::Initial);
+    TU_NOTNULL (waiter);
+    if (m_state != State::Initial)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid promise state");
     TU_ASSERT (m_waiter == nullptr);
     m_waiter = waiter;
     m_state = State::Pending;
+    return {};
 }
 
-void
+tempo_utils::Status
+lyric_runtime::Promise::target(std::shared_ptr<AsyncHandle> async, Waiter *waiter)
+{
+    TU_NOTNULL (waiter);
+    if (m_state != State::Initial)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid promise state");
+    TU_ASSERT (m_waiter == nullptr);
+    TU_ASSERT (m_async == nullptr);
+    m_waiter = waiter;
+    m_async = std::move(async);
+    m_state = State::Target;
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::Promise::forward(std::shared_ptr<Promise> &target)
+{
+    TU_NOTNULL (target);
+    if (target->m_state != State::Target)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid target promise");
+    if (!m_target.expired())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "promise has already been forwarded");
+    switch (m_state) {
+        case State::Pending:
+        case State::Target:
+            m_target = target;
+            target->m_dependencies.push_back(shared_from_this());
+            m_state = State::Forwarded;
+            return {};
+        default:
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid promise state");
+    }
+}
+
+tempo_utils::Status
 lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 {
     TU_NOTNULL (systemScheduler);
-    TU_NOTNULL (m_waiter);
-    TU_ASSERT (m_state == State::Pending);
-    systemScheduler->await(m_waiter);
+    if (m_waiter == nullptr)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "promise has no waiter");
+    switch (m_state) {
+        case State::Pending:
+        case State::Target:
+            systemScheduler->await(m_waiter);
+            m_state = State::Waiting;
+            return {};
+        default:
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid promise state");
+    }
 }
 
 void
@@ -137,21 +198,84 @@ lyric_runtime::Promise::adapt(BytecodeInterpreter *interp, InterpreterState *sta
 void
 lyric_runtime::Promise::setReachable()
 {
+    for (const auto &dep : m_dependencies) {
+        dep->setReachable();
+    }
     m_ops->setReachable();
 }
 
-void
-lyric_runtime::Promise::complete(const DataCell &result)
+tempo_utils::Status
+lyric_runtime::Promise::notify()
 {
-    TU_ASSERT (result.isValid());
-    m_result = result;
-    m_state = State::Completed;
+    auto target = m_target.lock();
+    if (target == nullptr)
+        return {};
+    switch (target->m_state) {
+        // cannot notify a promise in initial state
+        case State::Initial:
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid promise state");
+
+        // if target is already finished then do nothing
+        case State::Completed:
+        case State::Rejected:
+            return {};
+
+        // otherwise call onPartial to determine whether target can be resolved
+        default: {
+            auto begin = target->m_dependencies.cbegin();
+            auto end = target->m_dependencies.cend();
+            auto &done = target->m_async;
+            target->m_ops->onPartial(begin, end, done);
+            break;
+        }
+    }
+
+    return {};
 }
 
-void
+tempo_utils::Status
+lyric_runtime::Promise::complete(const DataCell &result)
+{
+    if (!result.isValid())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid promise result");
+    switch (m_state) {
+        case State::Pending:
+        case State::Target:
+        case State::Waiting:
+            m_result = result;
+            m_state = State::Completed;
+            return {};
+        case State::Forwarded:
+            m_result = result;
+            m_state = State::Completed;
+            return notify();
+        default:
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid promise state");
+    }
+}
+
+tempo_utils::Status
 lyric_runtime::Promise::reject(const DataCell &result)
 {
-    TU_ASSERT (result.type == DataCellType::STATUS);
-    m_result = result;
-    m_state = State::Rejected;
+    if (result.type != DataCellType::STATUS)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid promise result");
+    switch (m_state) {
+        case State::Pending:
+        case State::Target:
+        case State::Waiting:
+            m_result = result;
+            m_state = State::Rejected;
+            return {};
+        case State::Forwarded:
+            m_result = result;
+            m_state = State::Rejected;
+            return notify();
+        default:
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid promise state");
+    }
 }
