@@ -107,6 +107,10 @@ lyric_common::TypeDef::forIntersection(const std::vector<TypeDef> &members)
         }
     }
 
+    // special case: if members has one element then return the element
+    if (sortedMembers.size() == 1)
+        return sortedMembers.front();
+
     // sort the members
     std::sort(sortedMembers.begin(), sortedMembers.end(), member_cmp);
 
@@ -150,6 +154,10 @@ lyric_common::TypeDef::forUnion(const std::vector<TypeDef> &members)
                     "invalid union member {}", member.toString());
         }
     }
+
+    // special case: if members has one element then return the element
+    if (sortedMembers.size() == 1)
+        return sortedMembers.front();
 
     // sort the members
     std::sort(sortedMembers.begin(), sortedMembers.end(), member_cmp);

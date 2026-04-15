@@ -45,44 +45,81 @@ lyric_compiler::ExpectHandler::after(
     //
     auto *fundamentalCache = driver->getFundamentalCache();
     auto ErrorType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Error);
-
     auto *typeSystem = driver->getTypeSystem();
 
     lyric_common::TypeDef successType;
     std::vector<lyric_common::TypeDef> errorMembers;
 
-    // determine the result type
-    if (successOrErrorType.getType() == lyric_common::TypeDefType::Union) {
-        std::vector<lyric_common::TypeDef> successMembers;
-        for (const auto &memberType : successOrErrorType.getUnionMembers()) {
+    switch (successOrErrorType.getType()) {
+
+        case lyric_common::TypeDefType::Union: {
+            std::vector<lyric_common::TypeDef> successMembers;
+            lyric_common::TypeDef ambiguousType;
+
+            for (const auto &memberType : successOrErrorType.getUnionMembers()) {
+                lyric_runtime::TypeComparison cmp;
+                TU_ASSIGN_OR_RETURN (cmp, typeSystem->compareAssignable(ErrorType, memberType));
+                switch (cmp) {
+                    case lyric_runtime::TypeComparison::SUPER:
+                        ambiguousType = memberType;
+                        break;
+                    case lyric_runtime::TypeComparison::EQUAL:
+                    case lyric_runtime::TypeComparison::EXTENDS:
+                        errorMembers.push_back(memberType);
+                        break;
+                    case lyric_runtime::TypeComparison::DISJOINT:
+                        successMembers.push_back(memberType);
+                        break;
+                }
+            }
+
+            if (ambiguousType.isValid()) {
+                successMembers.push_back(ambiguousType);
+                errorMembers.push_back(ErrorType);
+            }
+
+            if (errorMembers.empty())
+                return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                    "incompatible operand type {} for expect expression; no error type declared",
+                    successOrErrorType.toString());
+
+            if (successMembers.empty())
+                return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                    "incompatible operand type {} for expect expression; no success type declared",
+                    successOrErrorType.toString());
+
+            TU_ASSIGN_OR_RETURN (successType, lyric_common::TypeDef::forUnion(successMembers));
+            break;
+        }
+
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder: {
             lyric_runtime::TypeComparison cmp;
-            TU_ASSIGN_OR_RETURN (cmp, typeSystem->compareAssignable(ErrorType, memberType));
+
+            TU_ASSIGN_OR_RETURN (cmp, typeSystem->compareAssignable(ErrorType, successOrErrorType));
             switch (cmp) {
-                case lyric_runtime::TypeComparison::SUPER:
-                    return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                        "operand type member {} is ambiguous for expect expression", memberType.toString());
+                case lyric_runtime::TypeComparison::SUPER: {
+                    successType = successOrErrorType;
+                    errorMembers.push_back(ErrorType);
+                    break;
+                }
                 case lyric_runtime::TypeComparison::EQUAL:
                 case lyric_runtime::TypeComparison::EXTENDS:
-                    errorMembers.push_back(memberType);
-                    break;
+                    return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                        "incompatible operand type {} for expect expression; no success type declared",
+                        successOrErrorType.toString());
                 case lyric_runtime::TypeComparison::DISJOINT:
-                    successMembers.push_back(memberType);
-                    break;
+                    return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                        "incompatible operand type {} for expect expression; no error type declared",
+                        successOrErrorType.toString());
             }
+            break;
         }
-        if (errorMembers.empty())
+
+        default:
             return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "incompatible operand type {} for expect expression; no error type declared",
+                "incompatible operand type {} for expect expression; operand must be a union type",
                 successOrErrorType.toString());
-        if (successMembers.empty())
-            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "incompatible operand type {} for expect expression; no success type declared",
-                successOrErrorType.toString());
-        TU_ASSIGN_OR_RETURN (successType, lyric_common::TypeDef::forUnion(successMembers));
-    } else {
-        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-            "incompatible operand type {} for expect expression; operand must be a union type",
-            successOrErrorType.toString());
     }
 
     auto *procHandle = block->blockProc();
