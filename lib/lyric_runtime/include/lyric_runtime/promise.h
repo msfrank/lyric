@@ -38,10 +38,6 @@ namespace lyric_runtime {
             std::vector<std::shared_ptr<Promise>>::const_iterator depsEnd,
             std::shared_ptr<AsyncHandle> &done);
         /**
-         * Callback invoked to resolve the result of the future. The default implementation does nothing.
-         */
-        virtual void onAdapt(Promise *promise, BytecodeInterpreter *interp, InterpreterState *state) {};
-        /**
          * Callback invoked to set refs reachable during GC. The default implementation does nothing.
          */
         virtual void setReachable() {};
@@ -84,7 +80,7 @@ namespace lyric_runtime {
         tempo_utils::Status forward(std::shared_ptr<Promise> &target);
 
         void accept(const Waiter *waiter, InterpreterState *state);
-        void adapt(BytecodeInterpreter *interp, InterpreterState *state);
+
         void setReachable();
 
         tempo_utils::Status complete(const DataCell &result);

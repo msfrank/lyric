@@ -190,12 +190,6 @@ lyric_runtime::Promise::accept(const Waiter *waiter, InterpreterState *state)
 }
 
 void
-lyric_runtime::Promise::adapt(BytecodeInterpreter *interp, InterpreterState *state)
-{
-    m_ops->onAdapt(this, interp, state);
-}
-
-void
 lyric_runtime::Promise::setReachable()
 {
     for (const auto &dep : m_dependencies) {
