@@ -183,12 +183,6 @@ lyric_runtime::ProtocolRef::setField(const DataCell &field, const DataCell &valu
 }
 
 bool
-lyric_runtime::ProtocolRef::uriValue(tempo_utils::Url &url) const
-{
-    return false;
-}
-
-bool
 lyric_runtime::ProtocolRef::iteratorValid()
 {
     return false;

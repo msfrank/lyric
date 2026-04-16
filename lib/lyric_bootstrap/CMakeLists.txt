@@ -36,9 +36,7 @@ add_library(prelude-plugin STATIC
     plugin/status_traps.h
     plugin/string_traps.cpp
     plugin/string_traps.h
-    plugin/url_traps.cpp
-    plugin/url_traps.h
-    )
+)
 
 set_target_properties(prelude-plugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -138,8 +136,6 @@ add_executable(prelude-builder
     object/compile_type.h
     object/compile_unwrap.cpp
     object/compile_unwrap.h
-    object/compile_url.cpp
-    object/compile_url.h
     object/compile_varargs.cpp
     object/compile_varargs.h
     object/lib_builder.cpp

@@ -57,9 +57,9 @@ CharLiteral                 : '\'' ( EscapeSequence | ~('\\'|'"') ) '\'' ;
 
 StringLiteral               : '"' ( EscapeSequence | ~('\\'|'"') )* '"' ;
 
-// a url literal is any sequence of characters (including escape sequences) enclosed in backticks
+// a raw literal is any sequence of characters enclosed in backticks
 
-UrlLiteral                  : '`' ( EscapeSequence | ~('\\'|'`') )* '`' ;
+RawLiteral                  : '`' ( ~'`' )* '`' ;
 
 
 fragment

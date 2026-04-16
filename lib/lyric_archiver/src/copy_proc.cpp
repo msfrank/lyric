@@ -32,8 +32,21 @@ struct CopyProcData {
 static tempo_utils::Status
 apply_literal(const lyric_object::OpCell &op, CopyProcData &data)
 {
-    return lyric_archiver::ArchiverStatus::forCondition(
-        lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid synthetic type");
+    const auto &operands = op.operands.address_u32;
+    auto literal = data.object.getString(operands.address);
+    switch (op.opcode) {
+        case lyric_object::Opcode::OP_STRING: {
+            std::string str(literal);
+            return data.fragment->loadString(str);
+        }
+        case lyric_object::Opcode::OP_BYTES: {
+            std::span bytes((const tu_uint8 *) literal.data(), literal.size());
+            return data.fragment->loadBytes(bytes);
+        }
+        default:
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid literal type");
+    }
 }
 
 static tempo_utils::Status
@@ -548,7 +561,6 @@ lyric_archiver::copy_proc(
 
             case lyric_object::Opcode::OP_BYTES:
             case lyric_object::Opcode::OP_STRING:
-            case lyric_object::Opcode::OP_URL:
                 TU_RETURN_IF_NOT_OK (apply_literal(op, data));
                 break;
 

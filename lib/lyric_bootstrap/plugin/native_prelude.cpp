@@ -15,9 +15,8 @@
 #include "singleton_ref.h"
 #include "status_traps.h"
 #include "string_traps.h"
-#include "url_traps.h"
 
-std::array<lyric_runtime::NativeTrap,59> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,58> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
@@ -76,7 +75,6 @@ std::array<lyric_runtime::NativeTrap,59> kPreludeTraps = {{
     { string_compare, "StringCompare", 0 },
     { string_length, "StringLength", 0 },
     { string_to_bytes, "StringToBytes", 0 },
-    { url_equals, "UrlEquals", 0 },
 }};
 
 bool

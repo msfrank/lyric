@@ -39,7 +39,6 @@ namespace lyric_runtime {
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode statusCode() override;
         std::string statusMessage() override;
-        bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;

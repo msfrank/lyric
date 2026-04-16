@@ -6,7 +6,6 @@
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_runtime/url_ref.h>
 #include <lyric_test/data_cell_matchers.h>
 #include <tempo_utils/memory_bytes.h>
 #include <tempo_utils/unicode.h>
@@ -27,12 +26,6 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const lyric_runtime::Data
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(const std::string &str)
     : m_type(MatcherType::DATA_CELL_STRING),
       m_str(str)
-{
-}
-
-lyric_test::matchers::DataCellMatcher::DataCellMatcher(const tempo_utils::Url &url)
-    : m_type(MatcherType::DATA_CELL_URL),
-      m_url(url)
 {
 }
 
@@ -89,14 +82,6 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
                 return false;
             return m_str == str;
         }
-        case MatcherType::DATA_CELL_URL: {
-            if (cell.type != lyric_runtime::DataCellType::URL)
-                return false;
-            tempo_utils::Url url;
-            if (!cell.data.url->uriValue(url))
-                return false;
-            return m_url == url;
-        }
         case MatcherType::DATA_CELL_BYTES: {
             if (cell.type != lyric_runtime::DataCellType::BYTES)
                 return false;
@@ -136,9 +121,6 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
         case MatcherType::DATA_CELL_STRING:
             *os << "cell contains string \"" << m_str << "\"";
             break;
-        case MatcherType::DATA_CELL_URL:
-            *os << "cell contains url " << m_url.toString();
-            break;
         case MatcherType::DATA_CELL_BYTES:
             *os << "cell contains bytes of length " << m_bytes->getSize();
             break;
@@ -159,7 +141,6 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::CHAR32:      *os << "cell contains chr cell"; break;
                 case lyric_runtime::DataCellType::BYTES:       *os << "cell contains bytes cell"; break;
                 case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
-                case lyric_runtime::DataCellType::URL:         *os << "cell contains url cell"; break;
                 case lyric_runtime::DataCellType::STATUS:      *os << "cell contains status cell"; break;
                 case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace cell"; break;
                 case lyric_runtime::DataCellType::PROTOCOL:    *os << "cell contains protocol cell"; break;
@@ -221,18 +202,6 @@ testing::Matcher<lyric_runtime::DataCell>
 lyric_test::matchers::DataCellString(std::string_view str)
 {
     return DataCellMatcher(std::string(str));
-}
-
-testing::Matcher<lyric_runtime::DataCell>
-lyric_test::matchers::DataCellUrl(const tempo_utils::Url &url)
-{
-    return DataCellMatcher(url);
-}
-
-testing::Matcher<lyric_runtime::DataCell>
-lyric_test::matchers::DataCellUrl(std::string_view str)
-{
-    return DataCellMatcher(tempo_utils::Url::fromString(str));
 }
 
 testing::Matcher<lyric_runtime::DataCell>

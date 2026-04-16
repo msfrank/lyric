@@ -42,7 +42,6 @@ namespace lyric_runtime {
         lyric_common::SymbolUrl getSymbolUrl() const override;
         bool getField(const DataCell &field, DataCell &value) const override;
         bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
-        bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;

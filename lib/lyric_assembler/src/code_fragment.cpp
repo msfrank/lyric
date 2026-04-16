@@ -226,15 +226,15 @@ lyric_assembler::CodeFragment::loadString(const std::string &str)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
+lyric_assembler::CodeFragment::loadBytes(std::span<const tu_uint8> bytes)
 {
     auto *state = m_procHandle->objectState();
     auto *literalCache = state->literalCache();
     LiteralHandle *literal;
-    TU_ASSIGN_OR_RETURN (literal, literalCache->getOrMakeLiteral(url));
+    TU_ASSIGN_OR_RETURN (literal, literalCache->getOrMakeLiteral(bytes));
 
     Statement statement;
-    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_URL, literal);
+    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_BYTES, literal);
     m_statements.push_back(std::move(statement));
     return {};
 }

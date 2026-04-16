@@ -238,7 +238,7 @@ lyric_object::ExistentialWalker::getIntrinsicType() const
         case lyo1::IntrinsicType::Float64:      return IntrinsicType::Float;
         case lyo1::IntrinsicType::Int64:        return IntrinsicType::Int;
         case lyo1::IntrinsicType::String:       return IntrinsicType::String;
-        case lyo1::IntrinsicType::Url:          return IntrinsicType::Url;
+        case lyo1::IntrinsicType::Bytes:        return IntrinsicType::Bytes;
         case lyo1::IntrinsicType::Class:        return IntrinsicType::Class;
         case lyo1::IntrinsicType::Concept:      return IntrinsicType::Concept;
         case lyo1::IntrinsicType::Instance:     return IntrinsicType::Instance;

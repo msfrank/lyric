@@ -181,7 +181,7 @@ lyric_compiler::ParamInit::decide(
         case lyric_schema::LyricAstId::Float:
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
-        case lyric_schema::LyricAstId::Url:
+        case lyric_schema::LyricAstId::Raw:
         case lyric_schema::LyricAstId::SymbolRef: {
             auto terminal = std::make_unique<TerminalFormBehavior>(
                 /* isSideEffect */ false, fragment, block, driver);

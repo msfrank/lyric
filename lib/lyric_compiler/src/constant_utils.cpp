@@ -145,7 +145,7 @@ lyric_compiler::constant_string(
 }
 
 tempo_utils::Status
-lyric_compiler::constant_url(
+lyric_compiler::constant_raw(
     const lyric_parser::ArchetypeNode *node,
     lyric_assembler::BlockHandle *block,
     lyric_assembler::CodeFragment *fragment,
@@ -157,11 +157,8 @@ lyric_compiler::constant_url(
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
 
-    // TODO: implement lyric_parser::parse_url_literal
-    std::string str;
-    TU_ASSIGN_OR_RETURN (str, lyric_parser::parse_string_literal(literalValue));
-    TU_RETURN_IF_NOT_OK (fragment->loadUrl(tempo_utils::Url::fromString(str)));
-    TU_LOG_VV << "immediate url `" << str << "`";
+    std::span bytes((const tu_uint8 *) literalValue.data(), literalValue.size());
+    TU_RETURN_IF_NOT_OK (fragment->loadBytes(bytes));
 
-    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Url));
+    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bytes));
 }

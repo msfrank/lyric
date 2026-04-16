@@ -549,8 +549,8 @@ numberLiteral           : decimalInteger
 
 charLiteral             : CharLiteral ;
 stringLiteral           : StringLiteral ;
-urlLiteral              : UrlLiteral ;
-textLiteral             : charLiteral | stringLiteral | urlLiteral ;
+rawLiteral              : RawLiteral ;
+textLiteral             : charLiteral | stringLiteral | rawLiteral ;
 
 
 trueLiteral             : TrueKeyword ;

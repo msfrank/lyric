@@ -48,7 +48,6 @@
 #include "compile_tuple.h"
 #include "compile_type.h"
 #include "compile_unwrap.h"
-#include "compile_url.h"
 #include "compile_varargs.h"
 
 #include "native_prelude.h"
@@ -82,9 +81,8 @@ main(int argc, char *argv[])
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
     auto *FloatExistential = declare_core_Float(state, IntrinsicExistential);
-    auto *BytesExistential = declare_core_Bytes(state, IntrinsicExistential);
     auto *StringExistential = declare_core_String(state, IntrinsicExistential);
-    auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
+    auto *BytesExistential = declare_core_Bytes(state, IntrinsicExistential);
 
     // declare Rest existential
     auto *RestExistential = declare_core_Rest(state, AnyExistential);
@@ -147,7 +145,6 @@ main(int argc, char *argv[])
     build_core_String(state, StringExistential, IntExistential->existentialType,
         CharExistential->existentialType, BytesExistential->existentialType,
         UndefExistential->existentialType);
-    build_core_Url(state, UrlExistential);
 
     // define Type existential
     build_core_Type(state, TypeExistential, IntExistential->existentialType,
@@ -215,14 +212,11 @@ main(int argc, char *argv[])
     build_core_FloatInstance(state, FloatExistential->existentialType, SingletonInstance,
         ArithmeticConcept, ComparisonConcept, EqualityConcept, OrderedConcept,
         IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_BytesInstance(state, BytesExistential->existentialType, SingletonInstance,
-        ComparisonConcept, EqualityConcept, OrderedConcept,
-        IntExistential->existentialType, BoolExistential->existentialType);
     build_core_StringInstance(state, StringExistential->existentialType, SingletonInstance,
         ComparisonConcept, EqualityConcept, OrderedConcept,
         CharExistential->existentialType, IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_UrlInstance(state, UrlExistential->existentialType, SingletonInstance,
-        EqualityConcept,
+    build_core_BytesInstance(state, BytesExistential->existentialType, SingletonInstance,
+        ComparisonConcept, EqualityConcept, OrderedConcept,
         IntExistential->existentialType, BoolExistential->existentialType);
 
     for (int i = 1; i < NUM_TUPLE_CLASSES; i++) {

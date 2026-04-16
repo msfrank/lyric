@@ -17,7 +17,6 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_CHR,                 lyric_object::OpInfoType::IMMEDIATE_CHR },
     { lyric_object::Opcode::OP_BYTES,               lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_STRING,              lyric_object::OpInfoType::ADDRESS_U32 },
-    { lyric_object::Opcode::OP_URL,                 lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_STATIC,              lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_SYNTHETIC,           lyric_object::OpInfoType::TYPE_U8 },
     { lyric_object::Opcode::OP_DESCRIPTOR,          lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32 },

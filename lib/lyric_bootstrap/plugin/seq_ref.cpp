@@ -3,7 +3,6 @@
 
 #include <absl/strings/substitute.h>
 
-#include <lyric_runtime/serialize_value.h>
 #include <lyric_schema/literal_schema.h>
 
 #include "seq_ref.h"

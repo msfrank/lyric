@@ -78,12 +78,6 @@ lyric_runtime::BaseRef::utf8Value(std::string &utf8) const
 }
 
 bool
-lyric_runtime::BaseRef::uriValue(tempo_utils::Url &url) const
-{
-    return false;
-}
-
-bool
 lyric_runtime::BaseRef::hashValue(absl::HashState state)
 {
     return false;

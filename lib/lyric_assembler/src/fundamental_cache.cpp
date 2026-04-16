@@ -87,8 +87,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Undef));
     m_fundamentalUnwrap = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap));
-    m_fundamentalUrl = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Url));
 
     // cache symbol urls for statuses
     m_fundamentalOk = lyric_common::SymbolUrl(preludeLocation,
@@ -139,8 +137,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::BytesInstance));
     m_fundamentalStringInstance = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::StringInstance));
-    m_fundamentalUrlInstance = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::UrlInstance));
 
     // cache symbol urls for Function0 through Function7
     m_fundamentalFunction.resize(kNumFunctionClasses);
@@ -301,8 +297,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalUndef;
         case FundamentalSymbol::Unwrap:
             return m_fundamentalUnwrap;
-        case FundamentalSymbol::Url:
-            return m_fundamentalUrl;
 
         case FundamentalSymbol::Ok:
             return m_fundamentalOk;
@@ -384,8 +378,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalBytesInstance;
         case FundamentalSymbol::StringInstance:
             return m_fundamentalStringInstance;
-        case FundamentalSymbol::UrlInstance:
-            return m_fundamentalUrlInstance;
 
         case FundamentalSymbol::Tuple1Instance:
             return m_fundamentalTupleInstance.at(1);

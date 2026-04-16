@@ -214,12 +214,6 @@ lyric_runtime::BytesRef::setField(const DataCell &field, const DataCell &value, 
 }
 
 bool
-lyric_runtime::BytesRef::uriValue(tempo_utils::Url &url) const
-{
-    return false;
-}
-
-bool
 lyric_runtime::BytesRef::iteratorValid()
 {
     return false;

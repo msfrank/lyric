@@ -9,7 +9,6 @@
 #include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_runtime/url_ref.h>
 
 struct MapKey {
     const lyric_runtime::DataCell &cell;
@@ -61,11 +60,9 @@ H AbslHashValue(H state, const MapKey &key) {
             return H::combine(std::move(state),
                 cell.data.type->getSegmentIndex(),
                 cell.data.type->getDescriptorIndex());
-        case lyric_runtime::DataCellType::URL:
-            cell.data.url->hashValue(absl::HashState::Create(&state));
-            return std::move(state);
+        default:
+            TU_UNREACHABLE();
     }
-    TU_UNREACHABLE();
 }
 
 #endif // ZURI_CORE_MAP_KEY_H

@@ -24,7 +24,6 @@ set(TEST_CASES
     Tuple_tests.cpp
     Type_tests.cpp
     Undef_tests.cpp
-    Url_tests.cpp
     va_tests.cpp
     )
 

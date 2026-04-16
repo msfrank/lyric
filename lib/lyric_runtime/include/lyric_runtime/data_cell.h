@@ -17,7 +17,6 @@ namespace lyric_runtime {
     class StatusRef;
     class StringRef;
     class TypeEntry;
-    class UrlRef;
 
     enum class DataCellType : uint8_t {
         INVALID,
@@ -36,7 +35,6 @@ namespace lyric_runtime {
         STATUS,
         STRING,
         REST,
-        URL,
     };
 
     struct DataCell final {
@@ -74,7 +72,6 @@ namespace lyric_runtime {
         static DataCell forStatus(StatusRef *status);
         static DataCell forString(StringRef *str);
         static DataCell forType(TypeEntry *type);
-        static DataCell forUrl(UrlRef *url);
 
         DataCellType type;
         union {
@@ -91,7 +88,6 @@ namespace lyric_runtime {
             StatusRef *status;
             StringRef *str;
             RestRef *rest;
-            UrlRef *url;
         } data;
     };
 

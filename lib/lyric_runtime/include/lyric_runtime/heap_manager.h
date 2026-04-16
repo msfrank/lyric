@@ -11,9 +11,9 @@ namespace lyric_runtime {
         const ExistentialTable *BytesTable = nullptr;
         const ExistentialTable *RestTable = nullptr;
         const ExistentialTable *StringTable = nullptr;
-        const ExistentialTable *UrlTable = nullptr;
         const ExistentialTable *ProtocolTable = nullptr;
         const ExistentialTable *NamespaceTable = nullptr;
+        const VirtualTable *OkTable = nullptr;
         const VirtualTable *CancelledTable = nullptr;
         const VirtualTable *InvalidArgumentTable = nullptr;
         const VirtualTable *DeadlineExceededTable = nullptr;
@@ -43,10 +43,6 @@ namespace lyric_runtime {
         virtual DataCell allocateString(std::string_view string);
         virtual tempo_utils::Status loadLiteralStringOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadStringOntoStack(std::string_view string);
-
-        virtual DataCell allocateUrl(const tempo_utils::Url &url);
-        virtual tempo_utils::Status loadLiteralUrlOntoStack(tu_uint32 address);
-        virtual tempo_utils::Status loadUrlOntoStack(const tempo_utils::Url &url);
 
         virtual DataCell allocateBytes(std::span<const tu_uint8> bytes);
         virtual tempo_utils::Status loadLiteralBytesOntoStack(tu_uint32 address);

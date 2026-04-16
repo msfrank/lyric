@@ -734,8 +734,7 @@ lyric_assembler::LoadLiteralInstruction::apply(
 {
     switch (m_opcode) {
         case lyric_object::Opcode::OP_BYTES:
-        case lyric_object::Opcode::OP_STRING:
-        case lyric_object::Opcode::OP_URL: {
+        case lyric_object::Opcode::OP_STRING: {
             tu_uint32 address;
             TU_ASSIGN_OR_RETURN (address, writer.getLiteralAddress(m_literal));
             TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));

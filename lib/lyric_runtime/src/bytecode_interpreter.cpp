@@ -186,14 +186,6 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // push url ref onto the stack
-            case lyric_object::Opcode::OP_URL: {
-                auto status = heapManager->loadLiteralUrlOntoStack(op.operands.address_u32.address);
-                if (status.notOk())
-                    return onError(op, status);
-                break;
-            }
-
             // push synthetic onto the stack
             case lyric_object::Opcode::OP_SYNTHETIC: {
                 const CallCell *activation;

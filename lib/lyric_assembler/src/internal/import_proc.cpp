@@ -44,19 +44,20 @@ apply_string(const lyric_object::OpCell &op, ImportProcData &data)
 }
 
 static tempo_utils::Status
-apply_url(const lyric_object::OpCell &op, ImportProcData &data)
+apply_bytes(const lyric_object::OpCell &op, ImportProcData &data)
 {
-    if (op.opcode != lyric_object::Opcode::OP_URL)
+    if (op.opcode != lyric_object::Opcode::OP_BYTES)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
     auto literal = data.object.getString(op.operands.address_u32.address);
     if (literal.empty())
         return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid url literal");
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid raw literal");
     auto url = tempo_utils::Url::fromString(literal);
+    std::span bytes((const tu_uint8 *) literal.data(), literal.size());
 
-    return data.fragment->loadUrl(url);
+    return data.fragment->loadBytes(bytes);
 }
 
 static tempo_utils::Status
@@ -509,8 +510,8 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_STRING:
                 TU_RETURN_IF_NOT_OK (apply_string(op, data));
                 break;
-            case lyric_object::Opcode::OP_URL:
-                TU_RETURN_IF_NOT_OK (apply_url(op, data));
+            case lyric_object::Opcode::OP_BYTES:
+                TU_RETURN_IF_NOT_OK (apply_bytes(op, data));
                 break;
 
             case lyric_object::Opcode::OP_SYNTHETIC:

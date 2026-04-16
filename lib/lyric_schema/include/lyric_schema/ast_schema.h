@@ -26,7 +26,7 @@ namespace lyric_schema {
         Float,                      // float literal
         Char,                       // char literal
         String,                     // string literal
-        Url,                        // url literal
+        Raw,                        // raw literal
         Pair,                       // pair container
 
         Add,                        // addition operator
@@ -179,8 +179,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Char, "Char");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstStringClass(
         &kLyricAstNs, LyricAstId::String, "String");
-    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUrlClass(
-        &kLyricAstNs, LyricAstId::Url, "Url");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRawClass(
+        &kLyricAstNs, LyricAstId::Raw, "Raw");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPairClass(
         &kLyricAstNs, LyricAstId::Pair, "Pair");
 
@@ -486,7 +486,7 @@ namespace lyric_schema {
         &kLyricAstFloatClass,
         &kLyricAstCharClass,
         &kLyricAstStringClass,
-        &kLyricAstUrlClass,
+        &kLyricAstRawClass,
         &kLyricAstPairClass,
 
         &kLyricAstAddClass,

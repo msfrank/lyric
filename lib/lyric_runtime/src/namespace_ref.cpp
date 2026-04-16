@@ -141,12 +141,6 @@ lyric_runtime::NamespaceRef::setField(const DataCell &field, const DataCell &val
 }
 
 bool
-lyric_runtime::NamespaceRef::uriValue(tempo_utils::Url &url) const
-{
-    return false;
-}
-
-bool
 lyric_runtime::NamespaceRef::iteratorValid()
 {
     return false;

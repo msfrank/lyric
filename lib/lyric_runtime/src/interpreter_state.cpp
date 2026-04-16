@@ -279,9 +279,6 @@ allocate_heap_manager(
     preludeTables.StringTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("String"), status);
     TU_RETURN_IF_NOT_OK (status);
-    preludeTables.UrlTable = resolve_bootstrap_existential_table(segmentManager,
-        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Url"), status);
-    TU_RETURN_IF_NOT_OK (status);
     preludeTables.NamespaceTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Namespace"), status);
     TU_RETURN_IF_NOT_OK (status);
@@ -290,6 +287,9 @@ allocate_heap_manager(
     TU_RETURN_IF_NOT_OK (status);
 
     // resolve virtual tables
+    preludeTables.OkTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Ok"), status);
+    TU_RETURN_IF_NOT_OK (status);
     preludeTables.CancelledTable = resolve_bootstrap_virtual_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Cancelled"), status);
     TU_RETURN_IF_NOT_OK (status);

@@ -272,12 +272,6 @@ lyric_runtime::StringRef::setField(const DataCell &field, const DataCell &value,
 }
 
 bool
-lyric_runtime::StringRef::uriValue(tempo_utils::Url &url) const
-{
-    return false;
-}
-
-bool
 lyric_runtime::StringRef::iteratorValid()
 {
     return false;

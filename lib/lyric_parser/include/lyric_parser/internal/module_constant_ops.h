@@ -28,7 +28,7 @@ namespace lyric_parser::internal {
 
         void parseCharLiteral(ModuleParser::CharLiteralContext *ctx);
         void parseStringLiteral(ModuleParser::StringLiteralContext *ctx);
-        void parseUrlLiteral(ModuleParser::UrlLiteralContext *ctx);
+        void parseRawLiteral(ModuleParser::RawLiteralContext *ctx);
     };
 }
 

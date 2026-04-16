@@ -232,7 +232,7 @@ public:
             case lyric_schema::LyricAstId::Float:
             case lyric_schema::LyricAstId::Char:
             case lyric_schema::LyricAstId::String:
-            case lyric_schema::LyricAstId::Url:
+            case lyric_schema::LyricAstId::Raw:
             case lyric_schema::LyricAstId::This:
             case lyric_schema::LyricAstId::Name:
             {

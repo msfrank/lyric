@@ -296,15 +296,15 @@ lyric_parser::internal::ModuleConstantOps::parseStringLiteral(ModuleParser::Stri
 }
 
 void
-lyric_parser::internal::ModuleConstantOps::parseUrlLiteral(ModuleParser::UrlLiteralContext *ctx)
+lyric_parser::internal::ModuleConstantOps::parseRawLiteral(ModuleParser::RawLiteralContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->UrlLiteral()->getSymbol();
+    auto *token = ctx->RawLiteral()->getSymbol();
     auto location = get_token_location(token);
 
     auto src = token->getText();
     if (src.empty()) {
-        throw SemanticException(token, "invalid url literal ''");
+        throw SemanticException(token, "invalid raw literal ''");
     }
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
@@ -313,7 +313,7 @@ lyric_parser::internal::ModuleConstantOps::parseUrlLiteral(ModuleParser::UrlLite
         return;
 
     ArchetypeNode *literalNode;
-    TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstUrlClass, location));
+    TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstRawClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }

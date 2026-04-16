@@ -56,7 +56,6 @@ namespace lyric_assembler {
         Type,
         Undef,
         Unwrap,
-        Url,
 
         // statuses
         Ok,
@@ -103,7 +102,6 @@ namespace lyric_assembler {
         IntInstance,
         BytesInstance,
         StringInstance,
-        UrlInstance,
 
         // tuple instances
         Tuple1Instance,

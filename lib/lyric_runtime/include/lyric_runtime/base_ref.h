@@ -27,7 +27,6 @@ namespace lyric_runtime {
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
         bool utf8Value(std::string &utf8) const override;
-        bool uriValue(tempo_utils::Url &url) const override;
         bool hashValue(absl::HashState state) override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &cell) override;

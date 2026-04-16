@@ -220,8 +220,8 @@ lyric_compiler::DataDerefSingle::decide(
             return constant_char(node, m_deref->invokeBlock, fragment, driver);
         case lyric_schema::LyricAstId::String:
             return constant_string(node, m_deref->invokeBlock, fragment, driver);
-        case lyric_schema::LyricAstId::Url:
-            return constant_url(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Raw:
+            return constant_raw(node, m_deref->invokeBlock, fragment, driver);
 
         // deref receiver
         case lyric_schema::LyricAstId::This:
@@ -303,8 +303,8 @@ lyric_compiler::DataDerefFirst::decide(
             return constant_char(node, m_deref->invokeBlock, fragment, driver);
         case lyric_schema::LyricAstId::String:
             return constant_string(node, m_deref->invokeBlock, fragment, driver);
-        case lyric_schema::LyricAstId::Url:
-            return constant_url(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Raw:
+            return constant_raw(node, m_deref->invokeBlock, fragment, driver);
 
         // deref receiver
         case lyric_schema::LyricAstId::This:

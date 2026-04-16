@@ -39,7 +39,6 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/rest_ref.h
     include/lyric_runtime/runtime_types.h
     include/lyric_runtime/segment_manager.h
-    include/lyric_runtime/serialize_value.h
     include/lyric_runtime/stackful_coroutine.h
     include/lyric_runtime/static_loader.h
     include/lyric_runtime/status_ref.h
@@ -50,7 +49,6 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/trap_index.h
     include/lyric_runtime/type_entry.h
     include/lyric_runtime/type_manager.h
-    include/lyric_runtime/url_ref.h
     include/lyric_runtime/virtual_table.h
     )
 set_target_properties(lyric_runtime PROPERTIES PUBLIC_HEADER "${LYRIC_RUNTIME_INCLUDES}")
@@ -79,7 +77,6 @@ target_sources(lyric_runtime PRIVATE
     src/rest_ref.cpp
     src/runtime_types.cpp
     src/segment_manager.cpp
-    src/serialize_value.cpp
     src/stackful_coroutine.cpp
     src/static_loader.cpp
     src/status_ref.cpp
@@ -90,7 +87,6 @@ target_sources(lyric_runtime PRIVATE
     src/trap_index.cpp
     src/type_entry.cpp
     src/type_manager.cpp
-    src/url_ref.cpp
     src/virtual_table.cpp
 
     include/lyric_runtime/internal/construct_enum.h

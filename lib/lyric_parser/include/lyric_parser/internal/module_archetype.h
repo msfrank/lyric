@@ -60,7 +60,7 @@ namespace lyric_parser::internal {
         void exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx) override;
         void exitCharLiteral(ModuleParser::CharLiteralContext *ctx) override;
         void exitStringLiteral(ModuleParser::StringLiteralContext *ctx) override;
-        void exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx) override;
+        void exitRawLiteral(ModuleParser::RawLiteralContext *ctx) override;
 
         // implemented by ModuleLogicalOps
         void exitBooleanAndExpression(ModuleParser::BooleanAndExpressionContext *ctx) override;

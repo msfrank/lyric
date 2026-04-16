@@ -18,8 +18,8 @@ is_equal(const lyric_runtime::DataCell &lhs, const lyric_runtime::DataCell &rhs)
         case lyric_runtime::DataCellType::STRING: {
             return lhs.data.str->equals(rhs.data.str);
         }
-        case lyric_runtime::DataCellType::URL: {
-            return lhs.data.url->equals(rhs.data.url);
+        case lyric_runtime::DataCellType::BYTES: {
+            return lhs.data.bytes->equals(rhs.data.bytes);
         }
         default:
             return lhs == rhs;

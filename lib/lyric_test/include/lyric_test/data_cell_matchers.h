@@ -22,7 +22,6 @@ namespace lyric_test {
                 INVALID,
                 DATA_CELL,
                 DATA_CELL_STRING,
-                DATA_CELL_URL,
                 DATA_CELL_BYTES,
                 DATA_CELL_SYMBOL,
                 DATA_CELL_DESCRIPTOR,
@@ -33,7 +32,6 @@ namespace lyric_test {
             DataCellMatcher();
             DataCellMatcher(const lyric_runtime::DataCell &cell);
             DataCellMatcher(const std::string &str);
-            DataCellMatcher(const tempo_utils::Url &url);
             DataCellMatcher(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes);
             DataCellMatcher(const lyric_common::SymbolUrl &symbolUrl);
             DataCellMatcher(lyric_object::LinkageSection section);
@@ -64,8 +62,6 @@ namespace lyric_test {
         Matcher<lyric_runtime::DataCell> DataCellFloat(double dbl);
         Matcher<lyric_runtime::DataCell> DataCellChar(char32_t chr);
         Matcher<lyric_runtime::DataCell> DataCellString(std::string_view str);
-        Matcher<lyric_runtime::DataCell> DataCellUrl(std::string_view url);
-        Matcher<lyric_runtime::DataCell> DataCellUrl(const tempo_utils::Url &url);
         Matcher<lyric_runtime::DataCell> DataCellBytes(std::string_view bytes);
         Matcher<lyric_runtime::DataCell> DataCellBytes(std::span<const tu_uint8> bytes);
         Matcher<lyric_runtime::DataCell> DataCellBytes(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes);

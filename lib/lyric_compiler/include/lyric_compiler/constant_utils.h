@@ -53,7 +53,7 @@ namespace lyric_compiler {
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status constant_url(
+    tempo_utils::Status constant_raw(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
         lyric_assembler::CodeFragment *fragment,

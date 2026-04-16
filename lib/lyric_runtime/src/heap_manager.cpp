@@ -2,15 +2,13 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/heap_manager.h>
-#include <lyric_runtime/system_scheduler.h>
+#include <lyric_runtime/namespace_ref.h>
+#include <lyric_runtime/protocol_ref.h>
+#include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_runtime/url_ref.h>
+#include <lyric_runtime/system_scheduler.h>
 #include <tempo_utils/big_endian.h>
-
-#include "lyric_runtime/namespace_ref.h"
-#include "lyric_runtime/protocol_ref.h"
-#include "lyric_runtime/rest_ref.h"
-#include "lyric_runtime/status_ref.h"
 
 lyric_runtime::HeapManager::HeapManager(
     PreludeTables preludeTables,
@@ -68,48 +66,6 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateUrl(const tempo_utils::Url &url)
-{
-    auto *instance = new UrlRef(m_preludeTables.UrlTable, url);
-    m_heap->insertInstance(instance);
-    return DataCell::forUrl(instance);
-}
-
-tempo_utils::Status
-lyric_runtime::HeapManager::loadLiteralUrlOntoStack(tu_uint32 address)
-{
-    auto *currentCoro = m_systemScheduler->currentCoro();
-    TU_ASSERT(currentCoro != nullptr);
-    auto *sp = currentCoro->peekSP();
-    TU_ASSERT (sp != nullptr);
-
-    tempo_utils::Status status;
-    auto literal = m_segmentManager->resolveString(sp, address, status);
-    TU_RETURN_IF_NOT_OK (status);
-
-    auto *instance = new UrlRef(m_preludeTables.UrlTable, literal);
-    m_heap->insertInstance(instance);
-    auto cell = DataCell::forUrl(instance);
-    currentCoro->pushData(cell);
-
-    return status;
-}
-
-tempo_utils::Status
-lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
-{
-    auto *currentCoro = m_systemScheduler->currentCoro();
-    TU_ASSERT(currentCoro != nullptr);
-
-    auto *instance = new UrlRef(m_preludeTables.UrlTable, url);
-    m_heap->insertInstance(instance);
-    auto cell = DataCell::forUrl(instance);
-    currentCoro->pushData(cell);
-
-    return {};
-}
-
-lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
 {
     auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
@@ -155,6 +111,8 @@ inline const lyric_runtime::VirtualTable *
 status_code_to_vtable(tempo_utils::StatusCode statusCode, const lyric_runtime::PreludeTables &preludeTables)
 {
     switch (statusCode) {
+        case tempo_utils::StatusCode::kOk:
+            return preludeTables.OkTable;
         case tempo_utils::StatusCode::kCancelled:
             return preludeTables.CancelledTable;
         case tempo_utils::StatusCode::kInvalidArgument:

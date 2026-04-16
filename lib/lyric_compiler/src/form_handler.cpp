@@ -90,8 +90,8 @@ lyric_compiler::TerminalFormBehavior::enter(
             return constant_char(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::String:
             return constant_string(node, m_block, m_fragment, m_driver);
-        case lyric_schema::LyricAstId::Url:
-            return constant_url(node, m_block, m_fragment, m_driver);
+        case lyric_schema::LyricAstId::Raw:
+            return constant_raw(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::This: {
             lyric_assembler::DataReference unusedRef;
             return deref_this(unusedRef, m_block, m_fragment, m_driver);
@@ -146,7 +146,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::Float:
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
-        case lyric_schema::LyricAstId::Url:
+        case lyric_schema::LyricAstId::Raw:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Call:
@@ -296,7 +296,7 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::Float:
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
-        case lyric_schema::LyricAstId::Url:
+        case lyric_schema::LyricAstId::Raw:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::TypeOf:

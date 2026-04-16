@@ -1,15 +1,13 @@
 
 #include <lyric_runtime/base_ref.h>
-#include <lyric_runtime/call_cell.h>
-#include <lyric_runtime/stackful_coroutine.h>
-#include <lyric_runtime/subroutine_manager.h>
-#include <tempo_utils/big_endian.h>
-
 #include <lyric_runtime/bytes_ref.h>
+#include <lyric_runtime/call_cell.h>
 #include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/stackful_coroutine.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_runtime/url_ref.h>
+#include <lyric_runtime/subroutine_manager.h>
+#include <tempo_utils/big_endian.h>
 
 lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManager)
     : m_segmentManager(segmentManager)
@@ -334,9 +332,6 @@ lyric_runtime::SubroutineManager::callVirtual(
         case DataCellType::STRING:
             resolver = receiver.data.str->getMethodResolver();
             break;
-        case DataCellType::URL:
-            resolver = receiver.data.url->getMethodResolver();
-            break;
         default:
             resolver = nullptr;
             break;
@@ -427,9 +422,6 @@ lyric_runtime::SubroutineManager::callConcept(
             break;
         case DataCellType::STRING:
             resolver = receiver.data.str->getExtensionResolver();
-            break;
-        case DataCellType::URL:
-            resolver = receiver.data.url->getExtensionResolver();
             break;
         default:
             resolver = nullptr;

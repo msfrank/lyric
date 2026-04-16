@@ -14,7 +14,6 @@ static const char *OP_DBL_name                 = "OP_DBL";
 static const char *OP_CHR_name                 = "OP_CHR";
 static const char *OP_BYTES_name               = "OP_BYTES";
 static const char *OP_STRING_name              = "OP_STRING";
-static const char *OP_URL_name                 = "OP_URL";
 static const char *OP_STATIC_name              = "OP_STATIC";
 static const char *OP_SYNTHETIC_name           = "OP_SYNTHETIC";
 static const char *OP_DESCRIPTOR_name          = "OP_DESCRIPTOR";
@@ -99,8 +98,6 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_BYTES_name;
         case Opcode::OP_STRING:
             return OP_STRING_name;
-        case Opcode::OP_URL:
-            return OP_URL_name;
         case Opcode::OP_STATIC:
             return OP_STATIC_name;
         case Opcode::OP_SYNTHETIC:

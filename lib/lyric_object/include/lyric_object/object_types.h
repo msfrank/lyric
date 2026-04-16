@@ -144,7 +144,7 @@ namespace lyric_object {
         Float,
         Int,
         String,
-        Url,
+        Bytes,
         Class,
         Concept,
         Instance,
@@ -161,18 +161,18 @@ namespace lyric_object {
         NUM_INTRINSIC_TYPES,
     };
 
-    enum class ValueType {
-        Invalid,
-        Nil,
-        Undef,
-        Bool,
-        Int64,
-        Float64,
-        Char,
-        Bytes,
-        String,
-        Url,
-    };
+    // enum class ValueType {
+    //     Invalid,
+    //     Nil,
+    //     Undef,
+    //     Bool,
+    //     Int64,
+    //     Float64,
+    //     Char,
+    //     Bytes,
+    //     String,
+    //     Url,
+    // };
 
     enum class AccessType {
         Invalid,
@@ -257,7 +257,6 @@ namespace lyric_object {
         OP_CHR,
         OP_BYTES,
         OP_STRING,
-        OP_URL,
         OP_STATIC,
         OP_SYNTHETIC,
         OP_DESCRIPTOR,

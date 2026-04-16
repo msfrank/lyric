@@ -99,14 +99,6 @@ namespace lyric_runtime {
         virtual bool utf8Value(std::string &utf8) const = 0;
 
         /**
-         * Assigns the value of the ref as a url to `url`. If the ref is not representable as a url then `url`
-         * is undefined.
-         *
-         * @return true if conversion was successful and `url` was assigned, otherwise false.
-         */
-        virtual bool uriValue(tempo_utils::Url &url) const = 0;
-
-        /**
          * Updates the specified `state` by hashing the content of the ref. If the ref does not support
          * hashing then `state` is untouched and the method must return false.
          *

@@ -319,10 +319,10 @@ void lyric_parser::internal::ModuleArchetype::exitStringLiteral(ModuleParser::St
     LOG_ERROR_ON_EXCEPTION (ctx, ops.parseStringLiteral(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitRawLiteral(ModuleParser::RawLiteralContext *ctx)
 {
     ModuleConstantOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseUrlLiteral(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseRawLiteral(ctx));
 }
 
 /*

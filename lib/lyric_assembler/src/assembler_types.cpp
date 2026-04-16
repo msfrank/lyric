@@ -86,8 +86,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Undef";
         case FundamentalSymbol::Unwrap:
             return "Unwrap";
-        case FundamentalSymbol::Url:
-            return "Url";
 
         case FundamentalSymbol::Ok:
             return "Ok";
@@ -168,8 +166,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "BytesInstance";
         case FundamentalSymbol::StringInstance:
             return "StringInstance";
-        case FundamentalSymbol::UrlInstance:
-            return "UrlInstance";
 
         case FundamentalSymbol::Tuple1Instance:
             return "Tuple1Instance";
