@@ -226,7 +226,8 @@ lyric_build::internal::RunnerWorker::runTask(BaseTask *task)
     TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
 
     // run the task
-    auto taskStatus = task->run();
+    tempo_utils::Status taskStatus;
+    TU_RETURN_IF_NOT_OK (task->run(taskStatus));
 
     // if the task returned status, then mark the task failed and return incomplete
     if (taskStatus.notOk()) {

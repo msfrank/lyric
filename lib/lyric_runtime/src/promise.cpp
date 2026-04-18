@@ -235,6 +235,7 @@ lyric_runtime::Promise::complete(const DataCell &result)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "invalid promise result");
     switch (m_state) {
+        case State::Initial:
         case State::Pending:
         case State::Target:
         case State::Waiting:
@@ -258,6 +259,7 @@ lyric_runtime::Promise::reject(const DataCell &result)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "invalid promise result");
     switch (m_state) {
+        case State::Initial:
         case State::Pending:
         case State::Target:
         case State::Waiting:

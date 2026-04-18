@@ -937,7 +937,7 @@ lyric_assembler::ObjectWriter::toObject() const
     flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
     auto *plugin = m_state->objectPlugin();
     if (plugin != nullptr) {
-        auto pluginLocation = m_state->getLocation();
+        auto pluginLocation = plugin->getLocation();
         auto plugin_location = buffer.CreateSharedString(pluginLocation.toString());
 
         lyo1::PluginFlags flags = lyo1::PluginFlags::NONE;

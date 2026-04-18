@@ -284,6 +284,8 @@ lyric_build::BaseTask::storeArtifact(
     TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(artifactId, metadata));
     TU_RETURN_IF_NOT_OK (artifactCache->storeContent(artifactId, std::move(content)));
 
+    TU_LOG_V << "task " << m_key << " stores " << path << " at " << artifactId;
+
     return {};
 }
 
@@ -318,6 +320,8 @@ lyric_build::BaseTask::linkArtifact(
 
     ArtifactId srcId(generation, data.getHash(), path);
     ArtifactId dstId(getGeneration(), taskHash, dstPath);
+
+    TU_LOG_V << "task " << m_key << " links " << srcId << " to " << dstId;
 
     return artifactCache->linkArtifact(dstId, srcId);
 }
@@ -355,11 +359,13 @@ lyric_build::BaseTask::linkArtifactOverridingMetadata(
     ArtifactId srcId(generation, data.getHash(), path);
     ArtifactId dstId(getGeneration(), taskHash, dstPath);
 
+    TU_LOG_V << "task " << m_key << " links " << srcId << " to " << dstId << " overriding metadata";
+
     return artifactCache->linkArtifactOverridingMetadata(dstId, overrideMetadata, srcId);
 }
 
 tempo_utils::Status
-lyric_build::BaseTask::run()
+lyric_build::BaseTask::run(tempo_utils::Status &taskStatus)
 {
     if (m_state == TaskState::COMPLETED || m_state == TaskState::FAILED)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -386,15 +392,13 @@ lyric_build::BaseTask::run()
     m_span->putTag(kLyricBuildTaskHash, taskHash.toString());
     m_state = TaskState::RUNNING;
 
-    absl::flat_hash_map<TaskKey,TaskData> depStates(m_completed.begin(), m_completed.end());
-
     // run the task
     m_span->activate();
-    auto status = runTask(m_tempDirectory.get());
+    taskStatus = runTask(m_tempDirectory.get());
 
     // clean up the task
     m_span->deactivate();
-    TU_RETURN_IF_NOT_OK (this->complete(status));
+    TU_RETURN_IF_NOT_OK (this->complete(taskStatus));
 
     return {};
 }
@@ -430,56 +434,74 @@ lyric_build::BaseTask::fail(const tempo_utils::Status &status)
 tempo_utils::Status
 lyric_build::BaseTask::complete(const tempo_utils::Status &status)
 {
-    m_state = status.isOk()? TaskState::COMPLETED : TaskState::FAILED;
-
-    auto buildState = m_buildState.lock();
-    if (buildState == nullptr)
-        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "invalid task {}; missing build state", m_key.toString());
-
-    // if there is a valid diagnostics recorder, then store it
-    if (m_diagnostics != nullptr) {
-        m_diagnostics->close();
-        tempo_tracing::TempoSpanset spanset;
-        TU_ASSIGN_OR_RETURN (spanset, m_diagnostics->toSpanset());
-        auto artifactCache = buildState->getArtifactCache();
-        artifactCache->storeDiagnostics(getReference(), spanset);
-    }
-
-    // close the span
     if (status.notOk()) {
-        m_span->logStatus(status, tempo_tracing::LogSeverity::kError);
+        logStatus(status);
+        m_state = TaskState::FAILED;
+    } else {
+        m_state = TaskState::COMPLETED;
     }
+
     m_span->close();
 
-    // clean up the temp directory
+    // remove the temp directory
+    tempo_utils::Status removeTempdirStatus;
     if (m_tempDirectory) {
-        TU_RETURN_IF_NOT_OK (m_tempDirectory->cleanup());
+        removeTempdirStatus = m_tempDirectory->cleanup();
     }
 
+    // if there is a valid diagnostics recorder, then store it
+    tempo_utils::Status storeDiagnosticsStatus;
+    if (m_diagnostics != nullptr) {
+        m_diagnostics->close();
+
+        auto buildState = m_buildState.lock();
+        if (buildState != nullptr) {
+
+            auto toSpansetResult = m_diagnostics->toSpanset();
+            if (toSpansetResult.isResult()) {
+                auto spanset = toSpansetResult.getResult();
+                auto artifactCache = buildState->getArtifactCache();
+                storeDiagnosticsStatus = artifactCache->storeDiagnostics(getReference(), spanset);
+            } else {
+                storeDiagnosticsStatus = toSpansetResult.getStatus();
+            }
+
+        } else {
+            storeDiagnosticsStatus =  BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid task {}; missing build state", m_key.toString());
+        }
+    }
+
+    // report any errors after we have finished cleanup
+    TU_RETURN_IF_NOT_OK (removeTempdirStatus);
+    TU_RETURN_IF_NOT_OK (storeDiagnosticsStatus);
     return {};
 }
 
 std::shared_ptr<tempo_tracing::SpanLog>
 lyric_build::BaseTask::logInfo(std::string_view message)
 {
+    TU_LOG_V << "task " << m_key << " (INFO): " << message;
     return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kInfo);
 }
 
 std::shared_ptr<tempo_tracing::SpanLog>
 lyric_build::BaseTask::logWarn(std::string_view message)
 {
+    TU_LOG_V << "task " << m_key << " (WARN): " << message;
     return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kWarn);
 }
 
 std::shared_ptr<tempo_tracing::SpanLog>
 lyric_build::BaseTask::logError(std::string_view message)
 {
+    TU_LOG_V << "task " << m_key << " (ERROR): " << message;
     return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kError);
 }
 
 std::shared_ptr<tempo_tracing::SpanLog>
 lyric_build::BaseTask::logStatus(const tempo_utils::Status &status)
 {
+    TU_LOG_V << "task " << m_key << " (ERROR): " << status;
     return m_span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
 }

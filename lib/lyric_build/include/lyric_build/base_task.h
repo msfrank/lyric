@@ -68,7 +68,7 @@ namespace lyric_build {
          */
         virtual tempo_utils::Status runTask(TempDirectory *tempDirectory) = 0;
 
-        tempo_utils::Status run();
+        tempo_utils::Status run(tempo_utils::Status &taskStatus);
 
         tempo_utils::Status cancel();
         tempo_utils::Status fail(const tempo_utils::Status &status);
