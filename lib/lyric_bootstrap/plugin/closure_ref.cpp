@@ -1,6 +1,7 @@
 #include <absl/strings/substitute.h>
 
 #include <lyric_object/bytecode_iterator.h>
+#include <lyric_object/proc_utils.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
@@ -48,37 +49,34 @@ ClosureRef::applyClosure(
     auto returnsValue = this->returnsValue();
 
     // proc offset must be within the segment bytecode
-    auto *bytecodeData = segment->getBytecodeData();
-    auto bytecodeSize = segment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
+    auto bytecode = segment->getBytecode();
+    if (bytecode.size() <= procOffset)
         throw tempo_utils::StatusException(
             lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset"));
 
-    const tu_uint8 *header = bytecodeData + procOffset;
-
-    header += 4;                                                        // skip over procSize
-    auto numArguments = tempo_utils::read_u16_and_advance(header);      // read numArguments
-    auto numLocals = tempo_utils::read_u16_and_advance(header);         // read numLocals
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
+    lyric_object::ActivationInfo activationInfo;
+    TU_RAISE_IF_NOT_OK (lyric_object::parse_proc_activation(bytecode, procOffset, activationInfo));
 
     // maximum number of args is 2^16
-    if (numArguments != args.size())
+    if (activationInfo.num_arguments != args.size())
         throw tempo_utils::StatusException(
             lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments"));
 
     // construct the task activation call frame
-    lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset, returnSegment,
-        returnIP, returnsValue, dataStackGuard, numArguments, /* numRest= */ 0, numLocals, numLexicals, args);
+    lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset,
+        returnSegment, returnIP, returnsValue, dataStackGuard,
+        activationInfo.num_arguments, /* numRest= */ 0, activationInfo.num_locals,
+        activationInfo.num_lexicals, args);
 
-    if (this->numLexicals() != numLexicals)
+    if (this->numLexicals() != activationInfo.num_lexicals)
         throw tempo_utils::StatusException(
             lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments"));
 
     // import each lexical from the instance into the stack
-    for (tu_uint16 i = 0; i < numLexicals; i++) {
+    for (tu_uint16 i = 0; i < activationInfo.num_lexicals; i++) {
         frame.setLexical(i, lexicalAt(i));
     }
 
@@ -320,28 +318,24 @@ closure_apply(
     auto returnsValue = instance->returnsValue();
 
     // proc offset must be within the segment bytecode
-    auto *bytecodeData = segment->getBytecodeData();
-    auto bytecodeSize = segment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
+    auto bytecode = segment->getBytecode();
+    if (bytecode.size() <= procOffset)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
 
-    const tu_uint8 *header = bytecodeData + procOffset;
     auto returnSP = frame.getReturnSegment();
     auto returnIP = frame.getReturnIP();
     auto stackGuard = currentCoro->dataStackSize();
 
-    header += 4;                                                        // skip over procSize
-    auto numArguments = tempo_utils::read_u16_and_advance(header);      // read numArguments
-    auto numLocals = tempo_utils::read_u16_and_advance(header);         // read numLocals
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
+    lyric_object::ActivationInfo activationInfo;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_activation(bytecode, procOffset, activationInfo));
 
     // maximum number of args is 2^16
     if (std::numeric_limits<tu_uint16>::max() <= frame.numArguments())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments");
     // all required args must be present
-    if (frame.numArguments() < numArguments)
+    if (frame.numArguments() < activationInfo.num_arguments)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments");
     auto numRest = frame.numRest();
@@ -352,20 +346,21 @@ closure_apply(
         args[i] = frame.getArgument(i);
     }
     for (int i = 0; i < frame.numRest(); i++) {
-        args[numArguments + i] = frame.getRest(i);
+        args[activationInfo.num_arguments + i] = frame.getRest(i);
     }
 
     // construct the lambda activation call frame
     lyric_runtime::CallCell trampoline(address, segment->getSegmentIndex(),
-        procOffset, returnSP, returnIP, returnsValue, stackGuard, numArguments,
-        numRest, numLocals, numLexicals, args, receiver);
+        procOffset, returnSP, returnIP, returnsValue, stackGuard,
+        activationInfo.num_arguments, numRest, activationInfo.num_locals, activationInfo.num_lexicals,
+        args, receiver);
 
-    if (instance->numLexicals() != numLexicals)
+    if (instance->numLexicals() != activationInfo.num_lexicals)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments");
 
     // import each lexical from the instance into the stack
-    for (tu_uint16 i = 0; i < numLexicals; i++) {
+    for (tu_uint16 i = 0; i < activationInfo.num_lexicals; i++) {
         trampoline.setLexical(i, instance->lexicalAt(i));
     }
 

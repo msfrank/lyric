@@ -2,105 +2,122 @@
 #include <lyric_object/object_result.h>
 #include <lyric_object/proc_utils.h>
 #include <tempo_utils/big_endian.h>
+#include <tempo_utils/bytes_iterator.h>
 #include <tempo_utils/status.h>
 
+
 tempo_utils::Status
-lyric_object::parse_proc_info(std::span<const tu_uint8> bytecode, tu_uint32 offset, ProcInfo &procInfo)
+lyric_object::parse_proc(std::span<const tu_uint8> bytecode, tu_uint32 offset, std::span<const tu_uint8> &proc)
 {
-    // there must be 4 bytes available to read starting at offset within the bytecode span
-    if (bytecode.size() <= offset + 4)
+    if (bytecode.size() <= offset)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc offset");
 
-    // calculate the proc span
-    const uint8_t *ptr = bytecode.data() + offset;
-    tu_uint32 nleft = tempo_utils::read_u32_and_advance(ptr);
-    if (bytecode.size() < offset + 4 + nleft)
+    tempo_utils::BytesIterator it(bytecode.subspan(offset));
+
+    // there must be 4 bytes available to read starting at offset within the bytecode span
+    tu_uint32 size;
+    if (!it.nextU32(size))
         return ObjectStatus::forCondition(
-            ObjectCondition::kObjectInvariant, "invalid proc header");
-    procInfo.proc = std::span(ptr, nleft);
+            ObjectCondition::kObjectInvariant, "invalid proc offset");
 
-    // there must be enough bytes to read the entire proc header
-    if (nleft < kProcHeaderSizeInBytes)
-        return ObjectStatus::forCondition(
-            ObjectCondition::kObjectInvariant, "invalid proc header");
-
-    procInfo.num_arguments = tempo_utils::read_u16_and_advance(ptr);
-    procInfo.num_locals = tempo_utils::read_u16_and_advance(ptr);
-    procInfo.num_lexicals = tempo_utils::read_u16_and_advance(ptr);
-    auto trailerSize = tempo_utils::read_u32_and_advance(ptr);
-    nleft -= 10;
-
-    // there must be enough bytes to read the entire lexicals table
-    auto lexicalsSize = procInfo.num_lexicals * kProcLexicalSizeInBytes;
-    if (nleft < lexicalsSize)
+    // there must be `size` bytes available to read in the remaining span
+    if (it.bytesLeft() < size)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc header");
 
-    // calculate the lexicals span
-    procInfo.lexicals = std::span(ptr, lexicalsSize);
-    ptr += lexicalsSize;
-    nleft -= lexicalsSize;
-
-    // there must be enough bytes to read the entire proc trailer
-    if (nleft < trailerSize)
-        return ObjectStatus::forCondition(
-            ObjectCondition::kObjectInvariant, "invalid proc trailer");
-    auto codeSize = nleft - trailerSize;
-
-    // calculate the code span
-    procInfo.code = std::span(ptr, codeSize);
-    ptr += codeSize;
-    nleft -= codeSize;
-
-    // calculate the trailer span
-    procInfo.trailer = std::span(ptr, trailerSize);
-
-    // assert that we have read all bytes in the proc
-    TU_ASSERT (nleft - trailerSize == 0);
-    TU_ASSERT (ptr + trailerSize == procInfo.proc.data() + procInfo.proc.size());
+    TU_ASSERT (it.nextSlice(proc, size));
 
     return {};
 }
 
 tempo_utils::Status
-lyric_object::parse_lexicals_table_entry(const ProcInfo &procInfo, int index, ProcLexical &lexical)
+lyric_object::parse_proc_info(std::span<const tu_uint8> bytecode, tu_uint32 offset, ProcInfo &procInfo)
 {
-    if (procInfo.num_lexicals <= index)
-        return ObjectStatus::forCondition(
-            ObjectCondition::kObjectInvariant, "invalid proc lexical at index {}", index);
+    std::span<const tu_uint8> proc;
+    TU_RETURN_IF_NOT_OK (parse_proc(bytecode, offset, proc));
 
-    const tu_uint8 *ptr = procInfo.lexicals.data();
-    ptr += kProcLexicalSizeInBytes * index;
-    lexical.activation_call = tempo_utils::read_u32_and_advance(ptr);
-    lexical.target_offset = tempo_utils::read_u32_and_advance(ptr);
-    lexical.lexical_target = tempo_utils::read_u8_and_advance(ptr);
+    // construct iterator for the proc
+    tempo_utils::BytesIterator it(proc);
+
+    // there must be enough bytes to read the entire proc header
+    if (it.bytesLeft() < kProcHeaderSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc header");
+
+    TU_ASSERT (it.nextU16(procInfo.num_arguments));
+    TU_ASSERT (it.nextU16(procInfo.num_locals));
+    TU_ASSERT (it.nextU16(procInfo.num_lexicals));
+
+    tu_uint32 trailerSize;
+    TU_ASSERT (it.nextU32(trailerSize));
+
+    // there must be enough bytes to read the entire lexicals table
+    auto lexicalsSize = procInfo.num_lexicals * kProcLexicalSizeInBytes;
+    if (it.bytesLeft() < lexicalsSize)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc header");
+
+    // calculate the lexicals span
+    TU_ASSERT (it.nextSlice(procInfo.lexicals, lexicalsSize));
+
+    // there must be enough bytes to read the entire proc trailer
+    if (it.bytesLeft() < trailerSize)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc trailer");
+    auto codeSize = it.bytesLeft() - trailerSize;
+
+    // calculate the code span
+    TU_ASSERT (it.nextSlice(procInfo.code, codeSize));
+
+    // calculate the trailer span
+    TU_ASSERT (it.nextSlice(procInfo.trailer, trailerSize));
+
+    // assert that we have read all bytes in the proc
+    TU_ASSERT (it.isValid() == false);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::parse_proc_activation(std::span<const tu_uint8> bytecode, tu_uint32 offset, ActivationInfo &activationInfo)
+{
+    std::span<const tu_uint8> proc;
+    TU_RETURN_IF_NOT_OK (parse_proc(bytecode, offset, proc));
+
+    // construct iterator for the proc
+    tempo_utils::BytesIterator it(proc);
+
+    // there must be enough bytes to read the entire proc header
+    if (it.bytesLeft() < kProcHeaderSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc header");
+
+    TU_ASSERT (it.nextU16(activationInfo.num_arguments));
+    TU_ASSERT (it.nextU16(activationInfo.num_locals));
+    TU_ASSERT (it.nextU16(activationInfo.num_lexicals));
+
     return {};
 }
 
 tempo_utils::Status
 lyric_object::parse_lexicals_table(const ProcInfo &procInfo, std::vector<ProcLexical> &lexicals)
 {
-    const tu_uint8 *ptr = procInfo.lexicals.data();
-    auto nleft = procInfo.lexicals.size();
+    if (procInfo.lexicals.size() != procInfo.num_lexicals * kProcLexicalSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc lexicals table");
+
+    tempo_utils::BytesIterator it(procInfo.lexicals);
 
     lexicals.resize(procInfo.num_lexicals);
-
     for (int i = 0; i < procInfo.num_lexicals; i++) {
-        if (nleft < kProcLexicalSizeInBytes)
-            return ObjectStatus::forCondition(
-                ObjectCondition::kObjectInvariant, "invalid proc lexical");
         ProcLexical &lexical = lexicals.at(i);
-        lexical.activation_call = tempo_utils::read_u32_and_advance(ptr);
-        lexical.target_offset = tempo_utils::read_u32_and_advance(ptr);
-        lexical.lexical_target = tempo_utils::read_u8_and_advance(ptr);
-        nleft -= kProcLexicalSizeInBytes;
+        TU_ASSERT (it.nextU32(lexical.activation_call));
+        TU_ASSERT (it.nextU32(lexical.target_offset));
+        TU_ASSERT (it.nextU8(lexical.lexical_target));
     }
 
     // assert that we have read all bytes in the lexicals table
-    TU_ASSERT (ptr == procInfo.lexicals.data() + procInfo.lexicals.size());
-    TU_ASSERT (nleft == 0);
-
+    TU_ASSERT (it.isValid() == false);
     return {};
 }
 
@@ -118,134 +135,114 @@ lyric_object::parse_proc_trailer(const ProcInfo &procInfo, TrailerInfo &trailerI
         return {};
     }
 
-    const tu_uint8 *ptr = procInfo.trailer.data();
-    auto nleft = procInfo.trailer.size();
+    tempo_utils::BytesIterator it(procInfo.trailer);
 
-    if (nleft < kProcTrailerSizeInBytes)
+    if (it.bytesLeft() < kProcTrailerSizeInBytes)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc trailer");
 
-    trailerInfo.num_checks = tempo_utils::read_u16_and_advance(ptr);
-    trailerInfo.num_exceptions = tempo_utils::read_u16_and_advance(ptr);
-    trailerInfo.num_cleanups = tempo_utils::read_u16_and_advance(ptr);
-    nleft -= kProcTrailerSizeInBytes;
+    TU_ASSERT (it.nextU16(trailerInfo.num_checks));
+    TU_ASSERT (it.nextU16(trailerInfo.num_exceptions));
+    TU_ASSERT (it.nextU16(trailerInfo.num_cleanups));
 
     // there must be enough bytes to read the entire checks table
     auto checksSize = trailerInfo.num_checks * kProcCheckSizeInBytes;
-    if (nleft < checksSize)
+    if (it.bytesLeft() < checksSize)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc trailer");
 
     // calculate the checks span
-    trailerInfo.checks = std::span(ptr, checksSize);
-    ptr += checksSize;
-    nleft -= checksSize;
+    TU_ASSERT (it.nextSlice(trailerInfo.checks, checksSize));
 
     // there must be enough bytes to read the entire exception table
     auto exceptionsSize = trailerInfo.num_exceptions * kProcExceptionSizeInBytes;
-    if (nleft < exceptionsSize)
+    if (it.bytesLeft() < exceptionsSize)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc trailer");
 
     // calculate the exceptions span
-    trailerInfo.exceptions = std::span(ptr, exceptionsSize);
-    ptr += exceptionsSize;
-    nleft -= exceptionsSize;
+    TU_ASSERT (it.nextSlice(trailerInfo.exceptions, exceptionsSize));
 
     // there must be enough bytes to read the entire cleanups table
     auto cleanupsSize = trailerInfo.num_cleanups * kProcCleanupSizeInBytes;
-    if (nleft < cleanupsSize)
+    if (it.bytesLeft() < cleanupsSize)
         return ObjectStatus::forCondition(
             ObjectCondition::kObjectInvariant, "invalid proc trailer");
 
     // calculate the cleanups span
-    trailerInfo.cleanups = std::span(ptr, cleanupsSize);
+    TU_ASSERT (it.nextSlice(trailerInfo.cleanups, cleanupsSize));
 
     // assert that we have read all bytes in the trailer
-    TU_ASSERT (nleft - cleanupsSize == 0);
-    TU_ASSERT (ptr + cleanupsSize == procInfo.trailer.data() + procInfo.trailer.size());
-
+    TU_ASSERT (it.isValid() == false);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::parse_checks_table(const TrailerInfo &trailerInfo, std::vector<ProcCheck> &checks)
 {
-    const tu_uint8 *ptr = trailerInfo.checks.data();
-    auto nleft = trailerInfo.checks.size();
+    if (trailerInfo.checks.size() != trailerInfo.num_checks * kProcCheckSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc checks table");
+
+    tempo_utils::BytesIterator it(trailerInfo.checks);
 
     checks.resize(trailerInfo.num_checks);
-
     for (int i = 0; i < trailerInfo.num_checks; i++) {
-        if (nleft < kProcCheckSizeInBytes)
-            return ObjectStatus::forCondition(
-                ObjectCondition::kObjectInvariant, "invalid proc check");
         ProcCheck &check = checks.at(i);
-        check.interval_offset = tempo_utils::read_u32_and_advance(ptr);
-        check.interval_size = tempo_utils::read_u32_and_advance(ptr);
-        check.first_exception = tempo_utils::read_u16_and_advance(ptr);
-        check.num_exceptions = tempo_utils::read_u16_and_advance(ptr);
-        check.exception_local = tempo_utils::read_u16_and_advance(ptr);
-        nleft -= kProcCheckSizeInBytes;
+        TU_ASSERT (it.nextU32(check.interval_offset));
+        TU_ASSERT (it.nextU32(check.interval_size));
+        TU_ASSERT (it.nextU16(check.first_exception));
+        TU_ASSERT (it.nextU16(check.num_exceptions));
+        TU_ASSERT (it.nextU16(check.exception_local));
     }
 
     // assert that we have read all bytes in the checks table
-    TU_ASSERT (ptr == trailerInfo.checks.data() + trailerInfo.checks.size());
-    TU_ASSERT (nleft == 0);
-
+    TU_ASSERT (it.isValid() == false);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::parse_exceptions_table(const TrailerInfo &trailerInfo, std::vector<ProcException> &exceptions)
 {
-    const tu_uint8 *ptr = trailerInfo.exceptions.data();
-    auto nleft = trailerInfo.exceptions.size();
+    if (trailerInfo.exceptions.size() != trailerInfo.num_exceptions * kProcExceptionSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc exceptions table");
+
+    tempo_utils::BytesIterator it(trailerInfo.exceptions);
 
     exceptions.resize(trailerInfo.num_exceptions);
-
     for (int i = 0; i < trailerInfo.num_exceptions; i++) {
-        if (nleft < kProcExceptionSizeInBytes)
-            return ObjectStatus::forCondition(
-                ObjectCondition::kObjectInvariant, "invalid proc exception");
         ProcException &exc = exceptions.at(i);
-        exc.exception_type = tempo_utils::read_u32_and_advance(ptr);
-        exc.catch_offset = tempo_utils::read_u32_and_advance(ptr);
-        exc.catch_size = tempo_utils::read_u32_and_advance(ptr);
-        nleft -= kProcExceptionSizeInBytes;
+        TU_ASSERT (it.nextU32(exc.exception_type));
+        TU_ASSERT (it.nextU32(exc.catch_offset));
+        TU_ASSERT (it.nextU32(exc.catch_size));
     }
 
     // assert that we have read all bytes in the checks table
-    TU_ASSERT (ptr == trailerInfo.exceptions.data() + trailerInfo.exceptions.size());
-    TU_ASSERT (nleft == 0);
-
+    TU_ASSERT (it.isValid() == false);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::parse_cleanups_table(const TrailerInfo &trailerInfo, std::vector<ProcCleanup> &cleanups)
 {
-    const tu_uint8 *ptr = trailerInfo.cleanups.data();
-    auto nleft = trailerInfo.cleanups.size();
+    if (trailerInfo.cleanups.size() != trailerInfo.num_cleanups * kProcCleanupSizeInBytes)
+        return ObjectStatus::forCondition(
+            ObjectCondition::kObjectInvariant, "invalid proc cleanups table");
+
+    tempo_utils::BytesIterator it(trailerInfo.cleanups);
 
     cleanups.resize(trailerInfo.num_cleanups);
-
     for (int i = 0; i < trailerInfo.num_cleanups; i++) {
-        if (nleft < kProcCleanupSizeInBytes)
-            return ObjectStatus::forCondition(
-                ObjectCondition::kObjectInvariant, "invalid proc cleanup");
         ProcCleanup &cleanup = cleanups.at(i);
-        cleanup.interval_offset = tempo_utils::read_u32_and_advance(ptr);
-        cleanup.interval_size = tempo_utils::read_u32_and_advance(ptr);
-        cleanup.parent_cleanup = tempo_utils::read_u16_and_advance(ptr);
-        cleanup.cleanup_offset = tempo_utils::read_u32_and_advance(ptr);
-        cleanup.cleanup_size = tempo_utils::read_u32_and_advance(ptr);
-        nleft -= kProcCleanupSizeInBytes;
+        TU_ASSERT (it.nextU32(cleanup.interval_offset));
+        TU_ASSERT (it.nextU32(cleanup.interval_size));
+        TU_ASSERT (it.nextU16(cleanup.parent_cleanup));
+        TU_ASSERT (it.nextU32(cleanup.cleanup_offset));
+        TU_ASSERT (it.nextU32(cleanup.cleanup_size));
     }
 
     // assert that we have read all bytes in the checks table
-    TU_ASSERT (ptr == trailerInfo.cleanups.data() + trailerInfo.cleanups.size());
-    TU_ASSERT (nleft == 0);
-
+    TU_ASSERT (it.isValid() == false);
     return {};
 }

@@ -261,14 +261,13 @@ struct MetadataEntry {
 };
 
 inline MetadataEntry
-read_artifact_meta(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes)
+read_artifact_meta(const std::shared_ptr<const tempo_utils::ImmutableBytes> &bytes)
 {
     MetadataEntry metadataEntry;
-    tempo_utils::BytesIterator it(bytes);
-    tu_uint8 u8;
-    if (!it.nextU8(u8))
+    if (bytes->getSize() == 0)
         return {};
-    metadataEntry.type = static_cast<lyric_build::EntryType>(u8);
+    auto span = bytes->getSpan();
+    metadataEntry.type = static_cast<lyric_build::EntryType>(span.front());
     tempo_utils::Slice slice(bytes, 1);
     metadataEntry.metadata = lyric_build::LyricMetadata(slice.toImmutableBytes());
     return metadataEntry;

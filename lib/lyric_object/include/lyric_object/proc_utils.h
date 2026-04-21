@@ -67,7 +67,6 @@ namespace lyric_object {
      * Proc information.
      */
     struct ProcInfo {
-        std::span<const tu_uint8> proc;
         tu_uint16 num_arguments;
         tu_uint16 num_locals;
         tu_uint16 num_lexicals;
@@ -89,7 +88,6 @@ namespace lyric_object {
      * Proc trailer information.
      */
     struct TrailerInfo {
-        std::span<const tu_uint8> trailer;
         tu_uint16 num_checks;
         tu_uint16 num_exceptions;
         tu_uint16 num_cleanups;
@@ -129,9 +127,17 @@ namespace lyric_object {
         tu_uint32 cleanup_size;         /**< the size of the cleanup handler in bytes. */
     };
 
+    struct ActivationInfo {
+        tu_uint16 num_arguments;
+        tu_uint16 num_locals;
+        tu_uint16 num_lexicals;
+    };
+
+    tempo_utils::Status parse_proc(std::span<const tu_uint8> bytecode, tu_uint32 offset, std::span<const tu_uint8> &proc);
+
     tempo_utils::Status parse_proc_info(std::span<const tu_uint8> bytecode, tu_uint32 offset, ProcInfo &procInfo);
 
-    tempo_utils::Status parse_lexicals_table_entry(const ProcInfo &procInfo, int index, ProcLexical &lexical);
+    tempo_utils::Status parse_proc_activation(std::span<const tu_uint8> bytecode, tu_uint32 offset, ActivationInfo &activationInfo);
 
     tempo_utils::Status parse_lexicals_table(const ProcInfo &procInfo, std::vector<ProcLexical> &lexicals);
 

@@ -1,8 +1,8 @@
+
 #include <absl/strings/substitute.h>
 
 #include <lyric_object/bytecode_iterator.h>
-#include <tempo_utils/big_endian.h>
-#include <tempo_utils/ieee754.h>
+#include <tempo_utils/bytes_iterator.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_object::OpInfo ops[] = {
@@ -141,7 +141,7 @@ lyric_object::BytecodeIterator::hasNext() const
 }
 
 bool
-lyric_object::BytecodeIterator::getNext(lyric_object::OpCell &op)
+lyric_object::BytecodeIterator::getNext(OpCell &op)
 {
     // we reached the end of the bytecode
     if (m_size <= m_curr)
@@ -151,58 +151,65 @@ lyric_object::BytecodeIterator::getNext(lyric_object::OpCell &op)
     op.offset = m_curr;
 
     // read the opcode and increment curr
-    op.opcode = static_cast<lyric_object::Opcode>(m_bytecode[m_curr++]);
-    if (lyric_object::Opcode::LAST_ <= op.opcode) {
+    op.opcode = static_cast<Opcode>(m_bytecode[m_curr++]);
+    TU_ASSERT (op.opcode != Opcode::OP_UNKNOWN);
+
+    if (Opcode::LAST_ <= op.opcode) {
         op.type = OpInfoType::NO_OPERANDS;
         return true;
     }
 
     // read the operands and increment curr
     const auto &opinfo = ops[static_cast<tu_uint8>(op.opcode)];
-    auto size = lyric_object::opinfo_type_to_size(opinfo.type);
+    auto size = opinfo_type_to_size(opinfo.type);
     if (m_size < m_curr + size)
         return false;
     op.type = opinfo.type;
 
     const tu_uint8 *ptr = &m_bytecode[m_curr];
+    tempo_utils::BytesIterator it(ptr, size);
+
     switch (opinfo.type) {
-        case lyric_object::OpInfoType::NO_OPERANDS:
+        case OpInfoType::NO_OPERANDS:
             break;
         case OpInfoType::ADDRESS_U32:
-            op.operands.address_u32.address = tempo_utils::read_u32_and_advance(ptr);
+            TU_ASSERT (it.nextU32(op.operands.address_u32.address));
             break;
         case OpInfoType::FLAGS_U8_ADDRESS_U32:
-            op.operands.flags_u8_address_u32.flags = tempo_utils::read_u8_and_advance(ptr);
-            op.operands.flags_u8_address_u32.address = tempo_utils::read_u32_and_advance(ptr);
+            TU_ASSERT (it.nextU8(op.operands.flags_u8_address_u32.flags));
+            TU_ASSERT (it.nextU32(op.operands.flags_u8_address_u32.address));
             break;
-        case lyric_object::OpInfoType::JUMP_I16:
-            op.operands.jump_i16.jump = tempo_utils::read_i16_and_advance(ptr);
+        case OpInfoType::JUMP_I16:
+            TU_ASSERT (it.nextS16(op.operands.jump_i16.jump));
             break;
-        case lyric_object::OpInfoType::OFFSET_U16:
-            op.operands.offset_u16.offset = tempo_utils::read_u16_and_advance(ptr);
+        case OpInfoType::OFFSET_U16:
+            TU_ASSERT (it.nextU16(op.operands.offset_u16.offset));
             break;
-        case lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16:
-            op.operands.flags_u8_address_u32_placement_u16.flags = tempo_utils::read_u8_and_advance(ptr);
-            op.operands.flags_u8_address_u32_placement_u16.address = tempo_utils::read_u32_and_advance(ptr);
-            op.operands.flags_u8_address_u32_placement_u16.placement = tempo_utils::read_u16_and_advance(ptr);
+        case OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16:
+            TU_ASSERT (it.nextU8(op.operands.flags_u8_address_u32_placement_u16.flags));
+            TU_ASSERT (it.nextU32(op.operands.flags_u8_address_u32_placement_u16.address));
+            TU_ASSERT (it.nextU16(op.operands.flags_u8_address_u32_placement_u16.placement));
             break;
         case OpInfoType::FLAGS_U8_OFFSET_U16_PLACEMENT_U16:
-            op.operands.flags_u8_offset_u16_placement_u16.flags = tempo_utils::read_u8_and_advance(ptr);
-            op.operands.flags_u8_offset_u16_placement_u16.offset = tempo_utils::read_u16_and_advance(ptr);
-            op.operands.flags_u8_offset_u16_placement_u16.placement = tempo_utils::read_u16_and_advance(ptr);
+            TU_ASSERT (it.nextU8(op.operands.flags_u8_offset_u16_placement_u16.flags));
+            TU_ASSERT (it.nextU16(op.operands.flags_u8_offset_u16_placement_u16.offset));
+            TU_ASSERT (it.nextU16(op.operands.flags_u8_offset_u16_placement_u16.placement));
             break;
-        case lyric_object::OpInfoType::TYPE_U8:
-            op.operands.type_u8.type = tempo_utils::read_u8_and_advance(ptr);
+        case OpInfoType::TYPE_U8:
+            TU_ASSERT (it.nextU8(op.operands.type_u8.type));
             break;
         case OpInfoType::IMMEDIATE_I64:
-            op.operands.immediate_i64.i64 = tempo_utils::read_i64_and_advance(ptr);
+            TU_ASSERT (it.nextS64(op.operands.immediate_i64.i64));
             break;
-        case lyric_object::OpInfoType::IMMEDIATE_DBL:
-            op.operands.immediate_dbl.dbl = tempo_utils::read_dbl_and_advance(ptr);
+        case OpInfoType::IMMEDIATE_DBL:
+            TU_ASSERT (it.nextF64(op.operands.immediate_dbl.dbl));
             break;
-        case lyric_object::OpInfoType::IMMEDIATE_CHR:
-            op.operands.immediate_chr.chr = tempo_utils::read_i32_and_advance(ptr);
+        case OpInfoType::IMMEDIATE_CHR: {
+            tu_int32 s32;
+            TU_ASSERT (it.nextS32(s32));
+            op.operands.immediate_chr.chr = s32;
             break;
+        }
     }
     m_curr += size;
 

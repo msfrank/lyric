@@ -1,4 +1,6 @@
 
+#include <boost/endian.hpp>
+
 #include <lyric_object/bytecode_builder.h>
 #include <lyric_object/bytecode_iterator.h>
 #include <lyric_object/generated/object.h>
@@ -87,30 +89,36 @@ lyric_object::BytecodeBuilder::writeU8(tu_uint8 u8)
 tempo_utils::Status
 lyric_object::BytecodeBuilder::writeU16(tu_uint16 u16)
 {
+    boost::endian::big_uint16_buf_t buf{u16};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 2);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_u16(u16, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::BytecodeBuilder::writeU32(tu_uint32 u32)
 {
+    boost::endian::big_uint32_buf_t buf{u32};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 4);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_u32(u32, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::BytecodeBuilder::writeU64(tu_uint64 u64)
 {
+    boost::endian::big_uint64_buf_t buf{u64};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 8);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_u64(u64, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
@@ -135,39 +143,39 @@ lyric_object::BytecodeBuilder::loadBool(bool b)
 tempo_utils::Status
 lyric_object::BytecodeBuilder::loadInt(tu_int64 i64)
 {
-    auto status = writeOpcode(Opcode::OP_I64);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_I64));
+    boost::endian::big_int64_buf_t buf{i64};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 8);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_i64(i64, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::BytecodeBuilder::loadFloat(double dbl)
 {
-    auto status = writeOpcode(Opcode::OP_DBL);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_DBL));
+    boost::endian::big_float64_buf_t buf{dbl};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 8);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_dbl(dbl, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
 tempo_utils::Status
 lyric_object::BytecodeBuilder::loadChar(char32_t chr)
 {
-    auto status = writeOpcode(Opcode::OP_CHR);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_CHR));
+    boost::endian::big_int32_buf_t buf{(tu_int32) chr};
+    size_t count = sizeof(buf);
     auto offset = m_code.size();
-    m_code.resize(offset + 4);
+    m_code.resize(offset + count);
     auto *ptr = m_code.data() + offset;
-    tempo_utils::write_i32(chr, ptr);
+    memcpy(ptr, &buf, count);
     return {};
 }
 
@@ -522,10 +530,10 @@ lyric_object::BytecodeBuilder::patch(tu_uint16 patchOffset, tu_uint16 jumpLabel)
     if (delta < std::numeric_limits<int16_t>::min() || delta > std::numeric_limits<int16_t>::max())
         return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
             "jump delta {} is too large", delta);
-    auto i16 = H_TO_BE16(static_cast<int16_t>(delta));
-    auto *ptr = (const tu_uint8 *) &i16;
-    m_code[patchOffset] = ptr[0];
-    m_code[patchOffset + 1] = ptr[1];
+    auto i16 = static_cast<tu_int16>(delta);
+    boost::endian::native_to_big_inplace(i16);
+    auto *ptr = &m_code[patchOffset];
+    memcpy(ptr, &i16, 2);
     return {};
 }
 
