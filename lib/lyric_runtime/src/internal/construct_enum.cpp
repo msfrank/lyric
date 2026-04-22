@@ -1,6 +1,5 @@
 
 #include <lyric_runtime/internal/construct_enum.h>
-#include <tempo_utils/big_endian.h>
 
 tempo_utils::Status
 lyric_runtime::internal::construct_enum(

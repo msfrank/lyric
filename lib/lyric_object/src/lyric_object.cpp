@@ -4,7 +4,6 @@
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_object/object_types.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/memory_bytes.h>
 
 lyric_object::LyricObject::LyricObject()

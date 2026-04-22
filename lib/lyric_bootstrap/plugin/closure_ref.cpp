@@ -3,7 +3,6 @@
 #include <lyric_object/bytecode_iterator.h>
 #include <lyric_object/proc_utils.h>
 #include <lyric_runtime/interpreter_state.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
 #include "closure_ref.h"

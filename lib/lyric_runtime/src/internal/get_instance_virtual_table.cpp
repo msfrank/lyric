@@ -8,7 +8,6 @@
 #include <lyric_runtime/internal/get_instance_virtual_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
 const lyric_runtime::VirtualTable *

@@ -1,6 +1,5 @@
 
 #include <lyric_runtime/internal/construct_namespace.h>
-#include <tempo_utils/big_endian.h>
 
 tempo_utils::Status
 lyric_runtime::internal::construct_namespace(

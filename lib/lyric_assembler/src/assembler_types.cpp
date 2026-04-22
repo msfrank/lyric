@@ -1,6 +1,5 @@
 
 #include <lyric_assembler/assembler_types.h>
-#include <tempo_utils/big_endian.h>
 
 std::string
 lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)

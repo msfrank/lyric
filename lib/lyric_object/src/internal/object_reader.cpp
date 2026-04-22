@@ -4,7 +4,6 @@
 #include <lyric_object/generated/object_schema.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/object_types.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_object::internal::ObjectReader::ObjectReader(std::span<const tu_uint8> bytes)

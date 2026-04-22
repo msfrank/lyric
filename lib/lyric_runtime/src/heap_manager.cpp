@@ -8,7 +8,6 @@
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/system_scheduler.h>
-#include <tempo_utils/big_endian.h>
 
 lyric_runtime::HeapManager::HeapManager(
     PreludeTables preludeTables,

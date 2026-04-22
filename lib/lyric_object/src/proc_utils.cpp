@@ -1,7 +1,6 @@
 
 #include <lyric_object/object_result.h>
 #include <lyric_object/proc_utils.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/bytes_iterator.h>
 #include <tempo_utils/status.h>
 

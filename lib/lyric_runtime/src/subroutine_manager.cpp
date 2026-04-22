@@ -7,7 +7,6 @@
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/subroutine_manager.h>
-#include <tempo_utils/big_endian.h>
 
 lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManager)
     : m_segmentManager(segmentManager)

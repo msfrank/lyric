@@ -5,7 +5,6 @@
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/gc_heap.h>
 #include <lyric_runtime/interpreter_state.h>
-#include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
 #include "lyric_runtime/string_ref.h"

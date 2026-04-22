@@ -5,8 +5,6 @@
 #include <lyric_object/bytecode_iterator.h>
 #include <lyric_object/generated/object.h>
 #include <lyric_object/object_result.h>
-#include <tempo_utils/big_endian.h>
-#include <tempo_utils/ieee754.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_object::BytecodeBuilder::BytecodeBuilder(const std::vector<tu_uint8> &bytecode)

@@ -7,7 +7,6 @@
 #include <lyric_object/symbol_walker.h>
 #include <lyric_object/template_walker.h>
 #include <lyric_object/type_walker.h>
-#include <tempo_utils/big_endian.h>
 
 lyric_object::ActionWalker::ActionWalker()
     : m_actionOffset(INVALID_ADDRESS_U32)

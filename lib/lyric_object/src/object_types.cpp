@@ -1,7 +1,6 @@
 
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/object_types.h>
-#include <tempo_utils/big_endian.h>
 
 static const char *OP_UNKNOWN_name             = "???";
 static const char *OP_NOOP_name                = "OP_NOOP";

@@ -4,7 +4,6 @@
 #include <lyric_object/link_walker.h>
 #include <lyric_object/parameter_walker.h>
 #include <lyric_object/symbol_walker.h>
-#include <tempo_utils/big_endian.h>
 
 #include "lyric_object/object_result.h"
 
