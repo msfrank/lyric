@@ -7,43 +7,18 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-inline utf8::iterator<const char *>
-make_start_iterator(const lyric_runtime::StringRef *ref, tu_uint32 start = 0)
-{
-    TU_ASSERT (ref != nullptr);
-    auto *data = ref->getStringData();
-    TU_ASSERT (data != nullptr);
-    auto size = ref->getStringSize();
-    TU_ASSERT (size >= 0);
-    auto *rangestart = start < size? data + start : data + size;
-    return utf8::iterator(data, rangestart, data + size);
-}
-
-inline utf8::iterator<const char *>
-make_end_iterator(const lyric_runtime::StringRef *ref)
-{
-    TU_ASSERT (ref != nullptr);
-    auto *data = ref->getStringData();
-    TU_ASSERT (data != nullptr);
-    auto size = ref->getStringSize();
-    TU_ASSERT (size >= 0);
-    return utf8::iterator(data + size, data, data + size);
-}
-
 lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, std::string_view literal)
     : m_etable(etable),
-      m_owned(false),
       m_permanent(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    m_data = literal.data();
-    m_size = literal.size();
+    m_rope = tempo_utils::Rope<char>(literal.cbegin(), literal.cend());
+    m_size = m_rope.numElements();
 }
 
 lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *src, int32_t size)
     : m_etable(etable),
-      m_owned(true),
       m_permanent(false),
       m_reachable(false)
 {
@@ -51,19 +26,29 @@ lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *
     TU_ASSERT (src != nullptr);
     TU_ASSERT (size >= 0);
 
-    auto *dst = new char[size];
-    memcpy(dst, src, size);
+    m_rope = tempo_utils::Rope<char>(src, src + size);
+    m_size = m_rope.numElements();
+}
 
-    m_data = dst;
-    m_size = size;
+lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, tempo_utils::Rope<char> rope)
+    : m_etable(etable),
+      m_permanent(false),
+      m_reachable(false)
+{
+    TU_ASSERT (m_etable != nullptr);
+    m_rope = std::move(rope);
+    m_size = m_rope.numElements();
 }
 
 lyric_runtime::StringRef::~StringRef()
 {
     TU_LOG_VV << "free StringRef" << StringRef::toString();
-    if (m_owned) {
-        delete[] m_data;
-    }
+}
+
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::StringRef::getDescriptorEntry() const
+{
+    return m_etable->getDescriptor().data.descriptor;
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -90,14 +75,61 @@ lyric_runtime::StringRef::getSymbolUrl() const
     return m_etable->getSymbolUrl();
 }
 
+int
+lyric_runtime::StringRef::compare(const AbstractRef *other) const
+{
+    TU_NOTNULL (other);
+
+    auto thischunks = m_rope.iterateChunks();
+    auto *otherstring = static_cast<const StringRef *>(other);
+    auto otherchunks = otherstring->m_rope.iterateChunks();
+
+    tempo_utils::RopeChunk<char> thischunk, otherchunk;
+
+    auto thisactive = thischunks.getNext(thischunk);
+    auto thisit = thischunk.cbegin();
+    auto thisend = thischunk.cend();;
+
+    auto otheractive = otherchunks.getNext(otherchunk);
+    auto otherit = otherchunk.cbegin();
+    auto otherend = otherchunk.cend();
+
+    while (thisactive && otheractive) {
+
+        while (thisit != thisend && otherit != otherend) {
+            try {
+                utf8::utfchar32_t thisch = utf8::next(thisit, thisend);
+                utf8::utfchar32_t otherch = utf8::next(otherit, otherend);
+                if (thisch < otherch)
+                    return -1;
+                if (otherch < thisch)
+                    return 1;
+            } catch (utf8::exception &ex) {
+            }
+        }
+
+        if (thisit == thisend) {
+            thisactive = thischunks.getNext(thischunk);
+            thisit = thischunk.cbegin();
+            thisend = thischunk.cend();
+        }
+
+        if (otherit == otherend) {
+            otheractive = otherchunks.getNext(otherchunk);
+            otherit = otherchunk.cbegin();
+            otherend = otherchunk.cend();
+        }
+    }
+
+    if (!thisactive)
+        return otheractive? 1 : 0;
+    return -1;
+}
+
 bool
 lyric_runtime::StringRef::equals(const AbstractRef *other) const
 {
-    auto *otherstring = static_cast<const StringRef *>(other);
-    TU_ASSERT (otherstring != nullptr);
-    if (m_size != otherstring->m_size)
-        return false;
-    return !memcmp(m_data, otherstring->m_data, m_size);
+    return compare(other) == 0;
 }
 
 bool
@@ -110,32 +142,42 @@ lyric_runtime::StringRef::rawSize(tu_int32 &size) const
 tu_int32
 lyric_runtime::StringRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
 {
-    if (offset < 0)
-        return -1;
-    if (dst == nullptr)
-        return -1;
-    if (size <= 0)
-        return -1;
+    auto subspan = m_rope.subspan(offset, size);
+    auto chunks = subspan.iterateChunks();
+    tempo_utils::RopeChunk<char> chunk;
 
-    if (m_size <= offset)
-        return 0;
-
-    auto ncopied = size < m_size - offset? size : static_cast<tu_int32>(m_size - offset);
-    memcpy(dst, m_data, ncopied);
+    size_t ncopied = 0;
+    while (chunks.getNext(chunk)) {
+        memcpy(dst, chunk.data(), chunk.size());
+        dst += chunk.size();
+        ncopied += chunk.size();
+    }
     return ncopied;
 }
 
 bool
 lyric_runtime::StringRef::utf8Value(std::string &utf8) const
 {
-    utf8 = std::string(m_data, m_size);
+    std::string str;
+
+    auto chunks = m_rope.iterateChunks();
+    tempo_utils::RopeChunk<char> chunk;
+    while (chunks.getNext(chunk)) {
+        str.append(chunk.cbegin(), chunk.cend());
+    }
+
+    utf8 = std::move(str);
     return true;
 }
 
 bool
 lyric_runtime::StringRef::hashValue(absl::HashState state)
 {
-    absl::HashState::combine_contiguous(std::move(state), m_data, m_size);
+    auto chunks = m_rope.iterateChunks();
+    tempo_utils::RopeChunk<char> chunk;
+    while (chunks.getNext(chunk)) {
+        state = absl::HashState::combine_contiguous(std::move(state), chunk.data(), chunk.size());
+    }
     return true;
 }
 
@@ -155,23 +197,32 @@ std::string
 lyric_runtime::StringRef::toString() const
 {
     std::string s;
-    if (m_data) {
-        s = std::string(m_data, m_size);
-    }
+    utf8Value(s);
     return absl::Substitute("<$0: StringRef \"$1\">", this, s);
 }
 
 lyric_runtime::DataCell
 lyric_runtime::StringRef::stringAt(int index) const
 {
-    if (m_data == nullptr)
+    if (m_rope.isEmpty())
         return DataCell::undef();
+
     try {
-        auto *it = (char *) m_data;
-        auto *end = it + m_size;
-        utf8::advance(it, index, end);
-        auto chr = utf8::peek_next(it, end);
-        return DataCell(chr);
+
+        int curr = 0;
+        auto chunks = m_rope.iterateChunks();
+        tempo_utils::RopeChunk<char> chunk;
+        while (chunks.getNext(chunk)) {
+            auto *it = chunk.data();
+            auto *end = it + chunk.size();
+            do {
+                utf8::utfchar32_t chr = utf8::next(it, end);
+                if (curr++ == index)
+                    return DataCell(chr);
+            } while (it != end);
+        }
+        return DataCell::undef();
+
     } catch (utf8::not_enough_room &ex) {
         return DataCell::undef();
     } catch (utf8::invalid_code_point &ex) {
@@ -179,54 +230,45 @@ lyric_runtime::StringRef::stringAt(int index) const
     }
 }
 
-inline tu_int64
-lexographical_compare(const lyric_runtime::StringRef *ref1, const lyric_runtime::StringRef *ref2)
-{
-    auto it1 = make_start_iterator(ref1);
-    auto end1 = make_end_iterator(ref1);
-    auto it2 = make_start_iterator(ref2);
-    auto end2 = make_end_iterator(ref2);
-
-    for (; (it1 != end1) && (it2 != end2); ++it1, ++it2) {
-        if (*it1 < *it2)
-            return -1;
-        if (*it2 < *it1)
-            return 1;
-    }
-
-    if (it1 == end1) {
-        return it2 != end2? 1 : 0;
-    }
-    return it2 != end2? 0 : -1;
-}
-
 lyric_runtime::DataCell
 lyric_runtime::StringRef::stringCompare(StringRef *other) const
 {
     TU_ASSERT (other != nullptr);
-    return DataCell(lexographical_compare(this, other));
+    return DataCell(static_cast<tu_int64>(compare(other)));
 }
 
 lyric_runtime::DataCell
 lyric_runtime::StringRef::stringLength() const
 {
-    if (m_data == nullptr || m_size == 0)
+    if (m_rope.isEmpty())
         return DataCell(static_cast<int64_t>(0));
 
-    auto it = make_start_iterator(this);
-    auto end = make_end_iterator(this);
-    tu_int32 length = 0;
-    while (it != end) {
-        utf8::next(it, end);
-        length++;
+    try {
+
+        size_t length = 0;
+        auto chunks = m_rope.iterateChunks();
+        tempo_utils::RopeChunk<char> chunk;
+        while (chunks.getNext(chunk)) {
+            auto *it = chunk.data();
+            auto *end = it + chunk.size();
+            do {
+                utf8::next(it, end);
+                length++;
+            } while (it != end);
+        }
+        return DataCell(static_cast<tu_int64>(length));
+
+    } catch (utf8::not_enough_room &ex) {
+        return DataCell::undef();
+    } catch (utf8::invalid_code_point &ex) {
+        return DataCell::undef();
     }
-    return DataCell(static_cast<int64_t>(length));
 }
 
-const char *
+tempo_utils::Rope<char>
 lyric_runtime::StringRef::getStringData() const
 {
-    return m_data;
+    return m_rope;
 }
 
 int32_t

@@ -5,39 +5,47 @@
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
+#include <utf8/checked.h>
 
 lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, std::string_view literal)
     : m_etable(etable),
-      m_owned(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    m_data = (const tu_uint8 *) literal.data();
-    m_size = literal.size();
+    m_rope = tempo_utils::Rope<tu_uint8>(literal.cbegin(), literal.cend());
+    m_size = m_rope.numElements();
 }
 
 lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const tu_uint8 *src, int32_t size)
     : m_etable(etable),
-      m_owned(true),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (src != nullptr);
     TU_ASSERT (size >= 0);
 
-    auto *dst = new tu_uint8[size];
-    memcpy(dst, src, size);
+    m_rope = tempo_utils::Rope<tu_uint8>(src, src + size);
+    m_size = m_rope.numElements();
+}
 
-    m_data = dst;
-    m_size = size;
+lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, tempo_utils::Rope<tu_uint8> rope)
+    : m_etable(etable),
+      m_reachable(false)
+{
+    TU_ASSERT (m_etable != nullptr);
+    m_rope = std::move(rope);
+    m_size = m_rope.numElements();
 }
 
 lyric_runtime::BytesRef::~BytesRef()
 {
     TU_LOG_VV << "free BytesRef" << BytesRef::toString();
-    if (m_owned) {
-        delete[] m_data;
-    }
+}
+
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::BytesRef::getDescriptorEntry() const
+{
+    return m_etable->getDescriptor().data.descriptor;
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -64,14 +72,58 @@ lyric_runtime::BytesRef::getSymbolUrl() const
     return m_etable->getSymbolUrl();
 }
 
+int
+lyric_runtime::BytesRef::compare(const AbstractRef *other) const
+{
+    TU_NOTNULL (other);
+
+    auto thischunks = m_rope.iterateChunks();
+    auto *otherbytes = static_cast<const BytesRef *>(other);
+    auto otherchunks = otherbytes->m_rope.iterateChunks();
+
+    tempo_utils::RopeChunk<tu_uint8> thischunk, otherchunk;
+
+    auto thisactive = thischunks.getNext(thischunk);
+    auto thisit = thischunk.cbegin();
+    auto thisend = thischunk.cend();;
+
+    auto otheractive = otherchunks.getNext(otherchunk);
+    auto otherit = otherchunk.cbegin();
+    auto otherend = otherchunk.cend();
+
+    while (thisactive && otheractive) {
+
+        while (thisit != thisend && otherit != otherend) {
+            if (*thisit < *otherit)
+                return -1;
+            if (*thisit > *otherit)
+                return 1;
+            ++thisit;
+            ++otherit;
+        }
+
+        if (thisit == thisend) {
+            thisactive = thischunks.getNext(thischunk);
+            thisit = thischunk.cbegin();
+            thisend = thischunk.cend();
+        }
+
+        if (otherit == otherend) {
+            otheractive = otherchunks.getNext(otherchunk);
+            otherit = otherchunk.cbegin();
+            otherend = otherchunk.cend();
+        }
+    }
+
+    if (!thisactive)
+        return otheractive? 1 : 0;
+    return -1;
+}
+
 bool
 lyric_runtime::BytesRef::equals(const AbstractRef *other) const
 {
-    auto *other_ = static_cast<const BytesRef *>(other);
-
-    if (m_size != other_->m_size)
-        return false;
-    return !memcmp(m_data, other_->m_data, m_size);
+    return compare(other) == 0;
 }
 
 bool
@@ -84,31 +136,48 @@ lyric_runtime::BytesRef::rawSize(tu_int32 &size) const
 tu_int32
 lyric_runtime::BytesRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
 {
-    if (offset < 0)
-        return -1;
-    if (dst == nullptr)
-        return -1;
-    if (size <= 0)
-        return -1;
+    auto subspan = m_rope.subspan(offset, size);
+    auto chunks = subspan.iterateChunks();
+    tempo_utils::RopeChunk<tu_uint8> chunk;
 
-    if (m_size <= offset)
-        return 0;
-
-    auto ncopied = size < m_size - offset? size : static_cast<tu_int32>(m_size - offset);
-    memcpy(dst, m_data, ncopied);
+    size_t ncopied = 0;
+    while (chunks.getNext(chunk)) {
+        memcpy(dst, chunk.data(), chunk.size());
+        dst += chunk.size();
+        ncopied += chunk.size();
+    }
     return ncopied;
 }
 
 bool
 lyric_runtime::BytesRef::utf8Value(std::string &utf8) const
 {
-    return false;
+    auto chunks = m_rope.iterateChunks();
+    tempo_utils::RopeChunk<tu_uint8> chunk;
+
+    while (chunks.getNext(chunk)) {
+        utf8.append((const char *) chunk.data(), chunk.size());
+    }
+    utf8::iterator it(utf8.cbegin(), utf8.cbegin(), utf8.cend());
+    utf8::iterator end(utf8.cend(), utf8.cbegin(), utf8.cend());
+    try {
+        while (it != end) {
+            utf8::next(it, end);
+        }
+        return true;
+    } catch (utf8::exception &ex) {
+        return false;
+    }
 }
 
 bool
 lyric_runtime::BytesRef::hashValue(absl::HashState state)
 {
-    absl::HashState::combine_contiguous(std::move(state), m_data, m_size);
+    auto chunks = m_rope.iterateChunks();
+    tempo_utils::RopeChunk<tu_uint8> chunk;
+    while (chunks.getNext(chunk)) {
+        state = absl::HashState::combine_contiguous(std::move(state), chunk.data(), chunk.size());
+    }
     return true;
 }
 
@@ -133,36 +202,25 @@ lyric_runtime::BytesRef::toString() const
 lyric_runtime::DataCell
 lyric_runtime::BytesRef::byteAt(int index) const
 {
-    if (m_data == nullptr)
+    if (m_rope.isEmpty())
         return DataCell::undef();
-    if (m_size <= index)
-        return DataCell::undef();
-    auto byte = m_data[index];
-    return DataCell(static_cast<tu_int64>(byte));
+
+    int curr = 0;
+    auto chunks = m_rope.iterateChunks();
+    tempo_utils::RopeChunk<tu_uint8> chunk;
+    while (chunks.getNext(chunk)) {
+        if (index < curr + chunk.size())
+            return DataCell(static_cast<tu_int64>(chunk.elementAt(index - curr)));
+        curr += chunk.size();
+    }
+    return DataCell::undef();
 }
 
 lyric_runtime::DataCell
 lyric_runtime::BytesRef::bytesCompare(BytesRef *other) const
 {
     TU_ASSERT (other != nullptr);
-
-    if (m_data == nullptr && other->m_data == nullptr)
-        return DataCell(static_cast<int64_t>(0));
-    if (m_data == nullptr && other->m_data != nullptr)
-        return DataCell(static_cast<int64_t>(-1));
-    if (m_data != nullptr && other->m_data == nullptr)
-        return DataCell(static_cast<int64_t>(1));
-
-    auto cmp = std::memcmp(m_data, other->m_data, m_size <= other->m_size? m_size : other->m_size);
-    if (cmp != 0)
-        return DataCell(static_cast<int64_t>(cmp));
-
-    if (m_size < other->m_size)
-        return DataCell(static_cast<int64_t>(-1));
-    if (m_size > other->m_size)
-        return DataCell(static_cast<int64_t>(1));
-
-    return DataCell(static_cast<int64_t>(0));
+    return DataCell(static_cast<tu_int64>(compare(other)));
 }
 
 lyric_runtime::DataCell
@@ -171,10 +229,10 @@ lyric_runtime::BytesRef::bytesLength() const
     return DataCell(static_cast<tu_int64>(m_size));
 }
 
-const tu_uint8 *
+tempo_utils::Rope<tu_uint8>
 lyric_runtime::BytesRef::getBytesData() const
 {
-    return m_data;
+    return m_rope;
 }
 
 int32_t

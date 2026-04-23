@@ -15,6 +15,7 @@ namespace lyric_runtime {
             lyric_object::CommunicationType comm);
         ~ProtocolRef() override;
 
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;

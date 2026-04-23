@@ -85,7 +85,7 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
         case MatcherType::DATA_CELL_BYTES: {
             if (cell.type != lyric_runtime::DataCellType::BYTES)
                 return false;
-            std::span bytes(cell.data.bytes->getBytesData(), cell.data.bytes->getBytesSize());
+            auto bytes = cell.data.bytes->getBytesData().toVector();
             return std::equal(bytes.begin(), bytes.end(), m_bytes->getSpan().begin());
         }
         case MatcherType::DATA_CELL_SYMBOL: {

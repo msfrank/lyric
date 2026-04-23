@@ -79,8 +79,7 @@ bytes_to_string(
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::BYTES);
     auto *instance = receiver.data.bytes;
-    auto *data = (const char *) instance->getBytesData();
-    auto size = instance->getBytesSize();
-    std::string string(data, size);
-    return heapManager->loadStringOntoStack(string);
+    std::string utf8;
+    instance->utf8Value(utf8);
+    return heapManager->loadStringOntoStack(utf8);
 }

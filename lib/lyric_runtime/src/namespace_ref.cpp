@@ -25,6 +25,12 @@ lyric_runtime::NamespaceRef::~NamespaceRef()
     TU_LOG_VV << "free NamespaceRef" << NamespaceRef::toString();
 }
 
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::NamespaceRef::getDescriptorEntry() const
+{
+    return m_etable->getDescriptor().data.descriptor;
+}
+
 const lyric_runtime::AbstractMemberResolver *
 lyric_runtime::NamespaceRef::getMemberResolver() const
 {

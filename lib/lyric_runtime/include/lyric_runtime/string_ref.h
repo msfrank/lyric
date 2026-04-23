@@ -1,6 +1,8 @@
 #ifndef LYRIC_RUNTIME_STRING_REF_H
 #define LYRIC_RUNTIME_STRING_REF_H
 
+#include <tempo_utils/rope.h>
+
 #include "abstract_ref.h"
 
 namespace lyric_runtime {
@@ -9,12 +11,15 @@ namespace lyric_runtime {
     public:
         StringRef(const ExistentialTable *etable, std::string_view literal);
         StringRef(const ExistentialTable *etable, const char *data, int32_t size);
+        StringRef(const ExistentialTable *etable, tempo_utils::Rope<char> rope);
         ~StringRef() override;
 
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
+        int compare(const AbstractRef *other) const;
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
@@ -28,7 +33,7 @@ namespace lyric_runtime {
         DataCell stringCompare(StringRef *other) const;
         DataCell stringLength() const;
 
-        const char *getStringData() const;
+        tempo_utils::Rope<char> getStringData() const;
         int32_t getStringSize() const;
 
         void setPermanent();
@@ -52,8 +57,7 @@ namespace lyric_runtime {
 
     private:
         const ExistentialTable *m_etable;
-        bool m_owned;
-        const char *m_data;
+        tempo_utils::Rope<char> m_rope;
         int32_t m_size;
         bool m_permanent;
         bool m_reachable;

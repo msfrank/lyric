@@ -31,6 +31,12 @@ lyric_runtime::ProtocolRef::~ProtocolRef()
     TU_LOG_VV << "free ProtocolRef" << ProtocolRef::toString();
 }
 
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::ProtocolRef::getDescriptorEntry() const
+{
+    return m_etable->getDescriptor().data.descriptor;
+}
+
 const lyric_runtime::AbstractMemberResolver *
 lyric_runtime::ProtocolRef::getMemberResolver() const
 {

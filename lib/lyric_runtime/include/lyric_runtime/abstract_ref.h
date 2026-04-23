@@ -21,6 +21,13 @@ namespace lyric_runtime {
         virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
 
         /**
+         * Returns the descriptor entry for the ref.
+         *
+         * @return The descriptor  entry for the ref.
+         */
+        virtual const DescriptorEntry *getDescriptorEntry() const = 0;
+
+        /**
          * Returns the member resolver for the ref. If the ref does not support members then returns nullptr.
          *
          * @return The member resolver for the ref.

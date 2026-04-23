@@ -1,6 +1,8 @@
 #ifndef LYRIC_RUNTIME_BYTES_REF_H
 #define LYRIC_RUNTIME_BYTES_REF_H
 
+#include <tempo_utils/rope.h>
+
 #include "abstract_ref.h"
 
 namespace lyric_runtime {
@@ -9,12 +11,15 @@ namespace lyric_runtime {
     public:
         BytesRef(const ExistentialTable *etable, std::string_view literal);
         BytesRef(const ExistentialTable *etable, const tu_uint8 *data, int32_t size);
+        BytesRef(const ExistentialTable *etable, tempo_utils::Rope<tu_uint8> rope);
         ~BytesRef() override;
 
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
+        int compare(const AbstractRef *other) const;
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
@@ -28,7 +33,7 @@ namespace lyric_runtime {
         DataCell bytesCompare(BytesRef *other) const;
         DataCell bytesLength() const;
 
-        const tu_uint8 *getBytesData() const;
+        tempo_utils::Rope<tu_uint8> getBytesData() const;
         int32_t getBytesSize() const;
 
         bool isReachable() const override;
@@ -51,8 +56,7 @@ namespace lyric_runtime {
 
     private:
         const ExistentialTable *m_etable;
-        bool m_owned;
-        const tu_uint8 *m_data;
+        tempo_utils::Rope<tu_uint8> m_rope;
         int32_t m_size;
         bool m_reachable;
     };

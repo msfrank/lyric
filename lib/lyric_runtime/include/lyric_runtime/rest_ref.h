@@ -10,6 +10,7 @@ namespace lyric_runtime {
         RestRef(const ExistentialTable *etable, std::vector<DataCell> &&restArgs);
         ~RestRef() override;
 
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;

@@ -13,6 +13,7 @@ namespace lyric_runtime {
             const DataCell &type);
         ~NamespaceRef() override;
 
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;

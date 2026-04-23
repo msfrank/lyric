@@ -124,9 +124,9 @@ lyric_runtime::StatusRef::setMessage(const DataCell &message)
 std::string
 lyric_runtime::StatusRef::toString() const
 {
-    std::string_view message;
+    std::string message;
     if (m_message != nullptr) {
-        message = std::string_view(m_message->getStringData(), m_message->getStringSize());
+        m_message->utf8Value(message);
     }
     return absl::Substitute("<$0: StatusRef $1 message=\"$2\">",
         this,

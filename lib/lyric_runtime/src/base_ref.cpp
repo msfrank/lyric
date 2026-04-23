@@ -11,6 +11,12 @@ lyric_runtime::BaseRef::BaseRef(const VirtualTable *vtable)
     m_reachable = false;
 }
 
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::BaseRef::getDescriptorEntry() const
+{
+    return m_vtable->getDescriptor().data.descriptor;
+}
+
 const lyric_runtime::VirtualTable *
 lyric_runtime::BaseRef::getVirtualTable() const
 {

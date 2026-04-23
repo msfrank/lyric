@@ -71,7 +71,6 @@ string_to_bytes(
     const lyric_runtime::VirtualTable *vtable)
 {
     auto *heapManager = state->heapManager();
-
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
@@ -79,8 +78,8 @@ string_to_bytes(
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
     auto *instance = receiver.data.str;
-    auto *data = (const tu_uint8 *) instance->getStringData();
-    auto size = instance->getStringSize();
-    auto bytes = std::span<const tu_uint8>(data, size);
+    std::string utf8;
+    instance->utf8Value(utf8);
+    auto bytes = std::span((const tu_uint8 *) utf8.data(), utf8.size());
     return heapManager->loadBytesOntoStack(bytes);
 }

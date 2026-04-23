@@ -17,6 +17,7 @@ namespace lyric_runtime {
         const VirtualTable *getVirtualTable() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const override;
+        const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;

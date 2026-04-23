@@ -18,6 +18,12 @@ lyric_runtime::RestRef::~RestRef()
     TU_LOG_VV << "free RestRef" << RestRef::toString();
 }
 
+const lyric_runtime::DescriptorEntry *
+lyric_runtime::RestRef::getDescriptorEntry() const
+{
+    return m_etable->getDescriptor().data.descriptor;
+}
+
 const lyric_runtime::AbstractMemberResolver *
 lyric_runtime::RestRef::getMemberResolver() const
 {
