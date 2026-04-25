@@ -3,6 +3,7 @@
 
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
+#include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_utils/logging.h>
 
@@ -12,11 +13,14 @@ class ParseValStatement : public BaseParserFixture {};
 
 TEST_F(ParseValStatement, TypedValWithLiteralInitializer)
 {
+    parserOptions.enableExtraDiagnostics =  true;
+    parserOptions.reportAllAmbiguities =  true;
+
     auto parseResult = parseModule(R"(
         val x: Int = 1
     )");
 
-    ASSERT_TRUE(parseResult.isResult());
+    ASSERT_THAT(parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
 
     auto blockNode = archetype.getRoot();
@@ -58,7 +62,7 @@ TEST_F(ParseValStatement, TypedValWithDefaultNewInitializer)
         val x: Foo = {}
     )");
 
-    ASSERT_TRUE(parseResult.isResult());
+    ASSERT_THAT(parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
 
     auto blockNode = archetype.getRoot();
@@ -99,7 +103,7 @@ TEST_F(ParseValStatement, UntypedValWithLiteralInitializer)
         val x = 1
     )");
 
-    ASSERT_TRUE(parseResult.isResult());
+    ASSERT_THAT(parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
 
     auto blockNode = archetype.getRoot();

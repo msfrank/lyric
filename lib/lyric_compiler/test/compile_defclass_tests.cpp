@@ -76,7 +76,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitThisInit)
         defclass Foo {
             val Value: Int
             init(i: Int) {
-                set this.Value = i
+                this.Value = i
             }
             init Named() from this(42) {}
         }
@@ -94,7 +94,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedThisInit)
         defclass Foo {
             val Value: Int
             init Named(i: Int) {
-                set this.Value = i
+                this.Value = i
             }
             init() from this.Named(42) {}
         }
@@ -141,7 +141,7 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
         defclass Foo {
             var Index: Int
             init(i: Int) {
-                set this.Index = i
+                this.Index = i
             }
         }
         var foo: Foo = Foo{100}
@@ -174,7 +174,7 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
         defclass Foo {
             var _index: Int
             init(i: Int) {
-                set this._index = i
+                this._index = i
             }
             def index(): Int {
                 this._index
@@ -199,7 +199,7 @@ TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
         defclass Foo {
             var _index: Int
             init(i: Int) {
-                set this._index = i
+                this._index = i
             }
         }
         var foo: Foo = Foo{100}
@@ -217,7 +217,7 @@ TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
         defclass Foo {
             var _index: Int
             init(i: Int) {
-                set this._index = i
+                this._index = i
             }
             def Index(): Int {
                 this._index
@@ -237,7 +237,7 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
         defclass Foo {
             var _index: Int
             init(i: Int) {
-                set this._index = i
+                this._index = i
             }
             def NoReturn() {
                 this._index + 1
@@ -279,7 +279,7 @@ TEST_F(CompileDefclass, EvaluateDefGenericClass)
         defclass Foo[A] {
             var _index: A
             init(i: A) {
-                set this._index = i
+                this._index = i
             }
             def Index(): A {
                 this._index
@@ -301,7 +301,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
         defclass Foo {
             var _index: Int
             init(i: Int) {
-                set this._index = i
+                this._index = i
             }
             def Tuple[T](t: T): Tuple2[T,Int] {
                 Tuple2[T,Int]{t, this._index}
@@ -322,7 +322,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
         defclass Foo[S] {
             var _s: S
             init(s: S) {
-                set this._s = s
+                this._s = s
             }
             def Tuple[T](t: T): Tuple2[T,S] {
                 Tuple2[T,S]{t, this._s}

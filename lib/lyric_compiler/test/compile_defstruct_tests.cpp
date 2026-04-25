@@ -76,7 +76,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitThisInit)
         defstruct Foo {
             val Value: Int
             init(i: Int) {
-                set this.Value = i
+                this.Value = i
             }
             init Named() from this(42) {}
         }
@@ -94,7 +94,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitNamedThisInit)
         defstruct Foo {
             val Value: Int
             init Named(i: Int) {
-                set this.Value = i
+                this.Value = i
             }
             init() from this.Named(42) {}
         }
@@ -112,7 +112,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithConstructor)
         defstruct Foo {
             val Value: Int
             init(i: Int, j: Int) {
-                set this.Value = i + j
+                this.Value = i + j
             }
         }
         val foo: Foo = Foo{40, 60}

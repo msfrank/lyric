@@ -80,7 +80,7 @@ TEST_F(SeqTests, TestEvaluateSeqIterateImpl)
         val seq: Seq = Seq{1, 2, 3, 4, 5, 6}
         var count: Int = 0
         for n: Any in seq {
-            set count += 1
+            count += 1
         }
         count
     )");

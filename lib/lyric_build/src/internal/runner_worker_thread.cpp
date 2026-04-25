@@ -163,9 +163,9 @@ lyric_build::internal::RunnerWorker::checkDependencies(BaseTask *task)
     if (!failedDeps.empty()) {
         TU_LOG_VV << "task " << key << " failed due to " << (tu_uint32) failedDeps.size()
             << " failed dependencies: " << failedDeps;
-        auto data = task->setState(TaskState::FAILED);
-        TU_RETURN_IF_NOT_OK (m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data)));
-        return task->cancel();
+        TU_RETURN_IF_NOT_OK (task->cancel());
+        auto data = task->getData();
+        return m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, data));
     }
 
     // if any dependencies are not complete, then mark the task blocked

@@ -50,7 +50,7 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
             var Value: Int = 0
 
             init(initial: Int) {
-                set this.Value = initial
+                this.Value = initial
             }
 
             def Add(x: Int): Int {

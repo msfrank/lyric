@@ -57,10 +57,11 @@ lyric_parser::internal::ModuleArchetype::logErrorOrThrow(
     size_t columnNr,
     const std::string &message)
 {
+    auto fullMessage = absl::Substitute("syntax error at $0:$1: $2", lineNr, columnNr, message);
+    TU_LOG_VV << fullMessage;
+
     // if this is the first error seen then set status
     if (m_status.isOk()) {
-        auto fullMessage = absl::Substitute(
-            "syntax error at $0:$1: $2", lineNr, columnNr, message);
         m_status = ParseStatus::forCondition(
             ParseCondition::kSyntaxError, fullMessage);
     }
@@ -427,16 +428,16 @@ void lyric_parser::internal::ModuleArchetype::exitGlobalStatement(ModuleParser::
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVal(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefaultNewVal(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUntypedVal(ModuleParser::UntypedValContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVal(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefaultNewVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterTypedVal(ModuleParser::TypedValContext *ctx)
@@ -451,16 +452,28 @@ void lyric_parser::internal::ModuleArchetype::exitTypedVal(ModuleParser::TypedVa
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypedVal(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::enterUntypedVar(ModuleParser::UntypedVarContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVar(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVal(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUntypedVar(ModuleParser::UntypedVarContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVar(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefaultNewVar(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefaultNewVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterTypedVar(ModuleParser::TypedVarContext *ctx)
@@ -475,6 +488,24 @@ void lyric_parser::internal::ModuleArchetype::exitTypedVar(ModuleParser::TypedVa
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypedVar(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterUntypedVar(ModuleParser::UntypedVarContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVar(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitUntypedVar(ModuleParser::UntypedVarContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVar(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitVariableDefaultNew(ModuleParser::VariableDefaultNewContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseVariableDefaultNew(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::exitNameAssignment(ModuleParser::NameAssignmentContext *ctx)
 {
     ModuleAssignOps ops(this);
@@ -487,10 +518,22 @@ void lyric_parser::internal::ModuleArchetype::exitMemberAssignment(ModuleParser:
     LOG_ERROR_ON_EXCEPTION (ctx, ops.parseMemberAssignment(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitSetStatement(ModuleParser::SetStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitAssignDefaultNew(ModuleParser::AssignDefaultNewContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseSetStatement(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseAssignDefaultNew(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDefaultNewSet(ModuleParser::DefaultNewSetContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultNewSet(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitExpressionSet(ModuleParser::ExpressionSetContext *ctx)
+{
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseExpressionSet(ctx));
 }
 
 /*
@@ -808,11 +851,6 @@ void lyric_parser::internal::ModuleArchetype::exitTypeofExpression(ModuleParser:
 /*
  * construct ops
  */
-void lyric_parser::internal::ModuleArchetype::exitPairExpression(ModuleParser::PairExpressionContext *ctx)
-{
-    ModuleConstructOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.parsePairExpression(ctx));
-}
 
 void lyric_parser::internal::ModuleArchetype::exitDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx)
 {

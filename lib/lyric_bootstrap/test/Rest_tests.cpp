@@ -39,7 +39,7 @@ TEST_F(RestTests, TestEvaluateRestIterateImpl)
         def SumArgs(args: ...Int): Int {
             var count: Int = 0
             for n: Int in args {
-                set count += n
+                count += n
             }
             count
         }

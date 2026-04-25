@@ -412,7 +412,7 @@ lyric_build::BaseTask::cancel()
             return {};
         default:
             return complete(BuildStatus::forCondition(
-                BuildCondition::kTaskFailure, "task has been cancelled"));
+                BuildCondition::kTaskFailure, "task cancelled"));
     }
 }
 

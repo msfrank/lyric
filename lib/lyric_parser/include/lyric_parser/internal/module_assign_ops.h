@@ -14,17 +14,27 @@ namespace lyric_parser::internal {
 
         void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
         void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
-        void enterUntypedVal(ModuleParser::UntypedValContext *ctx);
-        void exitUntypedVal(ModuleParser::UntypedValContext *ctx);
+
+        void enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx);
+        void exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx);
         void enterTypedVal(ModuleParser::TypedValContext *ctx);
         void exitTypedVal(ModuleParser::TypedValContext *ctx);
-        void enterUntypedVar(ModuleParser::UntypedVarContext *ctx);
-        void exitUntypedVar(ModuleParser::UntypedVarContext *ctx);
+        void enterUntypedVal(ModuleParser::UntypedValContext *ctx);
+        void exitUntypedVal(ModuleParser::UntypedValContext *ctx);
+
+        void enterDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx);
+        void exitDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx);
         void enterTypedVar(ModuleParser::TypedVarContext *ctx);
         void exitTypedVar(ModuleParser::TypedVarContext *ctx);
+        void enterUntypedVar(ModuleParser::UntypedVarContext *ctx);
+        void exitUntypedVar(ModuleParser::UntypedVarContext *ctx);
+
+        void parseVariableDefaultNew(ModuleParser::VariableDefaultNewContext *ctx);
         void parseNameAssignment(ModuleParser::NameAssignmentContext *ctx);
         void parseMemberAssignment(ModuleParser::MemberAssignmentContext *ctx);
-        void parseSetStatement(ModuleParser::SetStatementContext *ctx);
+        void parseAssignDefaultNew(ModuleParser::AssignDefaultNewContext *ctx);
+        void parseDefaultNewSet(ModuleParser::DefaultNewSetContext *ctx);
+        void parseExpressionSet(ModuleParser::ExpressionSetContext *ctx);
     };
 }
 

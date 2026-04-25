@@ -84,17 +84,24 @@ namespace lyric_parser::internal {
         // implemented by ModuleAssignOps
         void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
         void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
-        void enterUntypedVal(ModuleParser::UntypedValContext *ctx) override;
-        void exitUntypedVal(ModuleParser::UntypedValContext *ctx) override;
+        void enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx) override;
+        void exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx) override;
         void enterTypedVal(ModuleParser::TypedValContext *ctx) override;
         void exitTypedVal(ModuleParser::TypedValContext *ctx) override;
-        void enterUntypedVar(ModuleParser::UntypedVarContext *ctx) override;
-        void exitUntypedVar(ModuleParser::UntypedVarContext *ctx) override;
+        void enterUntypedVal(ModuleParser::UntypedValContext *ctx) override;
+        void exitUntypedVal(ModuleParser::UntypedValContext *ctx) override;
+        void enterDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx) override;
+        void exitDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx) override;
         void enterTypedVar(ModuleParser::TypedVarContext *ctx) override;
         void exitTypedVar(ModuleParser::TypedVarContext *ctx) override;
+        void enterUntypedVar(ModuleParser::UntypedVarContext *ctx) override;
+        void exitUntypedVar(ModuleParser::UntypedVarContext *ctx) override;
+        void exitVariableDefaultNew(ModuleParser::VariableDefaultNewContext *ctx) override;
         void exitNameAssignment(ModuleParser::NameAssignmentContext *ctx) override;
         void exitMemberAssignment(ModuleParser::MemberAssignmentContext *ctx) override;
-        void exitSetStatement(ModuleParser::SetStatementContext *ctx) override;
+        void exitAssignDefaultNew(ModuleParser::AssignDefaultNewContext *ctx) override;
+        void exitDefaultNewSet(ModuleParser::DefaultNewSetContext *ctx) override;
+        void exitExpressionSet(ModuleParser::ExpressionSetContext *ctx) override;
 
         // implemented by ModuleControlOps
         void exitIfStatement(ModuleParser::IfStatementContext *ctx) override;
@@ -160,7 +167,6 @@ namespace lyric_parser::internal {
         void exitNamedThisBase(ModuleParser::NamedThisBaseContext *ctx) override;
         void exitDefaultSuperBase(ModuleParser::DefaultSuperBaseContext *ctx) override;
         void exitNamedSuperBase(ModuleParser::NamedSuperBaseContext *ctx) override;
-        void exitPairExpression(ModuleParser::PairExpressionContext *ctx) override;
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx) override;
         void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx) override;
         void exitInitializerDefaultNew(ModuleParser::InitializerDefaultNewContext *ctx) override;

@@ -13,8 +13,8 @@ TEST_F(CompileWhile, EvaluateWhile)
         var count: Int = 0
         var sum: Int = 0
         while count < 5 {
-          set count = count + 1
-          set sum = sum + count
+          count = count + 1
+          sum = sum + count
         }
         sum
     )");

@@ -78,12 +78,15 @@ lyric_parser::internal::make_PType_node(
     TU_ASSIGN_OR_RAISE (ptypeNode, state->appendNode(lyric_schema::kLyricAstPTypeClass, location));
     ptypeNode->putAttr(kLyricAstSymbolPath, symbolPath);
 
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *param = ctx->assignableType(i);
-        if (param == nullptr)
-            continue;
-        auto *typeNode = make_Type_node(state, param);
-        ptypeNode->appendChild(typeNode);
+    auto *typeParameterList = ctx->typeParameterList();
+    if (typeParameterList) {
+        for (size_t i = 0; i < typeParameterList->getRuleIndex(); i++) {
+            auto *param = typeParameterList->assignableType(i);
+            if (param == nullptr)
+                continue;
+            auto *typeNode = make_Type_node(state, param);
+            ptypeNode->appendChild(typeNode);
+        }
     }
 
     return ptypeNode;

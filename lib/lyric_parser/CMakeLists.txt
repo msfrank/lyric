@@ -57,6 +57,12 @@ add_custom_command (
       ${CMAKE_CURRENT_SOURCE_DIR}/share/ModuleLexer.g4 ${CMAKE_CURRENT_SOURCE_DIR}/share/ModuleParser.g4
 )
 
+# generate grammar test runner script
+configure_file(test-grammar.in ${CMAKE_CURRENT_BINARY_DIR}/test-grammar @ONLY
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+    )
+
 # generate flatbuffer files for archetype IDL
 add_custom_command (
     OUTPUT

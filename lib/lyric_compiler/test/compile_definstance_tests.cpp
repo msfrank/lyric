@@ -13,7 +13,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceWithExplicitInit)
         definstance Foo {
             val Index: Int
             init() {
-                set this.Index = 100
+                this.Index = 100
             }
         }
         Foo.Index
@@ -83,9 +83,9 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
             impl Ordered[Int] {
                 def Compare(lhs: Int, rhs: Int): Int {
                     cond {
-                        when lhs > rhs     -1
-                        when lhs < rhs      1
-                        else                0
+                        when lhs > rhs -> -1
+                        when lhs < rhs -> 1
+                        else           -> 0
                     }
                 }
             }
@@ -108,9 +108,9 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
             impl Ordered[Int] {
                 def Compare(lhs: Int, rhs: Int): Int {
                     cond {
-                        when lhs > rhs     -1
-                        when lhs < rhs      1
-                        else                0
+                        when lhs > rhs -> -1
+                        when lhs < rhs -> 1
+                        else           -> 0
                     }
                 }
             }

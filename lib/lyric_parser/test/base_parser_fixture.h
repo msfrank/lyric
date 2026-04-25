@@ -9,13 +9,19 @@
 class BaseParserFixture : public ::testing::Test {
 protected:
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder;
-    std::unique_ptr<lyric_parser::LyricParser> parser;
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::ParseDiagnosticsOptions parseDiagnosticsOptions;
     tempo_tracing::TempoSpanset spanset;
     std::shared_ptr<lyric_parser::ParseDiagnostics> diagnostics;
 
     void SetUp() override;
 
+    lyric_parser::LyricParser *getParser();
+
     tempo_utils::Result<lyric_parser::LyricArchetype> parseModule(std::string_view utf8);
+
+private:
+    std::unique_ptr<lyric_parser::LyricParser> m_parser;
 };
 
 #endif //BASE_PARSER_FIXTURE_H

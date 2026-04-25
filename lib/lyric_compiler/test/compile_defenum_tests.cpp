@@ -47,7 +47,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseVal)
         defenum Direction {
             val Index: Int
             init(index: Int) {
-                set this.Index = index
+                this.Index = index
             }
             case North(1)
             case South(2)
@@ -66,15 +66,15 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDef)
         defenum Direction {
             val abbreviation: String
             init(abbreviation: String) {
-                set this.abbreviation = abbreviation
+                this.abbreviation = abbreviation
             }
             def IndexOf(): Int {
                 cond {
-                    when this.abbreviation == "N"  1
-                    when this.abbreviation == "S"  2
-                    when this.abbreviation == "E"  3
-                    when this.abbreviation == "W"  4
-                    else     -1
+                    when this.abbreviation == "N" -> 1
+                    when this.abbreviation == "S" -> 2
+                    when this.abbreviation == "E" -> 3
+                    when this.abbreviation == "W" -> 4
+                                             else -> -1
                 }
             }
             case North("N")
@@ -94,7 +94,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
         defenum Direction {
             val abbreviation: String
             init(abbreviation: String) {
-                set this.abbreviation = abbreviation
+                this.abbreviation = abbreviation
             }
             def NoReturn() {
                 42

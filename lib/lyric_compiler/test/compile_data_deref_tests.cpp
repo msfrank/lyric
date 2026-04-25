@@ -48,7 +48,7 @@ TEST_F(CompileDataDeref, EvaluateHiddenMemberFromInstanceOfSameClass)
         defclass Foo {
             val _priv: Int
             init(priv: Int) {
-                set this._priv = priv
+                this._priv = priv
             }
             def OtherValue(other: Foo): Int {
                 other._priv

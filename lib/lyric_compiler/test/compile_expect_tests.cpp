@@ -14,8 +14,8 @@ TEST_F(CompileExpect, EvaluateExpectYieldsResult)
     auto result = m_tester->runModule(R"(
         def PositiveOrError(x: Int): Int | Error {
             cond {
-                when x > 0      x
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> x
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         def Add10(x: Int): Int | Error {
@@ -35,8 +35,8 @@ TEST_F(CompileExpect, EvaluateExpectReturnsError)
     auto result = m_tester->runModule(R"(
         def PositiveOrError(x: Int): Int | Error {
             cond {
-                when x > 0      x
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> x
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         def Add10(x: Int): Int | Error {
@@ -56,8 +56,8 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandMember)
     auto result = m_tester->runModule(R"(
         def PositiveOrStatus(x: Int): Int | Status {
             cond {
-                when x > 0      x
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> x
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         expect PositiveOrStatus(1)
@@ -73,8 +73,8 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandYieldsResult)
     auto result = m_tester->runModule(R"(
         def CheckPositive(x: Int): Status {
             cond {
-                when x > 0      Ok{}
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> Ok{}
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         expect CheckPositive(1)
@@ -90,8 +90,8 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandReturnsError)
     auto result = m_tester->runModule(R"(
         def CheckPositive(x: Int): Status {
             cond {
-                when x > 0      Ok{}
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> Ok{}
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         expect CheckPositive(-1)
@@ -159,8 +159,8 @@ TEST_F(CompileExpect, CompileExpectFailsWhenOperandTypeIsAny)
     auto result = m_tester->compileModule(R"(
         def PositiveOrStatus(x: Int): Any {
             cond {
-                when x > 0      x
-                else            OutOfRange{message="integer is not positive"}
+                when x > 0 -> x
+                else       -> OutOfRange{message="integer is not positive"}
             }
         }
         expect PositiveOrStatus(0)

@@ -14,29 +14,6 @@ lyric_parser::internal::ModuleConstructOps::ModuleConstructOps(ModuleArchetype *
 }
 
 void
-lyric_parser::internal::ModuleConstructOps::parsePairExpression(ModuleParser::PairExpressionContext *ctx)
-{
-    auto *state = getState();
-    if (hasError())
-        return;
-
-    ArchetypeNode *p2;
-    TU_ASSIGN_OR_RAISE (p2, state->popNode());
-
-    ArchetypeNode *p1;
-    TU_ASSIGN_OR_RAISE (p1, state->popNode());
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
-
-    ArchetypeNode *pairNode;
-    TU_ASSIGN_OR_RAISE (pairNode, state->appendNode(lyric_schema::kLyricAstPairClass, location));
-    TU_RAISE_IF_NOT_OK (pairNode->appendChild(p1));
-    TU_RAISE_IF_NOT_OK (pairNode->appendChild(p2));
-    TU_RAISE_IF_NOT_OK (state->pushNode(pairNode));
-}
-
-void
 lyric_parser::internal::ModuleConstructOps::parseDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx)
 {
     auto *token = ctx->getStart();

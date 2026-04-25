@@ -150,8 +150,6 @@ WithKeyword             : 'with' ;
 FromKeyword             : 'from' ;
 UsingKeyword            : 'using' ;
 LambdaKeyword           : 'lambda' ;
-SetKeyword              : 'set' ;
-LetKeyword              : 'let' ;
 CondKeyword             : 'cond' ;
 MatchKeyword            : 'match' ;
 DoKeyword               : 'do' ;

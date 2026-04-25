@@ -39,9 +39,9 @@ lyric_parser::internal::TracingErrorListener::syntaxError(
     // log known antlr4 exceptions
     try {
         std::rethrow_exception(e);
-    } catch(antlr4::FailedPredicateException &ex) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::InputMismatchException &ex) {
+        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
+    } catch(antlr4::FailedPredicateException &ex) {
         m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::NoViableAltException &ex) {
         m_archetype->logErrorOrThrow(line, charPositionInLine, message);

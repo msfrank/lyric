@@ -86,7 +86,7 @@ TEST_F(MapTests, TestEvaluateMapUpdate)
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2}
             }
-        set names = names.Update("three", 3)
+        names = names.Update("three", 3)
         names.GetOrElse("three", 0)
     )");
 
@@ -101,7 +101,7 @@ TEST_F(MapTests, TestEvaluateMapRemove)
             Pair{first = "two", second = 2},
             Pair{first = "three", second = 3}
             }
-        set names = names.Remove("three")
+        names = names.Remove("three")
         names.Contains("three")
     )");
 
@@ -118,7 +118,7 @@ TEST_F(MapTests, TestEvaluateMapIterateImpl)
             }
         var count: Int = 0
         for n: Any in names {
-            set count += 1
+            count += 1
         }
         count
     )");

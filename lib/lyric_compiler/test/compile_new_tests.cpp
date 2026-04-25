@@ -39,7 +39,7 @@ TEST_F(CompileNew, EvaluateNewClassUsingNamedConstructor)
         defstruct Foo {
             val Value: Int
             init Named(value: Int) {
-                set this.Value = value
+                this.Value = value
             }
         }
         Foo.Named{42}
@@ -56,7 +56,7 @@ TEST_F(CompileNew, EvaluateNewStructUsingNamedConstructor)
         defstruct Foo {
             val Value: Int
             init Named(value: Int) {
-                set this.Value = value
+                this.Value = value
             }
         }
         Foo.Named{42}

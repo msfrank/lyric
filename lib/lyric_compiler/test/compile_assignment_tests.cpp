@@ -27,7 +27,7 @@ TEST_F(CompileAssignment, EvaluateTypedValFromDefaultInitializer)
         defclass Test {
             val Greeting: String
             init(greeting: String) {
-                set this.Greeting = greeting
+                this.Greeting = greeting
             }
         }
 
@@ -69,7 +69,7 @@ TEST_F(CompileAssignment, CompileValAssignmentFails)
 {
     auto result = m_tester->compileModule(R"(
         val foo: Int = 100
-        set foo = 1
+        foo = 1
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
@@ -81,7 +81,7 @@ TEST_F(CompileAssignment, EvaluateVarAssignment)
 {
     auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
-        set mutablefoo = 1
+        mutablefoo = 1
         mutablefoo
     )");
 
@@ -94,7 +94,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
 {
     auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
-        set mutablefoo += 10
+        mutablefoo += 10
         mutablefoo
     )");
 
@@ -107,7 +107,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
 {
     auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
-        set mutablefoo -= 10
+        mutablefoo -= 10
         mutablefoo
     )");
 
@@ -120,7 +120,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
 {
     auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
-        set mutablefoo *= 5
+        mutablefoo *= 5
         mutablefoo
     )");
 
@@ -133,7 +133,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceDivide)
 {
     auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
-        set mutablefoo /= 50
+        mutablefoo /= 50
         mutablefoo
     )");
 
@@ -148,12 +148,12 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
+                this.Count = count
             }
         }
 
         val test: Test = Test{10}
-        set test.Count += 1
+        test.Count += 1
         test.Count
     )");
 
@@ -168,12 +168,12 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
+                this.Count = count
             }
         }
 
         val test: Test = Test{10}
-        set test.Count -= 1
+        test.Count -= 1
         test.Count
     )");
 
@@ -188,12 +188,12 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
+                this.Count = count
             }
         }
 
         val test: Test = Test{10}
-        set test.Count *= 2
+        test.Count *= 2
         test.Count
     )");
 
@@ -209,12 +209,12 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
+                this.Count = count
             }
         }
 
         val test: Test = Test{10}
-        set test.Count /= 2
+        test.Count /= 2
         test.Count
     )");
 
@@ -229,8 +229,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceAdd)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
-                set this.Count += 1
+                this.Count = count
+                this.Count += 1
             }
         }
 
@@ -249,8 +249,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceSubtract)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
-                set this.Count -= 1
+                this.Count = count
+                this.Count -= 1
             }
         }
 
@@ -269,8 +269,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceMultiply)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
-                set this.Count *= 2
+                this.Count = count
+                this.Count *= 2
             }
         }
 
@@ -290,8 +290,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
         defclass Test {
             var Count: Int
             init(count: Int) {
-                set this.Count = count
-                set this.Count /= 2
+                this.Count = count
+                this.Count /= 2
             }
         }
 
@@ -322,7 +322,7 @@ TEST_F(CompileAssignment, EvaluateGlobalValFromDefaultInitializer)
         defclass Test {
             val Greeting: String
             init(greeting: String) {
-                set this.Greeting = greeting
+                this.Greeting = greeting
             }
         }
 
@@ -339,7 +339,7 @@ TEST_F(CompileAssignment, CompileGlobalValAssignmentFails)
 {
     auto result = m_tester->compileModule(R"(
         global val foo: Int = 100
-        set foo = 1
+        foo = 1
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
@@ -365,7 +365,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVarFromDefaultInitializer)
         defclass Test {
             val Greeting: String
             init(greeting: String) {
-                set this.Greeting = greeting
+                this.Greeting = greeting
             }
         }
 
@@ -382,7 +382,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVarAssignment)
 {
     auto result = m_tester->runModule(R"(
         global var mutablefoo: Int = 100
-        set mutablefoo = 1
+        mutablefoo = 1
         mutablefoo
     )");
 
@@ -397,12 +397,12 @@ TEST_F(CompileAssignment, EvaluateGlobalVarAssignmentFromDefaultInitializer)
         defclass Test {
             val Greeting: String
             init(greeting: String) {
-                set this.Greeting = greeting
+                this.Greeting = greeting
             }
         }
 
         global var test: Test = {"Hello, world!"}
-        set test = {"Wassup world!"}
+        test = {"Wassup world!"}
         test.Greeting
     )");
 

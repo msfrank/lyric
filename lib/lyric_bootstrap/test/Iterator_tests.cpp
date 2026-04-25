@@ -14,7 +14,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
         defclass CountdownIterator {
             var _count: Int
             init(count: Int) {
-                set this._count = count
+                this._count = count
             }
             impl Iterator[Int] {
                 def Valid(): Bool {
@@ -22,7 +22,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
                 }
                 def Next(): Int {
                     if this._count > 0 {
-                        set this._count -= 1
+                        this._count -= 1
                     }
                     this._count
                 }
@@ -32,7 +32,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
         var count: Int = 0
         val it: Iterator[Int] = CountdownIterator{3}
         for n: Int in it {
-            set count += 1
+            count += 1
         }
         count
     )");
@@ -49,7 +49,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
         defclass CountdownIterator {
             var _count: Int
             init(count: Int) {
-                set this._count = count
+                this._count = count
             }
             impl Iterator[Int] {
                 def Valid(): Bool {
@@ -57,7 +57,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
                 }
                 def Next(): Int {
                     if this._count > 0 {
-                        set this._count -= 1
+                        this._count -= 1
                     }
                     this._count
                 }
@@ -66,7 +66,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
 
         var count: Int = 0
         for n: Int in CountdownIterator{3} {
-            set count += 1
+            count += 1
         }
         count
     )");

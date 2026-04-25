@@ -15,8 +15,7 @@ TEST_F(CompileTry, EvaluateTryCatch)
         try {
             raise Internal{message="something failed"}
         } catch {
-            when ex: Internal
-              set x = 1
+            when ex: Internal { x = 1 }
         }
         x
     )");
@@ -32,8 +31,7 @@ TEST_F(CompileTry, EvaluateTryCatchPredicate)
         try {
             raise Internal{message="something failed"}
         } catch {
-            when ex: Internal
-              set x = ex.GetMessage()
+            when ex: Internal { x = ex.GetMessage() }
         }
         x
     )");
@@ -50,12 +48,10 @@ TEST_F(CompileTry, EvaluateNestedTryCatchInner)
             try {
                 raise Internal{message="something failed"}
             } catch {
-                when ex: Internal
-                  set x = "inner"
+                when ex: Internal { x = "inner" }
             }
         } catch {
-            when ex: Unknown
-              set x = "outer"
+            when ex: Unknown { x = "outer" }
         }
         x
     )");
@@ -72,12 +68,10 @@ TEST_F(CompileTry, EvaluateNestedTryCatchOuter)
             try {
                 raise Internal{message="something failed"}
             } catch {
-                when ex: Unknown
-                  set x = "inner"
+                when ex: Unknown { x = "inner" }
             }
         } catch {
-            when ex: Internal
-              set x = "outer"
+            when ex: Internal { x = "outer" }
         }
         x
     )");
@@ -92,18 +86,18 @@ TEST_F(CompileTry, EvaluateRaiseNewExceptionInCatch)
     auto result = m_tester->runModule(R"(
         var x: Int = 0
         try {
-            set x += 1
+            x += 1
             try {
-                set x += 1
+                x += 1
                 raise Internal{message="something failed"}
             } catch {
-                when ex: Internal
-                  set x += 1
+                when ex: Internal {
+                  x += 1
                   raise Aborted{message="aborted"}
+                }
             }
         } catch {
-            when ex: Aborted
-              set x += 1
+            when ex: Aborted { x += 1 }
         }
         x
     )");
@@ -117,18 +111,18 @@ TEST_F(CompileTry, EvaluateReraiseExceptionInCatch)
     auto result = m_tester->runModule(R"(
         var x: Int = 0
         try {
-            set x += 1
+            x += 1
             try {
-                set x += 1
+                x += 1
                 raise Internal{message="something failed"}
             } catch {
-                when ex: Internal
-                  set x += 1
+                when ex: Internal {
+                  x += 1
                   raise ex
+                }
             }
         } catch {
-            when ex: Internal
-              set x += 1
+            when ex: Internal { x += 1 }
         }
         x
     )");

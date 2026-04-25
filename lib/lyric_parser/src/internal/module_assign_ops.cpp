@@ -58,13 +58,13 @@ lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::Globa
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
+lyric_parser::internal::ModuleAssignOps::enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx)
 {
-    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterUntypedVal");
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterDefaultNewVal");
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedValContext *ctx)
+lyric_parser::internal::ModuleAssignOps::exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx)
 {
     tempo_tracing::ExitScope scope;
 
@@ -75,22 +75,25 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     // pop the top of the symbol stack and verify that the identifier matches
-    auto id = ctx->symbolIdentifier()->getText();
+    auto *symbolAndType = ctx->symbolAndType();
+    auto id = symbolAndType->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, symbolAndType->assignableType());
 
     if (hasError())
         return;
 
     ArchetypeNode *p1;
-    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+    TU_ASSIGN_OR_RAISE (p1, state->popNode(lyric_schema::kLyricAstNewClass));
 
     ArchetypeNode *valNode;
     TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
     TU_RAISE_IF_NOT_OK (valNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(valNode));
 }
 
@@ -135,13 +138,13 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::enterUntypedVar(ModuleParser::UntypedVarContext *ctx)
+lyric_parser::internal::ModuleAssignOps::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
-    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterUntypedVar");
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterUntypedVal");
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVarContext *ctx)
+lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
     tempo_tracing::ExitScope scope;
 
@@ -163,11 +166,51 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     ArchetypeNode *p1;
     TU_ASSIGN_OR_RAISE (p1, state->popNode());
 
+    ArchetypeNode *valNode;
+    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+    TU_RAISE_IF_NOT_OK (valNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (state->pushNode(valNode));
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::enterDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterDefaultNewVar");
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::exitDefaultNewVar(ModuleParser::DefaultNewVarContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto *symbolAndType = ctx->symbolAndType();
+    auto id = symbolAndType->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, symbolAndType->assignableType());
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode(lyric_schema::kLyricAstNewClass));
+
     ArchetypeNode *varNode;
     TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
     TU_RAISE_IF_NOT_OK (varNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(varNode));
 }
 
@@ -209,6 +252,86 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(varNode));
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::enterUntypedVar(ModuleParser::UntypedVarContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterUntypedVar");
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVarContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    ArchetypeNode *varNode;
+    TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
+    TU_RAISE_IF_NOT_OK (varNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (state->pushNode(varNode));
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::parseVariableDefaultNew(ModuleParser::VariableDefaultNewContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
+
+    if (ctx->argumentList()) {
+        auto *argList = ctx->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(static_cast<size_t>(i));
+            if (argSpec == nullptr)
+                continue;
+
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            TU_RAISE_IF_NOT_OK (newNode->prependChild(argNode));
+        }
+    }
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(newNode));
 }
 
 void
@@ -269,7 +392,86 @@ lyric_parser::internal::ModuleAssignOps::parseMemberAssignment(ModuleParser::Mem
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::parseSetStatement(ModuleParser::SetStatementContext *ctx)
+lyric_parser::internal::ModuleAssignOps::parseAssignDefaultNew(ModuleParser::AssignDefaultNewContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
+
+    if (ctx->argumentList()) {
+        auto *argList = ctx->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(static_cast<size_t>(i));
+            if (argSpec == nullptr)
+                continue;
+
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            TU_RAISE_IF_NOT_OK (newNode->prependChild(argNode));
+        }
+    }
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(newNode));
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::parseDefaultNewSet(ModuleParser::DefaultNewSetContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, state->popNode(lyric_schema::kLyricAstNewClass));
+
+    ArchetypeNode *targetNode;
+    TU_ASSIGN_OR_RAISE (targetNode, state->popNode());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *setNode;
+    if (ctx->assignOp()->AssignOperator()) {
+        TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstSetClass, location));
+    } else if (ctx->assignOp()->PlusAssignOperator()) {
+        TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceAddClass, location));
+    } else if (ctx->assignOp()->MinusAssignOperator()) {
+        TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceSubClass, location));
+    } else if (ctx->assignOp()->StarAssignOperator()) {
+        TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceMulClass, location));
+    } else if (ctx->assignOp()->SlashAssignOperator()) {
+        TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceDivClass, location));
+    } else {
+        throw SemanticException(token, "unknown assignment operator");
+    }
+
+    TU_RAISE_IF_NOT_OK (setNode->appendChild(targetNode));
+    TU_RAISE_IF_NOT_OK (setNode->appendChild(newNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(setNode));
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::parseExpressionSet(ModuleParser::ExpressionSetContext *ctx)
 {
     auto *state = getState();
     if (hasError())
@@ -285,18 +487,18 @@ lyric_parser::internal::ModuleAssignOps::parseSetStatement(ModuleParser::SetStat
     auto location = get_token_location(token);
 
     ArchetypeNode *setNode;
-    if (ctx->assignmentOp()->AssignOperator()) {
+    if (ctx->assignOp()->AssignOperator()) {
         TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstSetClass, location));
-    } else if (ctx->assignmentOp()->PlusAssignOperator()) {
+    } else if (ctx->assignOp()->PlusAssignOperator()) {
         TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceAddClass, location));
-    } else if (ctx->assignmentOp()->MinusAssignOperator()) {
+    } else if (ctx->assignOp()->MinusAssignOperator()) {
         TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceSubClass, location));
-    } else if (ctx->assignmentOp()->StarAssignOperator()) {
+    } else if (ctx->assignOp()->StarAssignOperator()) {
         TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceMulClass, location));
-    } else if (ctx->assignmentOp()->SlashAssignOperator()) {
+    } else if (ctx->assignOp()->SlashAssignOperator()) {
         TU_ASSIGN_OR_RAISE (setNode, state->appendNode(lyric_schema::kLyricAstInplaceDivClass, location));
     } else {
-        throw SemanticException(token, "illegal set operator");
+        throw SemanticException(token, "unknown assignment operator");
     }
 
     TU_RAISE_IF_NOT_OK (setNode->appendChild(targetNode));

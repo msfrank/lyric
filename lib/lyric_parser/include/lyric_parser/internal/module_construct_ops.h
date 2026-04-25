@@ -19,7 +19,6 @@ namespace lyric_parser::internal {
 
         void parseDerefNew(ModuleParser::DerefNewContext *ctx);
 
-        void parsePairExpression(ModuleParser::PairExpressionContext *ctx);
         void parseLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
         void parseLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx);
 

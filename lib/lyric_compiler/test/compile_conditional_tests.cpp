@@ -11,7 +11,7 @@ TEST_F(CompileConditional, EvaluateIf)
 {
     auto result = m_tester->runModule(R"(
         var x: Int = 0
-        if true { set x = 1 }
+        if true { x = 1 }
         x
     )");
 
@@ -24,12 +24,9 @@ TEST_F(CompileConditional, EvaluateDo)
         var x: String = "two"
         var y: Int = 0
         do {
-          when x == "one"
-            set y = 1
-          when x == "two"
-            set y = 2
-          when x == "three"
-            set y = 3
+          when x == "one"   { y = 1 }
+          when x == "two"   { y = 2 }
+          when x == "three" { y = 3 }
         }
         y
     )");
@@ -52,10 +49,10 @@ TEST_F(CompileConditional, EvaluateCond)
     auto result = m_tester->runModule(R"(
         var x: String = "three"
         cond {
-          when x == "one"       1
-          when x == "two"       2
-          when x == "three"     3
-          else                  0
+          when x == "one"   -> 1
+          when x == "two"   -> 2
+          when x == "three" -> 3
+          else              -> 0
         }
     )");
 
@@ -67,10 +64,10 @@ TEST_F(CompileConditional, EvaluateCondElse)
     auto result = m_tester->runModule(R"(
         var x: String = "four"
         cond {
-          when x == "one"       1
-          when x == "two"       2
-          when x == "three"     3
-          else                  0
+          when x == "one"   -> 1
+          when x == "two"   -> 2
+          when x == "three" -> 3
+          else              -> 0
         }
     )");
 

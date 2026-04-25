@@ -86,7 +86,7 @@ TEST_F(CompileDefalias, EvaluateParameterizedAlias)
         defclass Foo[T] {
             val Value: T
             init(value: T) {
-                set this.Value = value
+                this.Value = value
             }
         }
         defalias Fooalias from Foo[Int]
@@ -106,8 +106,8 @@ TEST_F(CompileDefalias, EvaluatePartiallyParameterizedAlias)
             val TValue: T
             val UValue: U
             init(t: T, u: U) {
-                set this.TValue = t
-                set this.UValue = u
+                this.TValue = t
+                this.UValue = u
             }
         }
         defalias Fooalias[U] from Foo[Int,U]

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# cmake variables
+JAVA=@Java_JAVA_EXECUTABLE@
+JAVAC=@Java_JAVAC_EXECUTABLE@
+ANTLR_TOOL_JAR=@ANTLR_TOOL_JAR@
+
+# path to the grammar file
+SHAREDIR=@CMAKE_CURRENT_SOURCE_DIR@/share
+LEXER=ModuleLexer.g4
+GRAMMAR=ModuleParser.g4
+
+# run directory is the current working directory
+RUNDIR=$PWD
+
+# path to the directory in the RUNDIR containing state
+STATEDIR="$RUNDIR/.test-grammar"
+
+# path to the file containing sha256 checksum of grammar
+CHECKSUM_FILE="$STATEDIR/checksum-sha256"
+
+# create checksum of lexer and parser grammar
+CHECKSUM=$(cat "$SHAREDIR/$LEXER" "$SHAREDIR/$GRAMMAR" | sha256sum --quiet | cut -f1)
+echo "checksum is $CHECKSUM"
+
+# determine whether the grammar has changed
+up_to_date=0
+if [ -f "$CHECKSUM_FILE" ]; then
+  existing_checksum=$(cat $CHECKSUM_FILE)
+  if [ "$CHECKSUM" == "$existing_checksum" ]; then
+    up_to_date=1
+  fi
+fi
+
+# if not up to date then regenerate state directory
+if [ $up_to_date -eq 0 ]; then
+
+  # create temp directory for building grammar
+  TMP=$(mktemp -d generate-test-grammar.XXXXXX)
+  echo "using tempdir $TMP to build grammar"
+
+  # copy grammar files to TMP
+  cp $SHAREDIR/*.g4 $TMP
+
+  # execute the remaining commands from within the TMP
+  cd $TMP
+
+  # fail script on any error
+  set -e -x
+
+  # generate lexer
+  $JAVA -Xmx500M -cp "$ANTLR_TOOL_JAR:$CLASSPATH" org.antlr.v4.Tool -o . -lib . -Xlog $LEXER
+
+  # generate parser
+  $JAVA -Xmx500M -cp "$ANTLR_TOOL_JAR:$CLASSPATH" org.antlr.v4.Tool -o . -lib . -Xlog $GRAMMAR
+
+  # compile parser
+  $JAVAC -cp "$ANTLR_TOOL_JAR:$CLASSPATH" *.java
+
+  # make TMP the new state directory
+  cd $RUNDIR
+  mv $TMP $STATEDIR
+
+  # write checksum file
+  echo $CHECKSUM > $CHECKSUM_FILE
+else
+  echo "grammar state is up to date"
+fi
+
+# run test rig
+cd $STATEDIR
+$JAVA -Xmx500M -cp "$ANTLR_TOOL_JAR:$CLASSPATH" org.antlr.v4.gui.TestRig Module root $*

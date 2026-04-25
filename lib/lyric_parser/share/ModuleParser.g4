@@ -11,35 +11,14 @@ block               : form+ ;
 
 form                : blockMacro
                     | expression
-                    | typenameStatement
-                    | valStatement
-                    | varStatement
-                    | defStatement
-                    | defaliasStatement
-                    | defclassStatement
-                    | defconceptStatement
-                    | defenumStatement
-                    | definstanceStatement
-                    | defstructStatement
-                    | globalStatement
-                    | namespaceStatement
-                    | setStatement
-                    | ifStatement
-                    | doStatement
-                    | whileStatement
-                    | forStatement
-                    | tryStatement
-                    | returnStatement
-                    | importStatement
-                    | usingStatement
-                    | basicExpression
+                    | statement
                     ;
 
 
 // forms which return a value
 
-expression          : <assoc=right> expression
-                        ThenKeyword expression ElseKeyword expression               # ternaryExpression
+expression          : <assoc=right> expression ThenKeyword expression
+                        ElseKeyword expression                                      # ternaryExpression
                     | namedExpression                                               # namedLabel
                     | basicExpression                                               # basicLabel
                     ;
@@ -51,6 +30,39 @@ namedExpression     : condExpression
                     | expectExpression
                     | raiseExpression
                     ;
+
+
+// forms which do not return a value
+
+statement           : controlStatement
+                    | definitionStatement
+                    | typenameStatement
+                    | importStatement
+                    | usingStatement
+                    | setStatement
+                    ;
+
+definitionStatement : valStatement
+                    | varStatement
+                    | defStatement
+                    | defaliasStatement
+                    | defclassStatement
+                    | defconceptStatement
+                    | defenumStatement
+                    | definstanceStatement
+                    | defstructStatement
+                    | globalStatement
+                    | namespaceStatement
+                    ;
+
+controlStatement    : ifStatement
+                    | doStatement
+                    | whileStatement
+                    | forStatement
+                    | tryStatement
+                    | returnStatement
+                    ;
+
 
 // symbols
 
@@ -68,15 +80,21 @@ simpleType          : Identifier ( DotOperator Identifier )*
                     | Identifier ( DotOperator Identifier )* DotOperator
                         { notifyErrorListeners("Extra '.' after identifier in the type path"); }
                     ;
-parametricType      : simpleType BracketOpen assignableType ( CommaOperator assignableType )* BracketClose
-                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* BracketClose BracketClose
-                        { notifyErrorListeners("Extra ']' closing parametric type"); }
-                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* CommaOperator
+
+typeParameterList   : assignableType ( CommaOperator assignableType )*
+                    | assignableType ( CommaOperator assignableType )* CommaOperator ( CommaOperator assignableType )*
                         { notifyErrorListeners("Extra ',' after type parameter in the parametric type"); }
-                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* assignableType
+                    | assignableType ( CommaOperator assignableType )* assignableType ( CommaOperator assignableType )*
                         { notifyErrorListeners("Missing ',' between type parameters in the parametric type"); }
-                    | simpleType BracketOpen CommaOperator
+                    | CommaOperator assignableType ( CommaOperator assignableType )*
                         { notifyErrorListeners("Extra ',' before type parameter in the parametric type"); }
+                    ;
+
+parametricType      : simpleType BracketOpen typeParameterList BracketClose
+                    | simpleType BracketOpen BracketOpen typeParameterList BracketClose
+                        { notifyErrorListeners("Extra '[' opening parametric type"); }
+                    | simpleType BracketOpen typeParameterList BracketClose BracketClose
+                        { notifyErrorListeners("Extra ']' closing parametric type"); }
                     | simpleType BracketOpen BracketClose
                         { notifyErrorListeners("Parametric type must contain at least one type parameter"); }
                     ;
@@ -110,7 +128,7 @@ constraintSpec      : WhereKeyword constraint ( CommaOperator constraint )* ;
 
 argument            : Identifier AssignOperator expression
                     | expression
-                    | form
+                    | statement
                         { notifyErrorListeners("argument must be a valid expression or keyword argument"); }
                     ;
 argumentList        : argument ( CommaOperator argument )*
@@ -193,33 +211,50 @@ returnSpec          : ColonOperator assignableType
 typenameStatement   : TypeNameKeyword symbolIdentifier ;
 
 
-// assignment
+// variable declaration
 
 symbolAndType       : symbolIdentifier ColonOperator assignableType ;
-assignExpression    : initializerDefaultNew | expression ;
-
-valStatement        : ValKeyword symbolAndType AssignOperator assignExpression          # typedVal
-                    | ValKeyword symbolIdentifier AssignOperator assignExpression       # untypedVal
+variableDefaultNew  : CurlyOpen argumentList? CurlyClose
+                    | CurlyOpen argumentList? CurlyClose CurlyClose
+                        { notifyErrorListeners("Extra '}' closing variable initializer"); }
+                    | CurlyOpen argumentList?
+                        { notifyErrorListeners("Missing '}' closing variable initializer"); }
                     ;
 
-varStatement        : VarKeyword symbolAndType AssignOperator assignExpression          # typedVar
-                    | VarKeyword symbolIdentifier AssignOperator assignExpression       # untypedVar
+valStatement        : ValKeyword symbolAndType AssignOperator variableDefaultNew        # defaultNewVal
+                    | ValKeyword symbolAndType AssignOperator expression                # typedVal
+                    | ValKeyword symbolIdentifier AssignOperator expression             # untypedVal
+                    ;
+
+varStatement        : VarKeyword symbolAndType AssignOperator variableDefaultNew        # defaultNewVar
+                    | VarKeyword symbolAndType AssignOperator expression                # typedVar
+                    | VarKeyword symbolIdentifier AssignOperator expression             # untypedVar
                     ;
 
 
-// set statement
+// variable assignment
 
 assignmentSpec      : ( ThisKeyword | Identifier ) ( DotOperator Identifier )+          # memberAssignment
                     | Identifier                                                        # nameAssignment
                     ;
 
-assignmentOp        : AssignOperator
+assignOp            : AssignOperator
                     | PlusAssignOperator
                     | MinusAssignOperator
                     | StarAssignOperator
                     | SlashAssignOperator
                     ;
-setStatement        : SetKeyword assignmentSpec assignmentOp assignExpression ;
+
+assignDefaultNew    : CurlyOpen argumentList? CurlyClose
+                    | CurlyOpen argumentList? CurlyClose CurlyClose
+                        { notifyErrorListeners("Extra '}' closing assignment initializer"); }
+                    | CurlyOpen argumentList?
+                        { notifyErrorListeners("Missing '}' closing assignment initializer"); }
+                    ;
+
+setStatement        : assignmentSpec assignOp assignDefaultNew                          # defaultNewSet
+                    | assignmentSpec assignOp expression                                # expressionSet
+                    ;
 
 
 //
@@ -374,6 +409,17 @@ usingAll            : UsingKeyword usingRef ;
 usingImpls          : UsingKeyword FromKeyword usingRef usingSet ;
 usingStatement      : usingAll | usingImpls ;
 
+// clause block
+
+clauseBlock         : ArrowOperator basicExpression
+                    | ArrowOperator
+                        { notifyErrorListeners("Expected basic expression after '->'"); }
+                    | CurlyOpen block CurlyClose
+                    | CurlyOpen block
+                        { notifyErrorListeners("Missing '}' closing clause"); }
+                    | CurlyOpen
+                        { notifyErrorListeners("Missing '}' closing clause"); }
+                    ;
 
 // lambda expression
 
@@ -392,20 +438,36 @@ returnStatement     : ReturnKeyword expression ;
 
 // if statement
 
-ifStatement         : IfKeyword basicExpression CurlyOpen block CurlyClose ;
+ifStatement         : IfKeyword basicExpression clauseBlock ;
 
 
 // do statement
 
-doWhen              : WhenKeyword expression block ;
-doElse              : ElseKeyword block ;
+doWhen              : WhenKeyword expression clauseBlock
+                    | WhenKeyword expression
+                        { notifyErrorListeners("Missing '{' or '->' for when clause"); }
+                    | WhenKeyword
+                        { notifyErrorListeners("Missing '{' or '->' for when clause"); }
+                    ;
+doElse              : ElseKeyword clauseBlock
+                    | ElseKeyword
+                        { notifyErrorListeners("Missing '{' or '->' for else clause"); }
+                    ;
 doStatement         : DoKeyword CurlyOpen doWhen+ doElse? CurlyClose ;
 
 
 // cond expression
 
-condWhen            : WhenKeyword expression block ;
-condElse            : ElseKeyword block ;
+condWhen            : WhenKeyword expression clauseBlock
+                    | WhenKeyword expression
+                        { notifyErrorListeners("Missing '{' or '->' for when clause"); }
+                    | WhenKeyword
+                        { notifyErrorListeners("Missing '{' or '->' for when clause"); }
+                    ;
+condElse            : ElseKeyword clauseBlock
+                    | ElseKeyword
+                        { notifyErrorListeners("Missing '{' or '->' for else clause"); }
+                    ;
 condExpression      : CondKeyword CurlyOpen condWhen+ condElse CurlyClose ;
 
 
@@ -416,32 +478,33 @@ unwrapParam         : VarKeyword? Identifier paramType ;
 unwrapList          : unwrapParam ( CommaOperator unwrapParam )* ;
 unwrapSpec          : assignableType ParenOpen unwrapList? ParenClose ;
 
-matchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block        # matchOnUnwrap
-                    | WhenKeyword Identifier ColonOperator assignableType block         # matchOnType
-                    | WhenKeyword symbolPath block                                      # matchOnEnum
+matchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec clauseBlock      # matchOnUnwrap
+                    | WhenKeyword Identifier ColonOperator assignableType clauseBlock       # matchOnType
+                    | WhenKeyword symbolPath clauseBlock                                    # matchOnEnum
                     ;
-matchElse           : ElseKeyword block ;
+matchElse           : ElseKeyword clauseBlock ;
 matchExpression     : MatchKeyword matchTarget CurlyOpen matchWhen+ matchElse? CurlyClose ;
 
 
 // while statement
 
-whileStatement      : WhileKeyword expression CurlyOpen block CurlyClose ;
+whileStatement      : WhileKeyword expression clauseBlock ;
 
 
 // for statement
 
 forStatement        : ForKeyword Identifier ( ColonOperator assignableType )?
                         InKeyword basicExpression
-                        CurlyOpen block CurlyClose ;
+                        clauseBlock ;
+
 
 // try statement
 
 tryBlock            : TryKeyword CurlyOpen block CurlyClose ;
 tryCatch            : CatchKeyword CurlyOpen catchWhen* catchElse? CurlyClose ;
 tryFinally          : FinallyKeyword CurlyOpen block CurlyClose ;
-catchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block        # catchOnUnwrap
-                    | WhenKeyword Identifier ColonOperator assignableType block         # catchOnType
+catchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec clauseBlock      # catchOnUnwrap
+                    | WhenKeyword Identifier ColonOperator assignableType clauseBlock       # catchOnType
                     ;
 catchElse           : ElseKeyword block ;
 tryStatement        : tryBlock tryCatch tryFinally? ;
@@ -459,8 +522,7 @@ raiseExpression     : RaiseKeyword expression ;
 
 // basic expressions
 
-basicExpression     : basicExpression ArrowOperator basicExpression                         # pairExpression
-                    | basicExpression AndKeyword basicExpression                            # booleanAndExpression
+basicExpression     : basicExpression AndKeyword basicExpression                            # booleanAndExpression
                     | basicExpression OrKeyword basicExpression                             # booleanOrExpression
                     | NotKeyword basicExpression                                            # booleanNotExpression
                     | equality                                                              # equalityRule
