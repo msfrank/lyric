@@ -268,10 +268,15 @@ initBase            : FromKeyword ThisKeyword callArguments                     
 
 // proc block
 
-procBlock           : CurlyOpen block? CurlyClose
+procBlock           : ArrowOperator basicExpression
+                    | ArrowOperator
+                        { notifyErrorListeners("Expected basic expression after '->'"); }
+                    | CurlyOpen block? CurlyClose
+                    | CurlyOpen CurlyOpen block? CurlyClose
+                        { notifyErrorListeners("Extra '{' opening def"); }
                     | CurlyOpen block? CurlyClose CurlyClose
                         { notifyErrorListeners("Extra '}' closing def"); }
-                    | CurlyOpen block
+                    | CurlyOpen block?
                         { notifyErrorListeners("Missing '}' closing def"); }
                     ;
 
@@ -415,9 +420,11 @@ clauseBlock         : ArrowOperator basicExpression
                     | ArrowOperator
                         { notifyErrorListeners("Expected basic expression after '->'"); }
                     | CurlyOpen block CurlyClose
-                    | CurlyOpen block
-                        { notifyErrorListeners("Missing '}' closing clause"); }
-                    | CurlyOpen
+                    | CurlyOpen CurlyOpen block CurlyClose
+                        { notifyErrorListeners("Extra '{' opening clause"); }
+                    | CurlyOpen block CurlyClose CurlyOpen
+                        { notifyErrorListeners("Extra '}' closing clause"); }
+                    | CurlyOpen block?
                         { notifyErrorListeners("Missing '}' closing clause"); }
                     ;
 
