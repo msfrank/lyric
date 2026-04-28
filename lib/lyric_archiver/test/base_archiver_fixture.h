@@ -24,7 +24,10 @@ protected:
 
     tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(
         const lyric_common::ModuleLocation &location,
-        const std::string &identifier);
+        const lyric_common::SymbolPath &symbolPath);
+    tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(
+        const lyric_common::ModuleLocation &location,
+        const std::string &symbolPathString);
 
     tempo_utils::Result<lyric_assembler::BindingSymbol *> declareBinding(
         const std::string &name,

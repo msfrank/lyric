@@ -18,6 +18,7 @@ namespace lyric_assembler {
 
     struct InstanceSymbolPriv {
         bool isHidden = false;
+        bool isAbstract = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isDeclOnly = false;
         TypeHandle *instanceType = nullptr;
@@ -37,6 +38,7 @@ namespace lyric_assembler {
         InstanceSymbol(
             const lyric_common::SymbolUrl &instanceUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *instanceType,
             InstanceSymbol *superInstance,
@@ -54,8 +56,10 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         bool isHidden() const;
+        bool isAbstract() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isDeclOnly() const;
 

@@ -36,3 +36,9 @@ lyric_assembler::TypenameSymbol::getTypeDef() const
 {
     return lyric_common::TypeDef::forConcrete(m_typenameUrl).orElseThrow();
 }
+
+lyric_assembler::BlockHandle *
+lyric_assembler::TypenameSymbol::definitionBlock()
+{
+    return nullptr;
+}

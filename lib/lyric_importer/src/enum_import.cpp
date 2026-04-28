@@ -27,6 +27,13 @@ lyric_importer::EnumImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
+bool
+lyric_importer::EnumImport::isAbstract()
+{
+    load();
+    return m_priv->isAbstract;
+}
+
 lyric_object::DeriveType
 lyric_importer::EnumImport::getDerive()
 {
@@ -190,6 +197,7 @@ lyric_importer::EnumImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, enumWalker.getSymbolPath());
 
     priv->isDeclOnly = enumWalker.isDeclOnly();
+    priv->isAbstract = enumWalker.isAbstract();
 
     priv->derive = enumWalker.getDeriveType();
     if (priv->derive == lyric_object::DeriveType::Invalid)

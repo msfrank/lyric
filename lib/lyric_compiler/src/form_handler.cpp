@@ -92,15 +92,6 @@ lyric_compiler::TerminalFormBehavior::enter(
             return constant_string(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::Raw:
             return constant_raw(node, m_block, m_fragment, m_driver);
-        case lyric_schema::LyricAstId::This: {
-            lyric_assembler::DataReference unusedRef;
-            return deref_this(unusedRef, m_block, m_fragment, m_driver);
-        }
-        case lyric_schema::LyricAstId::Name: {
-            lyric_assembler::BlockHandle *currentBlock = m_block;
-            lyric_assembler::DataReference unusedRef;
-            return deref_name(node, unusedRef, &currentBlock, m_fragment, m_driver);
-        }
         case lyric_schema::LyricAstId::TypeOf:
             return load_type(node, m_fragment, m_block, m_driver);
         default:
@@ -297,8 +288,6 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Raw:
-        case lyric_schema::LyricAstId::This:
-        case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::TypeOf:
         {
             auto terminal = std::make_unique<TerminalFormBehavior>(
@@ -312,6 +301,20 @@ lyric_compiler::FormChoice::decide(
             auto new_ = std::make_unique<NewHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(new_));
+            break;
+        }
+
+        case lyric_schema::LyricAstId::This: {
+            auto deref = std::make_unique<DerefThisBehavior>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setBehavior(std::move(deref));
+            break;
+        }
+
+        case lyric_schema::LyricAstId::Name: {
+            auto deref = std::make_unique<DerefNameBehavior>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setBehavior(std::move(deref));
             break;
         }
 

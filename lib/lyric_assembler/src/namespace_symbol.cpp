@@ -1,12 +1,17 @@
 
 #include <lyric_assembler/binding_symbol.h>
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/namespace_import.h>
+
+#include "lyric_assembler/enum_symbol.h"
+#include "lyric_assembler/instance_symbol.h"
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
@@ -128,6 +133,13 @@ lyric_assembler::NamespaceSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->namespaceType->getTypeDef();
+}
+
+lyric_assembler::BlockHandle *
+lyric_assembler::NamespaceSymbol::definitionBlock()
+{
+    auto *priv = getPriv();
+    return priv->namespaceBlock.get();
 }
 
 bool
@@ -272,18 +284,99 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     return nsPtr;
 }
 
-tempo_utils::Status
-lyric_assembler::NamespaceSymbol::prepareMethod(
+tempo_utils::Result<lyric_assembler::DataReference>
+lyric_assembler::NamespaceSymbol::resolveTargetMember(
     const std::string &name,
-    const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
-    bool thisReceiver) const
+    const BlockHandle *currentBlock) const
 {
-    auto *fundamentalCache = m_state->fundamentalCache();
     auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
 
-    auto namespaceUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Namespace);
-    ExistentialSymbol *namespaceExistential;
-    TU_ASSIGN_OR_RETURN (namespaceExistential, symbolCache->getOrImportExistential(namespaceUrl));
-    return namespaceExistential->prepareMethod(name, receiverType, invoker, false);
+    auto entry = priv->targets.find(name);
+    if (entry == priv->targets.cend())
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+            "missing namespace member {}", name);
+    auto &targetUrl = entry->second;
+
+    auto *symbol = symbolCache->getSymbolOrNull(targetUrl);
+    if (symbol == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+            "invalid namespace member {}", targetUrl.toString());
+
+    DataReference ref;
+    bool isHidden;
+    switch (symbol->getSymbolType()) {
+        case SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = enumSymbol->isHidden();
+            break;
+        }
+        case SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = instanceSymbol->isHidden();
+            break;
+        }
+        case SymbolType::STATIC: {
+            auto *staticSymbol = cast_symbol_to_static(symbol);
+            ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+            isHidden = staticSymbol->isHidden();
+            break;
+        }
+        default:
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing member {}", name);
+    }
+
+    auto definitionUrl = currentBlock->getDefinition();
+    auto inNamespace = m_namespaceUrl.encloses(definitionUrl);
+
+    if (isHidden && !inNamespace)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "access to hidden member {} is not allowed", name);
+
+    ref.symbolUrl = targetUrl;
+    ref.typeDef = symbol->getTypeDef();
+    return ref;
+}
+
+tempo_utils::Status
+lyric_assembler::NamespaceSymbol::prepareTargetMethod(
+    const std::string &name,
+    CallableInvoker &invoker,
+    const BlockHandle *currentBlock) const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
+
+    auto entry = priv->targets.find(name);
+    if (entry == priv->targets.cend())
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+            "missing namespace method {}", name);
+    auto &targetUrl = entry->second;
+
+    auto *symbol = symbolCache->getSymbolOrNull(targetUrl);
+    if (symbol == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+            "invalid namespace method {}", targetUrl.toString());
+
+    if (symbol->getSymbolType() != SymbolType::CALL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", targetUrl.toString());
+    auto *callSymbol = cast_symbol_to_call(symbol);
+
+    auto definitionUrl = currentBlock->getDefinition();
+    auto inNamespace = m_namespaceUrl.encloses(definitionUrl);
+
+    if (callSymbol->isHidden() && !inNamespace)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot access hidden method {} in {}", name, m_namespaceUrl.toString());
+
+    if (callSymbol->isBound())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return invoker.initialize(std::move(callable));
 }

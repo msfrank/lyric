@@ -18,6 +18,7 @@ namespace lyric_assembler {
 
     struct EnumSymbolPriv {
         bool isHidden = false;
+        bool isAbstract = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isDeclOnly = false;
         TypeHandle *enumType = nullptr;
@@ -37,6 +38,7 @@ namespace lyric_assembler {
         EnumSymbol(
             const lyric_common::SymbolUrl &enumUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *enumType,
             EnumSymbol *superEnum,
@@ -54,14 +56,30 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         bool isHidden() const;
+        bool isAbstract() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isDeclOnly() const;
 
         TypeHandle *enumType() const;
         EnumSymbol *superEnum() const;
         BlockHandle *enumBlock() const;
+
+        /*
+         * global management
+         */
+        tempo_utils::Result<DataReference> resolveGlobalMember(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            bool thisReceiver) const;
+
+        tempo_utils::Status prepareGlobalMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
+            bool thisReceiver) const;
 
         /*
          * enum member management
@@ -82,7 +100,7 @@ namespace lyric_assembler {
             const std::string &name,
             AbstractMemberReifier &reifier,
             const lyric_common::TypeDef &receiverType,
-            bool isReceiver = false) const;
+            bool thisReceiver) const;
 
         bool isMemberInitialized(const std::string &name) const;
         tempo_utils::Status setMemberInitialized(const std::string &name);

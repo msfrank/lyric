@@ -3,6 +3,7 @@
 
 #include "abstract_symbol.h"
 #include "assembler_types.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -12,13 +13,19 @@ namespace lyric_assembler {
         LexicalVariable(
             const lyric_common::SymbolUrl &lexicalUrl,
             const lyric_common::TypeDef &assignableType,
-            LexicalOffset offset);
+            LexicalOffset offset,
+            ObjectState *state);
+        LexicalVariable(
+            const lyric_common::SymbolUrl &lexicalUrl,
+            LexicalOffset offset,
+            ObjectState *state);
 
         bool isImported() const override;
         bool isCopied() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         std::string getName() const;
         LexicalOffset getOffset() const;
@@ -27,6 +34,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_lexicalUrl;
         lyric_common::TypeDef m_assignableType;
         LexicalOffset m_offset;
+        ObjectState *m_state;
     };
 
     inline const LexicalVariable *cast_symbol_to_lexical(const AbstractSymbol *sym) {

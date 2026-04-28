@@ -2,14 +2,15 @@
 
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
+#include <tempo_test/spanset_matchers.h>
 
 #include "base_compiler_fixture.h"
 
 class CompileDefenum : public BaseCompilerFixture {};
 
-TEST_F(CompileDefenum, EvaluateEnum)
+TEST_F(CompileDefenum, EvaluateAbstractEnumFails)
 {
-    auto result = m_tester->runModule(R"(
+    auto result = m_tester->compileModule(R"(
         defenum Direction {
             case North
             case South
@@ -19,9 +20,9 @@ TEST_F(CompileDefenum, EvaluateEnum)
         Direction
     )");
 
-    ASSERT_THAT (result,
-                 tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_common::SymbolPath({"Direction"})))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kSyntaxError))));
 }
 
 TEST_F(CompileDefenum, EvaluateEnumCase)
@@ -33,12 +34,12 @@ TEST_F(CompileDefenum, EvaluateEnumCase)
             case East
             case West
         }
-        North
+        Direction.North
     )");
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_common::SymbolPath({"North"})))));
+                     RunModule(DataCellRef(lyric_common::SymbolPath({"Direction", "North"})))));
 }
 
 TEST_F(CompileDefenum, EvaluateEnumCaseVal)
@@ -54,7 +55,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseVal)
             case East(3)
             case West(4)
         }
-        North.Index
+        Direction.North.Index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
@@ -82,7 +83,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDef)
             case East("E")
             case West("W")
         }
-        East.IndexOf()
+        Direction.East.IndexOf()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
@@ -104,7 +105,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
             case East("E")
             case West("W")
         }
-        East.NoReturn()
+        Direction.East.NoReturn()
     )");
 
     ASSERT_THAT (result,

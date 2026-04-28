@@ -5,6 +5,7 @@
 #include <lyric_common/type_def.h>
 
 namespace lyric_assembler {
+    class BlockHandle;
 
     enum class SymbolType {
         EXISTENTIAL,
@@ -37,6 +38,7 @@ namespace lyric_assembler {
         virtual SymbolType getSymbolType() const = 0;
         virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
         virtual lyric_common::TypeDef getTypeDef() const = 0;
+        virtual BlockHandle *definitionBlock() = 0;
     };
 }
 

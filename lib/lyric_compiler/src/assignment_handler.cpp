@@ -110,7 +110,7 @@ lyric_compiler::AssignmentHandler::after(
         rvalueType = m_assignment.expressionType;
     } else {
         // if we are modifying a member then we need to duplicate the receiver because the next load consumes it
-        if (m_assignment.target.receiverType.isValid()) {
+        if (!m_assignment.target.effects.empty()) {
             TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
         }
         // load the target (lhs) onto the stack
@@ -185,7 +185,7 @@ lyric_compiler::AssignmentTarget::decide(
         }
 
         case lyric_schema::LyricAstId::Name: {
-            return resolve_name(node, block, m_assignment->target.targetRef, driver);
+            return resolve_name(node, block, m_assignment->target.targetRef);
         }
 
         default:

@@ -76,6 +76,9 @@ write_enum(
     if (enumSymbol->isHidden()) {
         enumFlags |= lyo1::EnumFlags::Hidden;
     }
+    if (enumSymbol->isAbstract()) {
+        enumFlags |= lyo1::EnumFlags::Abstract;
+    }
 
     switch (enumSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:

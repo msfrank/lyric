@@ -45,6 +45,7 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         bool isHidden() const;
         bool isDeclOnly() const;
@@ -70,11 +71,14 @@ namespace lyric_assembler {
             const std::string &name,
             bool isHidden);
 
-        tempo_utils::Status prepareMethod(
+        tempo_utils::Result<DataReference> resolveTargetMember(
             const std::string &name,
-            const lyric_common::TypeDef &receiverType,
+            const BlockHandle *currentBlock) const;
+
+        tempo_utils::Status prepareTargetMethod(
+            const std::string &name,
             CallableInvoker &invoker,
-            bool thisReceiver = false) const;
+            const BlockHandle *currentBlock) const;
 
     private:
         lyric_common::SymbolUrl m_namespaceUrl;

@@ -108,6 +108,12 @@ lyric_assembler::StaticSymbol::getTypeDef() const
     return priv->staticType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::StaticSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 std::string
 lyric_assembler::StaticSymbol::getName() const
 {

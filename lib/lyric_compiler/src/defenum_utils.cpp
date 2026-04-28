@@ -302,7 +302,7 @@ lyric_compiler::declare_enum_case(
 
     lyric_assembler::EnumSymbol *caseEnum;
     TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
-        identifier, enumSymbol, isHidden, lyric_object::DeriveType::Final));
+        identifier, enumSymbol, isHidden, /* isAbstract= */ false, lyric_object::DeriveType::Final));
 
     // add case to set of sealed subtypes
     TU_RETURN_IF_NOT_OK (enumSymbol->putSealedType(caseEnum->getTypeDef()));

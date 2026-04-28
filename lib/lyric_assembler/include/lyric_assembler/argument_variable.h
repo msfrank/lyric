@@ -3,6 +3,7 @@
 
 #include "abstract_symbol.h"
 #include "assembler_types.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -12,13 +13,19 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &argumentUrl,
             const lyric_common::TypeDef &assignableType,
             BindingType bindingType,
-            ArgumentOffset offset);
+            ArgumentOffset offset,
+            ObjectState *state);
+        ArgumentVariable(
+            const lyric_common::SymbolUrl &argumentUrl,
+            ArgumentOffset offset,
+            ObjectState *state);
 
         bool isImported() const override;
         bool isCopied() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         std::string getName() const;
         BindingType getBindingType() const;
@@ -29,6 +36,7 @@ namespace lyric_assembler {
         lyric_common::TypeDef m_assignableType;
         BindingType m_bindingType;
         ArgumentOffset m_offset;
+        ObjectState *m_state;
     };
 
     inline const ArgumentVariable *cast_symbol_to_argument(const AbstractSymbol *sym) {

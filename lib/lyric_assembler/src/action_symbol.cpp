@@ -199,6 +199,12 @@ lyric_assembler::ActionSymbol::getTypeDef() const
     return {};
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::ActionSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 bool
 lyric_assembler::ActionSymbol::isDeclOnly() const
 {

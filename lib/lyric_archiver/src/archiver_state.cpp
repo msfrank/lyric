@@ -163,7 +163,8 @@ lyric_archiver::ArchiverState::getSymbol(const lyric_common::SymbolUrl &symbolUr
     if (entry != m_copiedSymbols.cend())
         return entry->second;
     auto *symbolCache = m_objectState->symbolCache();
-    auto *symbol = symbolCache->getSymbolOrNull(symbolUrl);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
     if (symbol == nullptr)
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "missing symbol {}", symbolUrl.toString());

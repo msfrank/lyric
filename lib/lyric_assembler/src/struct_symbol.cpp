@@ -162,6 +162,13 @@ lyric_assembler::StructSymbol::getTypeDef() const
     return priv->structType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::StructSymbol::definitionBlock()
+{
+    auto *priv = getPriv();
+    return priv->structBlock.get();
+}
+
 bool
 lyric_assembler::StructSymbol::isHidden() const
 {

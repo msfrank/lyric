@@ -186,13 +186,13 @@ TEST_F(CompileMatch, EvaluateMatchEnum)
             case West
         }
 
-        val x: Any = West
+        val x: Any = Direction.West
         match x {
-            when North -> 1
-            when South -> 2
-            when East  -> 3
-            when West  -> 4
-            else       -> nil
+            when Direction.North -> 1
+            when Direction.South -> 2
+            when Direction.East  -> 3
+            when Direction.West  -> 4
+            else                 -> nil
         }
     )");
 

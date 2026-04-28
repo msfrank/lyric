@@ -178,6 +178,13 @@ lyric_assembler::ConceptSymbol::getTypeDef() const
     return priv->conceptType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::ConceptSymbol::definitionBlock()
+{
+    auto *priv = getPriv();
+    return priv->conceptBlock.get();
+}
+
 bool
 lyric_assembler::ConceptSymbol::isDeclOnly() const
 {

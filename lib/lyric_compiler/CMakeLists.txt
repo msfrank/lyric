@@ -23,6 +23,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/conditional_handler.h
     include/lyric_compiler/constant_utils.h
     include/lyric_compiler/constructor_handler.h
+    include/lyric_compiler/data_deref_handler.h
     include/lyric_compiler/def_handler.h
     include/lyric_compiler/defalias_handler.h
     include/lyric_compiler/defclass_handler.h
@@ -36,7 +37,6 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/defstatic_handler.h
     include/lyric_compiler/defstruct_handler.h
     include/lyric_compiler/defstruct_utils.h
-    include/lyric_compiler/data_deref_handler.h
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
     include/lyric_compiler/expect_handler.h
@@ -89,6 +89,7 @@ target_sources(lyric_compiler PRIVATE
     src/conditional_handler.cpp
     src/constant_utils.cpp
     src/constructor_handler.cpp
+    src/data_deref_handler.cpp
     src/def_handler.cpp
     src/defalias_handler.cpp
     src/defclass_handler.cpp
@@ -102,7 +103,6 @@ target_sources(lyric_compiler PRIVATE
     src/defstatic_handler.cpp
     src/defstruct_handler.cpp
     src/defstruct_utils.cpp
-    src/data_deref_handler.cpp
     src/deref_utils.cpp
     src/entry_handler.cpp
     src/expect_handler.cpp

@@ -377,6 +377,7 @@ table StructDescriptor {
 // flags which apply to the InstanceDecriptor
 
 enum InstanceFlags : uint16 (bit_flags) {
+    Abstract,                                   // instance cannot be instantiated
     Sealed,                                     // instance can only be inherited from in the current object
     Final,                                      // instance cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces
@@ -403,6 +404,7 @@ table InstanceDescriptor {
 // flags which apply to the EnumDecriptor
 
 enum EnumFlags : uint16 (bit_flags) {
+    Abstract,                                   // enum cannot be instantiated
     Sealed,                                     // enum can only be inherited from in the current object
     Final,                                      // enum cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces

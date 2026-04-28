@@ -70,11 +70,14 @@ write_instance(
     }
 
     lyo1::InstanceFlags instanceFlags = lyo1::InstanceFlags::NONE;
+    if (instanceSymbol->isDeclOnly()) {
+        instanceFlags |= lyo1::InstanceFlags::DeclOnly;
+    }
     if (instanceSymbol->isHidden()) {
         instanceFlags |= lyo1::InstanceFlags::Hidden;
     }
-    if (instanceSymbol->isDeclOnly()) {
-        instanceFlags |= lyo1::InstanceFlags::DeclOnly;
+    if (instanceSymbol->isAbstract()) {
+        instanceFlags |= lyo1::InstanceFlags::Abstract;
     }
 
     switch (instanceSymbol->getDeriveType()) {

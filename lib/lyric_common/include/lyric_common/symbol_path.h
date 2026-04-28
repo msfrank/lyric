@@ -34,6 +34,9 @@ namespace lyric_common {
         std::vector<std::string> getEnclosure() const;
         std::string getName() const;
 
+        bool isEnclosedBy(const SymbolPath &other) const;
+        bool encloses(const SymbolPath &other) const;
+
         std::string toString() const;
 
         bool operator==(const SymbolPath &other) const;

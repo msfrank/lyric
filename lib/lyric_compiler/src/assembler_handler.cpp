@@ -6,12 +6,11 @@
 #include <lyric_compiler/assembler_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/data_deref_handler.h>
+#include <lyric_compiler/resolve_utils.h>
 #include <lyric_compiler/symbol_deref_handler.h>
 #include <lyric_compiler/target_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
-
-#include "lyric_compiler/resolve_utils.h"
 
 lyric_compiler::AssemblerChoice::AssemblerChoice(
     lyric_assembler::CodeFragment *fragment,
@@ -331,7 +330,7 @@ public:
             }
 
             case lyric_schema::LyricAstId::Name: {
-                return resolve_name(node, block, m_storeData->target.targetRef, driver);
+                return lyric_compiler::resolve_name(node, block, m_storeData->target.targetRef);
             }
 
             default:

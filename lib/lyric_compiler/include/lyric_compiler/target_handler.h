@@ -3,15 +3,13 @@
 
 #include "base_choice.h"
 #include "base_grouping.h"
-#include "form_handler.h"
+#include "deref_utils.h"
 
 namespace lyric_compiler {
 
     struct Target {
+        std::vector<DerefEffect> effects;
         lyric_assembler::DataReference targetRef;
-        lyric_common::TypeDef receiverType;
-        bool thisReceiver = false;
-        lyric_assembler::BlockHandle *bindingBlock = nullptr;
     };
 
     class TargetHandler : public BaseGrouping {

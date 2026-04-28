@@ -81,17 +81,12 @@ tempo_utils::Status lyric_compiler::InitialTarget::enter(
     switch (astId) {
 
         case lyric_schema::LyricAstId::This: {
-            m_target->thisReceiver = true;
-            TU_RETURN_IF_NOT_OK (deref_this(m_target->targetRef, block, m_fragment, driver));
-            m_target->receiverType = driver->peekResult();
+            TU_RETURN_IF_NOT_OK (deref_this(m_target->effects, block, m_fragment, driver));
             return driver->popResult();
         }
 
         case lyric_schema::LyricAstId::Name: {
-            m_target->bindingBlock = block;
-            TU_RETURN_IF_NOT_OK (deref_name(
-                node, m_target->targetRef, &m_target->bindingBlock, m_fragment, driver));
-            m_target->receiverType = driver->peekResult();
+            TU_RETURN_IF_NOT_OK (deref_name(node, m_target->effects, block, m_fragment, driver));
             return driver->popResult();
         }
 
@@ -134,12 +129,7 @@ tempo_utils::Status lyric_compiler::ResolveMember::enter(
     switch (astId) {
 
         case lyric_schema::LyricAstId::Name: {
-            if (!m_target->receiverType.isValid())
-                return CompilerStatus::forCondition(
-                    CompilerCondition::kCompilerInvariant, "missing receiver type");
-            TU_RETURN_IF_NOT_OK (deref_member(node, m_target->targetRef, m_target->receiverType,
-                m_target->thisReceiver, m_target->bindingBlock, m_fragment, driver));
-            m_target->receiverType = driver->peekResult();
+            TU_RETURN_IF_NOT_OK (deref_member(node, m_target->effects, block, m_fragment, driver));
             return driver->popResult();
         }
 
@@ -177,22 +167,14 @@ tempo_utils::Status lyric_compiler::ResolveTarget::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    switch (astId) {
+    if (astId != lyric_schema::LyricAstId::Name)
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "invalid target target node");
 
-        case lyric_schema::LyricAstId::Name: {
-            if (m_target->receiverType.isValid()) {
-                TU_RETURN_IF_NOT_OK (resolve_member(node, block, m_target->receiverType,
-                    m_target->thisReceiver, m_target->targetRef, driver));
-            } else {
-                TU_RETURN_IF_NOT_OK (resolve_name(node, block, m_target->targetRef, driver));
-            }
-            return {};
-        }
+    if (m_target->effects.empty())
+        return resolve_name(node, block, m_target->targetRef);
 
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invalid target target node");
-    }
+    return resolve_member(node, m_target->targetRef, m_target->effects, block, driver);
 }
 
 tempo_utils::Status lyric_compiler::ResolveTarget::exit(

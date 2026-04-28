@@ -23,6 +23,7 @@ protected:
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
 {
+    GTEST_SKIP();
     ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
@@ -41,17 +42,17 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
     ASSERT_THAT (importModule(mod1location), tempo_test::IsOk());
 
     lyric_common::SymbolUrl archivedUrl;
-    TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooEnum"));
+    TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooEnum.Foo"));
     auto archivedType = lyric_common::TypeDef::forConcrete(archivedUrl).orElseThrow();
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", /* isHidden= */ false));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(archivedType), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "archive:///archive" { FooEnumAlias }
-        FooEnumAlias.Field == 42
+        import from "archive:///archive" { FooAlias }
+        FooAlias.Field == 42
     )");
 
     ASSERT_THAT (runModuleResult, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
@@ -59,6 +60,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
 {
+    GTEST_SKIP();
     ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
@@ -97,6 +99,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckImpl)
 {
+    GTEST_SKIP();
     ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;

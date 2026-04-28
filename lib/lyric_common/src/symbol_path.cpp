@@ -117,6 +117,28 @@ lyric_common::SymbolPath::getName() const
     return m_priv->parts->back();
 }
 
+bool
+lyric_common::SymbolPath::isEnclosedBy(const SymbolPath &other) const
+{
+    return other.encloses(*this);
+}
+
+bool
+lyric_common::SymbolPath::encloses(const SymbolPath &other) const
+{
+    const auto &path = *m_priv->parts;
+    const auto &otherpath = *other.m_priv->parts;
+
+    if (otherpath.size() <= path.size())
+        return false;
+    for (int i = 0; i < path.size(); i++) {
+        if (path.at(i) != otherpath.at(i))
+            return false;
+    }
+    return true;
+
+}
+
 std::string
 lyric_common::SymbolPath::toString() const
 {

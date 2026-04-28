@@ -66,6 +66,7 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;

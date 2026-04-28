@@ -462,7 +462,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
 
     lyric_assembler::EnumSymbol *enumSymbol;
     TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-        identifier, superEnum, isHidden, derive, /* declOnly= */ true));
+        identifier, superEnum, isHidden, /* isAbstract= */ true, derive, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -508,7 +508,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
 
     lyric_assembler::InstanceSymbol *instanceSymbol;
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, isHidden, derive, /* declOnly= */ true));
+        identifier, superInstance, isHidden, /* isAbstract= */ false, derive, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);

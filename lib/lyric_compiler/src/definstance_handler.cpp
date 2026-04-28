@@ -127,7 +127,7 @@ lyric_compiler::DefInstanceHandler::before(
 
     // declare the instance
     TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
-        identifier, m_definstance.superinstanceSymbol, isHidden,
+        identifier, m_definstance.superinstanceSymbol, isHidden, /* isAbstract= */ false,
         lyric_compiler::convert_derive_type(derive)));
 
     // add instance to the current namespace if specified

@@ -143,6 +143,7 @@ namespace lyric_assembler {
         Any,
         Sealed,
         Final,
+        Abstract,
     };
 
     enum class DispatchType {

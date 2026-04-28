@@ -55,6 +55,17 @@ lyric_object::EnumWalker::isDeclOnly() const
     return bool(enumDescriptor->flags() & lyo1::EnumFlags::DeclOnly);
 }
 
+bool
+lyric_object::EnumWalker::isAbstract() const
+{
+    if (!isValid())
+        return false;
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return false;
+    return bool(enumDescriptor->flags() & lyo1::EnumFlags::Abstract);
+}
+
 lyric_object::DeriveType
 lyric_object::EnumWalker::getDeriveType() const
 {

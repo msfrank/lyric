@@ -28,6 +28,8 @@
 #include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_parser/parser_types.h"
+
 /**
  * Allocate a new BlockHandle for the prelude block.
  */
@@ -643,8 +645,7 @@ lyric_assembler::BlockHandle::declareVariable(
     // if this is a root block then create a static variable, otherwise create a local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto localVariable = std::make_unique<LocalVariable>(
-        localUrl, isHidden, assignableType, address);
+    auto localVariable = std::make_unique<LocalVariable>(localUrl, isHidden, assignableType, address, m_state);
     TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
     localVariable.release();
 
@@ -680,8 +681,7 @@ lyric_assembler::BlockHandle::declareTemporary(
     // temporary variables are always local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto localVariable = std::make_unique<LocalVariable>(
-        localUrl, /* isHidden= */ true, assignableType, address);
+    auto localVariable = std::make_unique<LocalVariable>(localUrl, /* isHidden= */ true, assignableType, address, m_state);
     TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
     localVariable.release();
 
@@ -895,7 +895,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
             // import lexical variable into this env, and return it
             auto lexicalUrl = makeSymbolUrl(name);
             auto address = m_blockProc->allocateLexical(lexicalTarget, targetOffset, activationCall);
-            auto *lexicalVariable = new LexicalVariable(lexicalUrl, typeDef, address);
+            auto *lexicalVariable = new LexicalVariable(lexicalUrl, typeDef, address, m_state);
             symbolCache->insertSymbol(lexicalUrl, lexicalVariable);
 
             SymbolBinding lexical;
@@ -1167,6 +1167,7 @@ lyric_assembler::BlockHandle::declareEnum(
     const std::string &name,
     EnumSymbol *superEnum,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
@@ -1187,13 +1188,17 @@ lyric_assembler::BlockHandle::declareEnum(
             "cannot derive enum {} from {}; sealed base enum must be located in the same module",
             name, superEnum->getSymbolUrl().toString());
 
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare enum {} as both abstract and final", name);
+
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         enumUrl, {}, superEnum->getTypeDef()));
 
     // create the enum
-    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, derive,
+    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, isAbstract, derive,
         typeHandle, superEnum, declOnly, this, m_state);
 
     EnumSymbol *enumPtr;
@@ -1233,6 +1238,7 @@ lyric_assembler::BlockHandle::declareInstance(
     const std::string &name,
     InstanceSymbol *superInstance,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
@@ -1253,13 +1259,17 @@ lyric_assembler::BlockHandle::declareInstance(
             "cannot derive instance {} from {}; sealed base instance must be located in the same module",
             name, superInstance->getSymbolUrl().toString());
 
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare instance {} as both abstract and final", name);
+
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         instanceUrl, {}, superInstance->getTypeDef()));
 
     // create the instance
-    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, isHidden, derive,
+    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, isHidden, isAbstract, derive,
         typeHandle, superInstance, declOnly, this, m_state);
 
     InstanceSymbol *instancePtr;

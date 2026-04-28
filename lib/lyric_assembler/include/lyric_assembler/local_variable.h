@@ -3,6 +3,7 @@
 
 #include "abstract_symbol.h"
 #include "assembler_types.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -13,13 +14,20 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &localUrl,
             bool isHidden,
             const lyric_common::TypeDef &assignableType,
-            LocalOffset offset);
+            LocalOffset offset,
+            ObjectState *state);
+        LocalVariable(
+            const lyric_common::SymbolUrl &localUrl,
+            bool isHidden,
+            LocalOffset offset,
+            ObjectState *state);
 
         bool isImported() const override;
         bool isCopied() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
+        BlockHandle *definitionBlock() override;
 
         std::string getName() const;
         bool isHidden() const;
@@ -30,6 +38,7 @@ namespace lyric_assembler {
         bool m_isHidden;
         lyric_common::TypeDef m_assignableType;
         LocalOffset m_offset;
+        ObjectState *m_state;
     };
 
     inline const LocalVariable *cast_symbol_to_local(const AbstractSymbol *sym) {

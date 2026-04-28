@@ -37,6 +37,7 @@ lyric_archiver::copy_enum(
     }
 
     auto isHidden = enumImport->isHidden();
+    auto isAbstract = enumImport->isAbstract();
     auto derive = enumImport->getDerive();
 
     auto superEnumUrl = enumImport->getSuperEnum();
@@ -57,7 +58,7 @@ lyric_archiver::copy_enum(
     // declare the enum
     std::unique_ptr<lyric_assembler::EnumSymbol> enumSymbol;
     enumSymbol = std::make_unique<lyric_assembler::EnumSymbol>(
-            enumUrl, isHidden, derive, enumType, superEnum,
+            enumUrl, isHidden, isAbstract, derive, enumType, superEnum,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the enum to the object

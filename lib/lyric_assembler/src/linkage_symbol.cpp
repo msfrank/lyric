@@ -42,6 +42,12 @@ lyric_assembler::LinkageSymbol::getTypeDef() const
     return {};
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::LinkageSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 lyric_object::LinkageSection
 lyric_assembler::LinkageSymbol::getLinkage() const
 {

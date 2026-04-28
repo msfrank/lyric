@@ -125,6 +125,7 @@ namespace lyric_assembler {
             const std::string &name,
             EnumSymbol *superEnum,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
@@ -134,6 +135,7 @@ namespace lyric_assembler {
             const std::string &name,
             InstanceSymbol *superInstance,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 

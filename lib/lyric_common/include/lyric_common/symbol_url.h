@@ -33,6 +33,9 @@ namespace lyric_common {
         SymbolPath getSymbolPath() const;
         std::string getSymbolName() const;
 
+        bool isEnclosedBy(const SymbolUrl &other) const;
+        bool encloses(const SymbolUrl &other) const;
+
         SymbolUrl resolve(const ModuleLocation &base) const;
 
         std::string toString() const;

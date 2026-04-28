@@ -127,6 +127,12 @@ lyric_assembler::BindingSymbol::getTypeDef() const
     return {};
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::BindingSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 std::string
 lyric_assembler::BindingSymbol::getName() const
 {

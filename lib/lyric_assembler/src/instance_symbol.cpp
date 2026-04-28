@@ -21,6 +21,7 @@
 lyric_assembler::InstanceSymbol::InstanceSymbol(
     const lyric_common::SymbolUrl &instanceUrl,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     TypeHandle *instanceType,
     InstanceSymbol *superInstance,
@@ -36,6 +37,7 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
 
     auto *priv = getPriv();
     priv->isHidden = isHidden;
+    priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
     priv->instanceType = instanceType;
@@ -73,6 +75,7 @@ lyric_assembler::InstanceSymbol::load()
         m_instanceUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
     priv->isHidden = m_instanceImport->isHidden();
+    priv->isAbstract = m_instanceImport->isAbstract();
     priv->derive = m_instanceImport->getDerive();
     priv->isDeclOnly = m_instanceImport->isDeclOnly();
 
@@ -160,11 +163,25 @@ lyric_assembler::InstanceSymbol::getTypeDef() const
     return priv->instanceType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::InstanceSymbol::definitionBlock()
+{
+    auto *priv = getPriv();
+    return priv->instanceBlock.get();
+}
+
 bool
 lyric_assembler::InstanceSymbol::isHidden() const
 {
     auto *priv = getPriv();
     return priv->isHidden;
+}
+
+bool
+lyric_assembler::InstanceSymbol::isAbstract() const
+{
+    auto *priv = getPriv();
+    return priv->isAbstract;
 }
 
 lyric_object::DeriveType

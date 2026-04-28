@@ -451,6 +451,12 @@ lyric_assembler::CallSymbol::getTypeDef() const
     return {};
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::CallSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 tempo_utils::Result<lyric_assembler::ProcHandle *>
 lyric_assembler::CallSymbol::defineCall(
     const ParameterPack &parameterPack,
@@ -502,7 +508,7 @@ lyric_assembler::CallSymbol::defineCall(
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
@@ -527,7 +533,7 @@ lyric_assembler::CallSymbol::defineCall(
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
@@ -630,7 +636,7 @@ lyric_assembler::CallSymbol::defineAbstract(
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
         priv->parametersMap[param.name] = param;
@@ -643,7 +649,7 @@ lyric_assembler::CallSymbol::defineAbstract(
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
         priv->parametersMap[param.name] = param;

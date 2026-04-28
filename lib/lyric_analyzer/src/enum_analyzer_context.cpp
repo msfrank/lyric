@@ -119,7 +119,8 @@ lyric_analyzer::EnumAnalyzerContext::declareCase(const lyric_parser::ArchetypeNo
 
     lyric_assembler::EnumSymbol *enumCaseSymbol;
     TU_ASSIGN_OR_RETURN (enumCaseSymbol, parentBlock->declareEnum(
-        identifier, m_enumSymbol, isHidden, lyric_object::DeriveType::Final, /* declOnly= */ true));
+        identifier, m_enumSymbol, isHidden, /* isAbstract= */ false,
+        lyric_object::DeriveType::Final, /* declOnly= */ true));
 
     lyric_assembler::CallSymbol *ctorSymbol;
     TU_ASSIGN_OR_RETURN (ctorSymbol, enumCaseSymbol->declareCtor(/* isHidden= */ false));

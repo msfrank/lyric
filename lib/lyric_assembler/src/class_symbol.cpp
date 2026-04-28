@@ -198,6 +198,13 @@ lyric_assembler::ClassSymbol::getTypeDef() const
     return priv->classType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::ClassSymbol::definitionBlock()
+{
+    auto *priv = getPriv();
+    return priv->classBlock.get();
+}
+
 bool
 lyric_assembler::ClassSymbol::isHidden() const
 {

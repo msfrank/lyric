@@ -41,6 +41,12 @@ lyric_assembler::SyntheticSymbol::getTypeDef() const
     return m_assignableType;
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::SyntheticSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 lyric_assembler::SyntheticType
 lyric_assembler::SyntheticSymbol::getSyntheticType() const
 {

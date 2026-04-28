@@ -1,16 +1,113 @@
 
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/resolve_utils.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/member_reifier.h>
+
+#include "lyric_assembler/argument_variable.h"
+
+bool
+lyric_compiler::current_ref_is_this_receiver(
+    const lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::BlockHandle *bindingBlock,
+    const std::vector<DerefEffect> &effects)
+{
+    TU_ASSERT (!effects.empty());
+
+    const auto &definitionUrl = bindingBlock->getDefinition();
+    auto *symbol = symbolCache->getSymbolOrNull(definitionUrl);
+    TU_ASSERT (symbol && symbol->getSymbolType() == lyric_assembler::SymbolType::CALL);
+    auto *definitionCall = lyric_assembler::cast_symbol_to_call(symbol);
+    auto thisUrl = definitionCall->getReceiverUrl();
+
+    const auto &current = effects.back();
+    const auto &receiverType = current.receiverType;
+    if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
+        return false;
+    auto receiverUrl = receiverType.getConcreteUrl();
+    return receiverUrl == thisUrl;
+}
+
+tempo_utils::Status
+lyric_compiler::deref_literal(
+    const lyric_parser::ArchetypeNode *node,
+    std::vector<DerefEffect> &effects,
+    lyric_assembler::BlockHandle *block,
+    lyric_assembler::CodeFragment *fragment,
+    CompilerScanDriver *driver)
+{
+    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+
+    auto *fundamentalCache = driver->getFundamentalCache();
+    lyric_common::SymbolUrl symbolUrl;
+
+    auto astId = resource->getId();
+    switch (astId) {
+        // deref constant
+        case lyric_schema::LyricAstId::Nil:
+            TU_RETURN_IF_NOT_OK (constant_nil(block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Nil);
+            break;
+        case lyric_schema::LyricAstId::Undef:
+            TU_RETURN_IF_NOT_OK (constant_undef(block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Undef);
+            break;
+        case lyric_schema::LyricAstId::True:
+            TU_RETURN_IF_NOT_OK (constant_true(block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Bool);
+            break;
+        case lyric_schema::LyricAstId::False:
+            TU_RETURN_IF_NOT_OK (constant_false(block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Bool);
+            break;
+        case lyric_schema::LyricAstId::Integer:
+            TU_RETURN_IF_NOT_OK (constant_integer(node, block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Int);
+            break;
+        case lyric_schema::LyricAstId::Float:
+            TU_RETURN_IF_NOT_OK (constant_float(node, block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Float);
+            break;
+        case lyric_schema::LyricAstId::Char:
+            TU_RETURN_IF_NOT_OK (constant_char(node, block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Char);
+            break;
+        case lyric_schema::LyricAstId::String:
+            TU_RETURN_IF_NOT_OK (constant_string(node, block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::String);
+            break;
+        case lyric_schema::LyricAstId::Raw:
+            TU_RETURN_IF_NOT_OK (constant_raw(node, block, fragment, driver));
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Bytes);
+            break;
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "invalid deref target node");
+    }
+
+    auto *symbolCache = driver->getSymbolCache();
+
+    // append the deref effect
+    DerefEffect effect;
+    effect.receiverType = driver->peekResult();
+    effect.derefSymbol = symbolCache->getSymbolOrNull(symbolUrl);
+    effect.pushResult = true;
+    effect.sideEffecting = false;
+    effects.push_back(std::move(effect));
+
+    return {};
+}
 
 /**
  * dereference 'this' keyword. this overload is intended to be used to compile a bare 'this'
@@ -18,13 +115,18 @@
  */
 tempo_utils::Status
 lyric_compiler::deref_this(
+    std::vector<DerefEffect> &effects,
     lyric_assembler::BlockHandle *block,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
-    TU_ASSERT (block != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
+    TU_NOTNULL (block);
+    TU_NOTNULL (fragment);
+    TU_NOTNULL (driver);
+
+    if (!effects.empty())
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "invalid this deref; effects vector is not empty");
 
     lyric_assembler::DataReference ref;
     TU_ASSIGN_OR_RETURN (ref, block->resolveReference("$this"));
@@ -32,43 +134,27 @@ lyric_compiler::deref_this(
     auto *state = block->blockState();
     auto *symbolCache = state->symbolCache();
 
+    lyric_assembler::AbstractSymbol *thisSymbol;
+
     // ensure symbol for $this is imported
-    TU_RETURN_IF_STATUS(symbolCache->getOrImportSymbol(ref.symbolUrl));
+    auto thisUrl = ref.typeDef.getConcreteUrl();
+    TU_ASSIGN_OR_RETURN (thisSymbol, symbolCache->getOrImportSymbol(thisUrl));
 
     // load the receiver
     TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
 
-    return driver->pushResult(ref.typeDef);
-}
+    // push result type for this
+    TU_RETURN_IF_NOT_OK (driver->pushResult(ref.typeDef));
 
-/**
- * dereference 'this' keyword. this overload is intended to be used to compile a data dereference
- * expression with multiple elements. note that the 'this' dereference element is only valid as the
- * first element in the expression.
- */
-tempo_utils::Status
-lyric_compiler::deref_this(
-    lyric_assembler::DataReference &ref,
-    lyric_assembler::BlockHandle *block,
-    lyric_assembler::CodeFragment *fragment,
-    CompilerScanDriver *driver)
-{
-    TU_ASSERT (block != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
+    // append the deref effect
+    DerefEffect effect;
+    effect.receiverType = ref.typeDef;
+    effect.derefSymbol = thisSymbol;
+    effect.pushResult = true;
+    effect.sideEffecting = false;
+    effects.push_back(std::move(effect));
 
-    TU_ASSIGN_OR_RETURN (ref, block->resolveReference("$this"));
-
-    auto *state = block->blockState();
-    auto *symbolCache = state->symbolCache();
-
-    // ensure symbol for $this is imported
-    TU_RETURN_IF_STATUS(symbolCache->getOrImportSymbol(ref.symbolUrl));
-
-    // load the receiver
-    TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
-
-    return driver->pushResult(ref.typeDef);
+    return {};
 }
 
 inline tempo_utils::Result<lyric_assembler::DataReference>
@@ -81,327 +167,325 @@ resolve_binding(
     return block->resolveReference(identifier);
 }
 
-inline tempo_utils::Result<lyric_common::TypeDef>
-deref_descriptor_if_allowed(
-    lyric_common::SymbolUrl &symbolUrl,
-    lyric_assembler::CodeFragment *fragment,
-    lyric_compiler::CompilerScanDriver *driver)
+inline tempo_utils::Status
+deref_symbol(
+    lyric_assembler::AbstractSymbol *symbol,
+    lyric_common::TypeDef &resultType,
+    bool &pushResult,
+    lyric_assembler::CodeFragment *fragment)
 {
-    auto *symbolCache = driver->getSymbolCache();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
     switch (symbol->getSymbolType()) {
-        case lyric_assembler::SymbolType::ENUM:
-        case lyric_assembler::SymbolType::INSTANCE:
+
+        // never push result for the following symbol types
+        case lyric_assembler::SymbolType::CLASS:
+        case lyric_assembler::SymbolType::CONCEPT:
         case lyric_assembler::SymbolType::NAMESPACE:
+        case lyric_assembler::SymbolType::STRUCT:
+            pushResult = false;
+            break;
+
+        // set push result based on whether enum can be instantiated
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(symbol);
+            pushResult = !enumSymbol->isAbstract();
+            break;
+        }
+
+        // set push result based on whether instance can be instantiated
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(symbol);
+            pushResult = !instanceSymbol->isAbstract();
+            break;
+        }
+
+        // always push result for the following symbol types
         case lyric_assembler::SymbolType::PROTOCOL:
         case lyric_assembler::SymbolType::STATIC:
-            TU_RETURN_IF_NOT_OK (fragment->loadData(symbol));
-            return symbol->getTypeDef();
+            pushResult = true;
+            break;
+
+        // any other symbol type is invalid to deref as a descriptor
         default:
             return lyric_compiler::CompilerStatus::forCondition(
                 lyric_compiler::CompilerCondition::kCompilerInvariant,
-                "invalid deref target {}", symbolUrl.toString());
+                "invalid deref target {}", symbol->getSymbolUrl().toString());
     }
-}
 
-tempo_utils::Status
-lyric_compiler::deref_name(
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    lyric_assembler::CodeFragment *fragment,
-    CompilerScanDriver *driver)
-{
-    TU_ASSERT (node != nullptr);
-    TU_ASSERT (block != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
-
-    lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, resolve_binding(node, block));
-
-    lyric_common::TypeDef resultType;
-    switch (ref.referenceType) {
-        case lyric_assembler::ReferenceType::Value:
-        case lyric_assembler::ReferenceType::Variable:
-            TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
-            resultType = ref.typeDef;
-            break;
-
-        case lyric_assembler::ReferenceType::Descriptor:
-        case lyric_assembler::ReferenceType::Namespace:
-            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_if_allowed(ref.symbolUrl, fragment, driver));
-            break;
-        default:
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid deref target {}", ref.symbolUrl.toString());
+    resultType = symbol->getTypeDef();
+    if (pushResult) {
+        TU_RETURN_IF_NOT_OK (fragment->loadData(symbol));
     }
-    return driver->pushResult(resultType);
-}
 
-inline tempo_utils::Status
-update_namespace_block(lyric_assembler::AbstractSymbol *symbol, lyric_assembler::BlockHandle **blockptr)
-{
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
-        return lyric_compiler::CompilerStatus::forCondition(
-            lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid deref namespace");
-    auto *namespaceSymbol = cast_symbol_to_namespace(symbol);
-    *blockptr = namespaceSymbol->namespaceBlock();
     return {};
 }
 
 tempo_utils::Status
 lyric_compiler::deref_name(
     const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::DataReference &ref,
-    lyric_assembler::BlockHandle **blockptr,
+    std::vector<DerefEffect> &effects,
+    lyric_assembler::BlockHandle *block,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
-    TU_ASSERT (node != nullptr);
-    TU_ASSERT (blockptr != nullptr && *blockptr != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
+    TU_NOTNULL (node);
+    TU_NOTNULL (block);
+    TU_NOTNULL (fragment);
+    TU_NOTNULL (driver);
 
-    TU_ASSIGN_OR_RETURN (ref, resolve_binding(node, *blockptr));
+    if (!effects.empty())
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "invalid name deref; effects vector is not empty");
 
-    auto *state = (*blockptr)->blockState();
-    auto *symbolCache = state->symbolCache();
+    // resolve the name to a data reference
+    lyric_assembler::DataReference ref;
+    TU_ASSIGN_OR_RETURN (ref, resolve_binding(node, block));
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
+    auto *symbolCache = driver->getSymbolCache();
+    auto *symbol = symbolCache->getSymbolOrNull(ref.symbolUrl);
 
     lyric_common::TypeDef resultType;
+    bool pushResult;
+
     switch (ref.referenceType) {
-        //
-        case lyric_assembler::ReferenceType::Namespace:
-            return update_namespace_block(symbol, blockptr);
 
-        case lyric_assembler::ReferenceType::Descriptor: {
-            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_if_allowed(ref.symbolUrl, fragment, driver));
-            break;
-        }
-
+        // if ref is a val or var then load it onto the stack
         case lyric_assembler::ReferenceType::Value:
         case lyric_assembler::ReferenceType::Variable:
             TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
             resultType = ref.typeDef;
+            pushResult = true;
+            break;
+
+        // if ref is a descriptor or namespace then we may or may not load it
+        case lyric_assembler::ReferenceType::Descriptor:
+        case lyric_assembler::ReferenceType::Namespace:
+            TU_RETURN_IF_NOT_OK (deref_symbol(symbol, resultType, pushResult, fragment));
             break;
 
         default:
-            break;
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                "invalid deref target {}", ref.symbolUrl.toString());
     }
 
-    return driver->pushResult(resultType);
-}
-
-tempo_utils::Status
-lyric_compiler::deref_namespace(
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::DataReference &ref,
-    lyric_assembler::BlockHandle **blockptr,
-    lyric_assembler::CodeFragment *fragment,
-    CompilerScanDriver *driver)
-{
-    TU_ASSERT (node != nullptr);
-    TU_ASSERT (ref.referenceType == lyric_assembler::ReferenceType::Namespace);
-    TU_ASSERT (blockptr != nullptr && *blockptr != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
-
-    TU_ASSIGN_OR_RETURN (ref, resolve_binding(node, *blockptr));
-
-    auto *state = (*blockptr)->blockState();
-    auto *symbolCache = state->symbolCache();
-
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
-
-    switch (ref.referenceType) {
-        case lyric_assembler::ReferenceType::Namespace: {
-            TU_RETURN_IF_NOT_OK (update_namespace_block(symbol, blockptr));
-            break;
-        }
-
-        case lyric_assembler::ReferenceType::Value:
-        case lyric_assembler::ReferenceType::Variable:
-            break;
-
-        case lyric_assembler::ReferenceType::Descriptor:
-            switch (symbol->getSymbolType()) {
-                case lyric_assembler::SymbolType::ENUM:
-                case lyric_assembler::SymbolType::INSTANCE:
-                case lyric_assembler::SymbolType::STATIC:
-                    break;
-                default:
-                    return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                        "invalid namespace binding");
+    // if ref is an argument, local, or lexical then we lookup the symbol for the type
+    switch (symbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::ARGUMENT:
+        case lyric_assembler::SymbolType::LOCAL:
+        case lyric_assembler::SymbolType::LEXICAL:
+        case lyric_assembler::SymbolType::STATIC:
+            if (resultType.getType() == lyric_common::TypeDefType::Concrete) {
+                auto concreteUrl = resultType.getConcreteUrl();
+                symbol = symbolCache->getSymbolOrNull(concreteUrl);
+            } else {
+                // if type is not concrete then we can't deref any further so set symbol to null
+                symbol = nullptr;
             }
             break;
         default:
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid namespace binding");
+            break;
     }
 
-    // FIXME: was this a remnant of previous behavior? removing the pop fixes test case
-    // pop the prior namespace descriptor off the stack
-    //TU_RETURN_IF_NOT_OK (fragment->popValue());
+    // push result type for name
+    TU_RETURN_IF_NOT_OK (driver->pushResult(resultType));
 
-    // load the namespace binding onto the stack
-    TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
+    // append the deref effect
+    DerefEffect effect;
+    effect.receiverType = resultType;
+    effect.derefSymbol = symbol;
+    effect.pushResult = pushResult;
+    effect.sideEffecting = false;
+    effects.push_back(std::move(effect));
 
-    return driver->pushResult(ref.typeDef);
+    return {};
 }
 
 tempo_utils::Status
 lyric_compiler::deref_member(
     const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::DataReference &ref,
-    const lyric_common::TypeDef &receiverType,
-    bool thisReceiver,
+    std::vector<DerefEffect> &effects,
     lyric_assembler::BlockHandle *block,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
-    TU_ASSERT (node != nullptr);
-    TU_ASSERT (block != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (receiverType.isValid());
-    TU_ASSERT (driver != nullptr);
+    TU_NOTNULL (node);
+    TU_NOTNULL (fragment);
+    TU_NOTNULL (driver);
+
+    if (effects.empty())
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "invalid member deref; effects vector is empty");
 
     auto *state = driver->getState();
     auto *typeSystem = driver->getTypeSystem();
     auto *symbolCache = state->symbolCache();
 
-    auto receiverUrl = receiverType.getConcreteUrl();
-    lyric_assembler::AbstractSymbol *receiver;
-    TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
-
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    auto thisReceiver = current_ref_is_this_receiver(symbolCache, block, effects);
+
+    const auto &effect = effects.back();
+    auto receiverType = effect.receiverType;
+    auto *derefSymbol = effect.derefSymbol;
+
+    if (derefSymbol == nullptr)
+        return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+            "cannot dereference {}", receiverType.toString());
+
     lyric_typing::MemberReifier reifier(typeSystem);
-    switch (receiver->getSymbolType()) {
+    lyric_assembler::DataReference ref;
+
+    switch (derefSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(receiver);
+            auto *classSymbol = lyric_assembler::cast_symbol_to_class(derefSymbol);
             TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType, classSymbol->classTemplate()));
             TU_ASSIGN_OR_RETURN (ref, classSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
-            auto *enumSymbol = cast_symbol_to_enum(receiver);
+            auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
             TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, enumSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(receiver);
+            auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
             TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, instanceSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(receiver);
+            auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
             TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, structSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             break;
         }
         default:
             return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
-                "invalid receiver symbol {}", receiverUrl.toString());
+                "invalid receiver symbol {}", derefSymbol->getSymbolUrl().toString());
+    }
+
+    // drop the previous result from the stack
+    TU_RETURN_IF_NOT_OK (driver->popResult());
+
+    auto *memberSymbol = symbolCache->getSymbolOrNull(ref.symbolUrl);
+    switch (memberSymbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::FIELD:
+            break;
+        case lyric_assembler::SymbolType::STATIC:
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
+            break;
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                "invalid member symbol {}", memberSymbol->getSymbolUrl().toString());
     }
 
     // load the reference onto the stack
     TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
 
-    // drop the previous result from the stack
-    TU_RETURN_IF_NOT_OK (driver->popResult());
-
     // push member result
-    return driver->pushResult(ref.typeDef);
-}
+    TU_RETURN_IF_NOT_OK (driver->pushResult(ref.typeDef));
 
-inline tempo_utils::Status
-update_descriptor_block(lyric_assembler::AbstractSymbol *symbol, lyric_assembler::BlockHandle **blockptr)
-{
-    switch (symbol->getSymbolType()) {
-        case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(symbol);
-            *blockptr = classSymbol->classBlock();
-            return {};
-        }
-        case lyric_assembler::SymbolType::CONCEPT: {
-            auto *conceptSymbol = cast_symbol_to_concept(symbol);
-            *blockptr = conceptSymbol->conceptBlock();
-            return {};
-        }
-        case lyric_assembler::SymbolType::ENUM: {
-            auto *enumSymbol = cast_symbol_to_enum(symbol);
-            *blockptr = enumSymbol->enumBlock();
-            return {};
-        }
-        case lyric_assembler::SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(symbol);
-            *blockptr = instanceSymbol->instanceBlock();
-            return {};
-        }
-        case lyric_assembler::SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(symbol);
-            *blockptr = structSymbol->structBlock();
-            return {};
-        }
-        case lyric_assembler::SymbolType::NAMESPACE: {
-            auto *namespaceSymbol = cast_symbol_to_namespace(symbol);
-            *blockptr = namespaceSymbol->namespaceBlock();
-            return {};
-        }
-        default:
-            return lyric_compiler::CompilerStatus::forCondition(
-                lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid descriptor type");
-    }
+    // append the deref effect
+    DerefEffect nextEffect;
+    nextEffect.receiverType = ref.typeDef;
+    nextEffect.derefSymbol = memberSymbol;
+    nextEffect.pushResult = true;
+    nextEffect.sideEffecting = false;
+    effects.push_back(std::move(nextEffect));
+
+    return {};
 }
 
 tempo_utils::Status
-lyric_compiler::deref_descriptor(
+lyric_compiler::deref_global_member(
     const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle **blockptr,
+    std::vector<DerefEffect> &effects,
+    lyric_assembler::BlockHandle *block,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
-    TU_ASSERT (node != nullptr);
-    TU_ASSERT (blockptr != nullptr && *blockptr != nullptr);
-    TU_ASSERT (fragment != nullptr);
-    TU_ASSERT (driver != nullptr);
+    TU_NOTNULL (node);
+    TU_NOTNULL (block);
+    TU_NOTNULL (fragment);
+    TU_NOTNULL (driver);
 
-    lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, resolve_binding(node, *blockptr));
+    if (effects.empty())
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "invalid member deref; effects vector is empty");
+    TU_ASSERT (effects.back().pushResult == false);
 
-    auto *state = (*blockptr)->blockState();
+    auto *state = driver->getState();
     auto *symbolCache = state->symbolCache();
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    switch (ref.referenceType) {
-        case lyric_assembler::ReferenceType::Namespace: {
-            TU_RETURN_IF_NOT_OK (update_namespace_block(symbol, blockptr));
+    auto thisReceiver = current_ref_is_this_receiver(symbolCache, block, effects);
+
+    const auto &effect = effects.back();
+    auto *derefSymbol = effect.derefSymbol;
+    auto receiverType = effect.receiverType;
+
+    lyric_assembler::DataReference ref;
+
+    switch (derefSymbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, enumSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
             break;
         }
-        case lyric_assembler::ReferenceType::Descriptor: {
-            TU_RETURN_IF_NOT_OK (update_descriptor_block(symbol, blockptr));
+        case lyric_assembler::SymbolType::NAMESPACE: {
+            auto *namespaceSymbol = lyric_assembler::cast_symbol_to_namespace(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, namespaceSymbol->resolveTargetMember(identifier, block));
             break;
         }
-
-        default: {
-            std::string identifier;
-            TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-            return CompilerStatus::forCondition(CompilerCondition::kMissingSymbol,
-                "missing symbol '{}'", identifier);
-        }
+        case lyric_assembler::SymbolType::CLASS:
+        case lyric_assembler::SymbolType::INSTANCE:
+        case lyric_assembler::SymbolType::STRUCT:
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
+                "invalid receiver symbol {}", derefSymbol->getSymbolUrl().toString());
     }
 
-    // load the namespace binding onto the stack
-    TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
+    bool pushResult = false;
 
-    return driver->pushResult(ref.typeDef);
+    auto *memberSymbol = symbolCache->getSymbolOrNull(ref.symbolUrl);
+    switch (memberSymbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(memberSymbol);
+            pushResult = !enumSymbol->isAbstract();
+            break;
+        }
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
+            pushResult = !instanceSymbol->isAbstract();
+            break;
+        }
+        case lyric_assembler::SymbolType::NAMESPACE:
+            pushResult = false;
+            break;
+        case lyric_assembler::SymbolType::STATIC:
+            pushResult = true;
+            break;
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                "invalid member symbol {}", memberSymbol->getSymbolUrl().toString());
+    }
+
+    // load the reference onto the stack and push result if necessary
+    if (pushResult) {
+        TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
+        TU_RETURN_IF_NOT_OK (driver->pushResult(ref.typeDef));
+    }
+
+    // append the deref effect
+    DerefEffect nextEffect;
+    nextEffect.receiverType = ref.typeDef;
+    nextEffect.derefSymbol = memberSymbol;
+    nextEffect.pushResult = pushResult;
+    nextEffect.sideEffecting = false;
+    effects.push_back(std::move(nextEffect));
+
+    return {};
 }

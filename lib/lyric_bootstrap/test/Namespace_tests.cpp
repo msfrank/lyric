@@ -11,9 +11,9 @@ TEST_F(NamespaceTests, EvaluateNamespace)
 {
     auto result = runModule(R"(
         namespace Foo {}
-        Foo
+        #Foo
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        MatchesDataCellType(lyric_runtime::DataCellType::NAMESPACE))));
+        MatchesDescriptorSection(lyric_object::LinkageSection::Namespace))));
 }

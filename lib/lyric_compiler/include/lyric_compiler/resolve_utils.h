@@ -6,21 +6,20 @@
 #include <lyric_parser/archetype_node.h>
 
 #include "compiler_scan_driver.h"
+#include "data_deref_handler.h"
 
 namespace lyric_compiler {
 
     tempo_utils::Status resolve_name(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
-        lyric_assembler::DataReference &ref,
-        CompilerScanDriver *driver);
+        lyric_assembler::DataReference &ref);
 
     tempo_utils::Status resolve_member(
         const lyric_parser::ArchetypeNode *node,
-        lyric_assembler::BlockHandle *block,
-        const lyric_common::TypeDef &receiverType,
-        bool thisReceiver,
         lyric_assembler::DataReference &ref,
+        const std::vector<DerefEffect> &effects,
+        lyric_assembler::BlockHandle *block,
         CompilerScanDriver *driver);
 }
 

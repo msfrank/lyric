@@ -103,6 +103,12 @@ lyric_assembler::FieldSymbol::getTypeDef() const
     return priv->fieldType->getTypeDef();
 }
 
+lyric_assembler::BlockHandle *
+lyric_assembler::FieldSymbol::definitionBlock()
+{
+    return nullptr;
+}
+
 std::string
 lyric_assembler::FieldSymbol::getName() const
 {

@@ -121,7 +121,7 @@ lyric_compiler::DefEnumHandler::before(
 
     // declare the enum
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
-        identifier, m_defenum.superenumSymbol, isHidden, lyric_object::DeriveType::Sealed));
+        identifier, m_defenum.superenumSymbol, isHidden, /* isAbstract= */ true, lyric_object::DeriveType::Sealed));
 
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -165,11 +165,11 @@ lyric_compiler::DefEnumHandler::before(
             m_defenum.enumSymbol, m_allocatorTrapName));
     }
 
-    // FIXME: declare enum cases
+    // declare cases
     for (auto &caseNode : caseNodes) {
         lyric_assembler::EnumSymbol *enumcase;
         TU_ASSIGN_OR_RETURN (enumcase, declare_enum_case(
-            caseNode, m_defenum.enumSymbol, block, typeSystem));
+            caseNode, m_defenum.enumSymbol, m_defenum.enumSymbol->enumBlock(), typeSystem));
         m_defenum.cases[caseNode] = enumcase;
     }
 
@@ -233,12 +233,6 @@ lyric_compiler::EnumDefinition::decide(
             ctx.setGrouping(std::move(handler));
             return {};
         }
-        case lyric_schema::LyricAstId::Case: {
-            auto *enumcase = m_defenum->cases.at(node);
-            auto handler = std::make_unique<EnumCase>(enumcase, block, driver);
-            ctx.setChoice(std::move(handler));
-            return {};
-        }
         case lyric_schema::LyricAstId::Def: {
             auto method = m_defenum->methods.at(node);
             auto handler = std::make_unique<MethodHandler>(method, block, driver);
@@ -249,6 +243,13 @@ lyric_compiler::EnumDefinition::decide(
             auto impl = m_defenum->impls.at(node);
             auto handler = std::make_unique<ImplHandler>(impl, block, driver);
             ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Case: {
+            auto *enumcase = m_defenum->cases.at(node);
+            auto *caseBlock = enumcase->enumBlock();
+            auto handler = std::make_unique<EnumCase>(enumcase, caseBlock, driver);
+            ctx.setChoice(std::move(handler));
             return {};
         }
         default:

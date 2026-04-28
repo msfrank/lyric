@@ -72,6 +72,12 @@ lyric_common::SymbolUrl::isRelative() const
     return !m_location.isValid();
 }
 
+lyric_common::ModuleLocation
+lyric_common::SymbolUrl::getModuleLocation() const
+{
+    return m_location;
+}
+
 lyric_common::SymbolPath
 lyric_common::SymbolUrl::getSymbolPath() const
 {
@@ -84,10 +90,20 @@ lyric_common::SymbolUrl::getSymbolName() const
     return m_path.getName();
 }
 
-lyric_common::ModuleLocation
-lyric_common::SymbolUrl::getModuleLocation() const
+bool
+lyric_common::SymbolUrl::isEnclosedBy(const SymbolUrl &other) const
 {
-    return m_location;
+    if (m_location != other.m_location)
+        return false;
+    return m_path.isEnclosedBy(other.m_path);
+}
+
+bool
+lyric_common::SymbolUrl::encloses(const SymbolUrl &other) const
+{
+    if (m_location != other.m_location)
+        return false;
+    return m_path.encloses(other.m_path);
 }
 
 lyric_common::SymbolUrl
