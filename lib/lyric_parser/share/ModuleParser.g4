@@ -50,8 +50,8 @@ definitionStatement : valStatement
                     | defconceptStatement
                     | defenumStatement
                     | definstanceStatement
+                    | defstaticStatement
                     | defstructStatement
-                    | globalStatement
                     | namespaceStatement
                     ;
 
@@ -287,10 +287,19 @@ defStatement        : definitionMacro? DefKeyword
                         symbolIdentifier placeholderSpec? paramSpec returnSpec? constraintSpec?
                         procBlock ;
 
-// impl statement
+// impl spec
 
 implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 implSpec            : implDef ;
+
+
+// global spec
+
+globalVal           : definitionMacro? ValKeyword
+                        symbolIdentifier ColonOperator assignableType AssignOperator initializer ;
+globalVar           : definitionMacro? VarKeyword
+                        symbolIdentifier ColonOperator assignableType AssignOperator initializer ;
+globalSpec          : globalVal | globalVar | defStatement ;
 
 
 // defclass statement
@@ -309,7 +318,8 @@ classDef            : DefKeyword symbolIdentifier
                         procBlock ;
 classDecl           : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-classSpec           : classInit | classVal | classVar | classDef | classDecl | classImpl ;
+classGlobal         : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
+classSpec           : classInit | classVal | classVar | classDef | classDecl | classImpl | classGlobal ;
 
 
 // defconcept statement
@@ -368,9 +378,9 @@ structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 structSpec          : structInit | structVal | structDef | structImpl ;
 
 
-// global statement
+// defstatic statement
 
-globalStatement     : definitionMacro? GlobalKeyword ( ValKeyword | VarKeyword )
+defstaticStatement  : definitionMacro? GlobalKeyword ( ValKeyword | VarKeyword )
                         symbolIdentifier ColonOperator assignableType AssignOperator initializer ;
 
 
@@ -381,12 +391,12 @@ defaliasStatement   : definitionMacro? DefAliasKeyword symbolIdentifier placehol
 
 // namespace statement
 
-namespaceSpec       : globalStatement
-                    | defStatement
+namespaceSpec       : defStatement
                     | defclassStatement
                     | defconceptStatement
                     | defenumStatement
                     | definstanceStatement
+                    | defstaticStatement
                     | defstructStatement
                     ;
 namespaceStatement  : definitionMacro? NamespaceKeyword

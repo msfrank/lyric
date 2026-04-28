@@ -148,32 +148,33 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
     if (hasError())
         return;
 
-    // allocate the val node
-    ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+    // allocate the field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, false));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
     TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    // append val node to defenum
-    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(valNode));
+    // append field node to defenum
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(fieldNode));
 }
 
 void

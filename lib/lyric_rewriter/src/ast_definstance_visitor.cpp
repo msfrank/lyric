@@ -32,8 +32,7 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
             case lyric_schema::LyricAstId::Init:
                 initNodes.push_back(std::pair{child, i});
                 break;
-            case lyric_schema::LyricAstId::Val:
-            case lyric_schema::LyricAstId::Var:
+            case lyric_schema::LyricAstId::Field:
                 memberNodes.push_back(std::pair{child, i});
                 break;
             case lyric_schema::LyricAstId::Def:

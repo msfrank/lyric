@@ -12,8 +12,8 @@ namespace lyric_parser::internal {
     public:
         explicit ModuleAssignOps(ModuleArchetype *listener);
 
-        void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
-        void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
+        void enterDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx);
+        void exitDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx);
 
         void enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx);
         void exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx);

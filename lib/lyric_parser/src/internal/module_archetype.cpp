@@ -416,16 +416,16 @@ void lyric_parser::internal::ModuleArchetype::exitIsGreaterOrEqualExpression(Mod
 /*
  * assign ops
  */
-void lyric_parser::internal::ModuleArchetype::enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGlobalStatement(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefstaticStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx)
 {
     ModuleAssignOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalStatement(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefstaticStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx)
@@ -939,6 +939,41 @@ void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefC
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImplDef(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGlobalSpec(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterGlobalVal(ModuleParser::GlobalValContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGlobalVal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitGlobalVal(ModuleParser::GlobalValContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalVal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterGlobalVar(ModuleParser::GlobalVarContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGlobalVar(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitGlobalVar(ModuleParser::GlobalVarContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalVar(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitGlobalSpec(ModuleParser::GlobalSpecContext *ctx) {
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalSpec(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
 {
     ModuleDefineOps ops(this);
@@ -1024,6 +1059,18 @@ void lyric_parser::internal::ModuleArchetype::exitClassImpl(ModuleParser::ClassI
 {
     ModuleDefclassOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassImpl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterClassGlobal(ModuleParser::ClassGlobalContext *ctx)
+{
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassGlobal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitClassGlobal(ModuleParser::ClassGlobalContext *ctx)
+{
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassGlobal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx)

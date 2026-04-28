@@ -82,8 +82,8 @@ namespace lyric_parser::internal {
         void exitIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx) override;
 
         // implemented by ModuleAssignOps
-        void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
-        void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
+        void enterDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx) override;
+        void exitDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx) override;
         void enterDefaultNewVal(ModuleParser::DefaultNewValContext *ctx) override;
         void exitDefaultNewVal(ModuleParser::DefaultNewValContext *ctx) override;
         void enterTypedVal(ModuleParser::TypedValContext *ctx) override;
@@ -178,6 +178,12 @@ namespace lyric_parser::internal {
         void exitDefStatement(ModuleParser::DefStatementContext *ctx) override;
         void enterImplDef(ModuleParser::ImplDefContext *ctx) override;
         void exitImplDef(ModuleParser::ImplDefContext *ctx) override;
+        void enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx) override;
+        void enterGlobalVal(ModuleParser::GlobalValContext *ctx) override;
+        void exitGlobalVal(ModuleParser::GlobalValContext *ctx) override;
+        void enterGlobalVar(ModuleParser::GlobalVarContext *ctx) override;
+        void exitGlobalVar(ModuleParser::GlobalVarContext *ctx) override;
+        void exitGlobalSpec(ModuleParser::GlobalSpecContext *ctx) override;
         void exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx) override;
 
         // implemented by ModuleDefclassOps
@@ -194,6 +200,8 @@ namespace lyric_parser::internal {
         void exitClassDecl(ModuleParser::ClassDeclContext *ctx) override;
         void enterClassImpl(ModuleParser::ClassImplContext *ctx) override;
         void exitClassImpl(ModuleParser::ClassImplContext *ctx) override;
+        void enterClassGlobal(ModuleParser::ClassGlobalContext *ctx) override;
+        void exitClassGlobal(ModuleParser::ClassGlobalContext *ctx) override;
         void exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx) override;
 
         // implemented by ModuleDefconceptOps

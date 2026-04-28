@@ -177,7 +177,6 @@ lyric_compiler::declare_class_init(
 tempo_utils::Result<lyric_compiler::Member>
 lyric_compiler::declare_class_member(
     const lyric_parser::ArchetypeNode *node,
-    bool isVariable,
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_typing::TypeSystem *typeSystem)
 {
@@ -196,6 +195,9 @@ lyric_compiler::declare_class_member(
     TU_ASSIGN_OR_RETURN (memberSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(classBlock, memberSpec));
+
+    bool isVariable;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));

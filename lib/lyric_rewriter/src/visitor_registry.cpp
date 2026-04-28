@@ -122,6 +122,7 @@ lyric_rewriter::VisitorRegistry::makeVisitor(
 #include <lyric_rewriter/ast_definstance_visitor.h>
 #include <lyric_rewriter/ast_defstruct_visitor.h>
 #include <lyric_rewriter/ast_for_visitor.h>
+#include <lyric_rewriter/ast_global_visitor.h>
 #include <lyric_rewriter/ast_if_visitor.h>
 #include <lyric_rewriter/ast_match_visitor.h>
 #include <lyric_rewriter/ast_param_visitor.h>
@@ -197,6 +198,7 @@ make_ast_visitor(
         case lyric_schema::LyricAstId::Lambda:
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
+        case lyric_schema::LyricAstId::Field:
         case lyric_schema::LyricAstId::Decl:
         case lyric_schema::LyricAstId::Def:
         case lyric_schema::LyricAstId::DefStatic:
@@ -251,6 +253,8 @@ make_ast_visitor(
             return std::make_shared<lyric_rewriter::AstDefinstanceVisitor>(astId, state);
         case lyric_schema::LyricAstId::DefStruct:
             return std::make_shared<lyric_rewriter::AstDefstructVisitor>(astId, state);
+        case lyric_schema::LyricAstId::Global:
+            return std::make_shared<lyric_rewriter::AstGlobalVisitor>(astId, state);
 
         // param form
         case lyric_schema::LyricAstId::Param:

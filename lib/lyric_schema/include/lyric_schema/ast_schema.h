@@ -111,9 +111,11 @@ namespace lyric_schema {
         Namespace,                  // define namespace
         Protocol,                   // define protocol
 
+        Field,                      // field statement
         Init,                       // init statement
         Base,                       // base constructor
         Impl,                       // impl statement
+        Global,                     // global statement
 
         ImportAll,                  // import all module symbols into environment
         ImportSymbols,              // import specified module symbols into environment
@@ -338,12 +340,16 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstProtocolClass(
         &kLyricAstNs, LyricAstId::Protocol, "Protocol");
 
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFieldClass(
+        &kLyricAstNs, LyricAstId::Field, "Field");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInitClass(
         &kLyricAstNs, LyricAstId::Init, "Init");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBaseClass(
         &kLyricAstNs, LyricAstId::Base, "Base");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImplClass(
         &kLyricAstNs, LyricAstId::Impl, "Impl");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstGlobalClass(
+        &kLyricAstNs, LyricAstId::Global, "Global");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportAllClass(
         &kLyricAstNs, LyricAstId::ImportAll, "ImportAll");
@@ -571,9 +577,11 @@ namespace lyric_schema {
         &kLyricAstNamespaceClass,
         &kLyricAstProtocolClass,
 
+        &kLyricAstFieldClass,
         &kLyricAstInitClass,
         &kLyricAstBaseClass,
         &kLyricAstImplClass,
+        &kLyricAstGlobalClass,
 
         &kLyricAstImportAllClass,
         &kLyricAstImportSymbolsClass,

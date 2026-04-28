@@ -165,7 +165,6 @@ lyric_compiler::declare_enum_init(
 tempo_utils::Result<lyric_compiler::Member>
 lyric_compiler::declare_enum_member(
     const lyric_parser::ArchetypeNode *node,
-    bool isVariable,
     lyric_assembler::EnumSymbol *enumSymbol,
     lyric_typing::TypeSystem *typeSystem)
 {
@@ -184,6 +183,9 @@ lyric_compiler::declare_enum_member(
     TU_ASSIGN_OR_RETURN (memberSpec, typeSystem->parseAssignable(enumBlock, typeNode->getArchetypeNode()));
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(enumBlock, memberSpec));
+
+    bool isVariable;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));

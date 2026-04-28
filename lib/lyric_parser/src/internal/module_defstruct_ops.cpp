@@ -47,58 +47,6 @@ lyric_parser::internal::ModuleDefstructOps::enterDefstructStatement(ModuleParser
     TU_RAISE_IF_NOT_OK (state->pushNode(defstructNode));
 }
 
-// void
-// lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::StructSuperContext *ctx)
-// {
-//     auto *token = ctx->getStart();
-//     auto location = get_token_location(token);
-//     auto *state = getState();
-//
-//     if (hasError())
-//         return;
-//
-//     // allocate super node
-//     ArchetypeNode *superNode;
-//     TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
-//
-//     if (ctx->callArguments()->argumentList()) {
-//         auto *argList = ctx->callArguments()->argumentList();
-//         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-//             auto *argSpec = argList->argument(i);
-//             if (argSpec == nullptr)
-//                 continue;
-//
-//             // pop argument off of the stack
-//             ArchetypeNode *argNode;
-//             TU_ASSIGN_OR_RAISE (argNode, state->popNode());
-//
-//             if (argSpec->Identifier() != nullptr) {
-//                 auto label = argSpec->Identifier()->getText();
-//
-//                 token = argSpec->getStart();
-//                 location = get_token_location(token);
-//
-//                 // allocate keyword node
-//                 ArchetypeNode *keywordNode;
-//                 TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
-//
-//                 // set keyword name
-//                 TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
-//
-//                 // append arg node to keyword
-//                 TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
-//                 argNode = keywordNode;
-//             }
-//
-//             // prepend arg node to the super
-//             TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
-//         }
-//     }
-//
-//     // push super onto the stack
-//     TU_RAISE_IF_NOT_OK (state->pushNode(superNode));
-// }
-
 void
 lyric_parser::internal::ModuleDefstructOps::enterStructInit(ModuleParser::StructInitContext *ctx)
 {
@@ -216,32 +164,33 @@ lyric_parser::internal::ModuleDefstructOps::exitStructVal(ModuleParser::StructVa
     if (hasError())
         return;
 
-    // allocate val node
-    ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+    // allocate field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, false));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is defstruct
     ArchetypeNode *defstructNode;
     TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
 
-    // append val node to defstruct
-    TU_RAISE_IF_NOT_OK (defstructNode->appendChild(valNode));
+    // append field node to defstruct
+    TU_RAISE_IF_NOT_OK (defstructNode->appendChild(fieldNode));
 }
 
 void

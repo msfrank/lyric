@@ -69,8 +69,7 @@ lyric_compiler::DefInstanceHandler::before(
     }
 
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
-    std::vector<lyric_parser::ArchetypeNode *> valNodes;
-    std::vector<lyric_parser::ArchetypeNode *> varNodes;
+    std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
 
@@ -84,12 +83,8 @@ lyric_compiler::DefInstanceHandler::before(
                 initNodes.push_back(child);
                 break;
             }
-            case lyric_schema::LyricAstId::Val: {
-                valNodes.push_back(child);
-                break;
-            }
-            case lyric_schema::LyricAstId::Var: {
-                varNodes.push_back(child);
+            case lyric_schema::LyricAstId::Field: {
+                fieldNodes.push_back(child);
                 break;
             }
             case lyric_schema::LyricAstId::Def: {
@@ -135,20 +130,11 @@ lyric_compiler::DefInstanceHandler::before(
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_definstance.instanceSymbol->getSymbolUrl()));
     }
 
-    // declare val members
-    for (auto &valNode : valNodes) {
+    // declare members
+    for (auto &fieldNode : fieldNodes) {
         Member member;
-        TU_ASSIGN_OR_RETURN (member, declare_instance_member(
-            valNode, /* isVariable= */ false, m_definstance.instanceSymbol, typeSystem));
-        m_definstance.members[valNode] = member;
-    }
-
-    // declare var members
-    for (auto &varNode : varNodes) {
-        Member member;
-        TU_ASSIGN_OR_RETURN (member, declare_instance_member(
-            varNode, /* isVariable= */ true, m_definstance.instanceSymbol, typeSystem));
-        m_definstance.members[varNode] = member;
+        TU_ASSIGN_OR_RETURN (member, declare_instance_member(fieldNode, m_definstance.instanceSymbol, typeSystem));
+        m_definstance.members[fieldNode] = member;
     }
 
     // declare methods
@@ -234,8 +220,7 @@ lyric_compiler::InstanceDefinition::decide(
             ctx.setGrouping(std::move(handler));
             return {};
         }
-        case lyric_schema::LyricAstId::Val:
-        case lyric_schema::LyricAstId::Var: {
+        case lyric_schema::LyricAstId::Field: {
             auto member = m_definstance->members.at(node);
             auto handler = std::make_unique<MemberHandler>(member, block, driver);
             ctx.setGrouping(std::move(handler));

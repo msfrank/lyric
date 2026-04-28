@@ -25,7 +25,7 @@ TEST_F(SymbolizeNamespace, DeclareNamespace)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     TU_LOG_INFO << object.dumpJson();

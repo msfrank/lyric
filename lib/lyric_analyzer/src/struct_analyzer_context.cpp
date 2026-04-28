@@ -39,7 +39,7 @@ lyric_analyzer::StructAnalyzerContext::enter(
         case lyric_schema::LyricAstId::Init:
             m_missingInit = false;
             return declareCtor(node);
-        case lyric_schema::LyricAstId::Val:
+        case lyric_schema::LyricAstId::Field:
             return declareMember(node);
         case lyric_schema::LyricAstId::Def:
             return declareMethod(node);

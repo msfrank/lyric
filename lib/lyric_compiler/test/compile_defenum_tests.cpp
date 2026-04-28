@@ -8,6 +8,22 @@
 
 class CompileDefenum : public BaseCompilerFixture {};
 
+TEST_F(CompileDefenum, EvaluateAbstractEnumDescriptor)
+{
+    auto result = m_tester->runModule(R"(
+        defenum Direction {
+            case North
+            case South
+            case East
+            case West
+        }
+        #Direction
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
+        MatchesDescriptorSection(lyric_object::LinkageSection::Enum))));
+}
+
 TEST_F(CompileDefenum, EvaluateAbstractEnumFails)
 {
     auto result = m_tester->compileModule(R"(

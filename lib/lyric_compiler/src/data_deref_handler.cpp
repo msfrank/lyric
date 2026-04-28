@@ -719,10 +719,6 @@ lyric_compiler::DataDerefLast::decide(
         }
     }
 
-    // const auto &lastEffect = m_deref->effects.back();
-    // if (!lastEffect.pushResult)
-    //     return CompilerStatus::forCondition(
-    //         CompilerCondition::kSyntaxError, "failed to dereference");
     return {};
 }
 

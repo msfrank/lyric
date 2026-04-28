@@ -17,13 +17,13 @@ lyric_parser::internal::ModuleAssignOps::ModuleAssignOps(ModuleArchetype *listen
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+lyric_parser::internal::ModuleAssignOps::enterDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx)
 {
-    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterGlobalStatement");
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleAssignOps::enterDefstaticStatement");
 }
 
 void
-lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+lyric_parser::internal::ModuleAssignOps::exitDefstaticStatement(ModuleParser::DefstaticStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;
 

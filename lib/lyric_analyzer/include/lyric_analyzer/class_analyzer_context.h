@@ -27,7 +27,7 @@ namespace lyric_analyzer {
             const lyric_rewriter::VisitorContext &ctx) override;
 
         tempo_utils::Status declareCtor(const lyric_parser::ArchetypeNode *node);
-        tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable);
+        tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareMethod(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareAbstract(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImpl(const lyric_parser::ArchetypeNode *node);

@@ -191,6 +191,107 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 }
 
 void
+lyric_parser::internal::ModuleDefineOps::enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx)
+{
+    auto *state = getState();
+    TU_RAISE_IF_STATUS (state->peekNode(lyric_schema::kLyricAstGlobalClass));
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::enterGlobalVal(ModuleParser::GlobalValContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefineOps::enterGlobalVal");
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::exitGlobalVal(ModuleParser::GlobalValContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    ArchetypeNode *defstaticNode;
+    TU_ASSIGN_OR_RAISE (defstaticNode, state->appendNode(lyric_schema::kLyricAstDefStaticClass, location));
+    TU_RAISE_IF_NOT_OK (defstaticNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsVariable, false));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(defstaticNode));
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::enterGlobalVar(ModuleParser::GlobalVarContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefineOps::enterGlobalVar");
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::exitGlobalVar(ModuleParser::GlobalVarContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    ArchetypeNode *defstaticNode;
+    TU_ASSIGN_OR_RAISE (defstaticNode, state->appendNode(lyric_schema::kLyricAstDefStaticClass, location));
+    TU_RAISE_IF_NOT_OK (defstaticNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsVariable, true));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(defstaticNode));
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::exitGlobalSpec(ModuleParser::GlobalSpecContext *ctx)
+{
+    auto *state = getState();
+
+    ArchetypeNode *elementNode;
+    TU_ASSIGN_OR_RAISE (elementNode, state->popNode());
+
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->peekNode(lyric_schema::kLyricAstGlobalClass));
+
+    TU_RAISE_IF_NOT_OK (globalNode->appendChild(elementNode));
+}
+
+void
 lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
 {
     tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::exitTypenameStatement");

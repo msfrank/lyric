@@ -32,7 +32,6 @@ namespace lyric_compiler {
     tempo_utils::Result<Member>
     declare_instance_member(
         const lyric_parser::ArchetypeNode *node,
-        bool isVariable,
         lyric_assembler::InstanceSymbol *instanceSymbol,
         lyric_typing::TypeSystem *typeSystem);
 

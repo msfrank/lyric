@@ -17,6 +17,7 @@ lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(
     TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
     m_namespaces.push(m_root->globalNamespace());
+    m_scopes.push(Scope::Namespace);
 }
 
 tempo_utils::Status
@@ -31,13 +32,28 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
 
     auto astId = resource->getId();
     switch (astId) {
-        case lyric_schema::LyricAstId::Decl:
-            return pushDefinition(node, lyric_object::LinkageSection::Action);
+        case lyric_schema::LyricAstId::Block:
+            return pushBlock();
+
         case lyric_schema::LyricAstId::DefAlias:
-            return pushDefinition(node, lyric_object::LinkageSection::Binding);
+            return declareBinding(node);
+        case lyric_schema::LyricAstId::Decl:
+            return declareAction(node);
+        case lyric_schema::LyricAstId::Field:
+            return declareField(node);
+        case lyric_schema::LyricAstId::TypeName:
+            return declareTypename(node);
+        case lyric_schema::LyricAstId::DefStatic:
+            return declareStatic(node);
+        case lyric_schema::LyricAstId::Protocol:
+            return declareProtocol(node);
+
         case lyric_schema::LyricAstId::Init:
+            return pushInit(node);
+
         case lyric_schema::LyricAstId::Def:
-            return pushDefinition(node, lyric_object::LinkageSection::Call);
+            return pushCall(node);
+
         case lyric_schema::LyricAstId::DefClass:
             return pushDefinition(node, lyric_object::LinkageSection::Class);
         case lyric_schema::LyricAstId::DefConcept:
@@ -48,8 +64,10 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
             return pushDefinition(node, lyric_object::LinkageSection::Instance);
         case lyric_schema::LyricAstId::DefStruct:
             return pushDefinition(node, lyric_object::LinkageSection::Struct);
+
         case lyric_schema::LyricAstId::Namespace:
             return pushNamespace(node);
+
         default:
             break;
     }
@@ -69,28 +87,29 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 
     auto astId = resource->getId();
     switch (astId) {
-        case lyric_schema::LyricAstId::TypeName:
-            return declareTypename(node);
-        case lyric_schema::LyricAstId::Protocol:
-            return declareProtocol(node);
-        case lyric_schema::LyricAstId::DefStatic:
-            return declareStatic(node);
-        case lyric_schema::LyricAstId::Decl:
-        case lyric_schema::LyricAstId::Def:
-        case lyric_schema::LyricAstId::DefAlias:
+        case lyric_schema::LyricAstId::Block:
+            return popBlock();
+
         case lyric_schema::LyricAstId::DefClass:
         case lyric_schema::LyricAstId::DefConcept:
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:
         case lyric_schema::LyricAstId::DefStruct:
-        case lyric_schema::LyricAstId::Init:
             return popDefinition();
+
+        case lyric_schema::LyricAstId::Init:
+            return popInit();
+        case lyric_schema::LyricAstId::Def:
+            return popCall();
+
         case lyric_schema::LyricAstId::Namespace:
             return popNamespace();
+
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
         case lyric_schema::LyricAstId::ImportAll:
             return declareImport(node);
+
         default:
             break;
     }
@@ -104,35 +123,111 @@ lyric_symbolizer::SymbolizerScanDriver::finish()
 }
 
 tempo_utils::Status
-lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::ArchetypeNode *node)
+lyric_symbolizer::SymbolizerScanDriver::pushBlock()
 {
-    if (!m_symbolPath.empty())
-        return {};
+    m_scopes.push(Scope::Block);
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::popBlock()
+{
+    if (m_scopes.top() != Scope::Block)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Block scope");
+    m_scopes.pop();
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareBinding(const lyric_parser::ArchetypeNode *node)
+{
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Binding);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared binding " << symbolUrl;
+
+    if (m_scopes.top() == Scope::Namespace) {
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
+    }
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareField(const lyric_parser::ArchetypeNode *node)
+{
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
 
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    auto *symbolCache = m_state->symbolCache();
-
-    lyric_common::SymbolPath symbolPath({identifier});
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    TU_RETURN_IF_STATUS (symbolCache->putTypename(symbolUrl));
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Field);
 
-    TU_LOG_V << "declared typename " << symbolUrl;
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared field " << symbolUrl;
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareAction(const lyric_parser::ArchetypeNode *node)
+{
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Action);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared action " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
 }
 
 tempo_utils::Status
-lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::ArchetypeNode *node)
+lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::ArchetypeNode *node)
 {
-    if (!m_symbolPath.empty())
-        return {};
-
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_common::SymbolPath symbolPath({identifier});
+    auto *symbolCache = m_state->symbolCache();
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    TU_RETURN_IF_STATUS (symbolCache->putTypename(symbolUrl));
+
+    TU_LOG_V << "declared typename " << symbolUrl;
+
+    if (m_scopes.top() == Scope::Namespace) {
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
+    }
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::ArchetypeNode *node)
+{
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
     lyric_common::SymbolUrl symbolUrl(symbolPath);
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
         symbolUrl, lyric_object::LinkageSection::Static);
@@ -140,19 +235,19 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_V << "declared static " << symbolUrl;
 
-    return putNamespaceTarget(symbolUrl);
+    if (m_scopes.top() == Scope::Namespace) {
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
+    }
+    return {};
 }
 
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::declareProtocol(const lyric_parser::ArchetypeNode *node)
 {
-    if (!m_symbolPath.empty())
-        return {};
-
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_common::SymbolPath symbolPath({identifier});
+    lyric_common::SymbolPath symbolPath(m_symbolPath, identifier);
     lyric_common::SymbolUrl symbolUrl(symbolPath);
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
         symbolUrl, lyric_object::LinkageSection::Protocol);
@@ -160,12 +255,21 @@ lyric_symbolizer::SymbolizerScanDriver::declareProtocol(const lyric_parser::Arch
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_V << "declared protocol " << symbolUrl;
 
-    return putNamespaceTarget(symbolUrl);
+    if (m_scopes.top() == Scope::Namespace) {
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
+    }
+    return {};
 }
 
 tempo_utils::Status
-lyric_symbolizer::SymbolizerScanDriver::pushConstructor(const lyric_parser::ArchetypeNode *node)
+lyric_symbolizer::SymbolizerScanDriver::pushInit(const lyric_parser::ArchetypeNode *node)
 {
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+
+    m_scopes.push(Scope::Definition);
+
     std::string identifier;
     if (node->hasAttr(lyric_parser::kLyricAstIdentifier)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
@@ -179,14 +283,53 @@ lyric_symbolizer::SymbolizerScanDriver::pushConstructor(const lyric_parser::Arch
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, lyric_object::LinkageSection::Call);
 
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
-    TU_LOG_V << "declared definition " << symbolUrl;
+    TU_LOG_V << "declared init call " << symbolUrl;
+    return {};
+}
 
-    auto *currentNamespace = m_namespaces.top();
-    auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
-    if (symbolPath.getEnclosure() == namespacePath.getPath()) {
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::popInit()
+{
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+    m_scopes.pop();
+    m_symbolPath.pop_back();
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::pushCall(const lyric_parser::ArchetypeNode *node)
+{
+    auto currentScope = m_scopes.top();
+
+    m_scopes.push(Scope::Definition);
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    m_symbolPath.push_back(identifier);
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, lyric_object::LinkageSection::Call);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared call " << symbolUrl;
+
+    if (currentScope == Scope::Namespace) {
         TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
     }
+    return {};
+}
 
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::popCall()
+{
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+    m_scopes.pop();
+    m_symbolPath.pop_back();
     return {};
 }
 
@@ -195,6 +338,10 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     const lyric_parser::ArchetypeNode *node,
     lyric_object::LinkageSection section)
 {
+    auto currentScope = m_scopes.top();
+
+    m_scopes.push(Scope::Definition);
+
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
     m_symbolPath.push_back(identifier);
@@ -206,18 +353,19 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_V << "declared definition " << symbolUrl;
 
-    auto *currentNamespace = m_namespaces.top();
-    auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
-    if (symbolPath.getEnclosure() == namespacePath.getPath()) {
+    if (currentScope == Scope::Namespace) {
         TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
     }
-
     return {};
 }
 
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::popDefinition()
 {
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+    m_scopes.pop();
     m_symbolPath.pop_back();
     return {};
 }
@@ -249,6 +397,8 @@ lyric_symbolizer::SymbolizerScanDriver::pushNamespace(const lyric_parser::Archet
             "namespace stack is empty");
     auto *currentNamespace = m_namespaces.top();
 
+    m_scopes.push(Scope::Namespace);
+
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
     m_symbolPath.push_back(identifier);
@@ -275,6 +425,11 @@ lyric_symbolizer::SymbolizerScanDriver::putNamespaceTarget(const lyric_common::S
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::popNamespace()
 {
+    if (m_scopes.top() != Scope::Namespace)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Namespace scope");
+    m_scopes.pop();
+
     m_namespaces.pop();
     if (m_namespaces.empty())
         return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,

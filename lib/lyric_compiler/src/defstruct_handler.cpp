@@ -68,7 +68,7 @@ lyric_compiler::DefStructHandler::before(
     }
 
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
-    std::vector<lyric_parser::ArchetypeNode *> valNodes;
+    std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
 
@@ -82,8 +82,8 @@ lyric_compiler::DefStructHandler::before(
                 initNodes.push_back(child);
                 break;
             }
-            case lyric_schema::LyricAstId::Val: {
-                valNodes.push_back(child);
+            case lyric_schema::LyricAstId::Field: {
+                fieldNodes.push_back(child);
                 break;
             }
             case lyric_schema::LyricAstId::Def: {
@@ -129,11 +129,11 @@ lyric_compiler::DefStructHandler::before(
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defstruct.structSymbol->getSymbolUrl()));
     }
 
-    // declare val members
-    for (auto &valNode : valNodes) {
+    // declare members
+    for (auto &fieldNode : fieldNodes) {
         Member member;
-        TU_ASSIGN_OR_RETURN (member, declare_struct_member(valNode, m_defstruct.structSymbol, typeSystem));
-        m_defstruct.members[valNode] = member;
+        TU_ASSIGN_OR_RETURN (member, declare_struct_member(fieldNode, m_defstruct.structSymbol, typeSystem));
+        m_defstruct.members[fieldNode] = member;
     }
 
     // declare methods
@@ -219,7 +219,7 @@ lyric_compiler::StructDefinition::decide(
             ctx.setGrouping(std::move(handler));
             return {};
         }
-        case lyric_schema::LyricAstId::Val: {
+        case lyric_schema::LyricAstId::Field: {
             auto member = m_defstruct->members.at(node);
             auto handler = std::make_unique<MemberHandler>(member, block, driver);
             ctx.setGrouping(std::move(handler));

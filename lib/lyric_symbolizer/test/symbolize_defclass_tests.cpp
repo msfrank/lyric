@@ -30,3 +30,67 @@ TEST_F(SymbolizeDefclass, DeclareDefclass)
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Class);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }
+
+TEST_F(SymbolizeDefclass, DeclareClassDefaultInit)
+{
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
+        defclass Class {
+            init() {
+            }
+        }
+    )");
+    ASSERT_THAT (symbolizeModuleResult,
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
+
+    auto symbolizeModule = symbolizeModuleResult.getResult();
+    auto object = symbolizeModule.getModule();
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
+
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.$ctor"));
+    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Call);
+    ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
+}
+
+TEST_F(SymbolizeDefclass, DeclareClassNamedInit)
+{
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
+        defclass Class {
+            init Named() {
+            }
+        }
+    )");
+    ASSERT_THAT (symbolizeModuleResult,
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
+
+    auto symbolizeModule = symbolizeModuleResult.getResult();
+    auto object = symbolizeModule.getModule();
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
+
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.Named"));
+    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Call);
+    ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
+}
+
+TEST_F(SymbolizeDefclass, DeclareClassGlobalVal)
+{
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
+        defclass Class {
+            global {
+                val Val: Int = 1
+            }
+        }
+    )");
+    ASSERT_THAT (symbolizeModuleResult,
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::COMPLETED)));
+
+    auto symbolizeModule = symbolizeModuleResult.getResult();
+    auto object = symbolizeModule.getModule();
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
+
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.Val"));
+    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Static);
+    ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
+}

@@ -148,32 +148,33 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVal(ModuleParser::Inst
     if (hasError())
         return;
 
-    // allocate the val node
-    ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+    // allocate the field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, false));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is definstance
     ArchetypeNode *definstanceNode;
     TU_ASSIGN_OR_RAISE (definstanceNode, state->peekNode(lyric_schema::kLyricAstDefInstanceClass));
 
-    // append val node to definstance
-    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(valNode));
+    // append field node to definstance
+    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(fieldNode));
 }
 
 void
@@ -208,32 +209,33 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVar(ModuleParser::Inst
     if (hasError())
         return;
 
-    // allocate the var node
-    ArchetypeNode *varNode;
-    TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
+    // allocate the field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, true));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (varNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is definstance
     ArchetypeNode *definstanceNode;
     TU_ASSIGN_OR_RAISE (definstanceNode, state->peekNode(lyric_schema::kLyricAstDefInstanceClass));
 
-    // append var node to definstance
-    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(varNode));
+    // append field node to definstance
+    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(fieldNode));
 }
 
 void

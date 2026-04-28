@@ -33,11 +33,30 @@ namespace lyric_symbolizer {
         std::vector<std::string> m_symbolPath;
         std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
 
+        enum class Scope {
+            Invalid,
+            Namespace,
+            Definition,
+            Block,
+        };
+        std::stack<Scope> m_scopes;
+
+        tempo_utils::Status pushBlock();
+        tempo_utils::Status popBlock();
+
+        tempo_utils::Status declareBinding(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status declareField(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status declareAction(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareTypename(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareProtocol(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImport(const lyric_parser::ArchetypeNode *node);
-        tempo_utils::Status pushConstructor(const lyric_parser::ArchetypeNode *node);
+
+        tempo_utils::Status pushInit(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status popInit();
+        tempo_utils::Status pushCall(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status popCall();
+
         tempo_utils::Status pushDefinition(
             const lyric_parser::ArchetypeNode *node,
             lyric_object::LinkageSection section);

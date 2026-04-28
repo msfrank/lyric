@@ -47,64 +47,6 @@ lyric_parser::internal::ModuleDefclassOps::enterDefclassStatement(ModuleParser::
     TU_RAISE_IF_NOT_OK (state->pushNode(defclassNode));
 }
 
-// void
-// lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSuperContext *ctx)
-// {
-//     auto *token = ctx->getStart();
-//     auto location = get_token_location(token);
-//     auto *state = getState();
-//
-//     // the class super type
-//     auto *superTypeNode = make_Type_node(state, ctx->assignableType());
-//
-//     if (hasError())
-//         return;
-//
-//     // allocate super node
-//     ArchetypeNode *superNode;
-//     TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
-//
-//     // set the super type
-//     TU_RAISE_IF_NOT_OK (superNode->putAttr(kLyricAstTypeOffset, superTypeNode));
-//
-//     if (ctx->callArguments()->argumentList()) {
-//         auto *argList = ctx->callArguments()->argumentList();
-//         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-//             auto *argSpec = argList->argument(i);
-//             if (argSpec == nullptr)
-//                 continue;
-//
-//             // pop argument off the stack
-//             ArchetypeNode *argNode;
-//             TU_ASSIGN_OR_RAISE (argNode, state->popNode());
-//
-//             if (argSpec->Identifier() != nullptr) {
-//                 auto label = argSpec->Identifier()->getText();
-//
-//                 token = argSpec->getStart();
-//                 location = get_token_location(token);
-//
-//                 // allocate keyword node
-//                 ArchetypeNode *keywordNode;
-//                 TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
-//
-//                 // set keyword name
-//                 TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
-//
-//                 // append arg node to keyword
-//                 TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
-//                 argNode = keywordNode;
-//             }
-//
-//             // prepend arg node to the super
-//             TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
-//         }
-//     }
-//
-//     // push the super onto stack
-//     TU_RAISE_IF_NOT_OK (state->pushNode(superNode));
-// }
-
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassInit(ModuleParser::ClassInitContext *ctx)
 {
@@ -222,32 +164,33 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     if (hasError())
         return;
 
-    // allocate the val node
-    ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+    // allocate the field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, false));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is defclass
     ArchetypeNode *defclassNode;
     TU_ASSIGN_OR_RAISE (defclassNode, state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    // append val node to defclass
-    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(valNode));
+    // append field node to defclass
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(fieldNode));
 }
 
 void
@@ -282,32 +225,33 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     if (hasError())
         return;
 
-    // allocate the var node
-    ArchetypeNode *varNode;
-    TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
+    // allocate the field node
+    ArchetypeNode *fieldNode;
+    TU_ASSIGN_OR_RAISE (fieldNode, state->appendNode(lyric_schema::kLyricAstFieldClass, location));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsVariable, true));
 
     // set the member name
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIdentifier, id));
 
     // seet the visibility
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
+    TU_RAISE_IF_NOT_OK (fieldNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
-        TU_RAISE_IF_NOT_OK (varNode->appendChild(defaultNode));
+        TU_RAISE_IF_NOT_OK (fieldNode->appendChild(defaultNode));
     }
 
     // peek node on stack, verify it is defclass
     ArchetypeNode *defclassNode;
     TU_ASSIGN_OR_RAISE (defclassNode, state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    // append var node to defclass
-    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(varNode));
+    // append field node to defclass
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(fieldNode));
 }
 
 void
@@ -476,7 +420,6 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDecl(ModuleParser::ClassDecl
     TU_RAISE_IF_NOT_OK (defclassNode->appendChild(declNode));
 }
 
-
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassImpl(ModuleParser::ClassImplContext *ctx)
 {
@@ -528,6 +471,53 @@ lyric_parser::internal::ModuleDefclassOps::exitClassImpl(ModuleParser::ClassImpl
 
     // append impl node to defclass
     TU_RAISE_IF_NOT_OK (defclassNode->appendChild(implNode));
+}
+
+void
+lyric_parser::internal::ModuleDefclassOps::enterClassGlobal(ModuleParser::ClassGlobalContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassGlobal");
+
+    auto *state = getState();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate global node
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->appendNode(lyric_schema::kLyricAstGlobalClass, location));
+
+    // push global onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(globalNode));
+}
+
+void
+lyric_parser::internal::ModuleDefclassOps::exitClassGlobal(ModuleParser::ClassGlobalContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is global
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->popNode(lyric_schema::kLyricAstGlobalClass));
+
+    // peek node on stack, verify it is defclass
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, state->peekNode(lyric_schema::kLyricAstDefClassClass));
+
+    // append global node to defclass
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(globalNode));
 }
 
 void

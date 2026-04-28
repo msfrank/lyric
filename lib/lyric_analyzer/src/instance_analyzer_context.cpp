@@ -39,10 +39,8 @@ lyric_analyzer::InstanceAnalyzerContext::enter(
         case lyric_schema::LyricAstId::Init:
             m_missingInit = false;
             return declareCtor(node);
-        case lyric_schema::LyricAstId::Val:
-            return declareMember(node, /* isVariable= */ false);
-        case lyric_schema::LyricAstId::Var:
-            return declareMember(node, /* isVariable= */ true);
+        case lyric_schema::LyricAstId::Field:
+            return declareMember(node);
         case lyric_schema::LyricAstId::Def:
             return declareMethod(node);
         case lyric_schema::LyricAstId::Impl:
@@ -107,10 +105,13 @@ lyric_analyzer::InstanceAnalyzerContext::declareCtor(const lyric_parser::Archety
 }
 
 tempo_utils::Status
-lyric_analyzer::InstanceAnalyzerContext::declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable)
+lyric_analyzer::InstanceAnalyzerContext::declareMember(const lyric_parser::ArchetypeNode *node)
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    bool isVariable;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
