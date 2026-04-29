@@ -231,6 +231,12 @@ invoke_global_method(
     // prepare method on receiver
     switch (derefSymbol->getSymbolType()) {
 
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *classSymbol = lyric_assembler::cast_symbol_to_class(derefSymbol);
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
+
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
             TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
@@ -243,7 +249,6 @@ invoke_global_method(
             break;
         }
 
-        case lyric_assembler::SymbolType::CLASS:
         case lyric_assembler::SymbolType::CONCEPT:
         case lyric_assembler::SymbolType::EXISTENTIAL:
         case lyric_assembler::SymbolType::INSTANCE:

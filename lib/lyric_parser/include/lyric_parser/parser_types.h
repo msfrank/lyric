@@ -48,6 +48,17 @@ namespace lyric_parser {
         Scientific,
     };
 
+    enum class PortType {
+        Connect,
+        Accept,
+    };
+
+    enum class CommunicationType {
+        Receive,
+        Send,
+        SendAndReceive,
+    };
+
     enum class ArchetypeDescriptorType {
         Invalid,
         Namespace,

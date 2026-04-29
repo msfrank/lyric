@@ -41,6 +41,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/entry_handler.h
     include/lyric_compiler/expect_handler.h
     include/lyric_compiler/form_handler.h
+    include/lyric_compiler/global_handler.h
     include/lyric_compiler/impl_handler.h
     include/lyric_compiler/impl_utils.h
     include/lyric_compiler/import_handler.h
@@ -107,6 +108,7 @@ target_sources(lyric_compiler PRIVATE
     src/entry_handler.cpp
     src/expect_handler.cpp
     src/form_handler.cpp
+    src/global_handler.cpp
     src/impl_handler.cpp
     src/impl_utils.cpp
     src/import_handler.cpp

@@ -90,6 +90,36 @@ namespace lyric_parser {
             DeriveType &value) const override;
     };
 
+    class PortTypeAttr : public tempo_schema::AttrSerde<PortType> {
+
+        using SerdeType = PortType;
+
+    public:
+        explicit PortTypeAttr(const tempo_schema::ComparableResource *resource);
+        tempo_utils::Result<tu_uint32> writeAttr(
+            tempo_schema::AbstractAttrWriter *writer,
+            const PortType &value) const override;
+        tempo_utils::Status parseAttr(
+            tu_uint32 index,
+            tempo_schema::AbstractAttrParser *parser,
+            PortType &value) const override;
+    };
+
+    class CommunicationTypeAttr : public tempo_schema::AttrSerde<CommunicationType> {
+
+        using SerdeType = CommunicationType;
+
+    public:
+        explicit CommunicationTypeAttr(const tempo_schema::ComparableResource *resource);
+        tempo_utils::Result<tu_uint32> writeAttr(
+            tempo_schema::AbstractAttrWriter *writer,
+            const CommunicationType &value) const override;
+        tempo_utils::Status parseAttr(
+            tu_uint32 index,
+            tempo_schema::AbstractAttrParser *parser,
+            CommunicationType &value) const override;
+    };
+
     class NodeAttr : public StatefulAttr {
     public:
         explicit NodeAttr(const tempo_schema::ComparableResource *resource);
@@ -113,6 +143,8 @@ namespace lyric_parser {
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
     extern const DeriveTypeAttr kLyricAstDeriveType;
+    extern const PortTypeAttr kLyricAstPortType;
+    extern const CommunicationTypeAttr kLyricAstCommunicationType;
 
     extern const tempo_schema::UrlAttr kLyricAstImportLocation;
     extern const lyric_common::ModuleLocationAttr kLyricAstModuleLocation;
@@ -129,6 +161,8 @@ namespace lyric_parser {
     extern const NodeAttr kLyricAstRestOffset;
     extern const NodeAttr kLyricAstGenericOffset;
     extern const NodeAttr kLyricAstTypeArgumentsOffset;
+    extern const NodeAttr kLyricAstSendTypeOffset;
+    extern const NodeAttr kLyricAstReceiveTypeOffset;
     extern const NodeAttr kLyricAstMacroListOffset;
 }
 

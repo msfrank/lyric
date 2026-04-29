@@ -13,7 +13,7 @@
 lyric_compiler::DefClassHandler::DefClassHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -24,7 +24,7 @@ lyric_compiler::DefClassHandler::DefClassHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -36,7 +36,7 @@ tempo_utils::Status
 lyric_compiler::DefClassHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_VV << "before DefClassHandler@" << this;
 
@@ -79,6 +79,7 @@ lyric_compiler::DefClassHandler::before(
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> declNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
+    std::vector<lyric_parser::ArchetypeNode *> globalNodes;
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
@@ -104,6 +105,10 @@ lyric_compiler::DefClassHandler::before(
             }
             case lyric_schema::LyricAstId::Impl: {
                 implNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Global: {
+                globalNodes.push_back(child);
                 break;
             }
             default:
@@ -141,6 +146,8 @@ lyric_compiler::DefClassHandler::before(
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defclass.classSymbol->getSymbolUrl()));
     }
 
+    m_defclass.global.definitionBlock = m_defclass.classSymbol->classBlock();
+
     // declare members
     for (auto &fieldNode : fieldNodes) {
         Member member;
@@ -170,6 +177,11 @@ lyric_compiler::DefClassHandler::before(
         TU_ASSIGN_OR_RETURN (impl, declare_class_impl(
             implNode, m_defclass.classSymbol, typeSystem));
         m_defclass.impls[implNode] = impl;
+    }
+
+    // declare globals
+    for (auto &globalNode : globalNodes) {
+        TU_RETURN_IF_NOT_OK (declare_global_block(globalNode, &m_defclass.global, typeSystem));
     }
 
     // declare constructors if any are specified, otherwise declare a default constructor
@@ -259,6 +271,11 @@ lyric_compiler::ClassDefinition::decide(
         case lyric_schema::LyricAstId::Impl: {
             auto impl = m_defclass->impls.at(node);
             auto handler = std::make_unique<ImplHandler>(impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Global: {
+            auto handler = std::make_unique<GlobalHandler>(&m_defclass->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

@@ -21,7 +21,7 @@ lyric_compiler::ImplHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_VV << "before DefClassHandler@" << this;
+    TU_LOG_VV << "before ImplHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();

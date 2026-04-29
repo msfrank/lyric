@@ -11,6 +11,7 @@
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/method_callable.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
@@ -254,6 +255,99 @@ lyric_assembler::ClassSymbol::classBlock() const
     return priv->classBlock.get();
 }
 
+tempo_utils::Result<lyric_assembler::DataReference>
+lyric_assembler::ClassSymbol::resolveGlobalMember(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    bool thisReceiver) const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
+
+    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
+
+    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    if (symbol == nullptr) {
+        if (priv->superClass == nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing global member {}", name);
+        return priv->superClass->resolveGlobalMember(name, receiverType, thisReceiver);
+    }
+
+    DataReference ref;
+    bool isHidden;
+    switch (symbol->getSymbolType()) {
+        case SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = enumSymbol->isHidden();
+            break;
+        }
+        case SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = instanceSymbol->isHidden();
+            break;
+        }
+        case SymbolType::STATIC: {
+            auto *staticSymbol = cast_symbol_to_static(symbol);
+            ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+            isHidden = staticSymbol->isHidden();
+            break;
+        }
+        default:
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing member {}", name);
+    }
+
+    bool thisSymbol = receiverType.getConcreteUrl() == m_classUrl;
+    if (isHidden && !(thisReceiver && thisSymbol))
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "access to hidden member {} is not allowed", name);
+    ref.symbolUrl = globalSymbolUrl;
+    ref.typeDef = symbol->getTypeDef();
+    return ref;
+}
+
+tempo_utils::Status
+lyric_assembler::ClassSymbol::prepareGlobalMethod(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
+    bool thisReceiver) const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
+
+    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
+
+    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    if (symbol == nullptr) {
+        if (priv->superClass == nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing global member {}", name);
+        return priv->superClass->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
+    }
+
+    if (symbol->getSymbolType() != SymbolType::CALL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", symbol->getSymbolUrl().toString());
+    auto *callSymbol = cast_symbol_to_call(symbol);
+
+    if (callSymbol->isHidden()) {
+        if (!thisReceiver)
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                "cannot access hidden method {} on {}", name, m_classUrl.toString());
+    }
+
+    if (callSymbol->isBound())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return invoker.initialize(std::move(callable));
+}
+
 bool
 lyric_assembler::ClassSymbol::hasMember(const std::string &name) const
 {
@@ -372,31 +466,72 @@ lyric_assembler::ClassSymbol::resolveMember(
     const lyric_common::TypeDef &receiverType,
     bool thisReceiver) const
 {
+    auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
 
-    if (!priv->members.contains(name)) {
-        if (priv->superClass == nullptr)
-            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
-                "missing member {}", name);
-        return priv->superClass->resolveMember(name, reifier, receiverType, thisReceiver);
+    AbstractSymbol *symbol;
+    auto entry = priv->members.find(name);
+
+    if (entry != priv->members.cend()) {
+        const auto &member = entry->second;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(member.symbolUrl));
+        if (symbol->getSymbolType() != SymbolType::FIELD)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid field symbol {}", member.symbolUrl.toString());
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
+
+        if (fieldSymbol->isHidden()) {
+            bool thisSymbol = receiverType.getConcreteUrl() == m_classUrl;
+            if (!(thisReceiver && thisSymbol))
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "access to hidden member {} is not allowed", name);
+        }
+
+        return reifier.reifyMember(name, fieldSymbol);
     }
 
-    const auto &member = priv->members.at(name);
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
-    if (symbol->getSymbolType() != SymbolType::FIELD)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid field symbol {}", member.symbolUrl.toString());
-    auto *fieldSymbol = cast_symbol_to_field(symbol);
+    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
+    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
 
-    if (fieldSymbol->isHidden()) {
+    if (symbol != nullptr) {
+        DataReference ref;
+        bool isHidden;
+        switch (symbol->getSymbolType()) {
+            case SymbolType::ENUM: {
+                auto *enumSymbol = cast_symbol_to_enum(symbol);
+                ref.referenceType = ReferenceType::Value;
+                isHidden = enumSymbol->isHidden();
+                break;
+            }
+            case SymbolType::INSTANCE: {
+                auto *instanceSymbol = cast_symbol_to_instance(symbol);
+                ref.referenceType = ReferenceType::Value;
+                isHidden = instanceSymbol->isHidden();
+                break;
+            }
+            case SymbolType::STATIC: {
+                auto *staticSymbol = cast_symbol_to_static(symbol);
+                ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+                isHidden = staticSymbol->isHidden();
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                    "missing member {}", name);
+        }
         bool thisSymbol = receiverType.getConcreteUrl() == m_classUrl;
-        if (!(thisReceiver && thisSymbol))
+        if (isHidden && !(thisReceiver && thisSymbol))
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "access to hidden member {} is not allowed", name);
+        ref.symbolUrl = globalSymbolUrl;
+        ref.typeDef = symbol->getTypeDef();
+        return ref;
     }
 
-    return reifier.reifyMember(name, fieldSymbol);
+    if (priv->superClass == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+            "missing member {}", name);
+    return priv->superClass->resolveMember(name, reifier, receiverType, thisReceiver);
 }
 
 bool
@@ -698,40 +833,61 @@ lyric_assembler::ClassSymbol::prepareMethod(
     CallableInvoker &invoker,
     bool thisReceiver) const
 {
+    auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
 
-    if (!priv->methods.contains(name)) {
-        if (priv->superClass == nullptr)
-            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
-                "missing method {}", name);
-        return priv->superClass->prepareMethod(name, receiverType, invoker, thisReceiver);
-    }
+    AbstractSymbol *symbol;
+    auto entry = priv->methods.find(name);
 
-    const auto &method = priv->methods.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
-    if (symbol->getSymbolType() != SymbolType::CALL)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid call symbol {}", method.methodCall.toString());
-    auto *callSymbol = cast_symbol_to_call(symbol);
+    if (entry != priv->methods.cend()) {
+        const auto &method = entry->second;
+        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
+        if (symbol->getSymbolType() != SymbolType::CALL)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid call symbol {}", method.methodCall.toString());
+        auto *callSymbol = cast_symbol_to_call(symbol);
 
-    if (callSymbol->isHidden()) {
-        if (!thisReceiver)
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "cannot access hidden method {} on {}", name, m_classUrl.toString());
-    }
+        if (callSymbol->isHidden()) {
+            if (!thisReceiver)
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "cannot access hidden method {} on {}", name, m_classUrl.toString());
+        }
 
-    if (callSymbol->isInline()) {
-        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->callProc());
+        if (!callSymbol->isBound())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
         return invoker.initialize(std::move(callable));
     }
 
-    if (!callSymbol->isBound())
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
+    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
 
-    auto callable = std::make_unique<MethodCallable>(callSymbol, /* isInlined= */ false);
-    return invoker.initialize(std::move(callable));
+    if (symbol != nullptr) {
+        if (symbol->getSymbolType() != SymbolType::CALL)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid call symbol {}", symbol->getSymbolUrl().toString());
+        auto *callSymbol = cast_symbol_to_call(symbol);
+
+        if (callSymbol->isHidden()) {
+            if (!thisReceiver)
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "cannot access hidden method {} on {}", name, m_classUrl.toString());
+        }
+
+        if (callSymbol->isBound())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+        auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+        return invoker.initialize(std::move(callable));
+    }
+
+    if (priv->superClass == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+            "missing method {}", name);
+    return priv->superClass->prepareMethod(name, receiverType, invoker);
 }
 
 bool

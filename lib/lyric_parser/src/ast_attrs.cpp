@@ -208,6 +208,85 @@ lyric_parser::DeriveTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractA
     return value_to_derive_type(value, derive);
 }
 
+lyric_parser::PortTypeAttr::PortTypeAttr(const tempo_schema::ComparableResource *resource)
+    : tempo_schema::AttrSerde<PortType>(resource)
+{
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_parser::PortTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const PortType &port) const
+{
+    TU_ASSERT (writer != nullptr);
+    return writer->putUInt32(static_cast<tu_uint32>(port));
+}
+
+static tempo_utils::Status
+value_to_port_type(tu_int64 value, lyric_parser::PortType &port)
+{
+    switch (static_cast<lyric_parser::PortType>(value)) {
+        case lyric_parser::PortType::Accept:
+            port = lyric_parser::PortType::Accept;
+            return {};
+        case lyric_parser::PortType::Connect:
+            port = lyric_parser::PortType::Connect;
+            return {};
+        default:
+            return tempo_schema::SchemaStatus::forCondition(
+                tempo_schema::SchemaCondition::kConversionError, "invalid port type");
+    }
+}
+
+tempo_utils::Status
+lyric_parser::PortTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, PortType &port) const
+{
+    tu_uint32 value;
+    auto status = parser->getUInt32(index, value);
+    if (status.notOk())
+        return status;
+    return value_to_port_type(value, port);
+}
+
+lyric_parser::CommunicationTypeAttr::CommunicationTypeAttr(const tempo_schema::ComparableResource *resource)
+    : tempo_schema::AttrSerde<CommunicationType>(resource)
+{
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_parser::CommunicationTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const CommunicationType &communication) const
+{
+    TU_ASSERT (writer != nullptr);
+    return writer->putUInt32(static_cast<tu_uint32>(communication));
+}
+
+static tempo_utils::Status
+value_to_communication_type(tu_int64 value, lyric_parser::CommunicationType &communication)
+{
+    switch (static_cast<lyric_parser::CommunicationType>(value)) {
+        case lyric_parser::CommunicationType::Send:
+            communication = lyric_parser::CommunicationType::Send;
+            return {};
+        case lyric_parser::CommunicationType::SendAndReceive:
+            communication = lyric_parser::CommunicationType::SendAndReceive;
+            return {};
+        case lyric_parser::CommunicationType::Receive:
+            communication = lyric_parser::CommunicationType::Receive;
+            return {};
+        default:
+            return tempo_schema::SchemaStatus::forCondition(
+                tempo_schema::SchemaCondition::kConversionError, "invalid communication type");
+    }
+}
+
+tempo_utils::Status
+lyric_parser::CommunicationTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, CommunicationType &communication) const
+{
+    tu_uint32 value;
+    auto status = parser->getUInt32(index, value);
+    if (status.notOk())
+        return status;
+    return value_to_communication_type(value, communication);
+}
+
 lyric_parser::NodeAttr::NodeAttr(const tempo_schema::ComparableResource *resource)
     : StatefulAttr(resource)
 {
@@ -268,6 +347,8 @@ const lyric_parser::NotationTypeAttr lyric_parser::kLyricAstNotationType(&lyric_
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
 const lyric_parser::DeriveTypeAttr lyric_parser::kLyricAstDeriveType(&lyric_schema::kLyricAstDeriveEnumProperty);
+const lyric_parser::PortTypeAttr lyric_parser::kLyricAstPortType(&lyric_schema::kLyricAstPortEnumProperty);
+const lyric_parser::CommunicationTypeAttr lyric_parser::kLyricAstCommunicationType(&lyric_schema::kLyricAstCommunicationEnumProperty);
 
 const tempo_schema::UrlAttr lyric_parser::kLyricAstImportLocation(&lyric_schema::kLyricAstImportLocationProperty);
 const lyric_common::ModuleLocationAttr lyric_parser::kLyricAstModuleLocation(&lyric_schema::kLyricAstModuleLocationProperty);
@@ -284,4 +365,6 @@ const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema:
 const lyric_parser::NodeAttr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstSendTypeOffset(&lyric_schema::kLyricAstSendTypeOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstReceiveTypeOffset(&lyric_schema::kLyricAstReceiveTypeOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstMacroListOffset(&lyric_schema::kLyricAstMacroListOffsetProperty);

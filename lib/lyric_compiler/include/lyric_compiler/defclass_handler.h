@@ -10,6 +10,7 @@
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
 #include "constructor_handler.h"
+#include "global_handler.h"
 #include "impl_handler.h"
 #include "member_handler.h"
 #include "method_handler.h"
@@ -21,6 +22,7 @@ namespace lyric_compiler {
         lyric_assembler::ClassSymbol *superclassSymbol = nullptr;
         lyric_assembler::CallSymbol *defaultCtor = nullptr;
         lyric_typing::TemplateSpec templateSpec;
+        Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;

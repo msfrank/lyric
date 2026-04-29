@@ -26,6 +26,9 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
+#include "lyric_assembler/protocol_symbol.h"
+#include "lyric_assembler/static_symbol.h"
+
 lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(
     lyric_assembler::ObjectRoot *root,
     lyric_assembler::ObjectState *state)
@@ -205,16 +208,16 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     lyric_common::TypeDef staticType;
     TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
 
-    lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
+    lyric_assembler::StaticSymbol *staticSymbol;
+    TU_ASSIGN_OR_RETURN (staticSymbol, block->declareStatic(
         identifier, isHidden, staticType, isVariable, /* declOnly= */ true));
 
     // add class to the current namespace if specified
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
-    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(ref.symbolUrl));
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(staticSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared static " << ref.symbolUrl;
+    TU_LOG_V << "declared static " << staticSymbol->getSymbolUrl();
 
     return {};
 }
@@ -229,31 +232,74 @@ lyric_analyzer::AnalyzerScanDriver::declareProtocol(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
 
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
     bool isHidden;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     bool isVariable;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
 
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-    lyric_parser::NodeWalker typeNode;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-    lyric_typing::TypeSpec staticSpec;
-    TU_ASSIGN_OR_RETURN (staticSpec, m_typeSystem->parseAssignable(block, typeNode));
-    lyric_common::TypeDef staticType;
-    TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
+    lyric_parser::NodeWalker sendTypeNode;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstSendTypeOffset, sendTypeNode));
+    lyric_typing::TypeSpec sendTypeSpec;
+    TU_ASSIGN_OR_RETURN (sendTypeSpec, m_typeSystem->parseAssignable(block, sendTypeNode));
+    lyric_common::TypeDef sendType;
+    TU_ASSIGN_OR_RETURN (sendType, m_typeSystem->resolveAssignable(block, sendTypeSpec));
 
-    lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
-        identifier, isHidden, staticType, isVariable, /* declOnly= */ true));
+    lyric_parser::NodeWalker receiveTypeNode;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstReceiveTypeOffset, receiveTypeNode));
+    lyric_typing::TypeSpec receiveTypeSpec;
+    TU_ASSIGN_OR_RETURN (receiveTypeSpec, m_typeSystem->parseAssignable(block, receiveTypeNode));
+    lyric_common::TypeDef receiveType;
+    TU_ASSIGN_OR_RETURN (receiveType, m_typeSystem->resolveAssignable(block, receiveTypeSpec));
+
+    lyric_parser::PortType portType;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstPortType, portType));
+
+    lyric_object::PortType port;
+    switch (portType) {
+        case lyric_parser::PortType::Accept:
+            port = lyric_object::PortType::Accept;
+            break;
+        case lyric_parser::PortType::Connect:
+            port = lyric_object::PortType::Connect;
+            break;
+        default:
+            return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+                "invalid port type");
+    }
+
+    lyric_parser::CommunicationType commType;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstCommunicationType, commType));
+
+    lyric_object::CommunicationType comm;
+    switch (commType) {
+        case lyric_parser::CommunicationType::Send:
+            comm = lyric_object::CommunicationType::Send;
+            break;
+        case lyric_parser::CommunicationType::SendAndReceive:
+            comm = lyric_object::CommunicationType::SendAndReceive;
+            break;
+        case lyric_parser::CommunicationType::Receive:
+            comm = lyric_object::CommunicationType::Receive;
+            break;
+        default:
+            return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+                "invalid communication type");
+    }
+
+    lyric_assembler::ProtocolSymbol *protocolSymbol;
+    TU_ASSIGN_OR_RETURN (protocolSymbol, block->declareProtocol(
+        identifier, isHidden, sendType, receiveType, port, comm, /* declOnly= */ true));
 
     // add class to the current namespace if specified
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
-    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(ref.symbolUrl));
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(protocolSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared protocol " << ref.symbolUrl;
+    TU_LOG_V << "declared protocol " << protocolSymbol->getSymbolUrl();
 
     return {};
 }

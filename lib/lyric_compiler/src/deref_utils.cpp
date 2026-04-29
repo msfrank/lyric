@@ -430,6 +430,11 @@ lyric_compiler::deref_global_member(
     lyric_assembler::DataReference ref;
 
     switch (derefSymbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *classSymbol = lyric_assembler::cast_symbol_to_class(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, classSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
+            break;
+        }
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
             TU_ASSIGN_OR_RETURN (ref, enumSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
@@ -440,7 +445,6 @@ lyric_compiler::deref_global_member(
             TU_ASSIGN_OR_RETURN (ref, namespaceSymbol->resolveTargetMember(identifier, block));
             break;
         }
-        case lyric_assembler::SymbolType::CLASS:
         case lyric_assembler::SymbolType::INSTANCE:
         case lyric_assembler::SymbolType::STRUCT:
         default:

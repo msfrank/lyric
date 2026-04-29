@@ -41,7 +41,6 @@ lyric_compiler::DefStaticHandler::before(
 
     auto *block = getBlock();
     auto *driver = getDriver();
-    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefStaticClass))
@@ -69,15 +68,7 @@ lyric_compiler::DefStaticHandler::before(
     TU_ASSIGN_OR_RETURN (declarationType, typeSystem->resolveAssignable(block, declarationSpec));
 
     // declare static symbol
-    lyric_assembler::DataReference staticRef;
-    TU_ASSIGN_OR_RETURN (staticRef, block->declareStatic(identifier, isHidden, declarationType, isVariable));
-
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(staticRef.symbolUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::STATIC)
-        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "invalid static symbol {}", staticRef.symbolUrl.toString());
-    m_staticSymbol = cast_symbol_to_static(symbol);
+    TU_ASSIGN_OR_RETURN (m_staticSymbol, block->declareStatic(identifier, isHidden, declarationType, isVariable));
 
     // add global to the current namespace if specified
     if (m_currentNamespace != nullptr) {

@@ -694,7 +694,7 @@ lyric_assembler::BlockHandle::declareTemporary(
     return DataReference(referenceType, localUrl, assignableType);
 }
 
-tempo_utils::Result<lyric_assembler::DataReference>
+tempo_utils::Result<lyric_assembler::StaticSymbol *>
 lyric_assembler::BlockHandle::declareStatic(
     const std::string &name,
     bool isHidden,
@@ -713,7 +713,6 @@ lyric_assembler::BlockHandle::declareStatic(
             "cannot declare static {}; symbol is already defined", name);
 
     BindingType bindingType = BindingType::Descriptor;
-    ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
     TypeHandle *staticType;
@@ -722,7 +721,8 @@ lyric_assembler::BlockHandle::declareStatic(
     auto staticSymbol = std::make_unique<StaticSymbol>(
         staticUrl, isHidden, isVariable, staticType, declOnly, this, m_state);
 
-    TU_RETURN_IF_STATUS (m_state->appendStatic(std::move(staticSymbol), existingTypename));
+    StaticSymbol *staticPtr;
+    TU_ASSIGN_OR_RETURN (staticPtr, m_state->appendStatic(std::move(staticSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = bindingType;
@@ -730,7 +730,7 @@ lyric_assembler::BlockHandle::declareStatic(
     binding.typeDef = assignableType;
     m_bindings[name] = binding;
 
-    return DataReference(referenceType, staticUrl, assignableType);
+    return staticPtr;
 }
 
 inline lyric_assembler::DataReference

@@ -83,7 +83,7 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &assignableType,
             bool isVariable);
 
-        tempo_utils::Result<DataReference> declareStatic(
+        tempo_utils::Result<StaticSymbol *> declareStatic(
             const std::string &name,
             bool isHidden,
             const lyric_common::TypeDef &assignableType,

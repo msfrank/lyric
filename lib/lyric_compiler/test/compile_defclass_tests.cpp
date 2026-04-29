@@ -379,3 +379,17 @@ TEST_F(CompileDefclass, EvaluateNewInstanceOfFinalClass)
                  tempo_test::ContainsResult(RunModule(
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
+
+TEST_F(CompileDefclass, EvaluateDerefGlobalMember)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo final {
+            global {
+                val GlobalValue: Int = 42
+            }
+        }
+        Foo.GlobalValue
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}

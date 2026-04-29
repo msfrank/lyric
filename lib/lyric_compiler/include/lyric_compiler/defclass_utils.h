@@ -7,6 +7,7 @@
 #include <lyric_typing/type_system.h>
 
 #include "defclass_handler.h"
+#include "global_handler.h"
 #include "impl_handler.h"
 #include "member_handler.h"
 #include "method_handler.h"
@@ -29,26 +30,22 @@ namespace lyric_compiler {
         const std::string &allocatorTrap,
         lyric_typing::TypeSystem *typeSystem);
 
-    tempo_utils::Result<Member>
-    declare_class_member(
+    tempo_utils::Result<Member> declare_class_member(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
-    tempo_utils::Result<Method>
-    declare_class_method(
+    tempo_utils::Result<Method> declare_class_method(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
-    tempo_utils::Result<Method>
-    declare_class_abstract_method(
+    tempo_utils::Result<Method> declare_class_abstract_method(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
-    tempo_utils::Result<Impl>
-    declare_class_impl(
+    tempo_utils::Result<Impl> declare_class_impl(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
