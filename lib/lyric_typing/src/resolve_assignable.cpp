@@ -16,6 +16,7 @@ lyric_typing::resolve_singular(
     TU_ASSERT (assignable.getType() == TypeSpecType::Singular);
     TU_ASSERT (resolver != nullptr);
     TU_ASSERT (state != nullptr);
+    auto *typeCache = state->typeCache();
 
     std::vector<lyric_common::TypeDef> typeArguments;
 
@@ -33,7 +34,7 @@ lyric_typing::resolve_singular(
     TU_ASSIGN_OR_RETURN (singularType, resolver->resolveSingular(assignable.getTypePath(), typeArguments));
 
     // if type is in the typecache then we're done
-    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(singularType));
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(singularType));
 
     return singularType;
 }
@@ -47,6 +48,7 @@ lyric_typing::resolve_assignable(
     TU_ASSERT (assignable.isValid());
     TU_ASSERT (resolver != nullptr);
     TU_ASSERT (state != nullptr);
+    auto *typeCache = state->typeCache();
 
     switch (assignable.getType()) {
         case TypeSpecType::Singular:
@@ -59,7 +61,7 @@ lyric_typing::resolve_assignable(
                 TU_ASSIGN_OR_RETURN (memberType, resolve_singular(member, resolver, state));
                 intersectionMembers.push_back(memberType);
             }
-            return state->typeCache()->resolveIntersection(intersectionMembers);
+            return typeCache->resolveIntersection(intersectionMembers);
         }
 
         case TypeSpecType::Union: {
@@ -69,7 +71,7 @@ lyric_typing::resolve_assignable(
                 TU_ASSIGN_OR_RETURN (memberType, resolve_singular(member, resolver, state));
                 unionMembers.push_back(memberType);
             }
-            return state->typeCache()->resolveUnion(unionMembers);
+            return typeCache->resolveUnion(unionMembers);
         }
 
         case TypeSpecType::NoReturn: {

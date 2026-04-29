@@ -10,7 +10,10 @@ set(TEST_CASES
     callsite_reifier_tp0_in_tests.cpp
     callsite_reifier_tp0_inout_tests.cpp
     callsite_reifier_tp0_out_tests.cpp
-    compare_assignable_tests.cpp
+    compare_placeholder_tests.cpp
+    compare_intersection_tests.cpp
+    compare_singular_tests.cpp
+    compare_union_tests.cpp
     is_assignable_tests.cpp
     )
 

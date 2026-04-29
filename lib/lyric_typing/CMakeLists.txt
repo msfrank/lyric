@@ -37,6 +37,15 @@ target_sources(lyric_typing PRIVATE
     src/typing_result.cpp
     src/typing_types.cpp
     src/unify_assignable.cpp
+
+    include/lyric_typing/internal/compare_concrete.h
+    src/internal/compare_concrete.cpp
+    include/lyric_typing/internal/compare_intersection.h
+    src/internal/compare_intersection.cpp
+    include/lyric_typing/internal/compare_placeholder.h
+    src/internal/compare_placeholder.cpp
+    include/lyric_typing/internal/compare_union.h
+    src/internal/compare_union.cpp
     )
 
 # set the library version

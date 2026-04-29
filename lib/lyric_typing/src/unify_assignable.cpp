@@ -13,54 +13,37 @@ unify_concrete_and_concrete(
 {
     TU_ASSERT (ref1.getType() == lyric_common::TypeDefType::Concrete);
     TU_ASSERT (ref2.getType() == lyric_common::TypeDefType::Concrete);
+    auto *typeCache = state->typeCache();
 
-    auto resolveSignature1Result = state->typeCache()->resolveSignature(ref1.getConcreteUrl());
-    if (resolveSignature1Result.isStatus())
-        return resolveSignature1Result.getStatus();
-    auto sig1 = resolveSignature1Result.getResult().getSignature();
-    if (sig1.size() == 0)
+    lyric_assembler::TypeSignature sig1;
+    TU_ASSIGN_OR_RETURN (sig1, typeCache->resolveSignature(ref1.getConcreteUrl()));
+    auto vec1 = sig1.getSignature();
+    if (vec1.size() == 0)
         return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} has invalid type signature", ref1.toString());
 
-    auto resolveSignature2Result = state->typeCache()->resolveSignature(ref2.getConcreteUrl());
-    if (resolveSignature2Result.isStatus())
-        return resolveSignature2Result.getStatus();
-    auto sig2 = resolveSignature2Result.getResult().getSignature();
-    if (sig2.size() == 0)
+    lyric_assembler::TypeSignature sig2;
+    TU_ASSIGN_OR_RETURN (sig2, typeCache->resolveSignature(ref2.getConcreteUrl()));
+    auto vec2 = sig2.getSignature();
+    if (vec2.size() == 0)
         return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} has invalid type signature", ref2.toString());
 
-    int minsize = std::min(sig1.size(), sig2.size());
-    if (sig1[0] != sig2[0])
+    int minsize = std::min(vec1.size(), vec2.size());
+    if (vec1[0] != vec2[0])
         return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
 
     // find the address of the most specific common ancestor type
     int i = 1;
     while (i < minsize) {
-        if (sig1[i] != sig2[i])
+        if (vec1[i] != vec2[i])
             break;
         i++;
     }
 
-    auto *typeHandle = sig1[i - 1];
+    auto *typeHandle = vec1[i - 1];
     return typeHandle->getTypeDef();
-
-//    auto address = sig1[i - 1];
-//
-//    // resolve type address to definition symbol url
-//    if (lyric_object::IS_NEAR(address.getAddress())) {
-//        auto *typeHandle = state->typeCache()->getType(address);
-//        TU_ASSERT (typeHandle != nullptr);
-//        return typeHandle->getTypeDef();
-//    }
-//
-//    auto commonType = state->importCache()->getLinkUrl(address.getAddress() & 0x7FFFFFFF);
-//    auto unifiedType = lyric_common::TypeDef::forConcrete(
-//        lyric_common::SymbolUrl(commonType.getModuleLocation(),
-//        lyric_common::SymbolPath(commonType.getSymbolPath().getPath())));
-//
-//    return unifiedType;
 }
 
 static tempo_utils::Result<lyric_common::TypeDef>
