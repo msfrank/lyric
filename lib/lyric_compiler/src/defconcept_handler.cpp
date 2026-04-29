@@ -65,6 +65,7 @@ lyric_compiler::DefConceptHandler::before(
 
     std::vector<lyric_parser::ArchetypeNode *> declNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
+    std::vector<lyric_parser::ArchetypeNode *> globalNodes;
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
@@ -78,6 +79,10 @@ lyric_compiler::DefConceptHandler::before(
             }
             case lyric_schema::LyricAstId::Impl: {
                 implNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Global: {
+                globalNodes.push_back(child);
                 break;
             }
             default:
@@ -100,6 +105,8 @@ lyric_compiler::DefConceptHandler::before(
         identifier, m_defconcept.superconceptSymbol, isHidden,
         m_defconcept.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
 
+    m_defconcept.global.definitionBlock = m_defconcept.conceptSymbol->conceptBlock();
+
     // add concept to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defconcept.conceptSymbol->getSymbolUrl()));
@@ -119,6 +126,11 @@ lyric_compiler::DefConceptHandler::before(
         TU_ASSIGN_OR_RETURN (impl, declare_concept_impl(
             implNode, m_defconcept.conceptSymbol, typeSystem));
         m_defconcept.impls[implNode] = impl;
+    }
+
+    // declare globals
+    for (auto &globalNode : globalNodes) {
+        TU_RETURN_IF_NOT_OK (declare_global_block(globalNode, &m_defconcept.global, typeSystem));
     }
 
     return {};
@@ -171,6 +183,11 @@ lyric_compiler::ConceptDefinition::decide(
         case lyric_schema::LyricAstId::Impl: {
             auto impl = m_defconcept->impls.at(node);
             auto handler = std::make_unique<ImplHandler>(impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Global: {
+            auto handler = std::make_unique<GlobalHandler>(&m_defconcept->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

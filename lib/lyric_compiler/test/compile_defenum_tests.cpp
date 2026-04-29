@@ -128,3 +128,41 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
         tempo_test::ContainsResult(RunModule(
             MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
 }
+
+TEST_F(CompileDefenum, EvaluateDerefGlobalMember)
+{
+    auto result = m_tester->runModule(R"(
+        defenum Direction {
+            case North
+            case South
+            case East
+            case West
+
+            global {
+                val GlobalValue: Int = 42
+            }
+        }
+        Direction.GlobalValue
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}
+
+TEST_F(CompileDefenum, EvaluateInvokeGlobalMethod)
+{
+    auto result = m_tester->runModule(R"(
+        defenum Direction {
+            case North
+            case South
+            case East
+            case West
+
+            global {
+                def GetValue(): Int { 42 }
+            }
+        }
+        Direction.GetValue()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}

@@ -63,6 +63,20 @@ namespace lyric_assembler {
         BlockHandle *structBlock() const;
 
         /*
+         * global management
+         */
+        tempo_utils::Result<DataReference> resolveGlobalMember(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            bool thisReceiver) const;
+
+        tempo_utils::Status prepareGlobalMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
+            bool thisReceiver) const;
+
+        /*
          * struct member management
          */
         bool hasMember(const std::string &name) const;

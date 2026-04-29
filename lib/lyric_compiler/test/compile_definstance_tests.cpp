@@ -127,3 +127,31 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
+
+TEST_F(CompileDefinstance, EvaluateDerefGlobalMember)
+{
+    auto result = m_tester->runModule(R"(
+        definstance Foo {
+            global {
+                val GlobalValue: Int = 42
+            }
+        }
+        Foo.GlobalValue
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}
+
+TEST_F(CompileDefinstance, EvaluateInvokeGlobalMethod)
+{
+    auto result = m_tester->runModule(R"(
+        definstance Foo {
+            global {
+                def GetValue(): Int { 42 }
+            }
+        }
+        Foo.GetValue()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}

@@ -210,6 +210,8 @@ namespace lyric_parser::internal {
         void exitConceptDecl(ModuleParser::ConceptDeclContext *ctx) override;
         void enterConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
         void exitConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
+        void enterConceptGlobal(ModuleParser::ConceptGlobalContext *ctx) override;
+        void exitConceptGlobal(ModuleParser::ConceptGlobalContext *ctx) override;
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx) override;
 
         // implemented by ModuleDefenumOps
@@ -224,6 +226,8 @@ namespace lyric_parser::internal {
         void exitEnumCase(ModuleParser::EnumCaseContext *ctx) override;
         void enterEnumImpl(ModuleParser::EnumImplContext *ctx) override;
         void exitEnumImpl(ModuleParser::EnumImplContext *ctx) override;
+        void enterEnumGlobal(ModuleParser::EnumGlobalContext *ctx) override;
+        void exitEnumGlobal(ModuleParser::EnumGlobalContext *ctx) override;
         void exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx) override;
 
         // implemented by ModuleDefinstanceOps
@@ -238,6 +242,8 @@ namespace lyric_parser::internal {
         void exitInstanceDef(ModuleParser::InstanceDefContext *ctx) override;
         void enterInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
         void exitInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
+        void enterInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx) override;
+        void exitInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx) override;
         void exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx) override;
 
         // implemented by ModuleDefstructOps
@@ -250,6 +256,8 @@ namespace lyric_parser::internal {
         void exitStructDef(ModuleParser::StructDefContext *ctx) override;
         void enterStructImpl(ModuleParser::StructImplContext *ctx) override;
         void exitStructImpl(ModuleParser::StructImplContext *ctx) override;
+        void enterStructGlobal(ModuleParser::StructGlobalContext *ctx) override;
+        void exitStructGlobal(ModuleParser::StructGlobalContext *ctx) override;
         void exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx) override;
 
         // implemented by ModuleParameterOps

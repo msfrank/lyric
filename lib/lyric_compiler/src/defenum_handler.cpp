@@ -67,6 +67,7 @@ lyric_compiler::DefEnumHandler::before(
     std::vector<lyric_parser::ArchetypeNode *> caseNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
+    std::vector<lyric_parser::ArchetypeNode *> globalNodes;
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
@@ -92,6 +93,10 @@ lyric_compiler::DefEnumHandler::before(
             }
             case lyric_schema::LyricAstId::Impl: {
                 implNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Global: {
+                globalNodes.push_back(child);
                 break;
             }
             default:
@@ -123,6 +128,8 @@ lyric_compiler::DefEnumHandler::before(
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
         identifier, m_defenum.superenumSymbol, isHidden, /* isAbstract= */ true, lyric_object::DeriveType::Sealed));
 
+    m_defenum.global.definitionBlock = m_defenum.enumSymbol->enumBlock();
+
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defenum.enumSymbol->getSymbolUrl()));
@@ -149,6 +156,11 @@ lyric_compiler::DefEnumHandler::before(
         TU_ASSIGN_OR_RETURN (impl, declare_enum_impl(
             implNode, m_defenum.enumSymbol, typeSystem));
         m_defenum.impls[implNode] = impl;
+    }
+
+    // declare globals
+    for (auto &globalNode : globalNodes) {
+        TU_RETURN_IF_NOT_OK (declare_global_block(globalNode, &m_defenum.global, typeSystem));
     }
 
     // declare constructors if any are specified, otherwise declare a default constructor
@@ -241,6 +253,11 @@ lyric_compiler::EnumDefinition::decide(
         case lyric_schema::LyricAstId::Impl: {
             auto impl = m_defenum->impls.at(node);
             auto handler = std::make_unique<ImplHandler>(impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Global: {
+            auto handler = std::make_unique<GlobalHandler>(&m_defenum->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

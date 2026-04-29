@@ -170,6 +170,53 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptImpl(ModuleParser::Conce
 }
 
 void
+lyric_parser::internal::ModuleDefconceptOps::enterConceptGlobal(ModuleParser::ConceptGlobalContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefconceptOps::enterConceptGlobal");
+
+    auto *state = getState();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate global node
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->appendNode(lyric_schema::kLyricAstGlobalClass, location));
+
+    // push global onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(globalNode));
+}
+
+void
+lyric_parser::internal::ModuleDefconceptOps::exitConceptGlobal(ModuleParser::ConceptGlobalContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is global
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->popNode(lyric_schema::kLyricAstGlobalClass));
+
+    // peek node on stack, verify it is defconcept
+    ArchetypeNode *defconceptNode;
+    TU_ASSIGN_OR_RAISE (defconceptNode, state->peekNode(lyric_schema::kLyricAstDefConceptClass));
+
+    // append global node to defconcept
+    TU_RAISE_IF_NOT_OK (defconceptNode->appendChild(globalNode));
+}
+
+void
 lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;

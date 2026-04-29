@@ -324,8 +324,8 @@ lyric_assembler::ClassSymbol::prepareGlobalMethod(
     auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
     if (symbol == nullptr) {
         if (priv->superClass == nullptr)
-            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
-                "missing global member {}", name);
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+                "missing global method {}", name);
         return priv->superClass->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
     }
 

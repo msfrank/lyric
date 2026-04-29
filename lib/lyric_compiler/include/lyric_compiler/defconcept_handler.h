@@ -10,6 +10,7 @@
 #include "base_choice.h"
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
+#include "global_handler.h"
 #include "impl_handler.h"
 
 namespace lyric_compiler {
@@ -18,6 +19,7 @@ namespace lyric_compiler {
         lyric_assembler::ConceptSymbol *conceptSymbol = nullptr;
         lyric_assembler::ConceptSymbol *superconceptSymbol = nullptr;
         lyric_typing::TemplateSpec templateSpec;
+        Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Action> actions;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;
     };

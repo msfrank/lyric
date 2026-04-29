@@ -12,11 +12,10 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/enum_import.h>
-
-#include "lyric_assembler/static_symbol.h"
 
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
@@ -288,8 +287,8 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
     auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
     if (symbol == nullptr) {
         if (priv->superEnum == nullptr)
-            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
-                "missing global member {}", name);
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+                "missing global method {}", name);
         return priv->superEnum->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
     }
 

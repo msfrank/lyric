@@ -332,7 +332,8 @@ conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
 conceptBase         : FromKeyword assignableType ;
 conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-conceptSpec         : conceptDecl | conceptImpl ;
+conceptGlobal       : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
+conceptSpec         : conceptDecl | conceptImpl | conceptGlobal ;
 
 
 // definstance statement
@@ -347,7 +348,8 @@ instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType (
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl ;
+instanceGlobal      : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
+instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl | instanceGlobal ;
 
 
 // defenum statement
@@ -361,7 +363,8 @@ enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType (
 enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 enumCase            : CaseKeyword symbolIdentifier callArguments? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
+enumGlobal          : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
+enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl | enumGlobal ;
 
 
 // defstruct statement
@@ -375,7 +378,8 @@ structInit          : InitKeyword symbolIdentifier? paramSpec initBase? procBloc
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-structSpec          : structInit | structVal | structDef | structImpl ;
+structGlobal        : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
+structSpec          : structInit | structVal | structDef | structImpl | structGlobal ;
 
 
 // defstatic statement

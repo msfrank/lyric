@@ -86,11 +86,31 @@ namespace lyric_compiler {
         lyric_assembler::InitializerHandle *m_initializerHandle;
     };
 
+    class GlobalMethodHandler : public BaseGrouping {
+    public:
+        GlobalMethodHandler(
+            GlobalMethod method,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) override;
+
+        tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) override;
+
+    private:
+        GlobalMethod m_method;
+    };
+
     tempo_utils::Status declare_global_block(
         const lyric_parser::ArchetypeNode *node,
         Global *global,
         lyric_typing::TypeSystem *typeSystem);
-
 }
 
 #endif // LYRIC_COMPILER_GLOBAL_HANDLER_H

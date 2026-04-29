@@ -1112,6 +1112,18 @@ void lyric_parser::internal::ModuleArchetype::exitConceptImpl(ModuleParser::Conc
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitConceptImpl(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterConceptGlobal(ModuleParser::ConceptGlobalContext *ctx)
+{
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterConceptGlobal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitConceptGlobal(ModuleParser::ConceptGlobalContext *ctx)
+{
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitConceptGlobal(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
 {
     ModuleDefconceptOps ops(this);
@@ -1185,6 +1197,18 @@ void lyric_parser::internal::ModuleArchetype::exitEnumImpl(ModuleParser::EnumImp
 {
     ModuleDefenumOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumImpl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterEnumGlobal(ModuleParser::EnumGlobalContext *ctx)
+{
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumGlobal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitEnumGlobal(ModuleParser::EnumGlobalContext *ctx)
+{
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumGlobal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
@@ -1262,6 +1286,18 @@ void lyric_parser::internal::ModuleArchetype::exitInstanceImpl(ModuleParser::Ins
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceImpl(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceGlobal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceGlobal(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx)
 {
     ModuleDefinstanceOps ops(this);
@@ -1323,6 +1359,18 @@ void lyric_parser::internal::ModuleArchetype::exitStructImpl(ModuleParser::Struc
 {
     ModuleDefstructOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructImpl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterStructGlobal(ModuleParser::StructGlobalContext *ctx)
+{
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructGlobal(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitStructGlobal(ModuleParser::StructGlobalContext *ctx)
+{
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructGlobal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx)

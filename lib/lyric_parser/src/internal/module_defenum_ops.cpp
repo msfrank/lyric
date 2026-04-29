@@ -393,6 +393,53 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumImpl(ModuleParser::EnumImplCon
 }
 
 void
+lyric_parser::internal::ModuleDefenumOps::enterEnumGlobal(ModuleParser::EnumGlobalContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumGlobal");
+
+    auto *state = getState();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate global node
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->appendNode(lyric_schema::kLyricAstGlobalClass, location));
+
+    // push global onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(globalNode));
+}
+
+void
+lyric_parser::internal::ModuleDefenumOps::exitEnumGlobal(ModuleParser::EnumGlobalContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is global
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->popNode(lyric_schema::kLyricAstGlobalClass));
+
+    // peek node on stack, verify it is defenum
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+
+    // append global node to defenum
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(globalNode));
+}
+
+void
 lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;

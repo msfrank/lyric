@@ -5,9 +5,13 @@
 #include <lyric_assembler/abstract_resolver.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/block_handle.h>
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
+#include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
@@ -232,6 +236,99 @@ lyric_assembler::ConceptSymbol::conceptBlock() const
 {
     auto *priv = getPriv();
     return priv->conceptBlock.get();
+}
+
+tempo_utils::Result<lyric_assembler::DataReference>
+lyric_assembler::ConceptSymbol::resolveGlobalMember(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    bool thisReceiver) const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
+
+    auto globalSymbolUrl = priv->conceptBlock->makeSymbolUrl(name);
+
+    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    if (symbol == nullptr) {
+        if (priv->superConcept == nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing global member {}", name);
+        return priv->superConcept->resolveGlobalMember(name, receiverType, thisReceiver);
+    }
+
+    DataReference ref;
+    bool isHidden;
+    switch (symbol->getSymbolType()) {
+        case SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = enumSymbol->isHidden();
+            break;
+        }
+        case SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(symbol);
+            ref.referenceType = ReferenceType::Value;
+            isHidden = instanceSymbol->isHidden();
+            break;
+        }
+        case SymbolType::STATIC: {
+            auto *staticSymbol = cast_symbol_to_static(symbol);
+            ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+            isHidden = staticSymbol->isHidden();
+            break;
+        }
+        default:
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
+                "missing member {}", name);
+    }
+
+    bool thisSymbol = receiverType.getConcreteUrl() == m_conceptUrl;
+    if (isHidden && !(thisReceiver && thisSymbol))
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "access to hidden member {} is not allowed", name);
+    ref.symbolUrl = globalSymbolUrl;
+    ref.typeDef = symbol->getTypeDef();
+    return ref;
+}
+
+tempo_utils::Status
+lyric_assembler::ConceptSymbol::prepareGlobalMethod(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
+    bool thisReceiver) const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto *priv = getPriv();
+
+    auto globalSymbolUrl = priv->conceptBlock->makeSymbolUrl(name);
+
+    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    if (symbol == nullptr) {
+        if (priv->superConcept == nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+                "missing global method {}", name);
+        return priv->superConcept->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
+    }
+
+    if (symbol->getSymbolType() != SymbolType::CALL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", symbol->getSymbolUrl().toString());
+    auto *callSymbol = cast_symbol_to_call(symbol);
+
+    if (callSymbol->isHidden()) {
+        if (!thisReceiver)
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                "cannot access hidden method {} on {}", name, m_conceptUrl.toString());
+    }
+
+    if (callSymbol->isBound())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return invoker.initialize(std::move(callable));
 }
 
 bool

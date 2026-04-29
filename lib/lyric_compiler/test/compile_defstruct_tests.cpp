@@ -210,3 +210,31 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceOfFinalStruct)
                  tempo_test::ContainsResult(RunModule(
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
+
+TEST_F(CompileDefstruct, EvaluateDerefGlobalMember)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            global {
+                val GlobalValue: Int = 42
+            }
+        }
+        Foo.GlobalValue
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}
+
+TEST_F(CompileDefstruct, EvaluateInvokeGlobalMethod)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            global {
+                def GetValue(): Int { 42 }
+            }
+        }
+        Foo.GetValue()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+}

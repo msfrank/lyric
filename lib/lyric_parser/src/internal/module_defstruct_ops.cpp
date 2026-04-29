@@ -327,6 +327,53 @@ lyric_parser::internal::ModuleDefstructOps::exitStructImpl(ModuleParser::StructI
 }
 
 void
+lyric_parser::internal::ModuleDefstructOps::enterStructGlobal(ModuleParser::StructGlobalContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefstructOps::enterStructGlobal");
+
+    auto *state = getState();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate global node
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->appendNode(lyric_schema::kLyricAstGlobalClass, location));
+
+    // push global onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(globalNode));
+}
+
+void
+lyric_parser::internal::ModuleDefstructOps::exitStructGlobal(ModuleParser::StructGlobalContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is global
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->popNode(lyric_schema::kLyricAstGlobalClass));
+
+    // peek node on stack, verify it is defstruct
+    ArchetypeNode *defstructNode;
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
+
+    // append global node to defstruct
+    TU_RAISE_IF_NOT_OK (defstructNode->appendChild(globalNode));
+}
+
+void
 lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;

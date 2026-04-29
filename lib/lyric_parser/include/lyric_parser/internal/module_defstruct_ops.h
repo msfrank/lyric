@@ -21,6 +21,8 @@ namespace lyric_parser::internal {
         void exitStructDef(ModuleParser::StructDefContext *ctx);
         void enterStructImpl(ModuleParser::StructImplContext *ctx);
         void exitStructImpl(ModuleParser::StructImplContext *ctx);
+        void enterStructGlobal(ModuleParser::StructGlobalContext *ctx);
+        void exitStructGlobal(ModuleParser::StructGlobalContext *ctx);
         void exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx);
     };
 }

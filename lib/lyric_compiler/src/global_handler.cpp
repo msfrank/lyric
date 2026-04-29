@@ -4,10 +4,11 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/global_handler.h>
+#include <lyric_compiler/new_handler.h>
+#include <lyric_compiler/pack_handler.h>
+#include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
-
-#include "lyric_compiler/new_handler.h"
 
 lyric_compiler::GlobalHandler::GlobalHandler(
     Global *global,
@@ -43,6 +44,12 @@ lyric_compiler::GlobalHandler::before(
             case lyric_schema::LyricAstId::DefStatic: {
                 auto member = m_global->members.at(child);
                 auto handler = std::make_unique<GlobalMemberHandler>(member, block, driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::Def: {
+                auto method = m_global->methods.at(child);
+                auto handler = std::make_unique<GlobalMethodHandler>(method, block, driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
@@ -198,6 +205,60 @@ lyric_compiler::GlobalMemberInit::decide(
     }
 }
 
+lyric_compiler::GlobalMethodHandler::GlobalMethodHandler(
+    GlobalMethod method,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_method(method)
+{
+    TU_ASSERT (m_method.callSymbol != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::GlobalMethodHandler::before(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    BeforeContext &ctx)
+{
+    TU_LOG_VV << "before GlobalMethodHandler@" << this;
+
+    auto *block = getBlock();
+    auto *driver = getDriver();
+
+    auto pack = std::make_unique<PackHandler>(m_method.callSymbol, block, driver);
+    ctx.appendGrouping(std::move(pack));
+
+    auto returnType = m_method.callSymbol->getReturnType();
+    TU_ASSERT (returnType.isValid());
+    bool requiresResult = returnType != lyric_common::TypeDef::noReturn();
+
+    auto proc = std::make_unique<ProcHandler>(
+        m_method.procHandle, requiresResult, getBlock(), getDriver());
+    ctx.appendGrouping(std::move(proc));
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::GlobalMethodHandler::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    AfterContext &ctx)
+{
+    TU_LOG_VV << "after GlobalMethodHandler@" << this;
+
+    auto *fragment = m_method.procHandle->procFragment();
+
+    // add return instruction
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    // finalize the call
+    TU_RETURN_IF_STATUS (m_method.callSymbol->finalizeCall());
+
+    return {};
+}
+
 tempo_utils::Status
 lyric_compiler::declare_global_block(
     const lyric_parser::ArchetypeNode *node,
@@ -252,9 +313,9 @@ lyric_compiler::declare_global_block(
 
                 // if method is generic, then parse the template parameter list
                 lyric_typing::TemplateSpec templateSpec;
-                if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+                if (child->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
                     lyric_parser::ArchetypeNode *genericNode;
-                    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+                    TU_RETURN_IF_NOT_OK (child->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
                     auto *rootBlock = definitionBlock->blockState()->objectRoot()->rootBlock();
                     TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(rootBlock, genericNode->getArchetypeNode()));
                 }
@@ -262,6 +323,30 @@ lyric_compiler::declare_global_block(
                 GlobalMethod method;
                 TU_ASSIGN_OR_RETURN (method.callSymbol, definitionBlock->declareFunction(
                     identifier, isHidden, templateSpec.templateParameters));
+
+                // parse the parameter list
+                auto *packNode = child->getChild(0);
+                lyric_typing::PackSpec packSpec;
+                TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(definitionBlock, packNode->getArchetypeNode()));
+
+                // parse the return type
+                lyric_parser::ArchetypeNode *typeNode;
+                TU_RETURN_IF_NOT_OK (child->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+                lyric_typing::TypeSpec returnSpec;
+                TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(definitionBlock, typeNode->getArchetypeNode()));
+
+                auto *resolver = method.callSymbol->callResolver();
+
+                // resolve the parameter pack
+                lyric_assembler::ParameterPack parameterPack;
+                TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+                // resolve the return type
+                lyric_common::TypeDef returnType;
+                TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
+
+                // define the method
+                TU_ASSIGN_OR_RETURN (method.procHandle, method.callSymbol->defineCall(parameterPack, returnType));
 
                 global->methods[child] = method;
                 return {};

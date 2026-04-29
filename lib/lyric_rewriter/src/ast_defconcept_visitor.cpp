@@ -21,6 +21,7 @@ lyric_rewriter::AstDefconceptVisitor::enter(lyric_parser::ArchetypeNode *node, V
 
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> actionNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> globalNodes;
 
     for (int i = 0; i < node->numChildren(); i++) {
         auto *child = node->getChild(i);
@@ -28,15 +29,24 @@ lyric_rewriter::AstDefconceptVisitor::enter(lyric_parser::ArchetypeNode *node, V
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
         switch (childId) {
             case lyric_schema::LyricAstId::Decl:
-                actionNodes.push_back(std::pair{child, i});
+                actionNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Impl:
-                implNodes.push_back(std::pair{child, i});
+                implNodes.emplace_back(child, i);
+                break;
+            case lyric_schema::LyricAstId::Global:
+                globalNodes.emplace_back(child, i);
                 break;
             default:
                 return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
                     "unexpected defconcept child node");
         }
+    }
+
+    for (auto it = globalNodes.rbegin(); it != globalNodes.rend(); it++) {
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {

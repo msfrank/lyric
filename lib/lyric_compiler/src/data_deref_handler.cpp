@@ -237,9 +237,21 @@ invoke_global_method(
             break;
         }
 
+        case lyric_assembler::SymbolType::CONCEPT: {
+            auto *conceptSymbol = lyric_assembler::cast_symbol_to_concept(derefSymbol);
+            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
+
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
             TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
+
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
+            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
             break;
         }
 
@@ -249,11 +261,11 @@ invoke_global_method(
             break;
         }
 
-        case lyric_assembler::SymbolType::CONCEPT:
-        case lyric_assembler::SymbolType::EXISTENTIAL:
-        case lyric_assembler::SymbolType::INSTANCE:
-        case lyric_assembler::SymbolType::PROTOCOL:
-        case lyric_assembler::SymbolType::STRUCT:
+        case lyric_assembler::SymbolType::STRUCT: {
+            auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
 
         default:
             return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,

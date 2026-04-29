@@ -17,6 +17,8 @@ namespace lyric_parser::internal {
         void exitConceptDecl(ModuleParser::ConceptDeclContext *ctx);
         void enterConceptImpl(ModuleParser::ConceptImplContext *ctx);
         void exitConceptImpl(ModuleParser::ConceptImplContext *ctx);
+        void enterConceptGlobal(ModuleParser::ConceptGlobalContext *ctx);
+        void exitConceptGlobal(ModuleParser::ConceptGlobalContext *ctx);
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx);
     };
 }

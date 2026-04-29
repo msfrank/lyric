@@ -372,6 +372,53 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceImpl(ModuleParser::Ins
 }
 
 void
+lyric_parser::internal::ModuleDefinstanceOps::enterInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefinstanceOps::enterInstanceGlobal");
+
+    auto *state = getState();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate global node
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->appendNode(lyric_schema::kLyricAstGlobalClass, location));
+
+    // push global onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(globalNode));
+}
+
+void
+lyric_parser::internal::ModuleDefinstanceOps::exitInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is global
+    ArchetypeNode *globalNode;
+    TU_ASSIGN_OR_RAISE (globalNode, state->popNode(lyric_schema::kLyricAstGlobalClass));
+
+    // peek node on stack, verify it is definstance
+    ArchetypeNode *definstanceNode;
+    TU_ASSIGN_OR_RAISE (definstanceNode, state->peekNode(lyric_schema::kLyricAstDefInstanceClass));
+
+    // append global node to definstances
+    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(globalNode));
+}
+
+void
 lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;

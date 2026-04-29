@@ -24,6 +24,7 @@ lyric_rewriter::AstDefenumVisitor::enter(lyric_parser::ArchetypeNode *node, Visi
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> memberNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> methodNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> globalNodes;
 
     for (int i = 0; i < node->numChildren(); i++) {
         auto *child = node->getChild(i);
@@ -31,19 +32,22 @@ lyric_rewriter::AstDefenumVisitor::enter(lyric_parser::ArchetypeNode *node, Visi
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
         switch (childId) {
             case lyric_schema::LyricAstId::Init:
-                initNodes.push_back(std::pair{child, i});
+                initNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Field:
-                memberNodes.push_back(std::pair{child, i});
+                memberNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Case:
-                caseNodes.push_back(std::pair{child, i});
+                caseNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Def:
-                methodNodes.push_back(std::pair{child, i});
+                methodNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Impl:
-                implNodes.push_back(std::pair{child, i});
+                implNodes.emplace_back(child, i);
+                break;
+            case lyric_schema::LyricAstId::Global:
+                globalNodes.emplace_back(child, i);
                 break;
             default:
                 return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
@@ -58,6 +62,12 @@ lyric_rewriter::AstDefenumVisitor::enter(lyric_parser::ArchetypeNode *node, Visi
     }
 
     for (auto it = initNodes.rbegin(); it != initNodes.rend(); it++) {
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
+        ctx.push(node, it->second, it->first, visitor);
+    }
+
+    for (auto it = globalNodes.rbegin(); it != globalNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
         ctx.push(node, it->second, it->first, visitor);

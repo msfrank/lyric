@@ -14,6 +14,7 @@
 #include <lyric_typing/member_reifier.h>
 
 #include "lyric_assembler/argument_variable.h"
+#include "lyric_assembler/concept_symbol.h"
 
 bool
 lyric_compiler::current_ref_is_this_receiver(
@@ -435,9 +436,19 @@ lyric_compiler::deref_global_member(
             TU_ASSIGN_OR_RETURN (ref, classSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
             break;
         }
+        case lyric_assembler::SymbolType::CONCEPT: {
+            auto *conceptSymbol = lyric_assembler::cast_symbol_to_concept(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, conceptSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
+            break;
+        }
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
             TU_ASSIGN_OR_RETURN (ref, enumSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
+            break;
+        }
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, instanceSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
             break;
         }
         case lyric_assembler::SymbolType::NAMESPACE: {
@@ -445,8 +456,11 @@ lyric_compiler::deref_global_member(
             TU_ASSIGN_OR_RETURN (ref, namespaceSymbol->resolveTargetMember(identifier, block));
             break;
         }
-        case lyric_assembler::SymbolType::INSTANCE:
-        case lyric_assembler::SymbolType::STRUCT:
+        case lyric_assembler::SymbolType::STRUCT: {
+            auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
+            TU_ASSIGN_OR_RETURN (ref, structSymbol->resolveGlobalMember(identifier, receiverType, thisReceiver));
+            break;
+        }
         default:
             return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
                 "invalid receiver symbol {}", derefSymbol->getSymbolUrl().toString());

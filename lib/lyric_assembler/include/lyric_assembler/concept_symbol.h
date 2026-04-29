@@ -73,6 +73,23 @@ namespace lyric_assembler {
         TemplateHandle *conceptTemplate() const;
         BlockHandle *conceptBlock() const;
 
+        /*
+         * global management
+         */
+        tempo_utils::Result<DataReference> resolveGlobalMember(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            bool thisReceiver) const;
+
+        tempo_utils::Status prepareGlobalMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
+            bool thisReceiver) const;
+
+        /*
+         * concept action management
+         */
         bool hasAction(const std::string &name) const;
         Option<ActionMethod> getAction(const std::string &name) const;
         absl::flat_hash_map<std::string, ActionMethod>::const_iterator actionsBegin() const;

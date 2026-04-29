@@ -71,6 +71,7 @@ lyric_compiler::DefStructHandler::before(
     std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
+    std::vector<lyric_parser::ArchetypeNode *> globalNodes;
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
@@ -92,6 +93,10 @@ lyric_compiler::DefStructHandler::before(
             }
             case lyric_schema::LyricAstId::Impl: {
                 implNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Global: {
+                globalNodes.push_back(child);
                 break;
             }
             default:
@@ -124,6 +129,8 @@ lyric_compiler::DefStructHandler::before(
         identifier, m_defstruct.superstructSymbol, isHidden,
         lyric_compiler::convert_derive_type(derive)));
 
+    m_defstruct.global.definitionBlock = m_defstruct.structSymbol->structBlock();
+
     // add struct to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defstruct.structSymbol->getSymbolUrl()));
@@ -150,6 +157,11 @@ lyric_compiler::DefStructHandler::before(
         TU_ASSIGN_OR_RETURN (impl, declare_struct_impl(
             implNode, m_defstruct.structSymbol, typeSystem));
         m_defstruct.impls[implNode] = impl;
+    }
+
+    // declare globals
+    for (auto &globalNode : globalNodes) {
+        TU_RETURN_IF_NOT_OK (declare_global_block(globalNode, &m_defstruct.global, typeSystem));
     }
 
     // declare constructors if any are specified, otherwise declare a default constructor
@@ -234,6 +246,11 @@ lyric_compiler::StructDefinition::decide(
         case lyric_schema::LyricAstId::Impl: {
             auto impl = m_defstruct->impls.at(node);
             auto handler = std::make_unique<ImplHandler>(impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Global: {
+            auto handler = std::make_unique<GlobalHandler>(&m_defstruct->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
