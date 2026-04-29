@@ -177,7 +177,7 @@ lyric_assembler::EnumSymbol::isAbstract() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::EnumSymbol::definitionBlock()
+lyric_assembler::EnumSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->enumBlock.get();

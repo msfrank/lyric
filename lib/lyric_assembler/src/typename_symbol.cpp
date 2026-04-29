@@ -38,7 +38,7 @@ lyric_assembler::TypenameSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::TypenameSymbol::definitionBlock()
+lyric_assembler::TypenameSymbol::derefBlock()
 {
     return nullptr;
 }

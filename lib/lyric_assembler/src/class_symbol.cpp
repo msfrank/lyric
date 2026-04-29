@@ -200,7 +200,7 @@ lyric_assembler::ClassSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::ClassSymbol::definitionBlock()
+lyric_assembler::ClassSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->classBlock.get();

@@ -42,7 +42,7 @@ lyric_assembler::SyntheticSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::SyntheticSymbol::definitionBlock()
+lyric_assembler::SyntheticSymbol::derefBlock()
 {
     return nullptr;
 }

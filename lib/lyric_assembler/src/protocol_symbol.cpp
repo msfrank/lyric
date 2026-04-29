@@ -131,7 +131,7 @@ lyric_assembler::ProtocolSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::ProtocolSymbol::definitionBlock()
+lyric_assembler::ProtocolSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->protocolBlock.get();

@@ -104,9 +104,16 @@ lyric_assembler::FieldSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::FieldSymbol::definitionBlock()
+lyric_assembler::FieldSymbol::derefBlock()
 {
-    return nullptr;
+    auto fieldType = getTypeDef();
+    if (fieldType.getType() != lyric_common::TypeDefType::Concrete)
+        return nullptr;
+    auto concreteUrl = fieldType.getConcreteUrl();
+    auto *symbolCache = m_state->symbolCache();
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+    return symbol->derefBlock();
 }
 
 std::string

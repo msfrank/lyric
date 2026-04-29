@@ -452,9 +452,16 @@ lyric_assembler::CallSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::CallSymbol::definitionBlock()
+lyric_assembler::CallSymbol::derefBlock()
 {
-    return nullptr;
+    auto returnType = getReturnType();
+    if (returnType.getType() != lyric_common::TypeDefType::Concrete)
+        return nullptr;
+    auto concreteUrl = returnType.getConcreteUrl();
+    auto *symbolCache = m_state->symbolCache();
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+    return symbol->derefBlock();
 }
 
 tempo_utils::Result<lyric_assembler::ProcHandle *>

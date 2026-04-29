@@ -66,15 +66,15 @@ lyric_assembler::LocalVariable::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::LocalVariable::definitionBlock()
+lyric_assembler::LocalVariable::derefBlock()
 {
     if (m_assignableType.getType() != lyric_common::TypeDefType::Concrete)
         return nullptr;
     auto concreteUrl = m_assignableType.getConcreteUrl();
     auto *symbolCache = m_state->symbolCache();
-    auto *symbol = symbolCache->getSymbolOrNull(concreteUrl);
-    TU_NOTNULL (symbol);
-    return symbol->definitionBlock();
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+    return symbol->derefBlock();
 }
 
 std::string

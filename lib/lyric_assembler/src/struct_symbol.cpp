@@ -163,7 +163,7 @@ lyric_assembler::StructSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::StructSymbol::definitionBlock()
+lyric_assembler::StructSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->structBlock.get();

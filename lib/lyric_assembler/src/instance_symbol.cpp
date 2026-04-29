@@ -165,7 +165,7 @@ lyric_assembler::InstanceSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::InstanceSymbol::definitionBlock()
+lyric_assembler::InstanceSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->instanceBlock.get();

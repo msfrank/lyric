@@ -1,7 +1,7 @@
 
-#include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/template_handle.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/type_import.h>
 
@@ -200,9 +200,16 @@ lyric_assembler::ActionSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::ActionSymbol::definitionBlock()
+lyric_assembler::ActionSymbol::derefBlock()
 {
-    return nullptr;
+    auto returnType = getReturnType();
+    if (returnType.getType() != lyric_common::TypeDefType::Concrete)
+        return nullptr;
+    auto concreteUrl = returnType.getConcreteUrl();
+    auto *symbolCache = m_state->symbolCache();
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+    return symbol->derefBlock();
 }
 
 bool

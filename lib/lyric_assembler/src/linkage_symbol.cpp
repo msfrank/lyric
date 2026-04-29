@@ -43,7 +43,7 @@ lyric_assembler::LinkageSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::LinkageSymbol::definitionBlock()
+lyric_assembler::LinkageSymbol::derefBlock()
 {
     return nullptr;
 }

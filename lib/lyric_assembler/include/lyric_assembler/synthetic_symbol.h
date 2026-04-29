@@ -19,7 +19,7 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
-        BlockHandle *definitionBlock() override;
+        BlockHandle *derefBlock() override;
 
         SyntheticType getSyntheticType() const;
 

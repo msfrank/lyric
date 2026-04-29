@@ -128,7 +128,7 @@ lyric_assembler::BindingSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::BindingSymbol::definitionBlock()
+lyric_assembler::BindingSymbol::derefBlock()
 {
     return nullptr;
 }

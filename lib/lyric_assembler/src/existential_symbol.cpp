@@ -183,7 +183,7 @@ lyric_assembler::ExistentialSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::ExistentialSymbol::definitionBlock()
+lyric_assembler::ExistentialSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->existentialBlock.get();

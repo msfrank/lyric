@@ -109,9 +109,16 @@ lyric_assembler::StaticSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::StaticSymbol::definitionBlock()
+lyric_assembler::StaticSymbol::derefBlock()
 {
-    return nullptr;
+    auto staticType = getTypeDef();
+    if (staticType.getType() != lyric_common::TypeDefType::Concrete)
+        return nullptr;
+    auto concreteUrl = staticType.getConcreteUrl();
+    auto *symbolCache = m_state->symbolCache();
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+    return symbol->derefBlock();
 }
 
 std::string

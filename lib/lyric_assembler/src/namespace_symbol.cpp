@@ -136,7 +136,7 @@ lyric_assembler::NamespaceSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::NamespaceSymbol::definitionBlock()
+lyric_assembler::NamespaceSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->namespaceBlock.get();

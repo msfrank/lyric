@@ -30,7 +30,7 @@ invoke_call(
     lyric_assembler::BlockHandle *bindingBlock;
     if (!dataDeref->effects.empty()) {
         const auto &effect = dataDeref->effects.back();
-        bindingBlock = effect.derefSymbol->definitionBlock();
+        bindingBlock = effect.derefSymbol->derefBlock();
     } else {
         bindingBlock = dataDeref->block;
     }
@@ -84,7 +84,7 @@ invoke_method(
     auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
 
     const auto &effect = dataDeref->effects.back();
-    auto *bindingBlock = effect.derefSymbol->definitionBlock();
+    auto *bindingBlock = effect.derefSymbol->derefBlock();
     auto receiverType = effect.receiverType;
 
     // get the method name
@@ -198,7 +198,7 @@ invoke_global_method(
     auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
 
     const auto &effect = dataDeref->effects.back();
-    auto *bindingBlock = effect.derefSymbol->definitionBlock();
+    auto *bindingBlock = effect.derefSymbol->derefBlock();
     auto receiverType = effect.receiverType;
     auto *derefSymbol = effect.derefSymbol;
 

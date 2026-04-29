@@ -183,7 +183,7 @@ lyric_assembler::ConceptSymbol::getTypeDef() const
 }
 
 lyric_assembler::BlockHandle *
-lyric_assembler::ConceptSymbol::definitionBlock()
+lyric_assembler::ConceptSymbol::derefBlock()
 {
     auto *priv = getPriv();
     return priv->conceptBlock.get();
