@@ -18,6 +18,7 @@ build_core_Bytes(
     const CoreType *StringType,
     const CoreType *UndefType)
 {
+    auto *BytesType = BytesExistential->existentialType;
     auto *IntOrUndefType = state.addUnionType({IntType,UndefType});
     {
         lyric_object::BytecodeBuilder code;
@@ -50,6 +51,69 @@ build_core_Bytes(
             lyo1::CallFlags::NONE,
             {},
             code, StringType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesAppend");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Append",
+            BytesExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("other", BytesType),
+            },
+            code, BytesType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesPrepend");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Prepend",
+            BytesExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("other", BytesType),
+            },
+            code, BytesType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesInsert");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Insert",
+            BytesExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("other", BytesType),
+            },
+            code, BytesType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesRemove");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Remove",
+            BytesExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("count", IntType),
+            },
+            code, BytesType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesSubspan");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Subspan",
+            BytesExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("count", IntType),
+            },
+            code, BytesType);
     }
 }
 

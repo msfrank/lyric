@@ -9,15 +9,43 @@ tempo_utils::Status bytes_at(
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
+
 tempo_utils::Status bytes_compare(
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
+
 tempo_utils::Status bytes_length(
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
+
 tempo_utils::Status bytes_to_string(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+
+tempo_utils::Status bytes_append(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+
+tempo_utils::Status bytes_prepend(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+
+tempo_utils::Status bytes_insert(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+
+tempo_utils::Status bytes_remove(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+
+tempo_utils::Status bytes_subspan(
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);

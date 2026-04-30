@@ -16,11 +16,16 @@
 #include "status_traps.h"
 #include "string_traps.h"
 
-std::array<lyric_runtime::NativeTrap,63> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,68> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
     { bytes_to_string, "BytesToString", 0 },
+    { bytes_append, "BytesAppend", 0 },
+    { bytes_prepend, "BytesPrepend", 0 },
+    { bytes_insert, "BytesInsert", 0 },
+    { bytes_remove, "BytesRemove", 0 },
+    { bytes_subspan, "BytesSubspan", 0 },
     { category_alloc, "CategoryAlloc", 0 },
     { closure_alloc, "ClosureAlloc", 0 },
     { closure_apply, "ClosureApply", 0 },
