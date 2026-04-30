@@ -229,7 +229,8 @@ lyric_assembler::EnumSymbol::resolveGlobalMember(
 
     auto globalSymbolUrl = priv->enumBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superEnum == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
@@ -284,7 +285,8 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
 
     auto globalSymbolUrl = priv->enumBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superEnum == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,

@@ -105,7 +105,7 @@ lyric_runtime::RestRef::rawSize(tu_int32 &size) const
 }
 
 tu_int32
-lyric_runtime::RestRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
+lyric_runtime::RestRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size) const
 {
     return -1;
 }

@@ -261,7 +261,8 @@ lyric_assembler::ConceptSymbol::resolveGlobalMember(
 
     auto globalSymbolUrl = priv->conceptBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superConcept == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
@@ -316,7 +317,8 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
 
     auto globalSymbolUrl = priv->conceptBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superConcept == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,

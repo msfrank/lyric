@@ -16,7 +16,7 @@
 #include "status_traps.h"
 #include "string_traps.h"
 
-std::array<lyric_runtime::NativeTrap,58> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,63> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
@@ -75,6 +75,11 @@ std::array<lyric_runtime::NativeTrap,58> kPreludeTraps = {{
     { string_compare, "StringCompare", 0 },
     { string_length, "StringLength", 0 },
     { string_to_bytes, "StringToBytes", 0 },
+    { string_append, "StringAppend", 0 },
+    { string_prepend, "StringPrepend", 0 },
+    { string_insert, "StringInsert", 0 },
+    { string_remove, "StringRemove", 0 },
+    { string_substring, "StringSubstring", 0 },
 }};
 
 bool

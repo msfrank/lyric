@@ -232,7 +232,8 @@ lyric_assembler::StructSymbol::resolveGlobalMember(
 
     auto globalSymbolUrl = priv->structBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superStruct == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
@@ -287,7 +288,8 @@ lyric_assembler::StructSymbol::prepareGlobalMethod(
 
     auto globalSymbolUrl = priv->structBlock->makeSymbolUrl(name);
 
-    auto *symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(globalSymbolUrl, /* allowMissing= */ true));
     if (symbol == nullptr) {
         if (priv->superStruct == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,

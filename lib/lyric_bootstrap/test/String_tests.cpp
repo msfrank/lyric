@@ -51,6 +51,69 @@ TEST_F(StringTests, TestEvaluateStringAt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
+TEST_F(StringTests, TestEvaluateStringAppend)
+{
+    auto result = runModule(R"(
+        val string1: String = "Hello,"
+        val string2: String = "world!"
+        string1.Append(" ").Append(string2)
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("Hello, world!"))));
+}
+
+TEST_F(StringTests, TestEvaluateStringPrepend)
+{
+    auto result = runModule(R"(
+        val string1: String = "Hello,"
+        val string2: String = "world!"
+        string2.Prepend(" ").Prepend(string1)
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("Hello, world!"))));
+}
+
+TEST_F(StringTests, TestEvaluateStringInsert)
+{
+    auto result = runModule(R"(
+        val string1: String = "Helloworld!"
+        val string2: String = ", "
+        string1.Insert(5, string2)
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("Hello, world!"))));
+}
+
+TEST_F(StringTests, TestEvaluateStringRemove)
+{
+    auto result = runModule(R"(
+        val string1: String = "Hello, world!"
+        string1.Remove(5, 2)
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("Helloworld!"))));
+}
+
+TEST_F(StringTests, TestEvaluateStringSubstring)
+{
+    auto result = runModule(R"(
+        val string1: String = "Helloworld!"
+        string1.Substring(5, 5)
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("world"))));
+}
+
 TEST_F(StringTests, TestEvaluateStringAtInvalidIndex)
 {
     auto result = runModule(R"(

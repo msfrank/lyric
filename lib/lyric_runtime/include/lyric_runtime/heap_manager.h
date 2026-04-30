@@ -4,6 +4,7 @@
 #include <lyric_runtime/abstract_heap.h>
 #include <lyric_runtime/segment_manager.h>
 #include <lyric_runtime/system_scheduler.h>
+#include <tempo_utils/rope.h>
 
 namespace lyric_runtime {
 
@@ -41,12 +42,16 @@ namespace lyric_runtime {
         virtual ~HeapManager() = default;
 
         virtual DataCell allocateString(std::string_view string);
+        virtual DataCell allocateString(tempo_utils::Rope<char> rope);
         virtual tempo_utils::Status loadLiteralStringOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadStringOntoStack(std::string_view string);
+        virtual tempo_utils::Status loadStringOntoStack(tempo_utils::Rope<char> rope);
 
         virtual DataCell allocateBytes(std::span<const tu_uint8> bytes);
+        virtual DataCell allocateBytes(tempo_utils::Rope<tu_uint8> rope);
         virtual tempo_utils::Status loadLiteralBytesOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadBytesOntoStack(std::span<const tu_uint8> bytes);
+        virtual tempo_utils::Status loadBytesOntoStack(tempo_utils::Rope<tu_uint8> rope);
 
         virtual DataCell allocateStatus(const VirtualTable *vtable);
         virtual DataCell allocateStatus(

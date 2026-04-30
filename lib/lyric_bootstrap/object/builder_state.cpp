@@ -97,6 +97,11 @@ CoreParam make_list_param(std::string_view name, const CoreType *type, bool isVa
     return {std::string(name), lyric_object::PlacementType::List, type, nullptr, isVariable, false};
 }
 
+CoreParam make_list_opt_param(std::string_view name, const CoreType *type, const CoreCall *dfl, bool isVariable)
+{
+    return {std::string(name), lyric_object::PlacementType::ListOpt, type, dfl, isVariable, false};
+}
+
 CoreParam make_named_param(std::string_view name, const CoreType *type, bool isVariable)
 {
     return {std::string(name), lyric_object::PlacementType::Named, type, nullptr, isVariable, false};

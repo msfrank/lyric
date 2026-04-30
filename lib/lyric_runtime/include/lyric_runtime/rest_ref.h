@@ -33,7 +33,7 @@ namespace lyric_runtime {
         bool getField(const DataCell &field, DataCell &value) const override;
         bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
         bool rawSize(tu_int32 &size) const override;
-        tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
+        tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const override;
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode statusCode() override;

@@ -1894,9 +1894,9 @@ lyric_common::SymbolUrl
 lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const
 {
     const auto enclosingDefinition = getDefinition();
+    auto location = enclosingDefinition.getModuleLocation();
     auto path = enclosingDefinition.getSymbolPath().getPath();
-    path.push_back(name);
-    auto symbolUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
+    lyric_common::SymbolUrl symbolUrl(location, lyric_common::SymbolPath(path, name));
     return symbolUrl;
 }
 

@@ -57,11 +57,12 @@ lyric_assembler::SymbolCache::getSymbolOrNull(const lyric_common::SymbolUrl &sym
  * is returned containing the failure.
  *
  * @param symbolUrl The symbol url which uniquely identifies the symbol.
+ * @param allowMissing If true then a missing symbol is not a failure, and the result will contain a nullptr.
  * @return A `tempo_utils::Result` containing a pointer to the AbstractSymbol on success, otherwise
  *     a `tempo_utils::Status` on failure.
  */
 tempo_utils::Result<lyric_assembler::AbstractSymbol *>
-lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const
+lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl, bool allowMissing) const
 {
     AbstractSymbol *sym;
 
@@ -70,7 +71,10 @@ lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &s
         sym = iterator->second;
     } else {
         auto *importCache = m_state->importCache();
-        TU_ASSIGN_OR_RETURN (sym, importCache->importSymbol(symbolUrl));
+        auto result = importCache->importSymbol(symbolUrl);
+        if (allowMissing && result.isStatus())
+            return nullptr;
+        return result;
     }
 
     return sym;

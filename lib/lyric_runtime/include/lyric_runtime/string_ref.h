@@ -22,7 +22,7 @@ namespace lyric_runtime {
         int compare(const AbstractRef *other) const;
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
-        tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
+        tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const override;
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode statusCode() override;
@@ -33,6 +33,7 @@ namespace lyric_runtime {
         DataCell stringCompare(StringRef *other) const;
         DataCell stringLength() const;
 
+        std::string getString() const;
         tempo_utils::Rope<char> getStringData() const;
         int32_t getStringSize() const;
 

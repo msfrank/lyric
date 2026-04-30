@@ -140,7 +140,7 @@ lyric_runtime::StringRef::rawSize(tu_int32 &size) const
 }
 
 tu_int32
-lyric_runtime::StringRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
+lyric_runtime::StringRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size) const
 {
     auto subspan = m_rope.subspan(offset, size);
     auto chunks = subspan.iterateChunks();
@@ -263,6 +263,15 @@ lyric_runtime::StringRef::stringLength() const
     } catch (utf8::invalid_code_point &ex) {
         return DataCell::undef();
     }
+}
+
+std::string
+lyric_runtime::StringRef::getString() const
+{
+    std::string s;
+    if (!utf8Value(s))
+        return {};
+    return s;
 }
 
 tempo_utils::Rope<char>

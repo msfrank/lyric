@@ -30,6 +30,14 @@ lyric_runtime::HeapManager::allocateString(std::string_view string)
     return DataCell::forString(instance);
 }
 
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateString(tempo_utils::Rope<char> rope)
+{
+    auto *instance = new StringRef(m_preludeTables.StringTable, rope);
+    m_heap->insertInstance(instance);
+    return DataCell::forString(instance);
+}
+
 tempo_utils::Status
 lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
 {
@@ -64,10 +72,32 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
     return {};
 }
 
+tempo_utils::Status
+lyric_runtime::HeapManager::loadStringOntoStack(tempo_utils::Rope<char> rope)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto *instance = new StringRef(m_preludeTables.StringTable, rope);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forString(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
 {
     auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
+    m_heap->insertInstance(instance);
+    return DataCell::forBytes(instance);
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateBytes(tempo_utils::Rope<tu_uint8> rope)
+{
+    auto *instance = new BytesRef(m_preludeTables.BytesTable, rope);
     m_heap->insertInstance(instance);
     return DataCell::forBytes(instance);
 }
@@ -99,6 +129,20 @@ lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
     TU_ASSERT(currentCoro != nullptr);
 
     auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forBytes(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadBytesOntoStack(tempo_utils::Rope<tu_uint8> rope)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto *instance = new BytesRef(m_preludeTables.BytesTable, rope);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
     currentCoro->pushData(cell);

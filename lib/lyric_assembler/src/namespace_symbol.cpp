@@ -298,7 +298,8 @@ lyric_assembler::NamespaceSymbol::resolveTargetMember(
             "missing namespace member {}", name);
     auto &targetUrl = entry->second;
 
-    auto *symbol = symbolCache->getSymbolOrNull(targetUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetUrl, /* allowMissing= */ true));
     if (symbol == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
             "invalid namespace member {}", targetUrl.toString());
@@ -356,7 +357,8 @@ lyric_assembler::NamespaceSymbol::prepareTargetMethod(
             "missing namespace method {}", name);
     auto &targetUrl = entry->second;
 
-    auto *symbol = symbolCache->getSymbolOrNull(targetUrl);
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetUrl, /* allowMissing= */ true));
     if (symbol == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
             "invalid namespace method {}", targetUrl.toString());

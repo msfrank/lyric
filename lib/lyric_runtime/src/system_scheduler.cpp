@@ -678,7 +678,8 @@ lyric_runtime::on_write_complete(uv_fs_t *req)
 tempo_utils::Status
 lyric_runtime::SystemScheduler::registerWrite(
     uv_file file,
-    uv_buf_t buf,
+    const uv_buf_t bufs[],
+    unsigned int nbufs,
     std::shared_ptr<Promise> promise,
     tu_int64 offset)
 {
@@ -688,7 +689,7 @@ lyric_runtime::SystemScheduler::registerWrite(
     auto *req = (uv_fs_t *) malloc(sizeof(uv_fs_t));
     memset(req, 0, sizeof(uv_fs_t));
 
-    auto ret = uv_fs_write(m_loop, req, file, &buf, 1, offset, on_write_complete);
+    auto ret = uv_fs_write(m_loop, req, file, bufs, nbufs, offset, on_write_complete);
     if (ret < 0) {
         uv_fs_req_cleanup(req);
         free(req);

@@ -131,7 +131,8 @@ namespace lyric_runtime {
             tu_int64 offset = -1);
         tempo_utils::Status registerWrite(
             uv_file file,
-            uv_buf_t buf,
+            const uv_buf_t bufs[],
+            unsigned int nbufs,
             std::shared_ptr<Promise> promise,
             tu_int64 offset = -1);
 

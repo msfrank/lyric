@@ -104,7 +104,7 @@ lyric_runtime::NamespaceRef::rawSize(tu_int32 &size) const
 }
 
 tu_int32
-lyric_runtime::NamespaceRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
+lyric_runtime::NamespaceRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size) const
 {
     return -1;
 }

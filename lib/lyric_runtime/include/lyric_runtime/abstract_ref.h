@@ -95,7 +95,7 @@ namespace lyric_runtime {
          *
          * @return The number of bytes copied, or -1 if there was an error.
          */
-        virtual tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) = 0;
+        virtual tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const = 0;
 
         /**
          * Assigns the value of the ref as a UTF-8 encoded string to `utf8`. If the ref is not representable

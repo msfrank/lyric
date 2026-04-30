@@ -134,7 +134,7 @@ lyric_runtime::BytesRef::rawSize(tu_int32 &size) const
 }
 
 tu_int32
-lyric_runtime::BytesRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size)
+lyric_runtime::BytesRef::rawCopy(tu_int32 offset, char *dst, tu_int32 size) const
 {
     auto subspan = m_rope.subspan(offset, size);
     auto chunks = subspan.iterateChunks();
@@ -227,6 +227,15 @@ lyric_runtime::DataCell
 lyric_runtime::BytesRef::bytesLength() const
 {
     return DataCell(static_cast<tu_int64>(m_size));
+}
+
+std::vector<tu_uint8>
+lyric_runtime::BytesRef::getBytes() const
+{
+    std::vector<tu_uint8> bytes(m_size);
+    if (!rawCopy(0, (char *) bytes.data(), bytes.size()))
+        return {};
+    return bytes;
 }
 
 tempo_utils::Rope<tu_uint8>

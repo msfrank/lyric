@@ -19,6 +19,7 @@ build_core_String(
     const CoreType *BytesType,
     const CoreType *UndefType)
 {
+    auto *StringType = StringExistential->existentialType;
     auto *CharOrUndefType = state.addUnionType({CharType,UndefType});
     {
         lyric_object::BytecodeBuilder code;
@@ -51,6 +52,81 @@ build_core_String(
             lyo1::CallFlags::NONE,
             {},
             code, BytesType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StringAppend");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Append",
+            StringExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("other", StringType),
+            },
+            code, StringType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StringPrepend");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Prepend",
+            StringExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("other", StringType),
+            },
+            code, StringType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StringInsert");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Insert",
+            StringExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("other", StringType),
+            },
+            code, StringType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StringRemove");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Remove",
+            StringExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("count", IntType),
+            },
+            code, StringType);
+    }
+    // {
+    //     lyric_object::BytecodeBuilder code;
+    //     state.writeTrap(code, "StringSplit");
+    //     TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+    //     state.addExistentialMethod("Split",
+    //         StringExistential,
+    //         lyo1::CallFlags::NONE,
+    //         {
+    //             make_list_param("index", IntType),
+    //         },
+    //         code, StringType);
+    // }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StringSubstring");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Substring",
+            StringExistential,
+            lyo1::CallFlags::NONE,
+            {
+                make_list_param("index", IntType),
+                make_list_param("count", IntType),
+            },
+            code, StringType);
     }
 }
 

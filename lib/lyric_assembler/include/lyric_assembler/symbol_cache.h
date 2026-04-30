@@ -21,7 +21,9 @@ namespace lyric_assembler {
 
         bool hasSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
         AbstractSymbol *getSymbolOrNull(const lyric_common::SymbolUrl &symbolUrl) const;
-        tempo_utils::Result<AbstractSymbol *> getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<AbstractSymbol *> getOrImportSymbol(
+            const lyric_common::SymbolUrl &symbolUrl,
+            bool allowMissing = false) const;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsBegin() const;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsEnd() const;
         int numSymbols() const;
