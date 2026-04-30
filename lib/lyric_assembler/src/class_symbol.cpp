@@ -20,6 +20,7 @@
 lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     TypeHandle *classType,
     ClassSymbol *superClass,
@@ -35,6 +36,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
 
     auto *priv = getPriv();
     priv->isHidden = isHidden;
+    priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
     priv->classType = classType;
@@ -49,6 +51,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
 lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     TypeHandle *classType,
     TemplateHandle *classTemplate,
@@ -59,6 +62,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     : ClassSymbol(
         classUrl,
         isHidden,
+        isAbstract,
         derive,
         classType,
         superClass,
@@ -102,6 +106,7 @@ lyric_assembler::ClassSymbol::load()
         m_classUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
     priv->isHidden = m_classImport->isHidden();
+    priv->isAbstract = m_classImport->isAbstract();
     priv->derive = m_classImport->getDerive();
     priv->isDeclOnly = m_classImport->isDeclOnly();
 
@@ -211,6 +216,13 @@ lyric_assembler::ClassSymbol::isHidden() const
 {
     auto *priv = getPriv();
     return priv->isHidden;
+}
+
+bool
+lyric_assembler::ClassSymbol::isAbstract() const
+{
+    auto *priv = getPriv();
+    return priv->isAbstract;
 }
 
 lyric_object::DeriveType
@@ -488,44 +500,6 @@ lyric_assembler::ClassSymbol::resolveMember(
         }
 
         return reifier.reifyMember(name, fieldSymbol);
-    }
-
-    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
-    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
-
-    if (symbol != nullptr) {
-        DataReference ref;
-        bool isHidden;
-        switch (symbol->getSymbolType()) {
-            case SymbolType::ENUM: {
-                auto *enumSymbol = cast_symbol_to_enum(symbol);
-                ref.referenceType = ReferenceType::Value;
-                isHidden = enumSymbol->isHidden();
-                break;
-            }
-            case SymbolType::INSTANCE: {
-                auto *instanceSymbol = cast_symbol_to_instance(symbol);
-                ref.referenceType = ReferenceType::Value;
-                isHidden = instanceSymbol->isHidden();
-                break;
-            }
-            case SymbolType::STATIC: {
-                auto *staticSymbol = cast_symbol_to_static(symbol);
-                ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
-                isHidden = staticSymbol->isHidden();
-                break;
-            }
-            default:
-                return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
-                    "missing member {}", name);
-        }
-        bool thisSymbol = receiverType.getConcreteUrl() == m_classUrl;
-        if (isHidden && !(thisReceiver && thisSymbol))
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to hidden member {} is not allowed", name);
-        ref.symbolUrl = globalSymbolUrl;
-        ref.typeDef = symbol->getTypeDef();
-        return ref;
     }
 
     if (priv->superClass == nullptr)
@@ -833,7 +807,6 @@ lyric_assembler::ClassSymbol::prepareMethod(
     CallableInvoker &invoker,
     bool thisReceiver) const
 {
-    auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
 
     AbstractSymbol *symbol;
@@ -858,29 +831,6 @@ lyric_assembler::ClassSymbol::prepareMethod(
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
         auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
-        return invoker.initialize(std::move(callable));
-    }
-
-    auto globalSymbolUrl = priv->classBlock->makeSymbolUrl(name);
-    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
-
-    if (symbol != nullptr) {
-        if (symbol->getSymbolType() != SymbolType::CALL)
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid call symbol {}", symbol->getSymbolUrl().toString());
-        auto *callSymbol = cast_symbol_to_call(symbol);
-
-        if (callSymbol->isHidden()) {
-            if (!thisReceiver)
-                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                    "cannot access hidden method {} on {}", name, m_classUrl.toString());
-        }
-
-        if (callSymbol->isBound())
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
-
-        auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
         return invoker.initialize(std::move(callable));
     }
 

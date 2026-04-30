@@ -15,6 +15,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isDeclOnly();
+        bool isAbstract();
         lyric_object::DeriveType getDerive();
         bool isHidden();
 
@@ -49,6 +50,7 @@ namespace lyric_importer {
         struct Priv {
             lyric_common::SymbolUrl symbolUrl;
             bool isDeclOnly = false;
+            bool isAbstract = false;
             lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
             bool isHidden = false;
             std::weak_ptr<TypeImport> structType;

@@ -312,26 +312,33 @@ lyric_compiler::deref_member(
     TU_NOTNULL (fragment);
     TU_NOTNULL (driver);
 
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
     if (effects.empty())
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "invalid member deref; effects vector is empty");
+
+    const auto &effect = effects.back();
+    auto *derefSymbol = effect.derefSymbol;
+    auto receiverType = effect.receiverType;
+
+    switch (receiverType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder:
+            break;
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                "cannot dereference member '{}' on {}", identifier, receiverType.toString());
+    }
+
+    TU_NOTNULL (derefSymbol);
 
     auto *state = driver->getState();
     auto *typeSystem = driver->getTypeSystem();
     auto *symbolCache = state->symbolCache();
 
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-
     auto thisReceiver = current_ref_is_this_receiver(symbolCache, block, effects);
-
-    const auto &effect = effects.back();
-    auto receiverType = effect.receiverType;
-    auto *derefSymbol = effect.derefSymbol;
-
-    if (derefSymbol == nullptr)
-        return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-            "cannot dereference {}", receiverType.toString());
 
     lyric_typing::MemberReifier reifier(typeSystem);
     lyric_assembler::DataReference ref;
@@ -411,22 +418,33 @@ lyric_compiler::deref_global_member(
     TU_NOTNULL (fragment);
     TU_NOTNULL (driver);
 
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
     if (effects.empty())
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "invalid member deref; effects vector is empty");
     TU_ASSERT (effects.back().pushResult == false);
 
-    auto *state = driver->getState();
-    auto *symbolCache = state->symbolCache();
-
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-
-    auto thisReceiver = current_ref_is_this_receiver(symbolCache, block, effects);
-
     const auto &effect = effects.back();
     auto *derefSymbol = effect.derefSymbol;
     auto receiverType = effect.receiverType;
+
+    switch (receiverType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder:
+            break;
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                "cannot dereference member '{}' on {}", identifier, receiverType.toString());
+    }
+
+    TU_NOTNULL (derefSymbol);
+
+    auto *state = driver->getState();
+    auto *symbolCache = state->symbolCache();
+
+    auto thisReceiver = current_ref_is_this_receiver(symbolCache, block, effects);
 
     lyric_assembler::DataReference ref;
 

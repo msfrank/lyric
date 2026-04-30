@@ -39,6 +39,7 @@ lyric_archiver::copy_concept(
     }
 
     auto isHidden = conceptImport->isHidden();
+    auto isAbstract = conceptImport->isAbstract();
     auto derive = conceptImport->getDerive();
 
     lyric_assembler::TemplateHandle *conceptTemplate = nullptr;
@@ -72,11 +73,11 @@ lyric_archiver::copy_concept(
 
     if (conceptTemplate != nullptr) {
         conceptSymbol = std::make_unique<lyric_assembler::ConceptSymbol>(
-            conceptUrl, isHidden, derive, conceptType, conceptTemplate, superConcept,
+            conceptUrl, isHidden, isAbstract, derive, conceptType, conceptTemplate, superConcept,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     } else {
         conceptSymbol = std::make_unique<lyric_assembler::ConceptSymbol>(
-            conceptUrl, isHidden, derive, conceptType, superConcept,
+            conceptUrl, isHidden, isAbstract, derive, conceptType, superConcept,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 

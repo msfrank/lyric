@@ -1010,6 +1010,7 @@ lyric_assembler::BlockHandle::declareClass(
     ClassSymbol *superClass,
     bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
@@ -1049,10 +1050,10 @@ lyric_assembler::BlockHandle::declareClass(
     // create the class
     std::unique_ptr<ClassSymbol> classSymbol;
     if (classTemplate) {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, typeHandle,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, isAbstract, derive, typeHandle,
             classTemplate, superClass, declOnly, this, m_state);
     } else {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, isAbstract, derive,
             typeHandle, superClass, declOnly, this, m_state);
     }
 
@@ -1094,6 +1095,7 @@ lyric_assembler::BlockHandle::declareConcept(
     ConceptSymbol *superConcept,
     bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
@@ -1123,10 +1125,10 @@ lyric_assembler::BlockHandle::declareConcept(
     // create the concept
     std::unique_ptr<ConceptSymbol> conceptSymbol;
     if (conceptTemplate) {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive, typeHandle,
             conceptTemplate, superConcept, declOnly, this, m_state);
     } else {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive, typeHandle,
             superConcept, declOnly, this, m_state);
     }
 
@@ -1380,6 +1382,7 @@ lyric_assembler::BlockHandle::declareStruct(
     const std::string &name,
     StructSymbol *superStruct,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
@@ -1406,7 +1409,7 @@ lyric_assembler::BlockHandle::declareStruct(
         structUrl, {}, superStruct->getTypeDef()));
 
     // create the struct
-    auto structSymbol = std::make_unique<StructSymbol>(structUrl, isHidden, derive,
+    auto structSymbol = std::make_unique<StructSymbol>(structUrl, isHidden, isAbstract, derive,
         typeHandle, superStruct, declOnly, this, m_state);
 
     StructSymbol *structPtr;

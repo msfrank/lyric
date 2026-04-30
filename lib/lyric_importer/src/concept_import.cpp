@@ -28,6 +28,13 @@ lyric_importer::ConceptImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
+bool
+lyric_importer::ConceptImport::isAbstract()
+{
+    load();
+    return m_priv->isAbstract;
+}
+
 lyric_object::DeriveType
 lyric_importer::ConceptImport::getDerive()
 {
@@ -163,6 +170,7 @@ lyric_importer::ConceptImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, conceptWalker.getSymbolPath());
 
     priv->isDeclOnly = conceptWalker.isDeclOnly();
+    priv->isAbstract = conceptWalker.isAbstract();
 
     priv->derive = conceptWalker.getDeriveType();
     if (priv->derive == lyric_object::DeriveType::Invalid)

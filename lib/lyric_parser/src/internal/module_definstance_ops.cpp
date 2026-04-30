@@ -435,16 +435,6 @@ lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModulePar
     // get the visibility
     auto isHidden = identifier_is_hidden(id);
 
-    // get the derive type
-    DeriveType derive = DeriveType::Any;
-    if (ctx->instanceDerives()) {
-        if (ctx->instanceDerives()->SealedKeyword() != nullptr) {
-            derive = DeriveType::Sealed;
-        } else if (ctx->instanceDerives()->FinalKeyword() != nullptr) {
-            derive = DeriveType::Final;
-        }
-    }
-
     if (hasError())
         return;
 
@@ -458,6 +448,13 @@ lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModulePar
     // set the visibility
     TU_RAISE_IF_NOT_OK (definstanceNode->putAttr(kLyricAstIsHidden, isHidden));
 
-    // set the derive type
-    TU_RAISE_IF_NOT_OK (definstanceNode->putAttr(kLyricAstDeriveType, derive));
+    // set the abstract flag if it is not set already
+    if (!definstanceNode->hasAttr(kLyricAstIsAbstract)) {
+        TU_RAISE_IF_NOT_OK (definstanceNode->putAttr(kLyricAstIsAbstract, false));
+    }
+
+    // set the derive type if it is not set already
+    if (!definstanceNode->hasAttr(kLyricAstDeriveType)) {
+        TU_RAISE_IF_NOT_OK (definstanceNode->putAttr(kLyricAstDeriveType, DeriveType::Any));
+    }
 }

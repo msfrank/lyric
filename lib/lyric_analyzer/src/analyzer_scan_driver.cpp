@@ -377,6 +377,9 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
@@ -405,7 +408,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-        identifier, superClass, isHidden, templateSpec.templateParameters,
+        identifier, superClass, isHidden, templateSpec.templateParameters, isAbstract,
         internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
@@ -432,6 +435,9 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
 
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -461,7 +467,7 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-        identifier, superConcept, isHidden, templateSpec.templateParameters,
+        identifier, superConcept, isHidden, templateSpec.templateParameters, isAbstract,
         internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
@@ -580,6 +586,9 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
@@ -602,7 +611,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 
     lyric_assembler::StructSymbol *structSymbol;
     TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, isHidden, internal::convert_derive_type(derive), /* declOnly= */ true));
+        identifier, superStruct, isHidden, isAbstract, internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);

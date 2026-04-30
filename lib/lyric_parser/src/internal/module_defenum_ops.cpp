@@ -468,4 +468,14 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
 
     // set the enum visibility
     TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIsHidden, isHidden));
+
+    // set the abstract flag if it is not set already
+    if (!defenumNode->hasAttr(kLyricAstIsAbstract)) {
+        TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIsAbstract, false));
+    }
+
+    // set the derive type if it is not set already
+    if (!defenumNode->hasAttr(kLyricAstDeriveType)) {
+        TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstDeriveType, DeriveType::Any));
+    }
 }

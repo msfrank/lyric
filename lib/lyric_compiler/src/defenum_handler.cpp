@@ -124,9 +124,12 @@ lyric_compiler::DefEnumHandler::before(
     // resolve the super enum symbol
     TU_ASSIGN_OR_RETURN (m_defenum.superenumSymbol, block->resolveEnum(superEnumType));
 
+    // if no cases are defined then derive type is any, otherwise derive type is sealed
+    auto derive = caseNodes.empty()? lyric_object::DeriveType::Any : lyric_object::DeriveType::Sealed;
+
     // declare the enum
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
-        identifier, m_defenum.superenumSymbol, isHidden, /* isAbstract= */ true, lyric_object::DeriveType::Sealed));
+        identifier, m_defenum.superenumSymbol, isHidden, /* isAbstract= */ true, derive));
 
     m_defenum.global.definitionBlock = m_defenum.enumSymbol->enumBlock();
 
@@ -257,6 +260,9 @@ lyric_compiler::EnumDefinition::decide(
             return {};
         }
         case lyric_schema::LyricAstId::Global: {
+            if (!m_defenum->enumSymbol->isAbstract())
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                    "global block is not valid on a non-abstract enum");
             auto handler = std::make_unique<GlobalHandler>(&m_defenum->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};

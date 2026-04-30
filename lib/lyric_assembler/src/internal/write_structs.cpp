@@ -74,6 +74,9 @@ write_struct(
     if (structSymbol->isHidden()) {
         structFlags |= lyo1::StructFlags::Hidden;
     }
+    if (structSymbol->isAbstract()) {
+        structFlags |= lyo1::StructFlags::Abstract;
+    }
 
     switch (structSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:

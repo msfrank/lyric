@@ -84,6 +84,9 @@ write_class(
     if (classSymbol->isHidden()) {
         classFlags |= lyo1::ClassFlags::Hidden;
     }
+    if (classSymbol->isAbstract()) {
+        classFlags |= lyo1::ClassFlags::Abstract;
+    }
 
     switch (classSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:

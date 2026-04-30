@@ -939,6 +939,12 @@ void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefC
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImplDef(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::exitModifierSpec(ModuleParser::ModifierSpecContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseModifierSpec(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx)
 {
     ModuleDefineOps ops(this);

@@ -124,6 +124,17 @@ lyric_object::ConceptWalker::isDeclOnly() const
     return bool(conceptDescriptor->flags() & lyo1::ConceptFlags::DeclOnly);
 }
 
+bool
+lyric_object::ConceptWalker::isAbstract() const
+{
+    if (!isValid())
+        return false;
+    auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
+    if (conceptDescriptor == nullptr)
+        return false;
+    return bool(conceptDescriptor->flags() & lyo1::ConceptFlags::Abstract);
+}
+
 lyric_object::DeriveType
 lyric_object::ConceptWalker::getDeriveType() const
 {

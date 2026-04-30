@@ -58,6 +58,17 @@ lyric_object::ClassWalker::isDeclOnly() const
     return bool(classDescriptor->flags() & lyo1::ClassFlags::DeclOnly);
 }
 
+bool
+lyric_object::ClassWalker::isAbstract() const
+{
+    if (!isValid())
+        return false;
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return false;
+    return bool(classDescriptor->flags() & lyo1::ClassFlags::Abstract);
+}
+
 lyric_object::DeriveType
 lyric_object::ClassWalker::getDeriveType() const
 {

@@ -58,6 +58,10 @@ lyric_compiler::DefInstanceHandler::before(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // get abstract flag
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     // get instance derive type
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -127,7 +131,7 @@ lyric_compiler::DefInstanceHandler::before(
 
     // declare the instance
     TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
-        identifier, m_definstance.superinstanceSymbol, isHidden, /* isAbstract= */ false,
+        identifier, m_definstance.superinstanceSymbol, isHidden, isAbstract,
         lyric_compiler::convert_derive_type(derive)));
 
     m_definstance.global.definitionBlock = m_definstance.instanceSymbol->instanceBlock();
@@ -251,6 +255,9 @@ lyric_compiler::InstanceDefinition::decide(
             return {};
         }
         case lyric_schema::LyricAstId::Global: {
+            if (!m_definstance->instanceSymbol->isAbstract())
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                    "global block is not valid on a non-abstract instance");
             auto handler = std::make_unique<GlobalHandler>(&m_definstance->global, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};

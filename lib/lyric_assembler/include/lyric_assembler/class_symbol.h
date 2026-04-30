@@ -18,6 +18,7 @@ namespace lyric_assembler {
 
     struct ClassSymbolPriv {
         bool isHidden = false;
+        bool isAbstract = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isDeclOnly = false;
         TypeHandle *classType = nullptr;
@@ -37,6 +38,7 @@ namespace lyric_assembler {
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *classType,
             ClassSymbol *superClass,
@@ -47,6 +49,7 @@ namespace lyric_assembler {
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *classType,
             TemplateHandle *classTemplate,
@@ -69,6 +72,7 @@ namespace lyric_assembler {
         BlockHandle *derefBlock() override;
 
         bool isHidden() const;
+        bool isAbstract() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isDeclOnly() const;
 

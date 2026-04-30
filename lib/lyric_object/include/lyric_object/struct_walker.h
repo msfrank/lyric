@@ -27,6 +27,7 @@ namespace lyric_object {
         lyric_common::SymbolPath getSymbolPath() const;
 
         bool isDeclOnly() const;
+        bool isAbstract() const;
         DeriveType getDeriveType() const;
         AccessType getAccess() const;
 

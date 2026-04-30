@@ -57,6 +57,10 @@ lyric_compiler::DefClassHandler::before(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // get abstract flag
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     // get class derive type
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -139,7 +143,7 @@ lyric_compiler::DefClassHandler::before(
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(
         identifier, m_defclass.superclassSymbol, isHidden,
-        m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
+        m_defclass.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
 
     // add class to the current namespace if specified
     if (m_currentNamespace != nullptr) {

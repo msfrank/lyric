@@ -233,16 +233,6 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     // get the visibility
     auto isHidden = identifier_is_hidden(id);
 
-    // get the derive type
-    DeriveType derive = DeriveType::Any;
-    if (ctx->conceptDerives()) {
-        if (ctx->conceptDerives()->SealedKeyword() != nullptr) {
-            derive = DeriveType::Sealed;
-        } else if (ctx->conceptDerives()->FinalKeyword() != nullptr) {
-            derive = DeriveType::Final;
-        }
-    }
-
     // get the generic information
     ArchetypeNode *genericNode = nullptr;
     if (ctx->genericConcept()) {
@@ -263,8 +253,15 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     // set the visibility
     TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIsHidden, isHidden));
 
-    // set the derive type
-    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstDeriveType, derive));
+    // set the abstract flag if it is not set already
+    if (!defconceptNode->hasAttr(kLyricAstIsAbstract)) {
+        TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIsAbstract, false));
+    }
+
+    // set the derive type if it is not set already
+    if (!defconceptNode->hasAttr(kLyricAstDeriveType)) {
+        TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstDeriveType, DeriveType::Any));
+    }
 
     // set the generic information, if it exists
     if (genericNode) {

@@ -420,44 +420,6 @@ lyric_assembler::EnumSymbol::resolveMember(
         return reifier.reifyMember(name, fieldSymbol);
     }
 
-    auto globalSymbolUrl = priv->enumBlock->makeSymbolUrl(name);
-    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
-
-    if (symbol != nullptr) {
-        DataReference ref;
-        bool isHidden;
-        switch (symbol->getSymbolType()) {
-            case SymbolType::ENUM: {
-                auto *enumSymbol = cast_symbol_to_enum(symbol);
-                ref.referenceType = ReferenceType::Value;
-                isHidden = enumSymbol->isHidden();
-                break;
-            }
-            case SymbolType::INSTANCE: {
-                auto *instanceSymbol = cast_symbol_to_instance(symbol);
-                ref.referenceType = ReferenceType::Value;
-                isHidden = instanceSymbol->isHidden();
-                break;
-            }
-            case SymbolType::STATIC: {
-                auto *staticSymbol = cast_symbol_to_static(symbol);
-                ref.referenceType = staticSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
-                isHidden = staticSymbol->isHidden();
-                break;
-            }
-            default:
-                return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
-                    "missing member {}", name);
-        }
-        bool thisSymbol = receiverType.getConcreteUrl() == m_enumUrl;
-        if (isHidden && !(thisReceiver && thisSymbol))
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to hidden member {} is not allowed", name);
-        ref.symbolUrl = globalSymbolUrl;
-        ref.typeDef = symbol->getTypeDef();
-        return ref;
-    }
-
     if (priv->superEnum == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
             "missing member {}", name);
@@ -653,7 +615,6 @@ lyric_assembler::EnumSymbol::prepareMethod(
     CallableInvoker &invoker,
     bool thisReceiver) const
 {
-    auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
 
     AbstractSymbol *symbol;
@@ -678,29 +639,6 @@ lyric_assembler::EnumSymbol::prepareMethod(
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
         auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
-        return invoker.initialize(std::move(callable));
-    }
-
-    auto globalSymbolUrl = priv->enumBlock->makeSymbolUrl(name);
-    symbol = symbolCache->getSymbolOrNull(globalSymbolUrl);
-
-    if (symbol != nullptr) {
-        if (symbol->getSymbolType() != SymbolType::CALL)
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid call symbol {}", symbol->getSymbolUrl().toString());
-        auto *callSymbol = cast_symbol_to_call(symbol);
-
-        if (callSymbol->isHidden()) {
-            if (!thisReceiver)
-                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                    "cannot access hidden method {} on {}", name, m_enumUrl.toString());
-        }
-
-        if (callSymbol->isBound())
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
-
-        auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
         return invoker.initialize(std::move(callable));
     }
 

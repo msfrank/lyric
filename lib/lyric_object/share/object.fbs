@@ -259,6 +259,7 @@ table ActionDescriptor {
 // flags which apply to a ConceptDescriptor
 
 enum ConceptFlags : uint16 (bit_flags) {
+    Abstract,                                   // concept cannot be implemented
     Sealed,                                     // concept can only be inherited from in the current object
     Final,                                      // concept cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces only
@@ -326,6 +327,7 @@ table ImplDescriptor {
 // flags which apply to a ClassDescriptor
 
 enum ClassFlags : uint16 (bit_flags) {
+    Abstract,                                   // class cannot be instantiated
     Sealed,                                     // class can only be inherited from in the current object
     Final,                                      // class cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces
@@ -352,6 +354,7 @@ table ClassDescriptor {
 // flags which apply to the StructDescriptor
 
 enum StructFlags : uint16 (bit_flags) {
+    Abstract,                                   // struct cannot be instantiated
     Sealed,                                     // struct can only be inherited from in the current object
     Final,                                      // struct cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces

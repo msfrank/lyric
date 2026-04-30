@@ -20,6 +20,8 @@ namespace lyric_parser::internal {
         void enterImplDef(ModuleParser::ImplDefContext *ctx);
         void exitImplDef(ModuleParser::ImplDefContext *ctx);
 
+        void parseModifierSpec(ModuleParser::ModifierSpecContext *ctx);
+
         void enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx);
         void enterGlobalVal(ModuleParser::GlobalValContext *ctx);
         void exitGlobalVal(ModuleParser::GlobalValContext *ctx);

@@ -57,6 +57,10 @@ lyric_compiler::DefStructHandler::before(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // get abstract flag
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     // get struct derive type
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -126,7 +130,7 @@ lyric_compiler::DefStructHandler::before(
 
     // declare the struct
     TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
-        identifier, m_defstruct.superstructSymbol, isHidden,
+        identifier, m_defstruct.superstructSymbol, isHidden, isAbstract,
         lyric_compiler::convert_derive_type(derive)));
 
     m_defstruct.global.definitionBlock = m_defstruct.structSymbol->structBlock();

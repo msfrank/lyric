@@ -106,6 +106,7 @@ namespace lyric_assembler {
             ClassSymbol *superClass,
             bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
+            bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
@@ -116,6 +117,7 @@ namespace lyric_assembler {
             ConceptSymbol *superConcept,
             bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
+            bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
@@ -125,7 +127,7 @@ namespace lyric_assembler {
             const std::string &name,
             EnumSymbol *superEnum,
             bool isHidden,
-            bool isAbstract,
+            bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
@@ -135,7 +137,7 @@ namespace lyric_assembler {
             const std::string &name,
             InstanceSymbol *superInstance,
             bool isHidden,
-            bool isAbstract,
+            bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
@@ -156,6 +158,7 @@ namespace lyric_assembler {
             const std::string &name,
             StructSymbol *superStruct,
             bool isHidden,
+            bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 

@@ -27,6 +27,13 @@ lyric_importer::StructImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
+bool
+lyric_importer::StructImport::isAbstract()
+{
+    load();
+    return m_priv->isAbstract;
+}
+
 lyric_object::DeriveType
 lyric_importer::StructImport::getDerive()
 {
@@ -190,6 +197,7 @@ lyric_importer::StructImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, structWalker.getSymbolPath());
 
     priv->isDeclOnly = structWalker.isDeclOnly();
+    priv->isAbstract = structWalker.isAbstract();
 
     priv->derive = structWalker.getDeriveType();
     if (priv->derive == lyric_object::DeriveType::Invalid)

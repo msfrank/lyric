@@ -37,6 +37,7 @@ lyric_archiver::copy_class(
     }
 
     auto isHidden = classImport->isHidden();
+    auto isAbstract = classImport->isAbstract();
     auto derive = classImport->getDerive();
 
     lyric_assembler::TemplateHandle *classTemplate = nullptr;
@@ -70,11 +71,11 @@ lyric_archiver::copy_class(
 
     if (classTemplate != nullptr) {
         classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, isHidden, derive, classType, classTemplate, superClass,
+            classUrl, isHidden, isAbstract, derive, classType, classTemplate, superClass,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     } else {
         classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, isHidden, derive, classType, superClass,
+            classUrl, isHidden, isAbstract, derive, classType, superClass,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 

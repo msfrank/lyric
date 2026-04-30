@@ -302,13 +302,20 @@ globalVar           : definitionMacro? VarKeyword
 globalSpec          : globalVal | globalVar | defStatement ;
 
 
+// modifiers spec
+
+sealedModifier      : SealedKeyword ;
+finalModifier       : FinalKeyword ;
+abstractModifier    : AbstractKeyword ;
+modifierSpec       : sealedModifier | finalModifier | abstractModifier ;
+
+
 // defclass statement
 
 defclassStatement   : definitionMacro? DefClassKeyword symbolIdentifier
-                        genericClass? classDerives? classBase?
+                        genericClass? modifierSpec* classBase?
                         CurlyOpen classSpec* CurlyClose ;
 genericClass        : placeholderSpec constraintSpec? ;
-classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classBase           : FromKeyword assignableType ;
 classInit           : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
@@ -325,10 +332,9 @@ classSpec           : classInit | classVal | classVar | classDef | classDecl | c
 // defconcept statement
 
 defconceptStatement : definitionMacro? DefConceptKeyword symbolIdentifier
-                        genericConcept? conceptDerives? conceptBase?
+                        genericConcept? modifierSpec* conceptBase?
                         CurlyOpen conceptSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
-conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
 conceptBase         : FromKeyword assignableType ;
 conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
@@ -339,9 +345,8 @@ conceptSpec         : conceptDecl | conceptImpl | conceptGlobal ;
 // definstance statement
 
 definstanceStatement: definitionMacro? DefInstanceKeyword symbolIdentifier
-                        instanceDerives? instanceBase?
+                        modifierSpec* instanceBase?
                         CurlyOpen instanceSpec* CurlyClose ;
-instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceBase        : FromKeyword assignableType ;
 instanceInit        : InitKeyword paramSpec procBlock ;
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
@@ -355,7 +360,7 @@ instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | i
 // defenum statement
 
 defenumStatement    : definitionMacro? DefEnumKeyword symbolIdentifier
-                        enumBase?
+                        modifierSpec* enumBase?
                         CurlyOpen enumSpec* CurlyClose ;
 enumBase            : FromKeyword assignableType ;
 enumInit            : InitKeyword paramSpec procBlock ;
@@ -370,9 +375,8 @@ enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl | enumG
 // defstruct statement
 
 defstructStatement  : definitionMacro? DefStructKeyword symbolIdentifier
-                        structDerives? structBase?
+                        modifierSpec* structBase?
                         CurlyOpen structSpec* CurlyClose ;
-structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structBase          : FromKeyword assignableType ;
 structInit          : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;

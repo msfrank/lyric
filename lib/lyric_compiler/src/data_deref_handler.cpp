@@ -24,19 +24,21 @@ invoke_call(
     lyric_compiler::CompilerScanDriver *driver,
     lyric_compiler::DecideContext &ctx)
 {
+    TU_NOTNULL (node);
+    TU_NOTNULL (dataDeref);
+    TU_NOTNULL (driver);
     auto *typeSystem = driver->getTypeSystem();
-    auto *invokeBlock = dataDeref->block;
 
-    lyric_assembler::BlockHandle *bindingBlock;
-    if (!dataDeref->effects.empty()) {
-        const auto &effect = dataDeref->effects.back();
-        bindingBlock = effect.derefSymbol->derefBlock();
-    } else {
-        bindingBlock = dataDeref->block;
-    }
+    if (!dataDeref->effects.empty())
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant,
+            "invalid call deref; effects vector is not empty");
 
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    auto *bindingBlock = dataDeref->block;
+    auto *invokeBlock = dataDeref->block;
 
     std::vector<lyric_common::TypeDef> callsiteArguments;
 
@@ -74,22 +76,40 @@ invoke_method(
     TU_NOTNULL (node);
     TU_NOTNULL (dataDeref);
     TU_NOTNULL (driver);
-    TU_ASSERT (!dataDeref->effects.empty());
-    TU_ASSERT (dataDeref->effects.back().pushResult == true);
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    if (dataDeref->effects.empty())
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant,
+            "invalid method deref; effects vector is empty");
+    const auto &effect = dataDeref->effects.back();
+
+    auto receiverType = effect.receiverType;
+    switch (receiverType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder:
+            break;
+        default:
+            return lyric_compiler::CompilerStatus::forCondition(
+                lyric_compiler::CompilerCondition::kSyntaxError,
+                "cannot invoke method '{}' on {}", identifier, receiverType.toString());
+    }
+
+    if (effect.pushResult == false)
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant,
+            "invalid method deref; last effect did not push result");
+
+    TU_NOTNULL (effect.derefSymbol);
+    auto *bindingBlock = effect.derefSymbol->derefBlock();
+    auto *invokeBlock = dataDeref->block;
 
     auto *typeSystem = driver->getTypeSystem();
     auto *symbolCache = driver->getSymbolCache();
-    auto *invokeBlock = dataDeref->block;
 
     auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
-
-    const auto &effect = dataDeref->effects.back();
-    auto *bindingBlock = effect.derefSymbol->derefBlock();
-    auto receiverType = effect.receiverType;
-
-    // get the method name
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // verify the receiver is valid
     if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
@@ -188,23 +208,41 @@ invoke_global_method(
     TU_NOTNULL (node);
     TU_NOTNULL (dataDeref);
     TU_NOTNULL (driver);
-    TU_ASSERT (!dataDeref->effects.empty());
-    TU_ASSERT (dataDeref->effects.back().pushResult == false);
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    if (dataDeref->effects.empty())
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant,
+            "invalid global method deref; effects vector is empty");
+    const auto &effect = dataDeref->effects.back();
+
+    auto receiverType = effect.receiverType;
+    switch (receiverType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder:
+            break;
+        default:
+            return lyric_compiler::CompilerStatus::forCondition(
+                lyric_compiler::CompilerCondition::kSyntaxError,
+                "cannot invoke global method '{}' on {}", identifier, receiverType.toString());
+    }
+
+    if (effect.pushResult == true)
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant,
+            "invalid global method deref; last effect pushed result");
+
+    TU_NOTNULL (effect.derefSymbol);
+    auto *derefSymbol = effect.derefSymbol;
+    auto *bindingBlock = derefSymbol->derefBlock();
+    auto *invokeBlock = dataDeref->block;
 
     auto *typeSystem = driver->getTypeSystem();
     auto *symbolCache = driver->getSymbolCache();
-    auto *invokeBlock = dataDeref->block;
 
     auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
-
-    const auto &effect = dataDeref->effects.back();
-    auto *bindingBlock = effect.derefSymbol->derefBlock();
-    auto receiverType = effect.receiverType;
-    auto *derefSymbol = effect.derefSymbol;
-
-    // get the method name
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // verify the receiver is valid
     if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
@@ -341,9 +379,7 @@ lyric_compiler::DerefThisBehavior::exit(
     if (m_isSideEffect) {
         auto resultType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
-        if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
-            TU_RETURN_IF_NOT_OK (m_deref->fragment->popValue());
-        }
+        TU_RETURN_IF_NOT_OK (m_deref->fragment->popValue());
     }
 
     return {};
@@ -409,9 +445,7 @@ lyric_compiler::DerefNameBehavior::exit(
     if (m_isSideEffect) {
         auto resultType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
-        if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
-            TU_RETURN_IF_NOT_OK (m_deref->fragment->popValue());
-        }
+        TU_RETURN_IF_NOT_OK (m_deref->fragment->popValue());
     }
 
     return {};
@@ -773,39 +807,31 @@ lyric_compiler::DataDerefCall::after(
     TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
 
     lyric_assembler::AbstractSymbol *derefSymbol;
-    bool pushResult;
 
-    //
+    // store the deref symbol if return type is concrete
     switch (returnType.getType()) {
-        case lyric_common::TypeDefType::NoReturn:
-            derefSymbol = nullptr;
-            pushResult = false;
-            break;
         case lyric_common::TypeDefType::Concrete:
             derefSymbol = symbolCache->getSymbolOrNull(returnType.getConcreteUrl());
-            pushResult = true;
             break;
         case lyric_common::TypeDefType::Intersection:
         case lyric_common::TypeDefType::Union:
         case lyric_common::TypeDefType::Placeholder:
+        case lyric_common::TypeDefType::NoReturn:
             derefSymbol = nullptr;
-            pushResult = true;
             break;
         default:
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "unexpected return type {}", returnType.toString());
     }
 
-    // push the call return if necessary
-    if (pushResult) {
-        TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
-    }
+    // push the call return result
+    TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
 
     // append the deref effect
     DerefEffect effect;
     effect.receiverType = returnType;
     effect.derefSymbol = derefSymbol;
-    effect.pushResult = pushResult;
+    effect.pushResult = true;
     effect.sideEffecting = true;
     m_deref->effects.push_back(std::move(effect));
 
@@ -846,23 +872,17 @@ lyric_compiler::DataDerefMethod::after(
     TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
 
     lyric_assembler::AbstractSymbol *derefSymbol;
-    bool pushResult;
 
-    //
+    // store the deref symbol if return type is concrete
     switch (returnType.getType()) {
-        case lyric_common::TypeDefType::NoReturn:
-            derefSymbol = nullptr;
-            pushResult = false;
-            break;
         case lyric_common::TypeDefType::Concrete:
             derefSymbol = symbolCache->getSymbolOrNull(returnType.getConcreteUrl());
-            pushResult = true;
             break;
         case lyric_common::TypeDefType::Intersection:
         case lyric_common::TypeDefType::Union:
         case lyric_common::TypeDefType::Placeholder:
+        case lyric_common::TypeDefType::NoReturn:
             derefSymbol = nullptr;
-            pushResult = true;
             break;
         default:
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
@@ -872,16 +892,14 @@ lyric_compiler::DataDerefMethod::after(
     // pop the receiver
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
-    // push the method return if necessary
-    if (pushResult) {
-        TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
-    }
+    // push the method return result
+    TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
 
     // append the deref effect
     DerefEffect effect;
     effect.receiverType = returnType;
     effect.derefSymbol = derefSymbol;
-    effect.pushResult = pushResult;
+    effect.pushResult = true;
     effect.sideEffecting = true;
     m_deref->effects.push_back(std::move(effect));
 

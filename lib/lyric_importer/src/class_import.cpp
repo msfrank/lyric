@@ -27,6 +27,13 @@ lyric_importer::ClassImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
+bool
+lyric_importer::ClassImport::isAbstract()
+{
+    load();
+    return m_priv->isAbstract;
+}
+
 lyric_object::DeriveType
 lyric_importer::ClassImport::getDerive()
 {
@@ -204,6 +211,7 @@ lyric_importer::ClassImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, classWalker.getSymbolPath());
 
     priv->isDeclOnly = classWalker.isDeclOnly();
+    priv->isAbstract = classWalker.isAbstract();
 
     priv->derive = classWalker.getDeriveType();
     if (priv->derive == lyric_object::DeriveType::Invalid)

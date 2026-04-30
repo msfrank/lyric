@@ -52,6 +52,10 @@ lyric_compiler::DefConceptHandler::before(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // get abstract flag
+    bool isAbstract;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+
     // get concept derive type
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -103,7 +107,7 @@ lyric_compiler::DefConceptHandler::before(
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defconcept.conceptSymbol, block->declareConcept(
         identifier, m_defconcept.superconceptSymbol, isHidden,
-        m_defconcept.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
+        m_defconcept.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
 
     m_defconcept.global.definitionBlock = m_defconcept.conceptSymbol->conceptBlock();
 

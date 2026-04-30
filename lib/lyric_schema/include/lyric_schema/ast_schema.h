@@ -150,6 +150,7 @@ namespace lyric_schema {
         Label,
         IsHidden,
         IsVariable,
+        IsAbstract,
         NoOverride,
         ThisBase,
 
@@ -440,6 +441,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::IsVariable, "IsVariable", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstIsAbstractProperty(
+        &kLyricAstNs, LyricAstId::IsAbstract, "IsAbstract", tempo_schema::PropertyType::kBool);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstNoOverrideProperty(
         &kLyricAstNs, LyricAstId::NoOverride, "NoOverride", tempo_schema::PropertyType::kBool);
 
@@ -614,6 +619,7 @@ namespace lyric_schema {
         &kLyricAstLabelProperty,
         &kLyricAstIsHiddenProperty,
         &kLyricAstIsVariableProperty,
+        &kLyricAstIsAbstractProperty,
         &kLyricAstNoOverrideProperty,
         &kLyricAstThisBaseProperty,
 

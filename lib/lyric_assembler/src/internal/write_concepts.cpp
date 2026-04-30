@@ -80,6 +80,9 @@ write_concept(
     if (conceptSymbol->isHidden()) {
         conceptFlags |= lyo1::ConceptFlags::Hidden;
     }
+    if (conceptSymbol->isAbstract()) {
+        conceptFlags |= lyo1::ConceptFlags::Abstract;
+    }
 
     // serialize array of actions
     std::vector<tu_uint32> actions;

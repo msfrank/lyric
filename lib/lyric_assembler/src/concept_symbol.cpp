@@ -20,6 +20,7 @@
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     TypeHandle *conceptType,
     ConceptSymbol *superConcept,
@@ -35,6 +36,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 
     auto *priv = getPriv();
     priv->isHidden = isHidden;
+    priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
     priv->conceptType = conceptType;
@@ -49,6 +51,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
     bool isHidden,
+    bool isAbstract,
     lyric_object::DeriveType derive,
     TypeHandle *conceptType,
     TemplateHandle *conceptTemplate,
@@ -59,6 +62,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     : ConceptSymbol(
         conceptUrl,
         isHidden,
+        isAbstract,
         derive,
         conceptType,
         superConcept,
@@ -103,6 +107,7 @@ lyric_assembler::ConceptSymbol::load()
 
     priv->isDeclOnly = m_conceptImport->isDeclOnly();
     priv->isHidden = m_conceptImport->isHidden();
+    priv->isAbstract = m_conceptImport->isAbstract();
     priv->derive = m_conceptImport->getDerive();
 
     auto typeImport = m_conceptImport->getConceptType().lock();
@@ -201,6 +206,13 @@ lyric_assembler::ConceptSymbol::isHidden() const
 {
     auto *priv = getPriv();
     return priv->isHidden;
+}
+
+bool
+lyric_assembler::ConceptSymbol::isAbstract() const
+{
+    auto *priv = getPriv();
+    return priv->isAbstract;
 }
 
 lyric_object::DeriveType

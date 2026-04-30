@@ -16,6 +16,7 @@ namespace lyric_assembler {
 
     struct ConceptSymbolPriv {
         bool isHidden = false;
+        bool isAbstract = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isDeclOnly = false;
         TypeHandle *conceptType = nullptr;
@@ -33,6 +34,7 @@ namespace lyric_assembler {
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *conceptType,
             TemplateHandle *conceptTemplate,
@@ -44,6 +46,7 @@ namespace lyric_assembler {
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
             bool isHidden,
+            bool isAbstract,
             lyric_object::DeriveType derive,
             TypeHandle *conceptType,
             ConceptSymbol *superConcept,
@@ -66,6 +69,7 @@ namespace lyric_assembler {
 
         bool isDeclOnly() const;
         bool isHidden() const;
+        bool isAbstract() const;
         lyric_object::DeriveType getDeriveType() const;
 
         ConceptSymbol *superConcept() const;

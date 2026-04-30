@@ -191,6 +191,79 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 }
 
 void
+lyric_parser::internal::ModuleDefineOps::parseModifierSpec(ModuleParser::ModifierSpecContext *ctx)
+{
+    auto *state = getState();
+
+    // peek node on stack
+    ArchetypeNode *definitionNode;
+    TU_ASSIGN_OR_RAISE (definitionNode, state->peekNode());
+
+    bool isAbstract;
+    if (definitionNode->hasAttr(kLyricAstIsAbstract)) {
+        TU_RAISE_IF_NOT_OK (definitionNode->parseAttr(lyric_parser::kLyricAstIsAbstract, isAbstract));
+    } else {
+        isAbstract = false;
+    }
+
+    DeriveType derive;
+    if (definitionNode->hasAttr(kLyricAstDeriveType)) {
+        TU_RAISE_IF_NOT_OK (definitionNode->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
+    } else {
+        derive = DeriveType::Any;
+    }
+
+    auto currentSymbol = state->currentSymbolString();
+
+    if (ctx->abstractModifier()) {
+        if (isAbstract) {
+            logErrorOrThrow(ctx->getStart(), "{} is already declared abstract", currentSymbol);
+            return;
+        }
+        if (derive == DeriveType::Final) {
+            logErrorOrThrow(ctx->getStart(), "{} cannot be declared final and abstract", currentSymbol);
+            return;
+        }
+        TU_RAISE_IF_NOT_OK (definitionNode->putAttr(kLyricAstIsAbstract, true));
+        return;
+    }
+
+    if (ctx->sealedModifier()) {
+        switch (derive) {
+            case DeriveType::Final:
+                logErrorOrThrow(ctx->getStart(), "{} is already declared final", currentSymbol);
+                return;
+            case DeriveType::Sealed:
+                logErrorOrThrow(ctx->getStart(), "{} is already declared sealed", currentSymbol);
+                return;
+            case DeriveType::Any:
+                TU_RAISE_IF_NOT_OK (definitionNode->putAttr(kLyricAstDeriveType, DeriveType::Sealed));
+                return;
+        }
+    }
+
+    if (ctx->finalModifier()) {
+        if (isAbstract) {
+            logErrorOrThrow(ctx->getStart(), "{} cannot be declared final and abstract", currentSymbol);
+            return;
+        }
+        switch (derive) {
+            case DeriveType::Final:
+                logErrorOrThrow(ctx->getStart(), "{} is already declared final", currentSymbol);
+                return;
+            case DeriveType::Sealed:
+                logErrorOrThrow(ctx->getStart(), "{} is already declared sealed", currentSymbol);
+                return;
+            case DeriveType::Any:
+                TU_RAISE_IF_NOT_OK (definitionNode->putAttr(kLyricAstDeriveType, DeriveType::Final));
+                return;
+        }
+    }
+
+    TU_UNREACHABLE();
+}
+
+void
 lyric_parser::internal::ModuleDefineOps::enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx)
 {
     auto *state = getState();
