@@ -32,6 +32,7 @@ namespace lyric_parser::internal {
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx);
         void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx);
         void exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx);
+        void exitCastExpression(ModuleParser::CastExpressionContext *ctx);
     };
 }
 

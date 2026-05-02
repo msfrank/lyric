@@ -572,10 +572,11 @@ starOrSlash         : starOrSlash StarOperator starOrSlash                      
                     ;
 
 symbol              : HashOperator Identifier ( DotOperator Identifier)*                    # symbolExpression
-                    | typeof                                                                # typeofRule
+                    | typeofOrCast                                                          # typeofOrCastRule
                     ;
 
-typeof              : TypeOfKeyword assignableType                                          # typeofExpression
+typeofOrCast        : TypeOfKeyword assignableType                                          # typeofExpression
+                    | typeofOrCast AsKeyword assignableType                                 # castExpression
                     | literalOrNeg                                                          # literalOrNegRule
                     ;
 

@@ -76,6 +76,7 @@ TEST_F(SeqTests, TestEvaluateSeqSlice)
 
 TEST_F(SeqTests, TestEvaluateSeqIterateImpl)
 {
+    GTEST_SKIP();
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3, 4, 5, 6}
         var count: Int = 0

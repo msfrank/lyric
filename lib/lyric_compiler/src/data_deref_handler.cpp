@@ -299,6 +299,12 @@ invoke_global_method(
             break;
         }
 
+        case lyric_assembler::SymbolType::PROTOCOL: {
+            auto *protocolSymbol = lyric_assembler::cast_symbol_to_protocol(derefSymbol);
+            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, dataDeref->block));
+            break;
+        }
+
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
             TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));

@@ -112,7 +112,7 @@ ArrowOperator               : '->' ;
 ColonOperator               : ':' ;
 CommaOperator               : ',' ;
 SemicolonOperator           : ';' ;
-ConvertOperator             : '^:' ;
+CaretOperator               : '^' ;
 EllipsisOperator            : '...' ;
 DotOperator                 : '.' ;
 PipeOperator                : '|' ;
@@ -178,6 +178,7 @@ UndefKeyword            : 'undef' ;
 NilKeyword              : 'nil' ;
 TypeOfKeyword           : 'typeof' ;
 TypeNameKeyword         : 'typename' ;
+AsKeyword               : 'as' ;
 
 // an identifier is can be a variable, function, or state symbol
 

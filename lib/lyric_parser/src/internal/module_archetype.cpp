@@ -848,6 +848,12 @@ void lyric_parser::internal::ModuleArchetype::exitTypeofExpression(ModuleParser:
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypeofExpression(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::exitCastExpression(ModuleParser::CastExpressionContext *ctx)
+{
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCastExpression(ctx));
+}
+
 /*
  * construct ops
  */

@@ -160,6 +160,7 @@ namespace lyric_parser::internal {
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx) override;
         void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx) override;
         void exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx) override;
+        void exitCastExpression(ModuleParser::CastExpressionContext *ctx) override;
 
         // implemented by ModuleConstructOps
         void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;

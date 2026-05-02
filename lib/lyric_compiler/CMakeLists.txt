@@ -15,6 +15,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/base_invokable_handler.h
     include/lyric_compiler/binary_operation_handler.h
     include/lyric_compiler/block_handler.h
+    include/lyric_compiler/cast_handler.h
     include/lyric_compiler/compiler_handler.h
     include/lyric_compiler/compiler_macro_visitor.h
     include/lyric_compiler/compiler_result.h
@@ -82,6 +83,7 @@ target_sources(lyric_compiler PRIVATE
     src/base_invokable_handler.cpp
     src/binary_operation_handler.cpp
     src/block_handler.cpp
+    src/cast_handler.cpp
     src/compiler_handler.cpp
     src/compiler_macro_visitor.cpp
     src/compiler_result.cpp

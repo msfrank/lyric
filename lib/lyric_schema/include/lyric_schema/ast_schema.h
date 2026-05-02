@@ -52,6 +52,7 @@ namespace lyric_schema {
         TypeArguments,              // type arguments
         TypeOf,                     // typeof expression
         TypeName,                   // declare type
+        Cast,                       // perform type cast
 
         Set,                        // value assignment
         Target,                     // assignment target
@@ -231,6 +232,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::TypeOf, "TypeOf");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeNameClass(
         &kLyricAstNs, LyricAstId::TypeName, "TypeName");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCastClass(
+        &kLyricAstNs, LyricAstId::Cast, "Cast");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
         &kLyricAstNs, LyricAstId::Set, "Set");
@@ -523,6 +526,7 @@ namespace lyric_schema {
         &kLyricAstTypeArgumentsClass,
         &kLyricAstTypeOfClass,
         &kLyricAstTypeNameClass,
+        &kLyricAstCastClass,
 
         &kLyricAstSetClass,
         &kLyricAstTargetClass,

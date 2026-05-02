@@ -420,3 +420,25 @@ lyric_parser::internal::ModuleDerefOps::exitTypeofExpression(ModuleParser::Typeo
     TU_RAISE_IF_NOT_OK (typeofNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(typeofNode));
 }
+
+void
+lyric_parser::internal::ModuleDerefOps::exitCastExpression(ModuleParser::CastExpressionContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *castNode;
+    TU_ASSIGN_OR_RAISE (castNode, state->appendNode(lyric_schema::kLyricAstCastClass, location));
+    TU_RAISE_IF_NOT_OK (castNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (castNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(castNode));
+}

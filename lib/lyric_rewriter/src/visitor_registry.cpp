@@ -173,6 +173,7 @@ make_ast_visitor(
         case lyric_schema::LyricAstId::Rest:
         case lyric_schema::LyricAstId::Raise:
         case lyric_schema::LyricAstId::Return:
+        case lyric_schema::LyricAstId::Cast:
             return std::make_shared<lyric_rewriter::AstUnaryVisitor>(astId, state);
 
         // binary forms

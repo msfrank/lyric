@@ -1483,8 +1483,8 @@ lyric_assembler::BlockHandle::useImpls(
             break;
     }
 
-    absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsBegin;
-    absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd;
+    absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsBegin;
+    absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsEnd;
 
     switch (symbol->getSymbolType()) {
         case SymbolType::CLASS: {
@@ -1529,8 +1529,7 @@ lyric_assembler::BlockHandle::useImpls(
     }
 
     for (auto iterator = implsBegin; iterator != implsEnd; iterator++) {
-        auto *implHandle = iterator->second;
-        auto implType = implHandle->implType()->getTypeDef();
+        auto implType = iterator->first;
         if (!implTypes.empty() && !implTypes.contains(implType))
             continue;
         if (m_impls.contains(implType))

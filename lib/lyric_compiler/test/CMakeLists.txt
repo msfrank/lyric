@@ -7,6 +7,7 @@ include(GoogleTest)
 set(TEST_CASES
     compiler_scan_driver_tests.cpp
     compile_assignment_tests.cpp
+    compile_cast_tests.cpp
     compile_conditional_tests.cpp
     compile_data_deref_tests.cpp
     compile_def_tests.cpp

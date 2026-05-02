@@ -37,6 +37,8 @@
 #include <lyric_schema/ast_schema.h>
 #include <lyric_schema/compiler_schema.h>
 
+#include "lyric_compiler/cast_handler.h"
+
 lyric_compiler::TerminalFormBehavior::TerminalFormBehavior(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
@@ -147,6 +149,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
         case lyric_schema::LyricAstId::TypeOf:
+        case lyric_schema::LyricAstId::Cast:
         case lyric_schema::LyricAstId::Add:
         case lyric_schema::LyricAstId::Sub:
         case lyric_schema::LyricAstId::Mul:
@@ -329,6 +332,14 @@ lyric_compiler::FormChoice::decide(
             auto deref = std::make_unique<SymbolDerefHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(deref));
+            break;
+        }
+
+        // cast expression
+        case lyric_schema::LyricAstId::Cast: {
+            auto handler = std::make_unique<CastHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
             break;
         }
 

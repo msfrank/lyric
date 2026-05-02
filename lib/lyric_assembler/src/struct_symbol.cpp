@@ -127,8 +127,8 @@ lyric_assembler::StructSymbol::load()
                 AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
         TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
-        auto implUrl = it->first.getConcreteUrl();
-        priv->impls[implUrl] = implHandle;
+        auto implType = it->first;
+        priv->impls[implType] = implHandle;
     }
 
     for (auto iterator = m_structImport->sealedTypesBegin(); iterator != m_structImport->sealedTypesEnd(); iterator++) {
@@ -684,28 +684,12 @@ lyric_assembler::StructSymbol::prepareMethod(
 }
 
 bool
-lyric_assembler::StructSymbol::hasImpl(const lyric_common::SymbolUrl &implUrl) const
-{
-    auto *priv = getPriv();
-    return priv->impls.contains(implUrl);
-}
-
-bool
 lyric_assembler::StructSymbol::hasImpl(const lyric_common::TypeDef &implType) const
 {
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         return false;
-    return hasImpl(implType.getConcreteUrl());
-}
-
-lyric_assembler::ImplHandle *
-lyric_assembler::StructSymbol::getImpl(const lyric_common::SymbolUrl &implUrl) const
-{
     auto *priv = getPriv();
-    auto iterator = priv->impls.find(implUrl);
-    if (iterator != priv->impls.cend())
-        return iterator->second;
-    return nullptr;
+    return priv->impls.contains(implType);
 }
 
 lyric_assembler::ImplHandle *
@@ -713,17 +697,21 @@ lyric_assembler::StructSymbol::getImpl(const lyric_common::TypeDef &implType) co
 {
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         return nullptr;
-    return getImpl(implType.getConcreteUrl());
+    auto *priv = getPriv();
+    auto iterator = priv->impls.find(implType);
+    if (iterator != priv->impls.cend())
+        return iterator->second;
+    return nullptr;
 }
 
-absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::ImplHandle *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
 lyric_assembler::StructSymbol::implsBegin() const
 {
     auto *priv = getPriv();
     return priv->impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::ImplHandle *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
 lyric_assembler::StructSymbol::implsEnd() const
 {
     auto *priv = getPriv();
@@ -749,9 +737,8 @@ lyric_assembler::StructSymbol::declareImpl(const lyric_common::TypeDef &implType
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid impl type {}", implType.toString());
-    auto implUrl = implType.getConcreteUrl();
 
-    if (priv->impls.contains(implUrl))
+    if (priv->impls.contains(implType))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl {} already defined for struct {}", implType.toString(), m_structUrl.toString());
 
@@ -776,7 +763,7 @@ lyric_assembler::StructSymbol::declareImpl(const lyric_common::TypeDef &implType
     TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
         name, implTypeHandle, conceptSymbol, m_structUrl, priv->isDeclOnly, priv->structBlock.get()));
 
-    priv->impls[implUrl] = implHandle;
+    priv->impls[implType] = implHandle;
 
     return implHandle;
 }

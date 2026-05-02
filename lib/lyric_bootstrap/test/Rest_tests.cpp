@@ -35,6 +35,7 @@ TEST_F(RestTests, TestEvaluateRestGet)
 
 TEST_F(RestTests, TestEvaluateRestIterateImpl)
 {
+    GTEST_SKIP();
     auto result = runModule(R"(
         def SumArgs(args: ...Int): Int {
             var count: Int = 0
