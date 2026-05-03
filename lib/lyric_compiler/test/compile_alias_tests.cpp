@@ -5,13 +5,13 @@
 
 #include "base_compiler_fixture.h"
 
-class CompileDefalias : public BaseCompilerFixture {};
+class CompileAlias : public BaseCompilerFixture {};
 
-TEST_F(CompileDefalias, EvaluateGlobalAlias)
+TEST_F(CompileAlias, EvaluateGlobalAlias)
 {
     auto result = m_tester->runModule(R"(
         global val Fortytwo: Int = 42
-        defalias Fortytwoalias from Fortytwo
+        alias Fortytwoalias = Fortytwo
         Fortytwoalias
     )");
 
@@ -20,13 +20,13 @@ TEST_F(CompileDefalias, EvaluateGlobalAlias)
             DataCellInt(42))));
 }
 
-TEST_F(CompileDefalias, EvaluateFunctionAlias)
+TEST_F(CompileAlias, EvaluateFunctionAlias)
 {
     auto result = m_tester->runModule(R"(
         def Add10(x: Int): Int {
             x + 10
         }
-        defalias Add10alias from Add10
+        alias Add10alias = Add10
         Add10alias(5)
     )");
 
@@ -35,13 +35,13 @@ TEST_F(CompileDefalias, EvaluateFunctionAlias)
             DataCellInt(15))));
 }
 
-TEST_F(CompileDefalias, EvaluateClassAlias)
+TEST_F(CompileAlias, EvaluateClassAlias)
 {
     auto result = m_tester->runModule(R"(
         defclass Fooclass {
             val Value: Int = 42
         }
-        defalias Fooalias from Fooclass
+        alias Fooalias = Fooclass
         val fooalias: Fooalias = Fooalias{}
         fooalias.Value
     )");
@@ -51,13 +51,13 @@ TEST_F(CompileDefalias, EvaluateClassAlias)
             DataCellInt(42))));
 }
 
-TEST_F(CompileDefalias, EvaluateStructAlias)
+TEST_F(CompileAlias, EvaluateStructAlias)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foostruct {
             val Value: Int = 42
         }
-        defalias Fooalias from Foostruct
+        alias Fooalias = Foostruct
         val fooalias: Fooalias = Fooalias{}
         fooalias.Value
     )");
@@ -67,10 +67,10 @@ TEST_F(CompileDefalias, EvaluateStructAlias)
             DataCellInt(42))));
 }
 
-TEST_F(CompileDefalias, EvaluateUnionAlias)
+TEST_F(CompileAlias, EvaluateUnionAlias)
 {
     auto result = m_tester->runModule(R"(
-        defalias Fooalias from Int | Bool
+        alias Fooalias = Int | Bool
         val fooalias: Fooalias = 42
         fooalias
     )");
@@ -80,7 +80,7 @@ TEST_F(CompileDefalias, EvaluateUnionAlias)
             DataCellInt(42))));
 }
 
-TEST_F(CompileDefalias, EvaluateParameterizedAlias)
+TEST_F(CompileAlias, EvaluateParameterizedAlias)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo[T] {
@@ -89,7 +89,7 @@ TEST_F(CompileDefalias, EvaluateParameterizedAlias)
                 this.Value = value
             }
         }
-        defalias Fooalias from Foo[Int]
+        alias Fooalias = Foo[Int]
         val fooalias: Fooalias = Fooalias{42}
         fooalias.Value
     )");
@@ -99,7 +99,7 @@ TEST_F(CompileDefalias, EvaluateParameterizedAlias)
             DataCellInt(42))));
 }
 
-TEST_F(CompileDefalias, EvaluatePartiallyParameterizedAlias)
+TEST_F(CompileAlias, EvaluatePartiallyParameterizedAlias)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo[T, U] {
@@ -110,7 +110,7 @@ TEST_F(CompileDefalias, EvaluatePartiallyParameterizedAlias)
                 this.UValue = u
             }
         }
-        defalias Fooalias[U] from Foo[Int,U]
+        alias Fooalias[U] = Foo[Int,U]
         val fooalias: Fooalias[Bool] = Fooalias[Bool]{42, true}
         fooalias.UValue
     )");

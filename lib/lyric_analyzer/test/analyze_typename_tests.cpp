@@ -37,7 +37,7 @@ TEST_F(AnalyzeTypename, DeclareAliasWithTypenames)
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         typename Foo
         typename Bar
-        defalias FooOrBar from Foo | Bar
+        alias FooOrBar = Foo | Bar
         var x: FooOrBar | Nil = nil
         defstruct Foo{}
         defstruct Bar{}

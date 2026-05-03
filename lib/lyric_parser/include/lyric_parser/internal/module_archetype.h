@@ -186,7 +186,9 @@ namespace lyric_parser::internal {
         void enterGlobalVar(ModuleParser::GlobalVarContext *ctx) override;
         void exitGlobalVar(ModuleParser::GlobalVarContext *ctx) override;
         void exitGlobalSpec(ModuleParser::GlobalSpecContext *ctx) override;
-        void exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx) override;
+        void exitBindingAliasStatement(ModuleParser::BindingAliasStatementContext *ctx) override;
+        void exitIndexAliasStatement(ModuleParser::IndexAliasStatementContext *ctx) override;
+        void exitKeyAliasStatement(ModuleParser::KeyAliasStatementContext *ctx) override;
 
         // implemented by ModuleDefclassOps
         void enterDefclassStatement(ModuleParser::DefclassStatementContext *ctx) override;

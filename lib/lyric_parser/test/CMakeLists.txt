@@ -6,6 +6,7 @@ include(GoogleTest)
 
 set(TEST_CASES
     load_archetype_tests.cpp
+    parse_alias_tests.cpp
     parse_archetype_tests.cpp
     parse_constant_tests.cpp
     parse_def_tests.cpp

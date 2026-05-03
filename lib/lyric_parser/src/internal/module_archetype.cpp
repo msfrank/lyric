@@ -4,6 +4,9 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
+#include <tempo_tracing/enter_scope.h>
+#include <tempo_tracing/exit_scope.h>
+#include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/log_stream.h>
 
 #include <ModuleParser.h>
@@ -31,9 +34,6 @@
 #include <lyric_parser/internal/module_symbol_ops.h>
 #include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/internal/semantic_exception.h>
-#include <tempo_tracing/enter_scope.h>
-#include <tempo_tracing/exit_scope.h>
-#include <tempo_tracing/tracing_schema.h>
 
 lyric_parser::internal::ModuleArchetype::ModuleArchetype(
     ArchetypeState *state,
@@ -986,10 +986,22 @@ void lyric_parser::internal::ModuleArchetype::exitGlobalSpec(ModuleParser::Globa
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalSpec(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitBindingAliasStatement(ModuleParser::BindingAliasStatementContext *ctx)
 {
     ModuleDefineOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefaliasStatement(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseBindingAliasStatement(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitIndexAliasStatement(ModuleParser::IndexAliasStatementContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIndexAliasStatement(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitKeyAliasStatement(ModuleParser::KeyAliasStatementContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseKeyAliasStatement(ctx));
 }
 
 /*

@@ -29,7 +29,9 @@ namespace lyric_parser::internal {
         void exitGlobalVar(ModuleParser::GlobalVarContext *ctx);
         void exitGlobalSpec(ModuleParser::GlobalSpecContext *ctx);
 
-        void exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx);
+        void parseBindingAliasStatement(ModuleParser::BindingAliasStatementContext *ctx);
+        void parseIndexAliasStatement(ModuleParser::IndexAliasStatementContext *ctx);
+        void parseKeyAliasStatement(ModuleParser::KeyAliasStatementContext *ctx);
     };
 }
 

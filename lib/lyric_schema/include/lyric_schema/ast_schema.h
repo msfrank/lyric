@@ -102,13 +102,13 @@ namespace lyric_schema {
 
         Decl,                       // declare action
         Def,                        // define function or method
-        DefAlias,                   // define alias
         DefClass,                   // define class
         DefConcept,                 // define concept
         DefEnum,                    // define enumeration
         DefInstance,                // define instance
         DefStruct,                  // define struct
         DefStatic,                  // define static
+        Alias,                      // define alias
         Namespace,                  // define namespace
         Protocol,                   // define protocol
 
@@ -152,6 +152,7 @@ namespace lyric_schema {
         IsHidden,
         IsVariable,
         IsAbstract,
+        IsAlias,
         NoOverride,
         ThisBase,
 
@@ -325,8 +326,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Decl, "Decl");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClass(
         &kLyricAstNs, LyricAstId::Def, "Def");
-    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefAliasClass(
-        &kLyricAstNs, LyricAstId::DefAlias, "DefAlias");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClassClass(
         &kLyricAstNs, LyricAstId::DefClass, "DefClass");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefConceptClass(
@@ -339,6 +338,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::DefStruct, "DefStruct");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStaticClass(
         &kLyricAstNs, LyricAstId::DefStatic, "DefStatic");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAliasClass(
+        &kLyricAstNs, LyricAstId::Alias, "Alias");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
         &kLyricAstNs, LyricAstId::Namespace, "Namespace");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstProtocolClass(
@@ -446,6 +447,10 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstIsAbstractProperty(
         &kLyricAstNs, LyricAstId::IsAbstract, "IsAbstract", tempo_schema::PropertyType::kBool);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstIsAliasProperty(
+        &kLyricAstNs, LyricAstId::IsAlias, "IsAlias", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstNoOverrideProperty(
@@ -576,13 +581,13 @@ namespace lyric_schema {
 
         &kLyricAstDeclClass,
         &kLyricAstDefClass,
-        &kLyricAstDefAliasClass,
         &kLyricAstDefClassClass,
         &kLyricAstDefConceptClass,
         &kLyricAstDefEnumClass,
         &kLyricAstDefInstanceClass,
         &kLyricAstDefStructClass,
         &kLyricAstDefStaticClass,
+        &kLyricAstAliasClass,
         &kLyricAstNamespaceClass,
         &kLyricAstProtocolClass,
 
@@ -624,6 +629,7 @@ namespace lyric_schema {
         &kLyricAstIsHiddenProperty,
         &kLyricAstIsVariableProperty,
         &kLyricAstIsAbstractProperty,
+        &kLyricAstIsAliasProperty,
         &kLyricAstNoOverrideProperty,
         &kLyricAstThisBaseProperty,
 

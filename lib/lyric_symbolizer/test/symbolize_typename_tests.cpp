@@ -37,7 +37,7 @@ TEST_F(SymbolizeTypename, DeclareAliasWithTypenames)
     auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
         typename Foo
         typename Bar
-        defalias FooOrBar from Foo | Bar
+        alias FooOrBar = Foo | Bar
         defstruct Foo {}
         defstruct Bar {}
     )");

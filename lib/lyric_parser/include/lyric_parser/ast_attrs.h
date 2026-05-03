@@ -154,6 +154,7 @@ namespace lyric_parser {
     extern const tempo_schema::BoolAttr kLyricAstIsHidden;
     extern const tempo_schema::BoolAttr kLyricAstIsVariable;
     extern const tempo_schema::BoolAttr kLyricAstIsAbstract;
+    extern const tempo_schema::BoolAttr kLyricAstIsAlias;
     extern const tempo_schema::BoolAttr kLyricAstNoOverride;
     extern const tempo_schema::BoolAttr kLyricAstThisBase;
 

@@ -43,18 +43,14 @@ lyric_typing::resolve_template(
         tp.index = i;
 
         // get placeholder name
-        auto status = placeholder.parseAttr(lyric_parser::kLyricAstIdentifier, tp.name);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (placeholder.parseAttr(lyric_parser::kLyricAstIdentifier, tp.name));
         if (usedPlaceholderNames.contains(tp.name))
             return TypingStatus::forCondition(TypingCondition::kTemplateError,
                 "error parsing template; placeholder {} is already declared", tp.name);
 
         // get placeholder variance type
         lyric_parser::VarianceType variance;
-        status = placeholder.parseAttr(lyric_parser::kLyricAstVarianceType, variance);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (placeholder.parseAttr(lyric_parser::kLyricAstVarianceType, variance));
         switch (variance) {
             case lyric_parser::VarianceType::Covariant:
                 tp.variance = lyric_object::VarianceType::Covariant;
@@ -67,6 +63,9 @@ lyric_typing::resolve_template(
                 break;
         }
 
+        // get alias flag
+        TU_RETURN_IF_NOT_OK (placeholder.parseAttr(lyric_parser::kLyricAstIsAlias, tp.isAlias));
+
         // check if placeholder has a constraint
         if (placeholder.numChildren() > 0) {
             auto constraint = placeholder.getChild(0);
@@ -76,9 +75,7 @@ lyric_typing::resolve_template(
 
             // get constraint bound
             lyric_parser::BoundType bound;
-            status = constraint.parseAttr(lyric_parser::kLyricAstBoundType, bound);
-            if (status.notOk())
-                return status;
+            TU_RETURN_IF_NOT_OK (constraint.parseAttr(lyric_parser::kLyricAstBoundType, bound));
             switch (bound) {
                 case lyric_parser::BoundType::Extends:
                     tp.bound = lyric_object::BoundType::Extends;

@@ -8,7 +8,7 @@
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/defalias_handler.h>
+#include <lyric_compiler/alias_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
 #include <lyric_compiler/defenum_handler.h>
@@ -186,7 +186,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
         case lyric_schema::LyricAstId::Def:
-        case lyric_schema::LyricAstId::DefAlias:
+        case lyric_schema::LyricAstId::Alias:
         case lyric_schema::LyricAstId::DefClass:
         case lyric_schema::LyricAstId::DefConcept:
         case lyric_schema::LyricAstId::DefEnum:
@@ -531,8 +531,8 @@ lyric_compiler::FormChoice::decide(
         }
 
         // alias definition form
-        case lyric_schema::LyricAstId::DefAlias: {
-            auto def = std::make_unique<DefAliasHandler>(isSideEffect, block, driver);
+        case lyric_schema::LyricAstId::Alias: {
+            auto def = std::make_unique<AliasHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

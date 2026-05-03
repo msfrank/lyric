@@ -45,13 +45,13 @@ statement           : controlStatement
 definitionStatement : valStatement
                     | varStatement
                     | defStatement
-                    | defaliasStatement
                     | defclassStatement
                     | defconceptStatement
                     | defenumStatement
                     | definstanceStatement
                     | defstaticStatement
                     | defstructStatement
+                    | aliasStatement
                     | namespaceStatement
                     ;
 
@@ -109,9 +109,9 @@ typeArguments       : BracketOpen assignableType ( CommaOperator assignableType 
 
 // placeholder
 
-covariantPlaceholder        : PlusOperator Identifier ;
-contravariantPlaceholder    : MinusOperator Identifier ;
-invariantPlaceholder        : Identifier ;
+covariantPlaceholder        : AliasKeyword? PlusOperator Identifier ;
+contravariantPlaceholder    : AliasKeyword? MinusOperator Identifier ;
+invariantPlaceholder        : AliasKeyword? Identifier ;
 placeholder                 : covariantPlaceholder | contravariantPlaceholder | invariantPlaceholder ;
 placeholderSpec             : BracketOpen placeholder ( CommaOperator placeholder )* BracketClose ;
 
@@ -392,9 +392,18 @@ defstaticStatement  : definitionMacro? GlobalKeyword ( ValKeyword | VarKeyword )
                         symbolIdentifier ColonOperator assignableType AssignOperator initializer ;
 
 
-// defalias statement
+// alias statement
 
-defaliasStatement   : definitionMacro? DefAliasKeyword symbolIdentifier placeholderSpec? FromKeyword assignableType ;
+bindingAlias        : symbolIdentifier placeholderSpec? ;
+indexAlias          : symbolIdentifier UsingKeyword symbolPath BracketOpen DecimalInteger BracketClose ;
+keyAlias            : symbolIdentifier UsingKeyword Identifier InKeyword symbolPath ;
+aliasStatement      : definitionMacro? AliasKeyword bindingAlias
+                        AssignOperator assignableType                                   # bindingAliasStatement
+                    | definitionMacro? AliasKeyword indexAlias
+                        AssignOperator assignableType                                   # indexAliasStatement
+                    | definitionMacro? AliasKeyword keyAlias
+                        AssignOperator assignableType                                   # keyAliasStatement
+                    ;
 
 
 // namespace statement

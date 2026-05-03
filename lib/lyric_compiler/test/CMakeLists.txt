@@ -11,7 +11,7 @@ set(TEST_CASES
     compile_conditional_tests.cpp
     compile_data_deref_tests.cpp
     compile_def_tests.cpp
-    compile_defalias_tests.cpp
+    compile_alias_tests.cpp
     compile_defclass_tests.cpp
     compile_defconcept_tests.cpp
     compile_defenum_tests.cpp

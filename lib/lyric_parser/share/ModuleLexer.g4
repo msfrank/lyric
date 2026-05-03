@@ -137,7 +137,7 @@ DefClassKeyword         : 'defclass' ;
 DefInstanceKeyword      : 'definstance' ;
 DefEnumKeyword          : 'defenum' ;
 DefStructKeyword        : 'defstruct' ;
-DefAliasKeyword         : 'defalias' ;
+AliasKeyword            : 'alias' ;
 NamespaceKeyword        : 'namespace' ;
 WhereKeyword            : 'where' ;
 SealedKeyword           : 'sealed' ;

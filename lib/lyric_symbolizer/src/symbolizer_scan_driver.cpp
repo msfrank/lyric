@@ -35,7 +35,7 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
         case lyric_schema::LyricAstId::Block:
             return pushBlock();
 
-        case lyric_schema::LyricAstId::DefAlias:
+        case lyric_schema::LyricAstId::Alias:
             return declareBinding(node);
         case lyric_schema::LyricAstId::Decl:
             return declareAction(node);

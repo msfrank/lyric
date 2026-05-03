@@ -400,11 +400,12 @@ namespace lyric_object {
      * Describes a template parameter.
      */
     struct TemplateParameter {
-        std::string name = {};                           /**< */
-        int index = -1;                                  /**< */
-        lyric_common::TypeDef typeDef = {};              /**< */
-        VarianceType variance = VarianceType::Invalid;   /**< */
-        BoundType bound = BoundType::Invalid;            /**< */
+        std::string name = {};                              /**< The identifier. */
+        int index = -1;                                     /**< The index of the parameter in the parameters vector. */
+        lyric_common::TypeDef typeDef = {};                 /**< The type used for the type bound, if one was specified. */
+        VarianceType variance = VarianceType::Invalid;      /**< The variance. */
+        BoundType bound = BoundType::Invalid;               /**< The bound. */
+        bool isAlias = false;                               /**< true if the parameter is an alias parameter. */
     };
 
     class LiteralIndex {

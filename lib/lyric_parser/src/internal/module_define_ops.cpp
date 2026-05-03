@@ -365,15 +365,17 @@ lyric_parser::internal::ModuleDefineOps::exitGlobalSpec(ModuleParser::GlobalSpec
 }
 
 void
-lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
+lyric_parser::internal::ModuleDefineOps::parseBindingAliasStatement(ModuleParser::BindingAliasStatementContext *ctx)
 {
-    tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::exitTypenameStatement");
+    tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::parseBindingAliasStatement");
 
     auto *state = getState();
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
+    auto *bindingAlias = ctx->bindingAlias();
+
     // pop the top of the symbol stack and verify that the identifier matches
-    auto id = ctx->symbolIdentifier()->getText();
+    auto id = bindingAlias->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
@@ -385,18 +387,108 @@ lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::Def
     if (hasError())
         return;
 
-    ArchetypeNode *defaliasNode;
-    TU_ASSIGN_OR_RAISE (defaliasNode, state->appendNode(lyric_schema::kLyricAstDefAliasClass, location));
-    TU_RAISE_IF_NOT_OK (state->pushNode(defaliasNode));
+    ArchetypeNode *aliasNode;
+    TU_ASSIGN_OR_RAISE (aliasNode, state->appendNode(lyric_schema::kLyricAstAliasClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(aliasNode));
 
-    TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstIsHidden, isHidden));
-    TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstTypeOffset, typeNode));
 
     // generic information
-    if (ctx->placeholderSpec()) {
-        auto *placeholderSpec = ctx->placeholderSpec();
+    if (bindingAlias->placeholderSpec()) {
+        auto *placeholderSpec = bindingAlias->placeholderSpec();
         auto *genericNode = make_Generic_node(state, placeholderSpec);
-        TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstGenericOffset, genericNode));
+        TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstGenericOffset, genericNode));
     }
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::parseIndexAliasStatement(ModuleParser::IndexAliasStatementContext *ctx)
+{
+    tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::parseIndexAliasStatement");
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    auto *indexAlias = ctx->indexAlias();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = indexAlias->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
+
+    std::vector<std::string> parts;
+    for (size_t i = 0; i < indexAlias->symbolPath()->getRuleIndex(); i++) {
+        if (indexAlias->symbolPath()->Identifier(i) == nullptr)
+            continue;
+        parts.push_back(indexAlias->symbolPath()->Identifier(i)->getText());
+    }
+    lyric_common::SymbolPath symbolPath(parts);
+
+    auto indexLiteral = indexAlias->DecimalInteger()->getText();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *aliasNode;
+    TU_ASSIGN_OR_RAISE (aliasNode, state->appendNode(lyric_schema::kLyricAstAliasClass, location));
+
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstLiteralValue, indexLiteral));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstSymbolPath, symbolPath));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstTypeOffset, typeNode));
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(aliasNode));
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::parseKeyAliasStatement(ModuleParser::KeyAliasStatementContext *ctx)
+{
+    tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::parseIndexAliasStatement");
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    auto *keyAlias = ctx->keyAlias();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = keyAlias->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto isHidden = identifier_is_hidden(id);
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
+
+    std::vector<std::string> parts;
+    for (size_t i = 0; i < keyAlias->symbolPath()->getRuleIndex(); i++) {
+        if (keyAlias->symbolPath()->Identifier(i) == nullptr)
+            continue;
+        parts.push_back(keyAlias->symbolPath()->Identifier(i)->getText());
+    }
+    lyric_common::SymbolPath symbolPath(parts);
+
+    auto keyLiteral = keyAlias->Identifier()->getText();
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *aliasNode;
+    TU_ASSIGN_OR_RAISE (aliasNode, state->appendNode(lyric_schema::kLyricAstAliasClass, location));
+
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstIsHidden, isHidden));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstLiteralValue, keyLiteral));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstSymbolPath, symbolPath));
+    TU_RAISE_IF_NOT_OK (aliasNode->putAttr(kLyricAstTypeOffset, typeNode));
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(aliasNode));
 }

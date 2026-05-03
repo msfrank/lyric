@@ -1,12 +1,12 @@
 
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/alias_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
-#include <lyric_compiler/defalias_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
-lyric_compiler::DefAliasHandler::DefAliasHandler(
+lyric_compiler::AliasHandler::AliasHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
@@ -16,7 +16,7 @@ lyric_compiler::DefAliasHandler::DefAliasHandler(
 {
 }
 
-lyric_compiler::DefAliasHandler::DefAliasHandler(
+lyric_compiler::AliasHandler::AliasHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
@@ -29,30 +29,30 @@ lyric_compiler::DefAliasHandler::DefAliasHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::DefAliasHandler::before(
+lyric_compiler::AliasHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_VV << "before DefAliasHandler@" << this;
+    TU_LOG_VV << "before AliasHandler@" << this;
     return {};
 }
 
 tempo_utils::Status
-lyric_compiler::DefAliasHandler::after(
+lyric_compiler::AliasHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_VV << "after DefAliasHandler@" << this;
+    TU_LOG_VV << "after AliasHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
 
-    if (!node->isClass(lyric_schema::kLyricAstDefAliasClass))
+    if (!node->isClass(lyric_schema::kLyricAstAliasClass))
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "expected DefAlias node");
+            "expected Alias node");
 
     // get binding name
     std::string identifier;

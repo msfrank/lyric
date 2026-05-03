@@ -2,7 +2,7 @@
 #include <lyric_assembler/object_root.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/defalias_handler.h>
+#include <lyric_compiler/alias_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
 #include <lyric_compiler/defenum_handler.h>
@@ -76,8 +76,8 @@ lyric_compiler::EntryHandler::before(
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
-            case lyric_schema::LyricAstId::DefAlias: {
-                auto handler = std::make_unique<DefAliasHandler>(
+            case lyric_schema::LyricAstId::Alias: {
+                auto handler = std::make_unique<AliasHandler>(
                     isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;

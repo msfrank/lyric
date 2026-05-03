@@ -236,16 +236,23 @@ lyric_parser::internal::make_Generic_node(
 
         std::string id;
         VarianceType variance;
+        bool isAlias;
 
         if (p->covariantPlaceholder()) {
-            id = p->covariantPlaceholder()->Identifier()->getText();
             variance = VarianceType::Covariant;
+            auto *placeholder = p->covariantPlaceholder();
+            id = placeholder->Identifier()->getText();
+            isAlias = placeholder->AliasKeyword() != nullptr;
         } else if (p->contravariantPlaceholder()) {
-            id = p->contravariantPlaceholder()->Identifier()->getText();
             variance = VarianceType::Contravariant;
+            auto *placeholder = p->contravariantPlaceholder();
+            id = placeholder->Identifier()->getText();
+            isAlias = placeholder->AliasKeyword() != nullptr;
         } else if (p->invariantPlaceholder()) {
-            id = p->invariantPlaceholder()->Identifier()->getText();
             variance = VarianceType::Invariant;
+            auto *placeholder = p->invariantPlaceholder();
+            id = placeholder->Identifier()->getText();
+            isAlias = placeholder->AliasKeyword() != nullptr;
         } else {
             auto message = fmt::format("illegal placeholder '{}'", p->toString());
             throw SemanticException(p->getStart(), message);
@@ -258,6 +265,7 @@ lyric_parser::internal::make_Generic_node(
         TU_ASSIGN_OR_RAISE (placeholderNode, state->appendNode(lyric_schema::kLyricAstPlaceholderClass, location));
         placeholderNode->putAttr(kLyricAstIdentifier, id);
         placeholderNode->putAttr(kLyricAstVarianceType, variance);
+        placeholderNode->putAttr(kLyricAstIsAlias, isAlias);
         genericNode->appendChild(placeholderNode);
 
         placeholderNodes[id] = placeholderNode;

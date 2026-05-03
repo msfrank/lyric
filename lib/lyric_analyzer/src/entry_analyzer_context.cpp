@@ -38,7 +38,7 @@ lyric_analyzer::EntryAnalyzerContext::enter(
             return m_driver->importSymbols(node, getBlock());
         case lyric_schema::LyricAstId::TypeName:
             return m_driver->declareTypename(node, getBlock());
-        case lyric_schema::LyricAstId::DefAlias:
+        case lyric_schema::LyricAstId::Alias:
             return m_driver->declareBinding(node, getBlock());
         case lyric_schema::LyricAstId::Def:
             return m_driver->pushFunction(node, getBlock());

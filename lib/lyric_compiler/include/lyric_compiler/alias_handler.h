@@ -1,5 +1,5 @@
-#ifndef LYRIC_COMPILER_DEFALIAS_HANDLER_H
-#define LYRIC_COMPILER_DEFALIAS_HANDLER_H
+#ifndef LYRIC_COMPILER_ALIAS_HANDLER_H
+#define LYRIC_COMPILER_ALIAS_HANDLER_H
 
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
@@ -10,10 +10,10 @@
 
 namespace lyric_compiler {
 
-    class DefAliasHandler : public BaseGrouping {
+    class AliasHandler : public BaseGrouping {
     public:
-        DefAliasHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
-        DefAliasHandler(
+        AliasHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        AliasHandler(
             bool isSideEffect,
             lyric_assembler::NamespaceSymbol *currentNamespace,
             lyric_assembler::BlockHandle *block,
@@ -36,4 +36,4 @@ namespace lyric_compiler {
     };
 }
 
-#endif // LYRIC_COMPILER_DEFALIAS_HANDLER_H
+#endif // LYRIC_COMPILER_ALIAS_HANDLER_H
