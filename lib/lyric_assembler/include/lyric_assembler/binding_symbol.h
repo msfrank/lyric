@@ -13,6 +13,7 @@ namespace lyric_assembler {
         TypeHandle *bindingType = nullptr;
         TemplateHandle *bindingTemplate = nullptr;
         TypeHandle *targetType = nullptr;
+        TypeHandle *companionType = nullptr;
         BlockHandle *parentBlock = nullptr;
     };
 
@@ -51,10 +52,13 @@ namespace lyric_assembler {
         TypeHandle *bindingType() const;
         TemplateHandle *bindingTemplate() const;
         TypeHandle *targetType() const;
+        TypeHandle *companionType() const;
 
         AbstractResolver *bindingResolver() const;
 
-        tempo_utils::Status defineTarget(const lyric_common::TypeDef &targetType);
+        tempo_utils::Status finalizeBinding(
+            const lyric_common::TypeDef &targetType,
+            const lyric_common::TypeDef &companionType = {});
 
         tempo_utils::Result<lyric_common::TypeDef> resolveTarget(
             const std::vector<lyric_common::TypeDef> &typeArguments);

@@ -10,6 +10,8 @@
 #include <lyric_typing/type_system.h>
 #include <lyric_typing/unify_assignable.h>
 
+#include "lyric_typing/check_dispatchable.h"
+
 lyric_typing::TypeSystem::TypeSystem(lyric_assembler::ObjectState *state)
     : m_state(state)
 {
@@ -83,9 +85,7 @@ lyric_typing::TypeSystem::isAssignable(
     const lyric_common::TypeDef &toRef,
     const lyric_common::TypeDef &fromRef)
 {
-    lyric_runtime::TypeComparison cmp;
-    TU_ASSIGN_OR_RETURN (cmp, compareAssignable(toRef, fromRef));
-    return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
+    return is_assignable(toRef, fromRef, m_state);
 }
 
 tempo_utils::Result<lyric_typing::TemplateSpec>
@@ -116,4 +116,13 @@ lyric_typing::TypeSystem::isImplementable(
     const lyric_common::TypeDef &fromRef)
 {
     return is_implementable(toConcept, fromRef, m_state);
+}
+
+tempo_utils::Status
+lyric_typing::TypeSystem::checkDispatchable(
+    lyric_assembler::AbstractSymbol *symbol,
+    const lyric_assembler::ParameterPack &parameterPack,
+    const lyric_common::TypeDef &returnType)
+{
+    return check_dispatchable(symbol, parameterPack, returnType, m_state);
 }

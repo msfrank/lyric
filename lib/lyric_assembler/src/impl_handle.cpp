@@ -7,6 +7,8 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+#include "lyric_assembler/action_symbol.h"
+
 lyric_assembler::ImplHandle::ImplHandle(
     const std::string &name,
     TypeHandle *implType,
@@ -116,6 +118,27 @@ lyric_assembler::ImplHandle::getReceiverUrl() const
     return priv->receiverUrl;
 }
 
+tempo_utils::Status
+lyric_assembler::ImplHandle::defineContract(const lyric_common::TypeDef &contractType)
+{
+    auto *priv = getPriv();
+
+    if (isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "can't define impl {} from imported receiver {}",
+            priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
+
+    if (priv->contractType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "impl {} is already defined in receiver {}",
+            priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
+
+    auto *typeCache = m_state->typeCache();
+    TU_ASSIGN_OR_RETURN (priv->contractType, typeCache->getOrMakeType(contractType));
+
+    return {};
+}
+
 bool
 lyric_assembler::ImplHandle::hasExtension(const std::string &name) const
 {
@@ -129,7 +152,7 @@ lyric_assembler::ImplHandle::getExtension(const std::string &name) const
     auto *priv = getPriv();
     auto iterator = priv->extensions.find(name);
     if (iterator == priv->extensions.cend())
-        return Option<lyric_assembler::ExtensionMethod>();
+        return Option<ExtensionMethod>();
     return Option(iterator->second);
 }
 
@@ -172,6 +195,11 @@ lyric_assembler::ImplHandle::defineExtension(
             "extension {} already defined on impl {} in receiver {}",
             name, priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
 
+    if (priv->contractType == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "impl {} is not fully defined in receiver {}",
+            priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
+
     auto actionOption = priv->implConcept->getAction(name);
     if (actionOption.isEmpty())
         return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
@@ -200,8 +228,6 @@ lyric_assembler::ImplHandle::defineExtension(
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
-
-    // TODO: validate that the parameter types and return type match the action
 
     ProcHandle *extensionProc;
     TU_ASSIGN_OR_RETURN (extensionProc, callPtr->defineCall(parameterPack, returnType));

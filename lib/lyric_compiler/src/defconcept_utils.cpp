@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
@@ -66,9 +65,14 @@ lyric_compiler::declare_concept_impl(
     TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(conceptBlock, implSpec));
 
     Impl impl;
+    impl.reifier = lyric_typing::ImplReifier(typeSystem);
+
+    // reify the impl type
+    TU_RETURN_IF_NOT_OK (impl.reifier.initialize(implType));
+    TU_ASSIGN_OR_RETURN (impl.reifiedType, impl.reifier.reifyImplType());
 
     // declare the impl
-    TU_ASSIGN_OR_RETURN (impl.implHandle, conceptSymbol->declareImpl(implType));
+    TU_ASSIGN_OR_RETURN (impl.implHandle, conceptSymbol->declareImpl(impl.reifiedType));
 
     TU_LOG_V << "declared impl " << implType << " for " << conceptSymbol->getSymbolUrl();
 

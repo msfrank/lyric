@@ -172,7 +172,7 @@ lyric_analyzer::AnalyzerScanDriver::declareBinding(
     // define the target type
     lyric_common::TypeDef targetType;
     TU_ASSIGN_OR_RETURN (targetType, m_typeSystem->resolveAssignable(resolver, targetSpec));
-    TU_RETURN_IF_NOT_OK (bindingSymbol->defineTarget(targetType));
+    TU_RETURN_IF_NOT_OK (bindingSymbol->finalizeBinding(targetType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);

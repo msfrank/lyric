@@ -15,10 +15,17 @@
 
 namespace lyric_typing {
 
+    // forward declarations
+    namespace internal {
+        struct DispatchState;
+    }
+
     class CallsiteReifier : public lyric_assembler::AbstractCallsiteReifier {
 
     public:
+        explicit CallsiteReifier(lyric_assembler::ObjectState *state);
         explicit CallsiteReifier(TypeSystem *typeSystem);
+        ~CallsiteReifier();
 
         bool isValid() const;
 
@@ -38,27 +45,14 @@ namespace lyric_typing {
             const lyric_common::TypeDef &returnType) const override;
 
     private:
-        TypeSystem *m_typeSystem;
-
-        lyric_assembler::TemplateHandle *m_invokerTemplate;
+        std::unique_ptr<internal::DispatchState> m_state;
         std::vector<lyric_assembler::Parameter> m_unifiedParameters;
         Option<lyric_assembler::Parameter> m_restParameter;
         std::vector<lyric_common::TypeDef> m_callsiteArguments;
         bool m_initialized;
 
-        std::vector<lyric_common::TypeDef> m_reifiedPlaceholders;
         std::vector<lyric_common::TypeDef> m_argumentTypes;
         lyric_common::TypeDef m_restType;
-
-        tempo_utils::Status checkPlaceholder(
-            const lyric_object::TemplateParameter &tp,
-            const lyric_common::TypeDef &arg) const;
-        tempo_utils::Result<lyric_common::TypeDef> reifySingular(
-            const lyric_common::TypeDef &paramType,
-            const lyric_common::TypeDef &argType);
-        tempo_utils::Result<lyric_common::TypeDef> reifyUnion(
-            const lyric_common::TypeDef &paramType,
-            const lyric_common::TypeDef &argType);
     };
 }
 

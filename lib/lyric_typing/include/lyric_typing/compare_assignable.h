@@ -10,6 +10,11 @@ namespace lyric_typing {
         const lyric_common::TypeDef &fromRef,
         lyric_assembler::ObjectState *state);
 
+    tempo_utils::Result<bool> is_assignable(
+        const lyric_common::TypeDef &toRef,
+        const lyric_common::TypeDef &fromRef,
+        lyric_assembler::ObjectState *state);
+
     tempo_utils::Result<bool> is_implementable(
         const lyric_common::TypeDef &toConcept,
         const lyric_common::TypeDef &fromRef,

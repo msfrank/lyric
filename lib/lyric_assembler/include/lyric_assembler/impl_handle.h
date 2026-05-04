@@ -22,6 +22,7 @@ namespace lyric_assembler {
         ConceptSymbol *implConcept = nullptr;
         lyric_common::SymbolUrl receiverUrl;
         TemplateHandle *receiverTemplate = nullptr;
+        TypeHandle *contractType = nullptr;
         absl::flat_hash_map<std::string, ExtensionMethod> extensions;
         std::unique_ptr<BlockHandle> implBlock;
     };
@@ -58,6 +59,8 @@ namespace lyric_assembler {
         BlockHandle *implBlock() const;
 
         lyric_common::SymbolUrl getReceiverUrl() const;
+
+        tempo_utils::Status defineContract(const lyric_common::TypeDef &contractType);
 
         /*
          * impl extension management

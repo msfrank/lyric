@@ -70,6 +70,11 @@ namespace lyric_typing {
             const lyric_common::TypeDef &toConcept,
             const lyric_common::TypeDef &fromRef);
 
+        tempo_utils::Status checkDispatchable(
+            lyric_assembler::AbstractSymbol *symbol,
+            const lyric_assembler::ParameterPack &parameterPack,
+            const lyric_common::TypeDef &returnType);
+
     private:
         lyric_assembler::ObjectState *m_state;
     };

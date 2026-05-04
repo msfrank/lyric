@@ -100,6 +100,11 @@ lyric_assembler::BindingSymbol::load()
             m_bindingUrl.toString()));
     TU_ASSIGN_OR_RAISE (priv->targetType, typeCache->importType(targetImport));
 
+    // auto companionImport = m_bindingImport->getCompanionType().lock();
+    // if (companionImport != nullptr) {
+    //     TU_ASSIGN_OR_RAISE (priv->companionType, typeCache->importType(companionImport));
+    // }
+
     return priv.release();
 }
 
@@ -167,6 +172,13 @@ lyric_assembler::BindingSymbol::targetType() const
     return priv->targetType;
 }
 
+lyric_assembler::TypeHandle *
+lyric_assembler::BindingSymbol::companionType() const
+{
+    auto *priv = getPriv();
+    return priv->companionType;
+}
+
 lyric_assembler::AbstractResolver *
 lyric_assembler::BindingSymbol::bindingResolver() const
 {
@@ -177,17 +189,25 @@ lyric_assembler::BindingSymbol::bindingResolver() const
 }
 
 tempo_utils::Status
-lyric_assembler::BindingSymbol::defineTarget(const lyric_common::TypeDef &targetType)
+lyric_assembler::BindingSymbol::finalizeBinding(
+    const lyric_common::TypeDef &targetType,
+    const lyric_common::TypeDef &companionType)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "can't define target on imported binding {}", m_bindingUrl.toString());
+            "can't finalize imported binding {}", m_bindingUrl.toString());
     auto *priv = getPriv();
     if (priv->targetType != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "target is already defined");
+            "binding is already defined");
     auto *typeCache = m_state->typeCache();
     TU_ASSIGN_OR_RETURN (priv->targetType, typeCache->getOrMakeType(targetType));
+    if (companionType.isValid()) {
+        if (priv->bindingTemplate != nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "can't define companion on a generic binding");
+        TU_ASSIGN_OR_RETURN (priv->companionType, typeCache->getOrMakeType(companionType));
+    }
     return {};
 }
 

@@ -26,6 +26,7 @@ namespace lyric_analyzer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status declareAlias(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareExtension(const lyric_parser::ArchetypeNode *node);
 
     private:

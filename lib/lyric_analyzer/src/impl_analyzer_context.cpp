@@ -27,12 +27,18 @@ lyric_analyzer::ImplAnalyzerContext::enter(
     const lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
 {
+    auto implType = m_implHandle->implType()->getTypeDef();
+    TU_RETURN_IF_NOT_OK (m_implHandle->defineContract(implType));
+
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::Alias: {
+            break;
+        }
         case lyric_schema::LyricAstId::Def:
             return declareExtension(node);
         default:

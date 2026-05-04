@@ -9,6 +9,8 @@ add_library(lyric::lyric_typing ALIAS lyric_typing)
 set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/callsite_reifier.h
     include/lyric_typing/compare_assignable.h
+    include/lyric_typing/check_dispatchable.h
+    include/lyric_typing/impl_reifier.h
     include/lyric_typing/member_reifier.h
     include/lyric_typing/parse_assignable.h
     include/lyric_typing/parse_pack.h
@@ -26,6 +28,8 @@ set_target_properties(lyric_typing PROPERTIES PUBLIC_HEADER "${LYRIC_TYPING_INCL
 target_sources(lyric_typing PRIVATE
     src/callsite_reifier.cpp
     src/compare_assignable.cpp
+    src/check_dispatchable.cpp
+    src/impl_reifier.cpp
     src/member_reifier.cpp
     src/parse_assignable.cpp
     src/parse_pack.cpp
@@ -38,6 +42,8 @@ target_sources(lyric_typing PRIVATE
     src/typing_types.cpp
     src/unify_assignable.cpp
 
+    include/lyric_typing/internal/check_placeholder.h
+    src/internal/check_placeholder.cpp
     include/lyric_typing/internal/compare_concrete.h
     src/internal/compare_concrete.cpp
     include/lyric_typing/internal/compare_intersection.h
@@ -46,6 +52,8 @@ target_sources(lyric_typing PRIVATE
     src/internal/compare_placeholder.cpp
     include/lyric_typing/internal/compare_union.h
     src/internal/compare_union.cpp
+    include/lyric_typing/internal/reify_dispatch.h
+    src/internal/reify_dispatch.cpp
     )
 
 # set the library version

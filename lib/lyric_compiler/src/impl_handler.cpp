@@ -1,4 +1,8 @@
 
+#include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/alias_utils.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/impl_handler.h>
 #include <lyric_compiler/pack_handler.h>
@@ -25,6 +29,7 @@ lyric_compiler::ImplHandler::before(
 
     auto *block = getBlock();
     auto *driver = getDriver();
+    auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstImplClass))
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
@@ -36,16 +41,26 @@ lyric_compiler::ImplHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
-            case lyric_schema::LyricAstId::Def: {
-                auto def = std::make_unique<ImplDef>(&m_impl, block, driver);
-                ctx.appendGrouping(std::move(def));
+            case lyric_schema::LyricAstId::Alias: {
+                lyric_assembler::BindingSymbol *bindingSymbol;
+                TU_ASSIGN_OR_RETURN (bindingSymbol, declare_alias(child, block, typeSystem));
+                TU_RETURN_IF_NOT_OK (m_impl.reifier.reifyAliasArgument(bindingSymbol));
                 break;
             }
+            case lyric_schema::LyricAstId::Def:
+                break;
             default:
                 return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
+        auto definition = std::make_unique<ImplDefinition>(&m_impl, block, driver);
+        ctx.appendChoice(std::move(definition));
     }
+
+    // after all aliases have been declared we define the contract
+    lyric_common::TypeDef contractType;
+    TU_ASSIGN_OR_RETURN (contractType, m_impl.reifier.reifyContractType());
+    TU_RETURN_IF_NOT_OK (m_impl.implHandle->defineContract(contractType));
 
     return {};
 }
@@ -57,6 +72,43 @@ lyric_compiler::ImplHandler::after(
     AfterContext &ctx)
 {
     return {};
+}
+
+lyric_compiler::ImplDefinition::ImplDefinition(
+    Impl *impl,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_impl(impl)
+{
+    TU_ASSERT (m_impl != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::ImplDefinition::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    DecideContext &ctx)
+{
+    auto *block = getBlock();
+    auto *driver = getDriver();
+
+    lyric_schema::LyricAstId astId;
+    TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
+    switch (astId) {
+        case lyric_schema::LyricAstId::Alias: {
+            // alias was already defined so do nothing
+            return {};
+        }
+        case lyric_schema::LyricAstId::Def: {
+            auto handler = std::make_unique<ImplDef>(m_impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                "unexpected AST node");
+    }
 }
 
 lyric_compiler::ImplDef::ImplDef(
@@ -106,6 +158,18 @@ lyric_compiler::ImplDef::before(
     lyric_common::TypeDef returnType;
     TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(implBlock, returnSpec));
     bool requiresResult = returnType != lyric_common::TypeDef::noReturn();
+
+    // // verify that the extension is dispatchable to the action
+    // auto *symbolCache = driver->getSymbolCache();
+    // auto *conceptSymbol = implHandle->implConcept();
+    // auto actionMethod = conceptSymbol->getAction(identifier);
+    // if (actionMethod.isEmpty())
+    //     return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+    //         "impl defines unknown method '{}' for concept {}",
+    //         identifier, conceptSymbol->getSymbolUrl().toString());
+    // lyric_assembler::ActionSymbol *actionSymbol;
+    // TU_ASSIGN_OR_RETURN (actionSymbol, symbolCache->getOrImportAction(actionMethod.getValue().methodAction));
+    // TU_RETURN_IF_NOT_OK (typeSystem->checkDispatchable(actionSymbol, parameterPack, returnType));
 
     //
     TU_ASSIGN_OR_RETURN (m_procHandle, implHandle->defineExtension(identifier, parameterPack, returnType));

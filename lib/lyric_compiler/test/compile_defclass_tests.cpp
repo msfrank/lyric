@@ -407,3 +407,19 @@ TEST_F(CompileDefclass, EvaluateInvokeGlobalMethod)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
+
+TEST_F(CompileDefclass, EvaluateNewInstanceWithImpl)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            impl Equality[Foo,Foo] {
+                def Equals(lhs: Foo, rhs: Foo): Bool { true }
+            }
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}

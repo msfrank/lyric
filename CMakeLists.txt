@@ -292,7 +292,6 @@ target_link_libraries(lyric_testsuite
       gtest::gtest
     PRIVATE
       LyricAnalyzerTestSuite
-      LyricArchiverTestSuite
       LyricAssemblerTestSuite
       LyricBootstrapTestSuite
       LyricBuildTestSuite

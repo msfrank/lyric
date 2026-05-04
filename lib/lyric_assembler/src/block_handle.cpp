@@ -1155,7 +1155,7 @@ lyric_assembler::BlockHandle::resolveConcept(const lyric_common::TypeDef &concep
     lyric_common::SymbolUrl resolvedUrl;
     TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(conceptUrl.getSymbolPath()));
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(resolvedUrl));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,

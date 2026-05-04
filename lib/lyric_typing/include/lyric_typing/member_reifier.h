@@ -20,6 +20,7 @@ namespace lyric_typing {
     class MemberReifier : public lyric_assembler::AbstractMemberReifier {
 
     public:
+        explicit MemberReifier(lyric_assembler::ObjectState *state);
         explicit MemberReifier(TypeSystem *typeSystem);
 
         bool isValid() const override;
@@ -37,7 +38,7 @@ namespace lyric_typing {
             const lyric_assembler::FieldSymbol *fieldSymbol) override;
 
     private:
-        TypeSystem *m_typeSystem;
+        lyric_assembler::ObjectState *m_state;
 
         lyric_common::SymbolUrl m_templateUrl;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;

@@ -48,6 +48,18 @@ lyric_typing::compare_assignable(
 }
 
 tempo_utils::Result<bool>
+lyric_typing::is_assignable(
+    const lyric_common::TypeDef &toRef,
+    const lyric_common::TypeDef &fromRef,
+    lyric_assembler::ObjectState *state)
+{
+    lyric_runtime::TypeComparison cmp;
+    TU_ASSIGN_OR_RETURN (cmp, compare_assignable(toRef, fromRef, state));
+    return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
+}
+
+
+tempo_utils::Result<bool>
 lyric_typing::is_implementable(
     const lyric_common::TypeDef &toConcept,
     const lyric_common::TypeDef &fromRef,

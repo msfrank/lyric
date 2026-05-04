@@ -278,9 +278,14 @@ lyric_compiler::declare_enum_impl(
     TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(enumBlock, implSpec));
 
     Impl impl;
+    impl.reifier = lyric_typing::ImplReifier(typeSystem);
+
+    // reify the impl type
+    TU_RETURN_IF_NOT_OK (impl.reifier.initialize(implType));
+    TU_ASSIGN_OR_RETURN (impl.reifiedType, impl.reifier.reifyImplType());
 
     // declare the impl
-    TU_ASSIGN_OR_RETURN (impl.implHandle, enumSymbol->declareImpl(implType));
+    TU_ASSIGN_OR_RETURN (impl.implHandle, enumSymbol->declareImpl(impl.reifiedType));
 
     TU_LOG_V << "declared impl " << implType << " for " << enumSymbol->getSymbolUrl();
 

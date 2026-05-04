@@ -2,6 +2,7 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/alias_handler.h>
+#include <lyric_compiler/alias_utils.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
 #include <lyric_parser/ast_attrs.h>
@@ -54,47 +55,7 @@ lyric_compiler::AliasHandler::after(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Alias node");
 
-    // get binding name
-    std::string identifier;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-
-    // get binding access level
-    bool isHidden;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
-
-    // if binding is generic, then compile the template parameter list
-    lyric_typing::TemplateSpec templateSpec;
-    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-        lyric_parser::ArchetypeNode *genericNode;
-        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
-    }
-
-    // parse the target spec
-    lyric_parser::ArchetypeNode *typeNode;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-    lyric_typing::TypeSpec targetSpec;
-    TU_ASSIGN_OR_RETURN (targetSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-
-    // if current namespace is specified then add binding to the current namespace,
-    // otherwise declare binding in current block only
-    if (m_currentNamespace == nullptr) {
-        // declare binding symbol
-        TU_ASSIGN_OR_RETURN (m_bindingSymbol, block->declareBinding(
-            identifier, isHidden, templateSpec.templateParameters));
-    } else {
-        TU_ASSIGN_OR_RETURN (m_bindingSymbol, m_currentNamespace->declareBinding(
-            identifier, isHidden, templateSpec.templateParameters));
-    }
-
-    auto *resolver = m_bindingSymbol->bindingResolver();
-
-    // define the target type
-    lyric_common::TypeDef targetType;
-    TU_ASSIGN_OR_RETURN (targetType, typeSystem->resolveAssignable(resolver, targetSpec));
-
-    // set the binding target
-    TU_RETURN_IF_NOT_OK (m_bindingSymbol->defineTarget(targetType));
+    TU_ASSIGN_OR_RETURN (m_bindingSymbol, declare_alias(node, block, typeSystem));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

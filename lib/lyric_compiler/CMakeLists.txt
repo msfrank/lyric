@@ -8,6 +8,8 @@ add_library(lyric::lyric_compiler ALIAS lyric_compiler)
 
 set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/action_handler.h
+    include/lyric_compiler/alias_handler.h
+    include/lyric_compiler/alias_utils.h
     include/lyric_compiler/assembler_handler.h
     include/lyric_compiler/assignment_handler.h
     include/lyric_compiler/base_choice.h
@@ -26,7 +28,6 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/constructor_handler.h
     include/lyric_compiler/data_deref_handler.h
     include/lyric_compiler/def_handler.h
-    include/lyric_compiler/alias_handler.h
     include/lyric_compiler/defclass_handler.h
     include/lyric_compiler/defclass_utils.h
     include/lyric_compiler/defconcept_handler.h
@@ -76,6 +77,8 @@ set_target_properties(lyric_compiler PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_
 
 target_sources(lyric_compiler PRIVATE
     src/action_handler.cpp
+    src/alias_handler.cpp
+    src/alias_utils.cpp
     src/assembler_handler.cpp
     src/assignment_handler.cpp
     src/base_choice.cpp
@@ -94,7 +97,6 @@ target_sources(lyric_compiler PRIVATE
     src/constructor_handler.cpp
     src/data_deref_handler.cpp
     src/def_handler.cpp
-    src/alias_handler.cpp
     src/defclass_handler.cpp
     src/defclass_utils.cpp
     src/defconcept_handler.cpp

@@ -368,9 +368,14 @@ lyric_compiler::declare_class_impl(
     TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(classBlock, implSpec));
 
     Impl impl;
+    impl.reifier = lyric_typing::ImplReifier(typeSystem);
+
+    // reify the impl type
+    TU_RETURN_IF_NOT_OK (impl.reifier.initialize(implType));
+    TU_ASSIGN_OR_RETURN (impl.reifiedType, impl.reifier.reifyImplType());
 
     // declare the impl
-    TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(implType));
+    TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(impl.reifiedType));
 
     TU_LOG_V << "declared impl " << implType << " for " << classSymbol->getSymbolUrl();
 

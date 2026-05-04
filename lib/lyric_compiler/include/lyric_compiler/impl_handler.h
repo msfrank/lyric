@@ -5,17 +5,18 @@
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/impl_handle.h>
+#include <lyric_typing/impl_reifier.h>
 
 #include "base_choice.h"
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
-#include "member_handler.h"
-#include "method_handler.h"
 
 namespace lyric_compiler {
 
     struct Impl {
+        lyric_common::TypeDef reifiedType;
         lyric_assembler::ImplHandle *implHandle = nullptr;
+        lyric_typing::ImplReifier reifier;
     };
 
     class ImplHandler : public BaseGrouping {
@@ -37,6 +38,19 @@ namespace lyric_compiler {
 
     private:
         Impl m_impl;
+    };
+
+    class ImplDefinition : public BaseChoice {
+    public:
+        ImplDefinition(Impl *impl, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        Impl *m_impl;
     };
 
     class ImplDef : public BaseGrouping {
