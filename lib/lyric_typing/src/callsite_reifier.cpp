@@ -67,9 +67,9 @@ lyric_typing::CallsiteReifier::initialize(
 
     if (invokerTemplate != nullptr) {
         m_state->templateHandle = invokerTemplate;
+        m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
         m_callsiteArguments = callsiteArguments;
 
-        m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
         if (!m_callsiteArguments.empty()) {
             for (int i = 0; i < m_callsiteArguments.size(); i++) {
                 const auto &arg = m_callsiteArguments.at(i);
@@ -116,9 +116,9 @@ lyric_typing::CallsiteReifier::initialize(
 
     if (invokerTemplate != nullptr) {
         m_state->templateHandle = invokerTemplate;
+        m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
         m_callsiteArguments = callsiteArguments;
 
-        m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
         if (!m_callsiteArguments.empty()) {
             for (int i = 0; i < m_callsiteArguments.size(); i++) {
                 const auto &arg = m_callsiteArguments.at(i);

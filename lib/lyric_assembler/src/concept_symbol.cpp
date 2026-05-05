@@ -137,10 +137,7 @@ lyric_assembler::ConceptSymbol::load()
         ActionSymbol *actionSymbol;
         TU_ASSIGN_OR_RAISE (actionSymbol, importCache->importAction(it->second));
         TU_RAISE_IF_NOT_OK (priv->conceptBlock->putBinding(actionSymbol));
-
-        ActionMethod methodBinding;
-        methodBinding.methodAction = it->second;
-        priv->actions[it->first] = methodBinding;
+        priv->actions[it->first] = actionSymbol;
     }
 
     auto *implCache = m_state->implCache();
@@ -352,23 +349,24 @@ lyric_assembler::ConceptSymbol::hasAction(const std::string &name) const
     return priv->actions.contains(name);
 }
 
-Option<lyric_assembler::ActionMethod>
+lyric_assembler::ActionSymbol *
 lyric_assembler::ConceptSymbol::getAction(const std::string &name) const
 {
     auto *priv = getPriv();
-    if (priv->actions.contains(name))
-        return Option<ActionMethod>(priv->actions.at(name));
-    return Option<ActionMethod>();
+    auto entry = priv->actions.find(name);
+    if (entry != priv->actions.cend())
+        return entry->second;
+    return nullptr;
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::ActionMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
 lyric_assembler::ConceptSymbol::actionsBegin() const
 {
     auto *priv = getPriv();
     return priv->actions.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::ActionMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
 lyric_assembler::ConceptSymbol::actionsEnd() const
 {
     auto *priv = getPriv();
@@ -398,17 +396,17 @@ lyric_assembler::ConceptSymbol::declareAction(
             "action {} already defined for concept {}", name, m_conceptUrl.toString());
 
     // build reference path to function
-    auto methodPath = m_conceptUrl.getSymbolPath().getPath();
-    methodPath.push_back(name);
-    auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
+    auto actionPath = m_conceptUrl.getSymbolPath().getPath();
+    actionPath.push_back(name);
+    auto actionUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(actionPath));
 
     // construct action symbol
     std::unique_ptr<ActionSymbol> actionSymbol;
     if (priv->conceptTemplate != nullptr) {
-        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl,
+        actionSymbol = std::make_unique<ActionSymbol>(actionUrl, m_conceptUrl,
             isHidden, priv->conceptTemplate, priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     } else {
-        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl, isHidden,
+        actionSymbol = std::make_unique<ActionSymbol>(actionUrl, m_conceptUrl, isHidden,
             priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     }
 
@@ -416,8 +414,8 @@ lyric_assembler::ConceptSymbol::declareAction(
     TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
     TU_RETURN_IF_NOT_OK (priv->conceptBlock->putBinding(actionPtr));
 
-    // add bound method
-    priv->actions[name] = { methodUrl };
+    // add action
+    priv->actions[name] = actionPtr;
 
     return actionPtr;
 }
@@ -431,16 +429,11 @@ lyric_assembler::ConceptSymbol::prepareAction(
 {
     auto *priv = getPriv();
 
-    if (!priv->actions.contains(name))
+    auto entry = priv->actions.find(name);
+    if (entry == priv->actions.cend())
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingAction,
             "missing action {}", name);
-    const auto &actionMethod = priv->actions.at(name);
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(actionMethod.methodAction));
-    if (symbol->getSymbolType() != SymbolType::ACTION)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid action symbol {}", actionMethod.methodAction.toString());
-    auto *actionSymbol = cast_symbol_to_action(symbol);
+    auto *actionSymbol = entry->second;
 
     auto callable = std::make_unique<ActionCallable>(actionSymbol, this);
     return invoker.initialize(std::move(callable));

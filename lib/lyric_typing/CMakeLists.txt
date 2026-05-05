@@ -12,6 +12,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/check_dispatchable.h
     include/lyric_typing/impl_reifier.h
     include/lyric_typing/member_reifier.h
+    include/lyric_typing/overload_reifier.h
     include/lyric_typing/parse_assignable.h
     include/lyric_typing/parse_pack.h
     include/lyric_typing/resolve_assignable.h
@@ -31,6 +32,7 @@ target_sources(lyric_typing PRIVATE
     src/check_dispatchable.cpp
     src/impl_reifier.cpp
     src/member_reifier.cpp
+    src/overload_reifier.cpp
     src/parse_assignable.cpp
     src/parse_pack.cpp
     src/resolve_assignable.cpp

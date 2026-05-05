@@ -87,10 +87,10 @@ write_concept(
     // serialize array of actions
     std::vector<tu_uint32> actions;
     for (auto iterator = conceptSymbol->actionsBegin(); iterator != conceptSymbol->actionsEnd(); iterator++) {
-        const auto &actionMethod = iterator->second;
+        const auto *actionSymbol = iterator->second;
         tu_uint32 actionIndex;
         TU_ASSIGN_OR_RETURN (actionIndex,
-            writer.getSectionAddress(actionMethod.methodAction, lyric_object::LinkageSection::Action));
+            writer.getSectionAddress(actionSymbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
         actions.push_back(actionIndex);
     }
 

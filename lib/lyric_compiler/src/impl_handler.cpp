@@ -9,14 +9,17 @@
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_typing/overload_reifier.h"
+
 lyric_compiler::ImplHandler::ImplHandler(
     Impl impl,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_impl(impl)
+      m_impl(impl),
+      m_reifier(driver->getState())
 {
-    TU_ASSERT (m_impl.implHandle != nullptr);
+    TU_NOTNULL (m_impl.implHandle);
 }
 
 tempo_utils::Status
@@ -35,6 +38,9 @@ lyric_compiler::ImplHandler::before(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Impl node");
 
+    // reify the impl type
+    TU_RETURN_IF_NOT_OK (m_reifier.initialize(m_impl.implType));
+
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
 
@@ -44,7 +50,7 @@ lyric_compiler::ImplHandler::before(
             case lyric_schema::LyricAstId::Alias: {
                 lyric_assembler::BindingSymbol *bindingSymbol;
                 TU_ASSIGN_OR_RETURN (bindingSymbol, declare_alias(child, block, typeSystem));
-                TU_RETURN_IF_NOT_OK (m_impl.reifier.reifyAliasArgument(bindingSymbol));
+                TU_RETURN_IF_NOT_OK (m_reifier.reifyAliasArgument(bindingSymbol));
                 break;
             }
             case lyric_schema::LyricAstId::Def:
@@ -53,14 +59,17 @@ lyric_compiler::ImplHandler::before(
                 return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
-        auto definition = std::make_unique<ImplDefinition>(&m_impl, block, driver);
+        auto definition = std::make_unique<ImplDefinition>(&m_impl, &m_reifier, block, driver);
         ctx.appendChoice(std::move(definition));
     }
 
     // after all aliases have been declared we define the contract
     lyric_common::TypeDef contractType;
-    TU_ASSIGN_OR_RETURN (contractType, m_impl.reifier.reifyContractType());
+    TU_ASSIGN_OR_RETURN (contractType, m_reifier.reifyContractType());
     TU_RETURN_IF_NOT_OK (m_impl.implHandle->defineContract(contractType));
+
+    m_impl.contractArguments.insert(m_impl.contractArguments.cbegin(),
+        contractType.concreteArgumentsBegin(), contractType.concreteArgumentsEnd());
 
     return {};
 }
@@ -76,12 +85,15 @@ lyric_compiler::ImplHandler::after(
 
 lyric_compiler::ImplDefinition::ImplDefinition(
     Impl *impl,
+    lyric_typing::ImplReifier *reifier,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
-      m_impl(impl)
+      m_impl(impl),
+      m_reifier(reifier)
 {
-    TU_ASSERT (m_impl != nullptr);
+    TU_NOTNULL (m_impl);
+    TU_NOTNULL (m_reifier);
 }
 
 tempo_utils::Status
@@ -159,19 +171,21 @@ lyric_compiler::ImplDef::before(
     TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(implBlock, returnSpec));
     bool requiresResult = returnType != lyric_common::TypeDef::noReturn();
 
-    // // verify that the extension is dispatchable to the action
-    // auto *symbolCache = driver->getSymbolCache();
-    // auto *conceptSymbol = implHandle->implConcept();
-    // auto actionMethod = conceptSymbol->getAction(identifier);
-    // if (actionMethod.isEmpty())
-    //     return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-    //         "impl defines unknown method '{}' for concept {}",
-    //         identifier, conceptSymbol->getSymbolUrl().toString());
-    // lyric_assembler::ActionSymbol *actionSymbol;
-    // TU_ASSIGN_OR_RETURN (actionSymbol, symbolCache->getOrImportAction(actionMethod.getValue().methodAction));
-    // TU_RETURN_IF_NOT_OK (typeSystem->checkDispatchable(actionSymbol, parameterPack, returnType));
+    auto *actionSymbol = implHandle->getAction(identifier);
 
-    //
+    // reify the parameter pack and return type
+    lyric_typing::OverloadReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(actionSymbol, m_impl->contractArguments));
+
+    lyric_assembler::ParameterPack extensionParameters;
+    TU_ASSIGN_OR_RETURN (extensionParameters, reifier.reifyParameters(parameterPack));
+    lyric_common::TypeDef extensionResult;
+    TU_ASSIGN_OR_RETURN (extensionResult, reifier.reifyResult(returnType));
+
+    // verify that extension is compatible with action
+    TU_RETURN_IF_NOT_OK (typeSystem->checkDispatchable(extensionParameters, extensionResult, parameterPack, returnType));
+
+    // define the extension
     TU_ASSIGN_OR_RETURN (m_procHandle, implHandle->defineExtension(identifier, parameterPack, returnType));
 
     auto pack = std::make_unique<ExtensionPack>(block, driver);

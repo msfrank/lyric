@@ -14,9 +14,9 @@
 namespace lyric_compiler {
 
     struct Impl {
-        lyric_common::TypeDef reifiedType;
+        lyric_common::TypeDef implType;
+        std::vector<lyric_common::TypeDef> contractArguments;
         lyric_assembler::ImplHandle *implHandle = nullptr;
-        lyric_typing::ImplReifier reifier;
     };
 
     class ImplHandler : public BaseGrouping {
@@ -38,11 +38,16 @@ namespace lyric_compiler {
 
     private:
         Impl m_impl;
+        lyric_typing::ImplReifier m_reifier;
     };
 
     class ImplDefinition : public BaseChoice {
     public:
-        ImplDefinition(Impl *impl, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        ImplDefinition(
+            Impl *impl,
+            lyric_typing::ImplReifier *reifier,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status decide(
             const lyric_parser::ArchetypeState *state,
@@ -51,6 +56,7 @@ namespace lyric_compiler {
 
     private:
         Impl *m_impl;
+        lyric_typing::ImplReifier *m_reifier;
     };
 
     class ImplDef : public BaseGrouping {

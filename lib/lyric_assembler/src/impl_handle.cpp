@@ -140,6 +140,20 @@ lyric_assembler::ImplHandle::defineContract(const lyric_common::TypeDef &contrac
 }
 
 bool
+lyric_assembler::ImplHandle::hasAction(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->implConcept->hasAction(name);
+}
+
+lyric_assembler::ActionSymbol *
+lyric_assembler::ImplHandle::getAction(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->implConcept->getAction(name);
+}
+
+bool
 lyric_assembler::ImplHandle::hasExtension(const std::string &name) const
 {
     auto *priv = getPriv();
@@ -200,12 +214,12 @@ lyric_assembler::ImplHandle::defineExtension(
             "impl {} is not fully defined in receiver {}",
             priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
 
-    auto actionOption = priv->implConcept->getAction(name);
-    if (actionOption.isEmpty())
+    auto *actionSymbol = priv->implConcept->getAction(name);
+    if (actionSymbol == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "no such action {} for concept {}",
             name, priv->implConcept->getSymbolUrl().toString());
-    auto actionUrl = actionOption.getValue().methodAction;
+    auto actionUrl = actionSymbol->getSymbolUrl();
 
     // build reference path to function
     auto methodPath = priv->receiverUrl.getSymbolPath().getPath();

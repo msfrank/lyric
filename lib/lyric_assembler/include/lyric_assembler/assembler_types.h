@@ -318,12 +318,9 @@ namespace lyric_assembler {
         std::vector<Parameter> listParameters;
         std::vector<Parameter> namedParameters;
         Option<Parameter> restParameter;
-    };
 
-    struct ActionMethod {
-        lyric_common::SymbolUrl methodAction;
-        ActionMethod();
-        ActionMethod(const lyric_common::SymbolUrl &methodAction);
+        std::vector<Parameter> getUnifiedParameters() const;
+        size_t numUnifiedParameters() const;
     };
 
     struct BoundMethod {

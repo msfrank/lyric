@@ -8,9 +8,10 @@
 namespace lyric_typing {
 
     tempo_utils::Status check_dispatchable(
-        lyric_assembler::AbstractSymbol *symbol,
-        const lyric_assembler::ParameterPack &parameterPack,
-        const lyric_common::TypeDef &returnType,
+        const lyric_assembler::ParameterPack &toParameters,
+        const lyric_common::TypeDef &toResult,
+        const lyric_assembler::ParameterPack &fromParameters,
+        const lyric_common::TypeDef &fromResult,
         lyric_assembler::ObjectState *state);
 }
 

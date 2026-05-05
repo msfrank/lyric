@@ -22,7 +22,7 @@ namespace lyric_assembler {
         TypeHandle *conceptType = nullptr;
         TemplateHandle *conceptTemplate = nullptr;
         ConceptSymbol *superConcept = nullptr;
-        absl::flat_hash_map<std::string, ActionMethod> actions;
+        absl::flat_hash_map<std::string, ActionSymbol *> actions;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> conceptBlock;
@@ -95,9 +95,9 @@ namespace lyric_assembler {
          * concept action management
          */
         bool hasAction(const std::string &name) const;
-        Option<ActionMethod> getAction(const std::string &name) const;
-        absl::flat_hash_map<std::string, ActionMethod>::const_iterator actionsBegin() const;
-        absl::flat_hash_map<std::string, ActionMethod>::const_iterator actionsEnd() const;
+        ActionSymbol *getAction(const std::string &name) const;
+        absl::flat_hash_map<std::string, ActionSymbol *>::const_iterator actionsBegin() const;
+        absl::flat_hash_map<std::string, ActionSymbol *>::const_iterator actionsEnd() const;
         tu_uint32 numActions() const;
 
         tempo_utils::Result<ActionSymbol *> declareAction(

@@ -306,15 +306,24 @@ lyric_assembler::DataReference::DataReference(
     TU_ASSERT (typeDef.isValid());
 }
 
-lyric_assembler::ActionMethod::ActionMethod()
-    : methodAction()
+std::vector<lyric_assembler::Parameter>
+lyric_assembler::ParameterPack::getUnifiedParameters() const
 {
+    std::vector<Parameter> unifiedParameters;
+    unifiedParameters.insert(unifiedParameters.cbegin(),
+        listParameters.cbegin(), listParameters.cend());
+    unifiedParameters.insert(unifiedParameters.cend(),
+        namedParameters.cbegin(), namedParameters.cend());
+    if (restParameter.hasValue()) {
+        unifiedParameters.push_back(restParameter.getValue());
+    }
+    return unifiedParameters;
 }
 
-lyric_assembler::ActionMethod::ActionMethod(const lyric_common::SymbolUrl &methodAction)
-    : methodAction(methodAction)
+size_t
+lyric_assembler::ParameterPack::numUnifiedParameters() const
 {
-    TU_ASSERT (methodAction.isValid());
+    return listParameters.size() + namedParameters.size() + (restParameter.hasValue()? 1 : 0);
 }
 
 lyric_assembler::BoundMethod::BoundMethod()

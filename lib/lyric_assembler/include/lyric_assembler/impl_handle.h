@@ -63,6 +63,12 @@ namespace lyric_assembler {
         tempo_utils::Status defineContract(const lyric_common::TypeDef &contractType);
 
         /*
+         * access to concept actions
+         */
+        bool hasAction(const std::string &name) const;
+        ActionSymbol *getAction(const std::string &name) const;
+
+        /*
          * impl extension management
          */
         bool hasExtension(const std::string &name) const;

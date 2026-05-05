@@ -281,21 +281,15 @@ lyric_compiler::declare_instance_impl(
     lyric_typing::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, typeNode->getArchetypeNode()));
 
-    // resolve the impl type
-    lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(instanceBlock, implSpec));
-
     Impl impl;
-    impl.reifier = lyric_typing::ImplReifier(typeSystem);
 
-    // reify the impl type
-    TU_RETURN_IF_NOT_OK (impl.reifier.initialize(implType));
-    TU_ASSIGN_OR_RETURN (impl.reifiedType, impl.reifier.reifyImplType());
+    // resolve the impl type
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(instanceBlock, implSpec));
 
     // declare the impl
-    TU_ASSIGN_OR_RETURN (impl.implHandle, instanceSymbol->declareImpl(impl.reifiedType));
+    TU_ASSIGN_OR_RETURN (impl.implHandle, instanceSymbol->declareImpl(impl.implType));
 
-    TU_LOG_V << "declared impl " << implType << " for " << instanceSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << impl.implType << " for " << instanceSymbol->getSymbolUrl();
 
     return impl;
 }
