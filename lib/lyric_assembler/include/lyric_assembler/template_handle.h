@@ -39,7 +39,6 @@ namespace lyric_assembler {
 
         lyric_common::SymbolUrl getTemplateUrl() const;
         TemplateHandle *superTemplate() const;
-        //TemplateAddress getAddress() const;
 
         bool hasTemplateParameter(const std::string &name) const;
         lyric_object::TemplateParameter getTemplateParameter(const std::string &name) const;

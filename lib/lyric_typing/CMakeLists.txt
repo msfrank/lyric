@@ -15,6 +15,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/overload_reifier.h
     include/lyric_typing/parse_assignable.h
     include/lyric_typing/parse_pack.h
+    include/lyric_typing/resolve_alias.h
     include/lyric_typing/resolve_assignable.h
     include/lyric_typing/resolve_pack.h
     include/lyric_typing/resolve_template.h
@@ -35,6 +36,7 @@ target_sources(lyric_typing PRIVATE
     src/overload_reifier.cpp
     src/parse_assignable.cpp
     src/parse_pack.cpp
+    src/resolve_alias.cpp
     src/resolve_assignable.cpp
     src/resolve_pack.cpp
     src/resolve_template.cpp

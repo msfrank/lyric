@@ -23,7 +23,7 @@ namespace lyric_typing {
         explicit MemberReifier(lyric_assembler::ObjectState *state);
         explicit MemberReifier(TypeSystem *typeSystem);
 
-        bool isValid() const override;
+        bool isValid() const;
 
         tempo_utils::Status initialize(
             const lyric_common::TypeDef &receiverType,

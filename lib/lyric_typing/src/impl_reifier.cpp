@@ -35,7 +35,7 @@ lyric_typing::ImplReifier::isValid() const
 }
 
 tempo_utils::Status
-lyric_typing::ImplReifier::initialize(const lyric_assembler::ConceptSymbol *conceptSymbol)
+lyric_typing::ImplReifier::initialize(lyric_assembler::ConceptSymbol *conceptSymbol)
 {
     TU_NOTNULL (conceptSymbol);
 
@@ -43,7 +43,7 @@ lyric_typing::ImplReifier::initialize(const lyric_assembler::ConceptSymbol *conc
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
             "member reifier is already initialized");
 
-    m_conceptUrl = conceptSymbol->getSymbolUrl();
+    m_concept = conceptSymbol;
 
     auto *templateHandle = conceptSymbol->conceptTemplate();
     if (templateHandle != nullptr) {
@@ -112,16 +112,6 @@ lyric_typing::ImplReifier::reifyNextImplArgument(const lyric_common::TypeDef &ar
     return {};
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_typing::ImplReifier::reifyImplType() const
-{
-    if (m_implTemplateParametersIndex.size() != m_implArgumentTypes.size())
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "wrong number of impl type arguments; expected {} but found {}",
-            m_implTemplateParametersIndex.size(), m_implArgumentTypes.size());
-    return lyric_common::TypeDef::forConcrete(m_conceptUrl, m_implArgumentTypes);
-}
-
 tempo_utils::Status
 lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymbol *bindingSymbol)
 {
@@ -139,7 +129,7 @@ lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymb
 
     // we ignore alias if its companion type does not match the concept
     auto templateUrl = companionType.getPlaceholderTemplateUrl();
-    if (templateUrl != m_conceptUrl)
+    if (templateUrl != m_concept->getSymbolUrl())
         return {};
 
     auto index = companionType.getPlaceholderIndex();
@@ -163,14 +153,29 @@ lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymb
     return {};
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_typing::ImplReifier::reifyContractType() const
+tempo_utils::Result<lyric_assembler::TypeContract>
+lyric_typing::ImplReifier::reifyContract() const
 {
-    if (m_contractArgumentTypes.size() != m_templateParameters.size())
+    if (m_implTemplateParametersIndex.size() != m_implArgumentTypes.size())
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
             "wrong number of impl type arguments; expected {} but found {}",
+            m_implTemplateParametersIndex.size(), m_implArgumentTypes.size());
+
+    if (m_contractArgumentTypes.size() != m_templateParameters.size())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "wrong number of contract arguments; expected {} but found {}",
             m_templateParameters.size(), m_contractArgumentTypes.size());
-    return lyric_common::TypeDef::forConcrete(m_conceptUrl, m_contractArgumentTypes);
+
+    auto conceptUrl = m_concept->getSymbolUrl();
+
+    lyric_common::TypeDef consumerType;
+    TU_ASSIGN_OR_RETURN (consumerType, lyric_common::TypeDef::forConcrete(conceptUrl, m_implArgumentTypes));
+
+    lyric_common::TypeDef implementationType;
+    TU_ASSIGN_OR_RETURN (implementationType, lyric_common::TypeDef::forConcrete(conceptUrl, m_contractArgumentTypes));
+
+    return lyric_assembler::TypeContract(
+        consumerType, implementationType, m_concept, m_concept->conceptTemplate());
 }
 
 tempo_utils::Status

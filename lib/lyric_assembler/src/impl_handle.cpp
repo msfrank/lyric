@@ -11,8 +11,7 @@
 
 lyric_assembler::ImplHandle::ImplHandle(
     const std::string &name,
-    TypeHandle *implType,
-    ConceptSymbol *implConcept,
+    const lyric_common::TypeDef &consumerType,
     const lyric_common::SymbolUrl &receiverUrl,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -23,25 +22,20 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
+    priv->ref = {receiverUrl, consumerType};
     priv->name = name;
     priv->isDeclOnly = isDeclOnly;
-    priv->implType = implType;
-    priv->implConcept = implConcept;
     priv->receiverUrl = receiverUrl;
     priv->implBlock =std::make_unique<BlockHandle>(receiverUrl, parentBlock);
 
     TU_ASSERT (!priv->name.empty());
-    TU_ASSERT (priv->implType != nullptr);
-    TU_ASSERT (priv->implConcept != nullptr);
+    TU_ASSERT (priv->ref.implType.isValid());
     TU_ASSERT (priv->receiverUrl.isValid());
-
-    priv->ref = { priv->receiverUrl, priv->implType->getTypeDef() };
 }
 
 lyric_assembler::ImplHandle::ImplHandle(
     const std::string &name,
-    TypeHandle *implType,
-    ConceptSymbol *implConcept,
+    const lyric_common::TypeDef &consumerType,
     const lyric_common::SymbolUrl &receiverUrl,
     TemplateHandle *receiverTemplate,
     bool isDeclOnly,
@@ -49,8 +43,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     ObjectState *state)
     : ImplHandle(
         name,
-        implType,
-        implConcept,
+        consumerType,
         receiverUrl,
         isDeclOnly,
         parentBlock,
@@ -119,24 +112,54 @@ lyric_assembler::ImplHandle::getReceiverUrl() const
 }
 
 tempo_utils::Status
-lyric_assembler::ImplHandle::defineContract(const lyric_common::TypeDef &contractType)
+lyric_assembler::ImplHandle::finalizeContract(const TypeContract &typeContract)
 {
     auto *priv = getPriv();
 
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't define impl {} from imported receiver {}",
-            priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
+            priv->ref.implType.toString(), priv->receiverUrl.toString());
 
-    if (priv->contractType != nullptr)
+    if (priv->implContract.isValid())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "impl {} is already defined in receiver {}",
-            priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
+            priv->ref.implType.toString(), priv->receiverUrl.toString());
+
+    if (!typeContract.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid type contract");
+
+    if (typeContract.getConsumerType() != priv->ref.implType)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "impl {} does not fulfill contract {}",
+            priv->ref.implType.toString(), typeContract.getImplementationType().toString());
 
     auto *typeCache = m_state->typeCache();
-    TU_ASSIGN_OR_RETURN (priv->contractType, typeCache->getOrMakeType(contractType));
+
+    // verify the provider symbol is a concept
+    auto *providerSymbol = typeContract.getProviderSymbol();
+    TU_NOTNULL (providerSymbol);
+    if (providerSymbol->getSymbolType() != SymbolType::CONCEPT)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid provider {} for impl {}",
+            providerSymbol->getSymbolUrl().toString(), typeContract.getConsumerType().toString());
+
+    // create the impl type
+    auto implementationType = typeContract.getImplementationType();
+    TU_ASSIGN_OR_RETURN (priv->implType, typeCache->getOrMakeType(implementationType));
+
+    priv->implConcept = cast_symbol_to_concept(providerSymbol);
+    priv->implContract = typeContract;
 
     return {};
+}
+
+lyric_assembler::TypeContract
+lyric_assembler::ImplHandle::getContract() const
+{
+    auto *priv = getPriv();
+    return priv->implContract;
 }
 
 bool
@@ -209,7 +232,7 @@ lyric_assembler::ImplHandle::defineExtension(
             "extension {} already defined on impl {} in receiver {}",
             name, priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
 
-    if (priv->contractType == nullptr)
+    if (!priv->implContract.isValid())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "impl {} is not fully defined in receiver {}",
             priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
@@ -329,12 +352,15 @@ lyric_assembler::ImplHandle::load()
             AssemblerStatus::forCondition(AssemblerCondition::kImportError,
             "cannot import impl at index {}; missing type",
             m_implImport->getImplOffset()));
-    TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(typeImport));
 
+    TypeHandle *implementationType;
+    TU_ASSIGN_OR_RAISE (implementationType, typeCache->importType(typeImport));
     TU_ASSIGN_OR_RAISE (priv->implConcept, importCache->importConcept(m_implImport->getImplConcept()));
+    TU_ASSIGN_OR_RAISE (priv->implContract, TypeContract::load(priv->implConcept, implementationType));
+
     priv->receiverUrl = m_implImport->getReceiverUrl();
 
-    priv->ref = { priv->receiverUrl, priv->implType->getTypeDef() };
+    priv->ref = { priv->receiverUrl, priv->implContract.getConsumerType() };
 
     for (auto iterator = m_implImport->extensionsBegin(); iterator != m_implImport->extensionsEnd(); iterator++) {
         auto &extension = iterator->second;

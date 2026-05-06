@@ -209,7 +209,7 @@ BuilderState::addTemplate(
         Template->types[p.name] = PlaceholderType;
         uint8_t nameOffset = Template->names.size();
         Template->names.push_back(p.name);
-        Template->placeholders.push_back({p.variance, nameOffset});
+        Template->placeholders.push_back({p.variance, nameOffset, p.isAlias});
         placeholdersIndex[p.name] = i;
     }
 

@@ -121,6 +121,7 @@ enum PlaceholderVariance : uint8 {
 struct Placeholder {
     placeholder_variance: PlaceholderVariance;  // type of variance
     name_offset: uint8;                         // offset of the placeholder name in the names array
+    is_alias: bool;                             // if true, placeholder is resolved via alias
 }
 
 enum ConstraintBound : uint8 {

@@ -34,6 +34,7 @@ namespace lyric_common {
         TypeDefType getType() const;
 
         SymbolUrl getConcreteUrl() const;
+        TypeDef getConcreteArgument(int index) const;
         std::span<const TypeDef> getConcreteArguments() const;
         std::vector<TypeDef>::const_iterator concreteArgumentsBegin() const;
         std::vector<TypeDef>::const_iterator concreteArgumentsEnd() const;

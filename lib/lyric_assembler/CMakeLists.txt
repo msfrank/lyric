@@ -68,6 +68,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/synthetic_symbol.h
     include/lyric_assembler/template_handle.h
     include/lyric_assembler/type_cache.h
+    include/lyric_assembler/type_contract.h
     include/lyric_assembler/type_handle.h
     include/lyric_assembler/typename_symbol.h
     include/lyric_assembler/type_set.h
@@ -127,6 +128,7 @@ target_sources(lyric_assembler PRIVATE
     src/synthetic_symbol.cpp
     src/template_handle.cpp
     src/type_cache.cpp
+    src/type_contract.cpp
     src/type_handle.cpp
     src/typename_symbol.cpp
     src/type_set.cpp

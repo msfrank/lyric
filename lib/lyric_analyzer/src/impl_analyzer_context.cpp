@@ -4,6 +4,7 @@
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
+#include <lyric_typing/impl_reifier.h>
 
 lyric_analyzer::ImplAnalyzerContext::ImplAnalyzerContext(
     AnalyzerScanDriver *driver,
@@ -27,8 +28,13 @@ lyric_analyzer::ImplAnalyzerContext::enter(
     const lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
 {
-    auto implType = m_implHandle->implType()->getTypeDef();
-    TU_RETURN_IF_NOT_OK (m_implHandle->defineContract(implType));
+    auto implType = m_implHandle->getRef().implType;
+
+    lyric_typing::ImplReifier reifier(m_driver->getTypeSystem());
+    TU_RETURN_IF_NOT_OK (reifier.initialize(implType));
+    lyric_assembler::TypeContract typeContract;
+    TU_ASSIGN_OR_RETURN (typeContract, reifier.reifyContract());
+    TU_RETURN_IF_NOT_OK (m_implHandle->finalizeContract(typeContract));
 
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};

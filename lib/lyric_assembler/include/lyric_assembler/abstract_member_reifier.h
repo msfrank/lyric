@@ -18,8 +18,6 @@ namespace lyric_assembler {
     public:
         virtual ~AbstractMemberReifier() = default;
 
-        virtual bool isValid() const = 0;
-
         virtual tempo_utils::Result<DataReference> reifyMember(
             const std::string &name,
             const FieldSymbol *fieldSymbol) = 0;

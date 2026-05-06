@@ -191,6 +191,16 @@ lyric_common::TypeDef::getConcreteUrl() const
     return {};
 }
 
+lyric_common::TypeDef
+lyric_common::TypeDef::getConcreteArgument(int index) const
+{
+    if (m_priv->type != TypeDefType::Concrete)
+        return {};
+    if (0 <= index && index < m_priv->parameters->size())
+        return m_priv->parameters->at(index);
+    return {};
+}
+
 std::span<const lyric_common::TypeDef>
 lyric_common::TypeDef::getConcreteArguments() const
 {

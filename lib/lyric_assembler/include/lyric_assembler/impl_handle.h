@@ -5,11 +5,11 @@
 
 #include <lyric_importer/impl_import.h>
 
-#include "abstract_callable.h"
 #include "assembler_types.h"
 #include "object_state.h"
 #include "base_handle.h"
 #include "block_handle.h"
+#include "type_contract.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -20,9 +20,9 @@ namespace lyric_assembler {
         bool isDeclOnly = false;
         TypeHandle *implType = nullptr;
         ConceptSymbol *implConcept = nullptr;
+        TypeContract implContract;
         lyric_common::SymbolUrl receiverUrl;
         TemplateHandle *receiverTemplate = nullptr;
-        TypeHandle *contractType = nullptr;
         absl::flat_hash_map<std::string, ExtensionMethod> extensions;
         std::unique_ptr<BlockHandle> implBlock;
     };
@@ -31,16 +31,14 @@ namespace lyric_assembler {
     public:
         ImplHandle(
             const std::string &name,
-            TypeHandle *implType,
-            ConceptSymbol *implConcept,
+            const lyric_common::TypeDef &consumerType,
             const lyric_common::SymbolUrl &receiverUrl,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
         ImplHandle(
             const std::string &name,
-            TypeHandle *implType,
-            ConceptSymbol *implConcept,
+            const lyric_common::TypeDef &consumerType,
             const lyric_common::SymbolUrl &receiverUrl,
             TemplateHandle *receiverTemplate,
             bool isDeclOnly,
@@ -60,7 +58,11 @@ namespace lyric_assembler {
 
         lyric_common::SymbolUrl getReceiverUrl() const;
 
-        tempo_utils::Status defineContract(const lyric_common::TypeDef &contractType);
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeContract(const TypeContract &typeContract);
+        TypeContract getContract() const;
 
         /*
          * access to concept actions

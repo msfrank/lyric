@@ -84,6 +84,18 @@ lyric_object::TemplateParameterWalker::getPlaceholderVariance() const
     }
 }
 
+bool
+lyric_object::TemplateParameterWalker::isAlias() const
+{
+    if (!isValid())
+        return false;
+    auto *templateDescriptor = static_cast<const lyo1::TemplateDescriptor *>(m_templateDescriptor);
+    if (!templateDescriptor->placeholders())
+        return false;
+    auto *placeholder = templateDescriptor->placeholders()->Get(m_placeholderOffset);
+    return placeholder->is_alias();
+}
+
 inline const lyo1::Constraint *
 get_constraint(const lyo1::TemplateDescriptor *templateDescriptor, tu_uint8 placeholderOffset) {
     if (!templateDescriptor->constraints())
@@ -99,7 +111,7 @@ bool
 lyric_object::TemplateParameterWalker::hasConstraint() const
 {
     if (!isValid())
-        return {};
+        return false;
     auto *templateDescriptor = static_cast<const lyo1::TemplateDescriptor *>(m_templateDescriptor);
     return get_constraint(templateDescriptor, m_placeholderOffset) != nullptr;
 }

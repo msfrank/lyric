@@ -21,31 +21,29 @@ lyric_assembler::ImplCache::~ImplCache()
 
 tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ImplCache::makeImpl(
-    const std::string &name,
-    TypeHandle *implType,
-    ConceptSymbol *implConcept,
+    const lyric_common::TypeDef &consumerType,
     const lyric_common::SymbolUrl &receiverUrl,
     bool isDeclOnly,
     BlockHandle *parentBlock)
 {
-    auto *implHandle = new ImplHandle(name, implType, implConcept, receiverUrl,
-        isDeclOnly, parentBlock, m_objectState);
+    auto name = absl::StrCat("$impl", m_declaredImpls.size());
+    auto *implHandle = new ImplHandle(name, consumerType, receiverUrl, isDeclOnly,
+        parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }
 
 tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ImplCache::makeImpl(
-    const std::string &name,
-    TypeHandle *implType,
-    ConceptSymbol *implConcept,
+    const lyric_common::TypeDef &consumerType,
     const lyric_common::SymbolUrl &receiverUrl,
     TemplateHandle *receiverTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock)
 {
-    auto *implHandle = new ImplHandle(name, implType, implConcept, receiverUrl,
-        receiverTemplate, isDeclOnly, parentBlock, m_objectState);
+    auto name = absl::StrCat("$impl", m_declaredImpls.size());
+    auto *implHandle = new ImplHandle(name, consumerType, receiverUrl, receiverTemplate, isDeclOnly,
+        parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }
@@ -78,15 +76,15 @@ lyric_assembler::ImplCache::numImpls() const
 }
 
 bool
-lyric_assembler::ImplCache::hasEnvImpl(const lyric_common::TypeDef &type) const
+lyric_assembler::ImplCache::hasEnvImpl(const lyric_common::TypeDef &consumerType) const
 {
-    return m_envImpls.contains(type);
+    return m_envImpls.contains(consumerType);
 }
 
 lyric_common::SymbolUrl
-lyric_assembler::ImplCache::getEnvImpl(const lyric_common::TypeDef &type) const
+lyric_assembler::ImplCache::getEnvImpl(const lyric_common::TypeDef &consumerType) const
 {
-    auto iterator = m_envImpls.find(type);
+    auto iterator = m_envImpls.find(consumerType);
     if (iterator == m_envImpls.cend())
         return {};
     return iterator->second;
@@ -94,13 +92,13 @@ lyric_assembler::ImplCache::getEnvImpl(const lyric_common::TypeDef &type) const
 
 tempo_utils::Status
 lyric_assembler::ImplCache::insertEnvImpl(
-    const lyric_common::TypeDef &type,
+    const lyric_common::TypeDef &consumerType,
     const lyric_common::SymbolUrl &url)
 {
-    auto iterator = m_envImpls.find(type);
+    auto iterator = m_envImpls.find(consumerType);
     if (iterator != m_envImpls.cend())
         return AssemblerStatus::forCondition(AssemblerCondition::kImplConflict,
-            "env impl {} is already set", type.toString());
-    m_envImpls[type] = url;
+            "env impl {} is already set", consumerType.toString());
+    m_envImpls[consumerType] = url;
     return {};
 }

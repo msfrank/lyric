@@ -499,33 +499,15 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implTyp
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl {} already defined for concept {}", implType.toString(), m_conceptUrl.toString());
 
-    auto *symbolCache = m_state->symbolCache();
-    auto *typeCache = m_state->typeCache();
-
-    // resolve the concept symbol
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(implConcept));
-    if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid concept symbol {}", implConcept.toString());
-    auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-    // touch the impl type
-    TypeHandle *implTypeHandle;
-    TU_ASSIGN_OR_RETURN (implTypeHandle, typeCache->getOrMakeType(implType));
-
     auto *implCache = m_state->implCache();
-
-    auto name = absl::StrCat("$impl", priv->impls.size());
 
     ImplHandle *implHandle;
     if (priv->conceptTemplate != nullptr) {
-        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptTemplate, priv->isDeclOnly,
-            priv->conceptBlock.get()));
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(implType, m_conceptUrl,
+            priv->conceptTemplate, priv->isDeclOnly, priv->conceptBlock.get()));
     } else {
-        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->isDeclOnly, priv->conceptBlock.get()));
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(implType, m_conceptUrl,
+            priv->isDeclOnly, priv->conceptBlock.get()));
     }
 
     priv->impls[implType] = implHandle;

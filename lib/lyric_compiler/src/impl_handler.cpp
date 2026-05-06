@@ -63,13 +63,10 @@ lyric_compiler::ImplHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
-    // after all aliases have been declared we define the contract
-    lyric_common::TypeDef contractType;
-    TU_ASSIGN_OR_RETURN (contractType, m_reifier.reifyContractType());
-    TU_RETURN_IF_NOT_OK (m_impl.implHandle->defineContract(contractType));
-
-    m_impl.contractArguments.insert(m_impl.contractArguments.cbegin(),
-        contractType.concreteArgumentsBegin(), contractType.concreteArgumentsEnd());
+    // after all aliases have been declared we can finalize the contract
+    lyric_assembler::TypeContract contract;
+    TU_ASSIGN_OR_RETURN (contract, m_reifier.reifyContract());
+    TU_RETURN_IF_NOT_OK (m_impl.implHandle->finalizeContract(contract));
 
     return {};
 }

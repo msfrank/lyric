@@ -28,8 +28,6 @@
 #include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/log_stream.h>
 
-#include "lyric_parser/parser_types.h"
-
 /**
  * Allocate a new BlockHandle for the prelude block.
  */

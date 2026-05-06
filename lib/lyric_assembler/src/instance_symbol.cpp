@@ -714,26 +714,11 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_common::TypeDef &implTy
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl for concept {} already defined for instance {}", implType.toString(), m_instanceUrl.toString());
 
-    // touch the impl type
-    TypeHandle *implTypeHandle;
-    TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-    auto implConcept = implType.getConcreteUrl();
-
-    // resolve the concept symbol
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
-    if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid concept symbol {}", implConcept.toString());
-    auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
     auto *implCache = m_state->implCache();
 
-    auto name = absl::StrCat("$impl", priv->impls.size());
-
     ImplHandle *implHandle;
-    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-        name, implTypeHandle, conceptSymbol, m_instanceUrl, priv->isDeclOnly, priv->instanceBlock.get()));
+    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(implType, m_instanceUrl,
+        priv->isDeclOnly, priv->instanceBlock.get()));
 
     priv->impls[implType] = implHandle;
 

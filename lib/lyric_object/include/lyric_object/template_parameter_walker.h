@@ -17,6 +17,7 @@ namespace lyric_object {
 
         std::string getPlaceholderName() const;
         VarianceType getPlaceholderVariance() const;
+        bool isAlias() const;
 
         bool hasConstraint() const;
         TypeWalker getConstraintType() const;

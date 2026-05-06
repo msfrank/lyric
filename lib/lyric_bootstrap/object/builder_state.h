@@ -39,7 +39,8 @@ struct CoreTemplate {
 
 struct CorePlaceholder {
     std::string name;
-    lyo1::PlaceholderVariance variance;
+    lyo1::PlaceholderVariance variance = lyo1::PlaceholderVariance::Invariant;
+    bool isAlias = false;
 };
 
 struct CoreConstraint {

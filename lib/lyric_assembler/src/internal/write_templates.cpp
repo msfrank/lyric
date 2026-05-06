@@ -115,7 +115,7 @@ write_template(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid placeholder variance");
         }
-        placeholders.emplace_back(variance, name_offset);
+        placeholders.emplace_back(variance, name_offset, tp.isAlias);
 
         lyo1::ConstraintBound bound;
         switch (tp.bound) {
