@@ -53,8 +53,6 @@ namespace lyric_assembler {
         std::vector<lyric_common::TypeDef> getPlaceholders() const;
         int numPlaceholders() const;
 
-        void touch();
-
     private:
         lyric_common::SymbolUrl m_templateUrl;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;

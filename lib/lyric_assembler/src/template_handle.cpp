@@ -1,7 +1,7 @@
 
 #include <absl/strings/str_join.h>
 
-#include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -108,24 +108,64 @@ lyric_assembler::TemplateHandle::resolveSingular(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid type path {}", typePath.toString());
 
-    lyric_common::TypeDef assignableType;
+    lyric_common::TypeDef typeDef;
 
     // if type path is possibly a placeholder, then try to resolve the placeholder type
     if (!typePath.isEnclosed()) {
-        assignableType = resolvePlaceholder(typePath.getName(), typeArguments);
+        typeDef = resolvePlaceholder(typePath.getName(), typeArguments);
     }
 
     // otherwise if type path is not a placeholder, then resolve the concrete type
-    if (!assignableType.isValid()) {
+    if (!typeDef.isValid()) {
         lyric_common::SymbolUrl concreteUrl;
         TU_ASSIGN_OR_RETURN (concreteUrl, m_parentBlock->resolveDefinition(typePath));
-        TU_ASSIGN_OR_RETURN (assignableType, lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments));
+        TU_ASSIGN_OR_RETURN (typeDef, lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments));
+
+        auto *symbolCache = m_state->symbolCache();
+
+        AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(concreteUrl));
+
+        TemplateHandle *templateHandle = nullptr;
+        switch (symbol->getSymbolType()) {
+
+            // if symbol could be generic then get the template
+            case SymbolType::CLASS:
+                templateHandle = cast_symbol_to_class(symbol)->classTemplate();
+                break;
+            case SymbolType::CONCEPT:
+                templateHandle = cast_symbol_to_concept(symbol)->conceptTemplate();
+                break;
+            case SymbolType::EXISTENTIAL:
+                templateHandle = cast_symbol_to_existential(symbol)->existentialTemplate();
+                break;
+
+                // special case: if symbol is a binding then resolve the target
+            case SymbolType::BINDING: {
+                auto *bindingSymbol = cast_symbol_to_binding(symbol);
+                TU_ASSIGN_OR_RETURN (typeDef, bindingSymbol->resolveTarget(typeArguments));
+                break;
+            }
+
+                // otherwise we don't need to perform further validation
+            default:
+                break;
+        }
+
+        // if symbol is generic then validate the number of type arguments matches the template
+        if (templateHandle != nullptr) {
+            if (templateHandle->numTemplateParameters() != typeArguments.size())
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kIncompatibleType,
+                    "wrong number of type arguments for {}; expected {} but found {}",
+                    typeDef.toString(), templateHandle->numTemplateParameters(), typeArguments.size());
+        }
     }
 
     // if there is no type handle for type, then create it
-    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
+    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(typeDef));
 
-    return assignableType;
+    return typeDef;
 }
 
 lyric_assembler::TemplateHandle *
@@ -206,41 +246,4 @@ int
 lyric_assembler::TemplateHandle::numPlaceholders() const
 {
     return m_placeholders.size();
-}
-
-void
-lyric_assembler::TemplateHandle::touch()
-{
-//    for (const auto &placeholder : m_placeholders) {
-//        TU_RAISE_IF_STATUS (m_state->typeCache()->getOrMakeType(placeholder));
-//    }
-//    m_state->typeCache()->touchTemplateParameters(m_templateParameters);
-//
-//    if (m_address.isValid())
-//        return;
-//
-//    //TU_ASSERT (m_state->symbolCache()->hasSymbol(m_templateUrl));
-//    lyric_assembler::AbstractSymbol *symbol;
-//    TU_ASSIGN_OR_RAISE (symbol, m_state->symbolCache()->getOrImportSymbol(m_templateUrl));
-//    symbol->touch();
-//
-//    switch (symbol->getSymbolType()) {
-//        case SymbolType::EXISTENTIAL:
-//            m_address = TemplateAddress(cast_symbol_to_existential(symbol)->getAddress().getAddress());
-//            break;
-//        case SymbolType::ACTION:
-//            m_address = TemplateAddress(cast_symbol_to_action(symbol)->getAddress().getAddress());
-//            break;
-//        case SymbolType::CALL:
-//            m_address = TemplateAddress(cast_symbol_to_call(symbol)->getAddress().getAddress());
-//            break;
-//        case SymbolType::CLASS:
-//            m_address = TemplateAddress(cast_symbol_to_class(symbol)->getAddress().getAddress());
-//            break;
-//        case SymbolType::CONCEPT:
-//            m_address = TemplateAddress(cast_symbol_to_concept(symbol)->getAddress().getAddress());
-//            break;
-//        default:
-//            TU_UNREACHABLE();
-//    }
 }

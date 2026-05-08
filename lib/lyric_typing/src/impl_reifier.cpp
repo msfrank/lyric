@@ -1,18 +1,11 @@
 
-#include <lyric_typing/impl_reifier.h>
-
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_typing/compare_assignable.h>
+#include <lyric_typing/impl_reifier.h>
 #include <lyric_typing/typing_result.h>
-
-lyric_typing::ImplReifier::ImplReifier()
-    : m_state(nullptr),
-      m_initialized(false)
-{
-}
 
 lyric_typing::ImplReifier::ImplReifier(lyric_assembler::ObjectState *state)
     : m_state(state),

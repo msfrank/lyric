@@ -403,7 +403,6 @@ lyric_assembler::TypeCache::declareParameterizedType(
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingTemplate,
             "missing template {}", baseUrl.toString());
     auto *superTemplate = titerator->second;
-    superTemplate->touch();
 
     if (std::cmp_less(typeArguments.size(), superTemplate->numPlaceholders())) {
         const auto firstMissing = superTemplate->getPlaceholder(typeArguments.size());

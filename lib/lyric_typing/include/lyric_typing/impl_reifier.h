@@ -4,16 +4,14 @@
 #include <vector>
 
 #include <lyric_assembler/object_state.h>
-#include <lyric_common/symbol_url.h>
+#include <lyric_assembler/type_contract.h>
 
 #include "type_system.h"
-#include "lyric_assembler/type_contract.h"
 
 namespace lyric_typing {
 
     class ImplReifier {
     public:
-        ImplReifier();
         explicit ImplReifier(lyric_assembler::ObjectState *state);
         explicit ImplReifier(TypeSystem *typeSystem);
 
@@ -29,7 +27,6 @@ namespace lyric_typing {
     private:
         lyric_assembler::ObjectState *m_state;
 
-        //lyric_common::SymbolUrl m_conceptUrl;
         lyric_assembler::ConceptSymbol *m_concept;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
         std::vector<size_t> m_implTemplateParametersIndex;

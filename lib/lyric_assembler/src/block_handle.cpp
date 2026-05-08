@@ -434,12 +434,44 @@ lyric_assembler::BlockHandle::resolveSingular(
 
     // if the type is concrete and the symbol is a binding then resolve the binding target
     if (typeDef.getType() == lyric_common::TypeDefType::Concrete) {
+        AbstractSymbol *symbol;
+
         auto *symbolCache = m_state->symbolCache();
-        AbstractSymbol *sym;
-        TU_ASSIGN_OR_RETURN (sym, symbolCache->getOrImportSymbol(typeDef.getConcreteUrl()));
-        if (sym->getSymbolType() == SymbolType::BINDING) {
-            auto *bindingSymbol = cast_symbol_to_binding(sym);
-            TU_ASSIGN_OR_RETURN (typeDef, bindingSymbol->resolveTarget(typeArguments));
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(typeDef.getConcreteUrl()));
+
+        TemplateHandle *templateHandle = nullptr;
+        switch (symbol->getSymbolType()) {
+
+            // if symbol could be generic then get the template
+            case SymbolType::CLASS:
+                templateHandle = cast_symbol_to_class(symbol)->classTemplate();
+                break;
+            case SymbolType::CONCEPT:
+                templateHandle = cast_symbol_to_concept(symbol)->conceptTemplate();
+                break;
+            case SymbolType::EXISTENTIAL:
+                templateHandle = cast_symbol_to_existential(symbol)->existentialTemplate();
+                break;
+
+            // special case: if symbol is a binding then resolve the target
+            case SymbolType::BINDING: {
+                auto *bindingSymbol = cast_symbol_to_binding(symbol);
+                TU_ASSIGN_OR_RETURN (typeDef, bindingSymbol->resolveTarget(typeArguments));
+                break;
+            }
+
+            // otherwise we don't need to perform further validation
+            default:
+                break;
+        }
+
+        // if symbol is generic then validate the number of type arguments matches the template
+        if (templateHandle != nullptr) {
+            if (templateHandle->numTemplateParameters() != typeArguments.size())
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kIncompatibleType,
+                    "wrong number of type arguments for {}; expected {} but found {}",
+                    typeDef.toString(), templateHandle->numTemplateParameters(), typeArguments.size());
         }
     }
 
