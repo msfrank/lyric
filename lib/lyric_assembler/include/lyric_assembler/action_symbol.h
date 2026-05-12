@@ -1,6 +1,7 @@
 #ifndef LYRIC_ASSEMBLER_ACTION_SYMBOL_H
 #define LYRIC_ASSEMBLER_ACTION_SYMBOL_H
 
+#include "abstract_placement.h"
 #include "abstract_resolver.h"
 #include "abstract_symbol.h"
 #include "base_symbol.h"
@@ -82,6 +83,23 @@ namespace lyric_assembler {
         ObjectState *m_state;
 
         ActionSymbolPriv *load() override;
+    };
+
+    class ActionPlacement : public AbstractPlacement {
+    public:
+        explicit ActionPlacement(const ActionSymbol *actionSymbol);
+
+        TemplateHandle *getTemplate() const override;
+        std::vector<Parameter>::const_iterator listPlacementBegin() const override;
+        std::vector<Parameter>::const_iterator listPlacementEnd() const override;
+        std::vector<Parameter>::const_iterator namedPlacementBegin() const override;
+        std::vector<Parameter>::const_iterator namedPlacementEnd() const override;
+        const Parameter *restPlacement() const override;
+        bool hasInitializer(const std::string &name) const override;
+        lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
+
+    private:
+        const ActionSymbol *m_actionSymbol;
     };
 
     inline const ActionSymbol *cast_symbol_to_action(const AbstractSymbol *sym) {

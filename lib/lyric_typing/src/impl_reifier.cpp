@@ -5,6 +5,7 @@
 #include <lyric_assembler/template_handle.h>
 #include <lyric_typing/compare_assignable.h>
 #include <lyric_typing/impl_reifier.h>
+#include <lyric_typing/internal/check_placeholder.h>
 #include <lyric_typing/typing_result.h>
 
 lyric_typing::ImplReifier::ImplReifier(lyric_assembler::ObjectState *state)
@@ -34,7 +35,7 @@ lyric_typing::ImplReifier::initialize(lyric_assembler::ConceptSymbol *conceptSym
 
     if (m_initialized)
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "member reifier is already initialized");
+            "impl reifier is already initialized");
 
     m_concept = conceptSymbol;
 
@@ -84,7 +85,7 @@ lyric_typing::ImplReifier::reifyNextImplArgument(const lyric_common::TypeDef &ar
 
     if (!m_initialized)
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "callsite reifier is not initialized");
+            "impl reifier is not initialized");
 
     if (m_implTemplateParametersIndex.size() <= m_implArgumentTypes.size())
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
@@ -93,7 +94,7 @@ lyric_typing::ImplReifier::reifyNextImplArgument(const lyric_common::TypeDef &ar
 
     int index = m_implTemplateParametersIndex.at(m_implArgumentTypes.size());
     const auto &tp = m_templateParameters.at(index);
-    TU_RETURN_IF_NOT_OK (checkPlaceholder(tp, argumentType));
+    TU_RETURN_IF_NOT_OK (internal::check_placeholder(tp, argumentType, m_state));
 
     if (m_contractArgumentTypes.at(index).isValid())
         return TypingStatus::forCondition(
@@ -139,7 +140,7 @@ lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymb
     auto argumentType = targetTypeHandle->getTypeDef();
 
     const auto &tp = m_templateParameters.at(index);
-    TU_RETURN_IF_NOT_OK (checkPlaceholder(tp, argumentType));
+    TU_RETURN_IF_NOT_OK (internal::check_placeholder(tp, argumentType, m_state));
 
     m_contractArgumentTypes[tp.index] = argumentType;
 
@@ -169,32 +170,4 @@ lyric_typing::ImplReifier::reifyContract() const
 
     return lyric_assembler::TypeContract(
         consumerType, implementationType, m_concept, m_concept->conceptTemplate());
-}
-
-tempo_utils::Status
-lyric_typing::ImplReifier::checkPlaceholder(
-    const lyric_object::TemplateParameter &tp,
-    const lyric_common::TypeDef &arg) const
-{
-    lyric_runtime::TypeComparison comparison;
-    TU_ASSIGN_OR_RETURN (comparison, compare_assignable(tp.typeDef, arg, m_state));
-
-    switch (tp.bound) {
-        case lyric_object::BoundType::Extends:
-            if (comparison == lyric_runtime::TypeComparison::EQUAL
-              || comparison == lyric_runtime::TypeComparison::EXTENDS)
-                return {};
-            break;
-        case lyric_object::BoundType::Super:
-            if (comparison == lyric_runtime::TypeComparison::EQUAL
-              || comparison == lyric_runtime::TypeComparison::SUPER)
-                return {};
-            break;
-        default:
-            break;
-    }
-
-    return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
-        "argument type {} is not substitutable for constraint {}",
-        arg.toString(), tp.typeDef.toString());
 }

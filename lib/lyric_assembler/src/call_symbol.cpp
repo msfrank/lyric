@@ -1002,3 +1002,57 @@ lyric_assembler::CallSymbol::finalizeCall()
 
     return priv->returnType;
 }
+
+lyric_assembler::CallPlacement::CallPlacement(const CallSymbol *callSymbol)
+    : m_callSymbol(callSymbol)
+{
+    TU_NOTNULL (m_callSymbol);
+}
+
+lyric_assembler::TemplateHandle *
+lyric_assembler::CallPlacement::getTemplate() const
+{
+    return m_callSymbol->callTemplate();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallPlacement::listPlacementBegin() const
+{
+    return m_callSymbol->listPlacementBegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallPlacement::listPlacementEnd() const
+{
+    return m_callSymbol->listPlacementEnd();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallPlacement::namedPlacementBegin() const
+{
+    return m_callSymbol->namedPlacementBegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallPlacement::namedPlacementEnd() const
+{
+    return m_callSymbol->namedPlacementEnd();
+}
+
+const lyric_assembler::Parameter *
+lyric_assembler::CallPlacement::restPlacement() const
+{
+    return m_callSymbol->restPlacement();
+}
+
+bool
+lyric_assembler::CallPlacement::hasInitializer(const std::string &name) const
+{
+    return m_callSymbol->hasInitializer(name);
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::CallPlacement::getInitializer(const std::string &name) const
+{
+    return m_callSymbol->getInitializer(name);
+}

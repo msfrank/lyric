@@ -355,3 +355,57 @@ lyric_assembler::ActionSymbol::putInitializer(const std::string &name, const lyr
     priv->initializers[name] = initializer;
     return {};
 }
+
+lyric_assembler::ActionPlacement::ActionPlacement(const ActionSymbol *actionSymbol)
+    : m_actionSymbol(actionSymbol)
+{
+    TU_NOTNULL (m_actionSymbol);
+}
+
+lyric_assembler::TemplateHandle *
+lyric_assembler::ActionPlacement::getTemplate() const
+{
+    return m_actionSymbol->actionTemplate();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionPlacement::listPlacementBegin() const
+{
+    return m_actionSymbol->listPlacementBegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionPlacement::listPlacementEnd() const
+{
+    return m_actionSymbol->listPlacementEnd();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionPlacement::namedPlacementBegin() const
+{
+    return m_actionSymbol->namedPlacementBegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionPlacement::namedPlacementEnd() const
+{
+    return m_actionSymbol->namedPlacementEnd();
+}
+
+const lyric_assembler::Parameter *
+lyric_assembler::ActionPlacement::restPlacement() const
+{
+    return m_actionSymbol->restPlacement();
+}
+
+bool
+lyric_assembler::ActionPlacement::hasInitializer(const std::string &name) const
+{
+    return m_actionSymbol->hasInitializer(name);
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ActionPlacement::getInitializer(const std::string &name) const
+{
+    return m_actionSymbol->getInitializer(name);
+}

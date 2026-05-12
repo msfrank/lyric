@@ -2,9 +2,7 @@
 #define LYRIC_ASSEMBLER_ABSTRACT_PLACEMENT_H
 
 #include <lyric_common/symbol_url.h>
-#include <lyric_object/object_types.h>
 
-#include "abstract_callsite_reifier.h"
 #include "assembler_types.h"
 
 namespace lyric_assembler {

@@ -4,8 +4,8 @@
 #include <lyric_typing/compare_assignable.h>
 #include <lyric_typing/internal/check_placeholder.h>
 #include <lyric_typing/internal/reify_dispatch.h>
-#include <lyric_typing/typing_result.h>
 #include <lyric_typing/resolve_template.h>
+#include <lyric_typing/typing_result.h>
 
 /**
  * Given the specified simple or parametric parameter type `paramType` from the call declaration and the

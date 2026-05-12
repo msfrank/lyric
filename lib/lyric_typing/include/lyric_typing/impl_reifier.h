@@ -27,17 +27,13 @@ namespace lyric_typing {
     private:
         lyric_assembler::ObjectState *m_state;
 
-        lyric_assembler::ConceptSymbol *m_concept;
+        lyric_assembler::ConceptSymbol *m_concept = nullptr;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
         std::vector<size_t> m_implTemplateParametersIndex;
-        bool m_initialized;
+        bool m_initialized = false;
 
         std::vector<lyric_common::TypeDef> m_implArgumentTypes;
         std::vector<lyric_common::TypeDef> m_contractArgumentTypes;
-
-        tempo_utils::Status checkPlaceholder(
-            const lyric_object::TemplateParameter &tp,
-            const lyric_common::TypeDef &arg) const;
     };
 }
 

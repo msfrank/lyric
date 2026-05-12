@@ -11,6 +11,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/compare_assignable.h
     include/lyric_typing/check_dispatchable.h
     include/lyric_typing/impl_reifier.h
+    include/lyric_typing/impl_selector.h
     include/lyric_typing/member_reifier.h
     include/lyric_typing/overload_reifier.h
     include/lyric_typing/parse_assignable.h
@@ -19,6 +20,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/resolve_assignable.h
     include/lyric_typing/resolve_pack.h
     include/lyric_typing/resolve_template.h
+    include/lyric_typing/summon_reifier.h
     include/lyric_typing/type_spec.h
     include/lyric_typing/type_system.h
     include/lyric_typing/typing_result.h
@@ -32,6 +34,7 @@ target_sources(lyric_typing PRIVATE
     src/compare_assignable.cpp
     src/check_dispatchable.cpp
     src/impl_reifier.cpp
+    src/impl_selector.cpp
     src/member_reifier.cpp
     src/overload_reifier.cpp
     src/parse_assignable.cpp
@@ -40,6 +43,7 @@ target_sources(lyric_typing PRIVATE
     src/resolve_assignable.cpp
     src/resolve_pack.cpp
     src/resolve_template.cpp
+    src/summon_reifier.cpp
     src/type_spec.cpp
     src/type_system.cpp
     src/typing_result.cpp

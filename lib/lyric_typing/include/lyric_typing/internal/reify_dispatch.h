@@ -7,7 +7,6 @@ namespace lyric_typing::internal {
 
     struct DispatchState {
         lyric_assembler::ObjectState *objectState = nullptr;
-        lyric_assembler::AbstractSymbol *invokerSymbol = nullptr;
         lyric_assembler::TemplateHandle *templateHandle = nullptr;
         std::vector<lyric_common::TypeDef> reifiedPlaceholders;
     };

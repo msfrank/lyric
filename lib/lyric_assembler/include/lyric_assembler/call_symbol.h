@@ -175,6 +175,23 @@ namespace lyric_assembler {
         CallSymbolPriv *load() override;
     };
 
+    class CallPlacement : public AbstractPlacement {
+    public:
+        explicit CallPlacement(const CallSymbol *callSymbol);
+
+        TemplateHandle *getTemplate() const override;
+        std::vector<Parameter>::const_iterator listPlacementBegin() const override;
+        std::vector<Parameter>::const_iterator listPlacementEnd() const override;
+        std::vector<Parameter>::const_iterator namedPlacementBegin() const override;
+        std::vector<Parameter>::const_iterator namedPlacementEnd() const override;
+        const Parameter *restPlacement() const override;
+        bool hasInitializer(const std::string &name) const override;
+        lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
+
+    private:
+        const CallSymbol *m_callSymbol;
+    };
+
     inline const CallSymbol *cast_symbol_to_call(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::CALL);
         return static_cast<const CallSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
