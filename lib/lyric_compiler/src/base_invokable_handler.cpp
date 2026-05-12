@@ -121,14 +121,12 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
 
                     auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
                         initSymbol, /* isInlined= */ false);
-                    lyric_assembler::CallableInvoker invoker;
-                    TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
 
                     lyric_typing::CallsiteReifier initReifier(typeSystem);
-                    TU_RETURN_IF_NOT_OK (initReifier.initialize(invoker, reifier.getCallsiteArguments()));
+                    TU_RETURN_IF_NOT_OK (initReifier.initialize(callable.get(), reifier.getCallsiteArguments()));
 
                     lyric_common::TypeDef initializerType;
-                    TU_ASSIGN_OR_RETURN (initializerType, invoker.invoke(getInvokeBlock(), initReifier, fragment));
+                    TU_ASSIGN_OR_RETURN (initializerType, callable->invoke(getInvokeBlock(), initReifier, fragment));
                     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(initializerType));
                 } else {
                     auto offset = m_invocation.listOffsets.at(currpos);
@@ -187,14 +185,12 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
 
                     auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
                         initSymbol, /* isInlined= */ false);
-                    lyric_assembler::CallableInvoker invoker;
-                    TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
 
                     lyric_typing::CallsiteReifier initReifier(typeSystem);
-                    TU_RETURN_IF_NOT_OK (initReifier.initialize(invoker, reifier.getCallsiteArguments()));
+                    TU_RETURN_IF_NOT_OK (initReifier.initialize(callable.get(), reifier.getCallsiteArguments()));
 
                     lyric_common::TypeDef initializerType;
-                    TU_ASSIGN_OR_RETURN (initializerType, invoker.invoke(getInvokeBlock(), initReifier, fragment));
+                    TU_ASSIGN_OR_RETURN (initializerType, callable->invoke(getInvokeBlock(), initReifier, fragment));
                     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(initializerType));
                 } else {
                     auto offset = entry->second;

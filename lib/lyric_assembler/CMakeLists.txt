@@ -27,7 +27,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/base_symbol.h
     include/lyric_assembler/binding_symbol.h
     include/lyric_assembler/block_handle.h
-    include/lyric_assembler/callable_invoker.h
     include/lyric_assembler/call_symbol.h
     include/lyric_assembler/catch_handle.h
     include/lyric_assembler/check_handle.h
@@ -35,7 +34,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/cleanup_handle.h
     include/lyric_assembler/code_fragment.h
     include/lyric_assembler/concept_symbol.h
-    include/lyric_assembler/constructable_invoker.h
     include/lyric_assembler/ctor_constructable.h
     include/lyric_assembler/enum_symbol.h
     include/lyric_assembler/existential_callable.h
@@ -87,7 +85,6 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_types.cpp
     src/binding_symbol.cpp
     src/block_handle.cpp
-    src/callable_invoker.cpp
     src/call_symbol.cpp
     src/catch_handle.cpp
     src/check_handle.cpp
@@ -95,7 +92,6 @@ target_sources(lyric_assembler PRIVATE
     src/cleanup_handle.cpp
     src/code_fragment.cpp
     src/concept_symbol.cpp
-    src/constructable_invoker.cpp
     src/ctor_constructable.cpp
     src/enum_symbol.cpp
     src/existential_callable.cpp

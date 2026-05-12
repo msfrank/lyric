@@ -282,7 +282,7 @@ tempo_utils::Status
 lyric_assembler::ImplHandle::prepareExtension(
     const std::string &name,
     const DataReference &ref,
-    CallableInvoker &invoker)
+    std::unique_ptr<AbstractCallable> &callable)
 {
     auto *priv = getPriv();
 
@@ -310,16 +310,16 @@ lyric_assembler::ImplHandle::prepareExtension(
             "extension method {} must be public", name);
 
     if (callSymbol->isInline()) {
-        auto callable = std::make_unique<ExtensionCallable>(callSymbol);
-        return invoker.initialize(std::move(callable));
+        callable = std::make_unique<ExtensionCallable>(callSymbol);
+        return {};
     }
 
     if (!callSymbol->isBound())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid extension call {}", extension.methodCall.toString());
 
-    auto callable = std::make_unique<ExtensionCallable>(callSymbol, ref);
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<ExtensionCallable>(callSymbol, ref);
+    return {};
 }
 
 bool

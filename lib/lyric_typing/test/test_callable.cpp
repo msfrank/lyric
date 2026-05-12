@@ -81,3 +81,23 @@ TestCallable::invoke(
 {
     return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented);
 }
+
+tempo_utils::Result<lyric_common::TypeDef>
+TestCallable::invokeCtor(
+    lyric_assembler::BlockHandle *block,
+    const lyric_assembler::AbstractCallsiteReifier &reifier,
+    lyric_assembler::CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented);
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+TestCallable::invokeNew(
+    lyric_assembler::BlockHandle *block,
+    const lyric_assembler::AbstractCallsiteReifier &reifier,
+    lyric_assembler::CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented);
+}

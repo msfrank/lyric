@@ -98,6 +98,16 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CtorConstructable::invoke(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invoke not supported on ctor callable");
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::CtorConstructable::invokeCtor(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {

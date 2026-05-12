@@ -252,7 +252,7 @@ tempo_utils::Status
 lyric_assembler::ProtocolSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
@@ -281,15 +281,15 @@ lyric_assembler::ProtocolSymbol::prepareGlobalMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }
 
 tempo_utils::Status
 lyric_assembler::ProtocolSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -298,5 +298,5 @@ lyric_assembler::ProtocolSymbol::prepareMethod(
     auto protocolUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Protocol);
     ExistentialSymbol *protocolExistential;
     TU_ASSIGN_OR_RETURN (protocolExistential, symbolCache->getOrImportExistential(protocolUrl));
-    return protocolExistential->prepareMethod(name, receiverType, invoker, false);
+    return protocolExistential->prepareMethod(name, receiverType, callable, false);
 }

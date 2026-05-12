@@ -9,8 +9,6 @@
 #include "abstract_symbol.h"
 #include "object_state.h"
 #include "base_symbol.h"
-#include "callable_invoker.h"
-#include "constructable_invoker.h"
 #include "impl_handle.h"
 #include "type_handle.h"
 
@@ -78,7 +76,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareGlobalMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool thisReceiver) const;
 
         /*
@@ -114,7 +112,7 @@ namespace lyric_assembler {
         tempo_utils::Result<CallSymbol *> declareCtor(
             bool isHidden,
             std::string allocatorTrap = {});
-        tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
+        tempo_utils::Status prepareCtor(std::unique_ptr<AbstractCallable> &invoker);
 
         /*
          * instance method management
@@ -133,7 +131,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool isReceiver = false) const;
 
         /*

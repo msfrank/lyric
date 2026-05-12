@@ -108,3 +108,25 @@ lyric_assembler::ActionCallable::invoke(
     TU_RETURN_IF_NOT_OK (fragment->callConcept(m_actionSymbol, placementSize, 0));
     return reifier.reifyResult(m_actionSymbol->getReturnType());
 }
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ActionCallable::invokeCtor(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeCtor not supported on action callable");
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ActionCallable::invokeNew(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeNew not supported on action callable");
+}

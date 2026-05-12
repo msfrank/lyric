@@ -104,12 +104,12 @@ lyric_compiler::NewHandler::before(
     switch (receiverSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(receiverSymbol);
-            TU_RETURN_IF_NOT_OK (classSymbol->prepareCtor(ctorName, m_invoker));
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareCtor(ctorName, m_callable));
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(receiverSymbol);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareCtor(ctorName, m_invoker));
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareCtor(ctorName, m_callable));
             break;
         }
         default:
@@ -120,7 +120,7 @@ lyric_compiler::NewHandler::before(
 
     // construct the callsite reifier
     m_reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
-    TU_RETURN_IF_NOT_OK (m_reifier->initialize(m_invoker, newTypeArguments));
+    TU_RETURN_IF_NOT_OK (m_reifier->initialize(m_callable.get(), newTypeArguments));
 
     return BaseInvokableHandler::before(state, node, ctx);
 }
@@ -134,10 +134,10 @@ lyric_compiler::NewHandler::after(
     auto *driver = getDriver();
     auto *fragment = getFragment();
 
-    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker.getConstructable(), *m_reifier, fragment));
+    TU_RETURN_IF_NOT_OK (placeArguments(m_callable.get(), *m_reifier, fragment));
 
     lyric_common::TypeDef newType;
-    TU_ASSIGN_OR_RETURN (newType, m_invoker.invokeNew(getInvokeBlock(), *m_reifier, fragment, /* flags= */ 0));
+    TU_ASSIGN_OR_RETURN (newType, m_callable->invokeNew(getInvokeBlock(), *m_reifier, fragment, /* flags= */ 0));
 
     if (m_isSideEffect) {
         return m_fragment->popValue();

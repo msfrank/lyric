@@ -1018,7 +1018,7 @@ lyric_assembler::BlockHandle::declareFunction(
 }
 
 tempo_utils::Status
-lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableInvoker &invoker)
+lyric_assembler::BlockHandle::prepareFunction(const std::string &name, std::unique_ptr<AbstractCallable> &callable)
 {
     lyric_common::SymbolUrl functionUrl;
     TU_ASSIGN_OR_RETURN (functionUrl, resolveFunction(name));
@@ -1030,8 +1030,8 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
             "invalid call symbol {}", functionUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>

@@ -3,7 +3,6 @@
 
 #include "abstract_symbol.h"
 #include "base_symbol.h"
-#include "callable_invoker.h"
 #include "function_callable.h"
 #include "initializer_handle.h"
 #include "object_state.h"
@@ -53,7 +52,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getInitializer() const;
         tempo_utils::Result<InitializerHandle *> defineInitializer();
 
-        tempo_utils::Status prepareInitializer(CallableInvoker &invoker);
+        tempo_utils::Status prepareInitializer(std::unique_ptr<AbstractCallable> &callable);
 
         DataReference getReference() const;
 

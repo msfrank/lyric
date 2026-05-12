@@ -101,8 +101,6 @@ lyric_compiler::InitBase::before(
         thisBase = false;
     }
 
-    m_invoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-
     switch (m_constructor->superSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             lyric_assembler::ClassSymbol *baseClass;
@@ -111,7 +109,7 @@ lyric_compiler::InitBase::before(
             } else {
                 baseClass = lyric_assembler::cast_symbol_to_class(m_constructor->superSymbol);
             }
-            TU_RETURN_IF_NOT_OK (baseClass->prepareCtor(ctorName, *m_invoker));
+            TU_RETURN_IF_NOT_OK (baseClass->prepareCtor(ctorName, m_callable));
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
@@ -121,7 +119,7 @@ lyric_compiler::InitBase::before(
             } else {
                 baseEnum = lyric_assembler::cast_symbol_to_enum(m_constructor->superSymbol);
             }
-            TU_RETURN_IF_NOT_OK (baseEnum->prepareCtor(*m_invoker));
+            TU_RETURN_IF_NOT_OK (baseEnum->prepareCtor(m_callable));
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
@@ -131,7 +129,7 @@ lyric_compiler::InitBase::before(
             } else {
                 baseInstance = lyric_assembler::cast_symbol_to_instance(m_constructor->superSymbol);
             }
-            TU_RETURN_IF_NOT_OK (baseInstance->prepareCtor(*m_invoker));
+            TU_RETURN_IF_NOT_OK (baseInstance->prepareCtor(m_callable));
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
@@ -141,7 +139,7 @@ lyric_compiler::InitBase::before(
             } else {
                 baseStruct = lyric_assembler::cast_symbol_to_struct(m_constructor->superSymbol);
             }
-            TU_RETURN_IF_NOT_OK (baseStruct->prepareCtor(ctorName, *m_invoker));
+            TU_RETURN_IF_NOT_OK (baseStruct->prepareCtor(ctorName, m_callable));
             break;
         }
         default:
@@ -167,13 +165,12 @@ lyric_compiler::InitBase::after(
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
 
-    TU_RETURN_IF_NOT_OK (reifier.initialize(*m_invoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(m_callable.get()));
 
-    auto *constructable = m_invoker->getConstructable();
-    TU_RETURN_IF_NOT_OK (placeArguments(constructable, reifier, fragment));
+    TU_RETURN_IF_NOT_OK (placeArguments(m_callable.get(), reifier, fragment));
 
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
+    TU_ASSIGN_OR_RETURN (returnType, m_callable->invokeCtor(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
 
     return driver->pushResult(returnType);
 }

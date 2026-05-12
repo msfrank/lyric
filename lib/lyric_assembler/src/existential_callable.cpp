@@ -136,3 +136,25 @@ lyric_assembler::ExistentialCallable::invoke(
             TU_UNREACHABLE();
     }
 }
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ExistentialCallable::invokeCtor(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeCtor not supported on existential callable");
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ExistentialCallable::invokeNew(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeNew not supported on existential callable");
+}

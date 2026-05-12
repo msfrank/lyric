@@ -224,7 +224,7 @@ namespace lyric_compiler {
             DataDeref *deref,
             lyric_assembler::BlockHandle *bindingBlock,
             lyric_assembler::BlockHandle *invokeBlock,
-            std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+            std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
             std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
             lyric_assembler::CodeFragment *fragment,
             CompilerScanDriver *driver);
@@ -236,7 +236,7 @@ namespace lyric_compiler {
 
     private:
         DataDeref *m_deref;
-        std::unique_ptr<lyric_assembler::CallableInvoker> m_invoker;
+        std::unique_ptr<lyric_assembler::AbstractCallable> m_callable;
         std::unique_ptr<lyric_typing::CallsiteReifier> m_reifier;
     };
 
@@ -249,7 +249,7 @@ namespace lyric_compiler {
             DataDeref *deref,
             lyric_assembler::BlockHandle *bindingBlock,
             lyric_assembler::BlockHandle *invokeBlock,
-            std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+            std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
             std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
             lyric_assembler::CodeFragment *fragment,
             CompilerScanDriver *driver);
@@ -261,7 +261,7 @@ namespace lyric_compiler {
 
     private:
         DataDeref *m_deref;
-        std::unique_ptr<lyric_assembler::CallableInvoker> m_invoker;
+        std::unique_ptr<lyric_assembler::AbstractCallable> m_callable;
         std::unique_ptr<lyric_typing::CallsiteReifier> m_reifier;
     };
 

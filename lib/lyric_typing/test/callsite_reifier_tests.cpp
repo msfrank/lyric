@@ -17,13 +17,11 @@ TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
     auto *fundamentalCache = m_objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}));
-    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
 
     // simulate the function f(): Bool
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize(invoker).isOk());
+    ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // result type should be Bool
     auto reifyReturnResult = reifier.reifyResult(BoolType);
@@ -45,13 +43,11 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
     p0.typeDef = IntType;
     p0.placement = lyric_object::PlacementType::List;
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}));
-    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
 
     // simulate the function f(p0: Int): Int
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize(invoker).isOk());
+    ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // apply Int argument
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());
@@ -82,13 +78,11 @@ TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
     p1.typeDef = FloatType;
     p1.placement = lyric_object::PlacementType::List;
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0, p1}, {}, {}));
-    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
 
     // simulate the function f(p0: Int, p1: Float): Int
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize(invoker).isOk());
+    ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // apply Int argument
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());

@@ -16,7 +16,7 @@ namespace lyric_compiler {
     tempo_utils::Status prepare_impl_action(
         const std::string &actionName,
         const lyric_assembler::ImplReference &implRef,
-        lyric_assembler::CallableInvoker &invoker,
+        std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
         lyric_assembler::BlockHandle *block,
         lyric_assembler::SymbolCache *symbolCache);
 }

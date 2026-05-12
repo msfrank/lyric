@@ -43,14 +43,13 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
     p0.typeDef = FooClass->getTypeDef();
     p0.placement = lyric_object::PlacementType::List;
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}));
-    ASSERT_THAT (invoker.initialize(std::move(callable)), tempo_test::IsOk());
 
     // simulate the function f(p0: Foo[T]): Int
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_THAT (reifier.initialize(invoker), tempo_test::IsOk());
+    ASSERT_THAT (reifier.initialize(callable.get()), tempo_test::IsOk());
 
     // apply Int argument
-    ASSERT_THAT (reifier.reifyNextArgument(IntType), tempo_test::IsCondition(lyric_typing::TypingCondition::kIncompatibleType));
+    ASSERT_THAT (reifier.reifyNextArgument(IntType), tempo_test::IsCondition(
+        lyric_typing::TypingCondition::kIncompatibleType));
 }

@@ -57,18 +57,18 @@ lyric_compiler::define_lambda_builder(
     auto *fragment = procHandle->procFragment();
 
     // invoke the closure ctor
-    lyric_assembler::ConstructableInvoker closureCtor;
+    std::unique_ptr<lyric_assembler::AbstractCallable> closureCtor;
     TU_RETURN_IF_NOT_OK (closureClass->prepareCtor(lyric_object::kCtorSpecialSymbol, closureCtor));
 
     lyric_typing::CallsiteReifier closureReifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (closureReifier.initialize(closureCtor, builderTypeArguments));
+    TU_RETURN_IF_NOT_OK (closureReifier.initialize(closureCtor.get(), builderTypeArguments));
 
     // push the proc descriptor onto the top of the stack as first positional arg
     TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(lambdaCall));
     auto callType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Call);
     TU_RETURN_IF_NOT_OK (closureReifier.reifyNextArgument(callType));
 
-    TU_RETURN_IF_STATUS (closureCtor.invokeNew(procHandle->procBlock(), closureReifier, fragment, /* flags= */ 0));
+    TU_RETURN_IF_STATUS (closureCtor->invokeNew(procHandle->procBlock(), closureReifier, fragment, /* flags= */ 0));
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());

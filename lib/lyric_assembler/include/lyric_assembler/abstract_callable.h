@@ -21,6 +21,18 @@ namespace lyric_assembler {
             BlockHandle *block,
             const AbstractCallsiteReifier &reifier,
             CodeFragment *fragment) = 0;
+
+        virtual tempo_utils::Result<lyric_common::TypeDef> invokeCtor(
+            BlockHandle *block,
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment,
+            tu_uint8 flags) = 0;
+
+        virtual tempo_utils::Result<lyric_common::TypeDef> invokeNew(
+            BlockHandle *block,
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment,
+            tu_uint8 flags) = 0;
     };
 }
 

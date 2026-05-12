@@ -84,7 +84,7 @@ namespace lyric_compiler {
     class CaseInit : public BaseInvokableHandler {
     public:
         CaseInit(
-            std::unique_ptr<lyric_assembler::ConstructableInvoker> &&invoker,
+            std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
             lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
@@ -100,7 +100,7 @@ namespace lyric_compiler {
             AfterContext &ctx) override;
 
     private:
-        std::unique_ptr<lyric_assembler::ConstructableInvoker> m_invoker;
+        std::unique_ptr<lyric_assembler::AbstractCallable> m_callable;
     };
 }
 

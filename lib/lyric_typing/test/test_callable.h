@@ -31,6 +31,18 @@ public:
         const lyric_assembler::AbstractCallsiteReifier &reifier,
         lyric_assembler::CodeFragment *fragment) override;
 
+    tempo_utils::Result<lyric_common::TypeDef> invokeCtor(
+        lyric_assembler::BlockHandle *block,
+        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::CodeFragment *fragment,
+        tu_uint8 flags) override;
+
+    tempo_utils::Result<lyric_common::TypeDef> invokeNew(
+        lyric_assembler::BlockHandle *block,
+        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::CodeFragment *fragment,
+        tu_uint8 flags) override;
+
 private:
     lyric_assembler::TemplateHandle *m_templateHandle;
     std::vector<lyric_assembler::Parameter> m_listParameters;

@@ -279,7 +279,7 @@ tempo_utils::Status
 lyric_assembler::InstanceSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
@@ -293,7 +293,7 @@ lyric_assembler::InstanceSymbol::prepareGlobalMethod(
         if (priv->superInstance == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superInstance->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
+        return priv->superInstance->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -311,8 +311,8 @@ lyric_assembler::InstanceSymbol::prepareGlobalMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }
 
 bool
@@ -521,7 +521,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
 }
 
 tempo_utils::Status
-lyric_assembler::InstanceSymbol::prepareCtor(ConstructableInvoker &invoker)
+lyric_assembler::InstanceSymbol::prepareCtor(std::unique_ptr<AbstractCallable> &callable)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(
         m_instanceUrl.getSymbolPath().getPath(), "$ctor");
@@ -534,8 +534,8 @@ lyric_assembler::InstanceSymbol::prepareCtor(ConstructableInvoker &invoker)
             "invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
-    return invoker.initialize(std::move(constructable));
+    callable = std::make_unique<CtorConstructable>(callSymbol, this);
+    return {};
 }
 
 bool
@@ -619,7 +619,7 @@ tempo_utils::Status
 lyric_assembler::InstanceSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *priv = getPriv();
@@ -645,14 +645,14 @@ lyric_assembler::InstanceSymbol::prepareMethod(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
-        return invoker.initialize(std::move(callable));
+        callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+        return {};
     }
 
     if (priv->superInstance == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
-    return priv->superInstance->prepareMethod(name, receiverType, invoker);
+    return priv->superInstance->prepareMethod(name, receiverType, callable);
 }
 
 bool

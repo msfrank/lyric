@@ -47,36 +47,14 @@ lyric_typing::CallsiteReifier::getCallsiteArguments() const
 
 tempo_utils::Status
 lyric_typing::CallsiteReifier::initialize(
-    const lyric_assembler::ConstructableInvoker &invoker,
+    const std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
     const std::vector<lyric_common::TypeDef> &callsiteArguments)
 {
     if (m_initialized)
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
             "callsite reifier is already initialized");
 
-    auto *constructable = invoker.getConstructable();
-    if (constructable == nullptr)
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "invoker is not initialized");
-
-    return initialize(constructable, callsiteArguments);
-}
-
-tempo_utils::Status
-lyric_typing::CallsiteReifier::initialize(
-    const lyric_assembler::CallableInvoker &invoker,
-    const std::vector<lyric_common::TypeDef> &callsiteArguments)
-{
-    if (m_initialized)
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "callsite reifier is already initialized");
-
-    auto *callable = invoker.getCallable();
-    if (callable == nullptr)
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "invoker is not initialized");
-
-    return initialize(callable, callsiteArguments);
+    return initialize(callable.get(), callsiteArguments);
 }
 
 tempo_utils::Status

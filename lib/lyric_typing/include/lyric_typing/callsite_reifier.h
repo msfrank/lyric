@@ -4,12 +4,9 @@
 #include <lyric_common/symbol_url.h>
 
 #include <lyric_assembler/action_symbol.h>
-#include <lyric_assembler/assembler_result.h>
 #include <lyric_assembler/assembler_types.h>
 #include <lyric_assembler/object_state.h>
-#include <lyric_assembler/callable_invoker.h>
 #include <lyric_assembler/call_symbol.h>
-#include <lyric_assembler/constructable_invoker.h>
 
 #include "type_system.h"
 
@@ -30,10 +27,10 @@ namespace lyric_typing {
         bool isValid() const;
 
         tempo_utils::Status initialize(
-            const lyric_assembler::ConstructableInvoker &invoker,
+            const lyric_assembler::AbstractPlacement *placement,
             const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
         tempo_utils::Status initialize(
-            const lyric_assembler::CallableInvoker &invoker,
+            const std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
             const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
         tempo_utils::Status initialize(
             const lyric_assembler::AbstractSymbol *symbol,
@@ -56,10 +53,6 @@ namespace lyric_typing {
 
         std::vector<lyric_common::TypeDef> m_argumentTypes;
         lyric_common::TypeDef m_restType;
-
-        tempo_utils::Status initialize(
-            const lyric_assembler::AbstractPlacement *placement,
-            const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
     };
 }
 

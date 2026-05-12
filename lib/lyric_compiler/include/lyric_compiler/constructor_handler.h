@@ -58,7 +58,7 @@ namespace lyric_compiler {
 
     private:
         Constructor *m_constructor;
-        std::unique_ptr<lyric_assembler::ConstructableInvoker> m_invoker;
+        std::unique_ptr<lyric_assembler::AbstractCallable> m_callable;
     };
 }
 

@@ -38,16 +38,16 @@ lyric_compiler::compile_unary_operator(
     lyric_assembler::ImplReference implRef;
     TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
 
-    lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, extensionInvoker, block, symbolCache));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, callable, block, symbolCache));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable));
 
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
 
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier, fragment));
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
 
     return driver->pushResult(resultType);
 }
@@ -84,17 +84,17 @@ lyric_compiler::compile_binary_operator(
     lyric_assembler::ImplReference implRef;
     TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
 
-    lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, extensionInvoker, block, symbolCache));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, callable, block, symbolCache));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable));
 
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(lhsType));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
 
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier, fragment));
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
 
     return driver->pushResult(resultType);
 }

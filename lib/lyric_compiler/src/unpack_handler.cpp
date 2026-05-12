@@ -121,22 +121,22 @@ lyric_compiler::UnpackHandler::after(
     TU_ASSIGN_OR_RETURN (implRef, resolve_unwrap_impl(
         m_unpack.unwrapType, m_unpack.tupleTypeArguments, block, driver));
 
-    lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(kUnwrapExtensionName, implRef, extensionInvoker, block, symbolCache));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(kUnwrapExtensionName, implRef, callable, block, symbolCache));
 
     auto &usingRef = implRef.usingRef;
     auto instanceTypeArguments = usingRef.typeDef.getConcreteArguments();
     std::vector<lyric_common::TypeDef> callsiteTypeArguments(
         instanceTypeArguments.begin(), instanceTypeArguments.end());
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker, callsiteTypeArguments));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, callsiteTypeArguments));
 
     TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_unpack.targetRef));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(m_unpack.unwrapType));
 
     // invoke unwrap
     lyric_common::TypeDef tupleType;
-    TU_ASSIGN_OR_RETURN (tupleType, extensionInvoker.invoke(block, reifier, m_fragment));
+    TU_ASSIGN_OR_RETURN (tupleType, callable->invoke(block, reifier, m_fragment));
     auto tupleUrl = tupleType.getConcreteUrl();
 
     // declare a temporary to store the result of the unwrap

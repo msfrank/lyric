@@ -83,7 +83,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool isReceiver = false);
 
         /*

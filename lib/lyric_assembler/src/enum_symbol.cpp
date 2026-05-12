@@ -277,7 +277,7 @@ tempo_utils::Status
 lyric_assembler::EnumSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
@@ -291,7 +291,7 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
         if (priv->superEnum == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superEnum->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
+        return priv->superEnum->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -309,8 +309,8 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }
 
 bool
@@ -518,7 +518,7 @@ lyric_assembler::EnumSymbol::declareCtor(
 }
 
 tempo_utils::Status
-lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
+lyric_assembler::EnumSymbol::prepareCtor(std::unique_ptr<AbstractCallable> &callable)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_enumUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_enumUrl.getModuleLocation(), ctorPath);
@@ -530,8 +530,8 @@ lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
             "invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
-    return invoker.initialize(std::move(constructable));
+    callable = std::make_unique<CtorConstructable>(callSymbol, this);
+    return {};
 }
 
 bool
@@ -614,7 +614,7 @@ tempo_utils::Status
 lyric_assembler::EnumSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *priv = getPriv();
@@ -640,14 +640,14 @@ lyric_assembler::EnumSymbol::prepareMethod(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
-        return invoker.initialize(std::move(callable));
+        callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+        return {};
     }
 
     if (priv->superEnum == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
-    return priv->superEnum->prepareMethod(name, receiverType, invoker);
+    return priv->superEnum->prepareMethod(name, receiverType, callable);
 }
 
 bool

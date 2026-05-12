@@ -7,6 +7,8 @@
 #include <lyric_compiler/definstance_utils.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_assembler/ctor_constructable.h"
+
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_instance_default_init(
     lyric_assembler::InstanceSymbol *instanceSymbol,
@@ -52,17 +54,17 @@ lyric_compiler::define_instance_default_init(
     auto *fragment = procHandle->procFragment();
 
     // find the superinstance ctor
-    lyric_assembler::ConstructableInvoker superCtor;
+    std::unique_ptr<lyric_assembler::AbstractCallable> superCtor;
     TU_RETURN_IF_NOT_OK (definstance->superinstanceSymbol->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor.get()));
 
     // load the uninitialized instance onto the top of the stack
     TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
-    TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, fragment, /* flags= */ 0));
+    TU_RETURN_IF_STATUS (superCtor->invokeCtor(ctorBlock, reifier, fragment, /* flags= */ 0));
 
     // default-initialize all members
     for (auto it = definstance->instanceSymbol->membersBegin(); it != definstance->instanceSymbol->membersEnd(); it++) {
@@ -98,11 +100,9 @@ lyric_compiler::define_instance_default_init(
         // invoke initializer to place default value onto the top of the stack
         auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
             initializerCall, /* isInlined= */ false);
-        lyric_assembler::CallableInvoker invoker;
-        TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
         lyric_typing::CallsiteReifier initializerReifier(typeSystem);
-        TU_RETURN_IF_NOT_OK (initializerReifier.initialize(invoker));
-        TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier, fragment));
+        TU_RETURN_IF_NOT_OK (initializerReifier.initialize(callable.get()));
+        TU_RETURN_IF_STATUS (callable->invoke(ctorBlock, initializerReifier, fragment));
 
         // store default value in instance field
         TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));

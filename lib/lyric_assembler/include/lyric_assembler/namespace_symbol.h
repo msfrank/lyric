@@ -77,7 +77,7 @@ namespace lyric_assembler {
 
         tempo_utils::Status prepareTargetMethod(
             const std::string &name,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             const BlockHandle *currentBlock) const;
 
     private:

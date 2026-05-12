@@ -236,14 +236,14 @@ get_or_construct_iterator(
             "generator type {} is not iterable", generatorType.toString());
 
     // resolve the Iterate impl method
-    lyric_assembler::CallableInvoker invoker;
-    TU_RETURN_IF_NOT_OK (iterableConcept->prepareAction("Iterate", iterableType, invoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (iterableConcept->prepareAction("Iterate", iterableType, callable));
 
     // invoke Iterate()
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker, {targetType}));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), {targetType}));
 
-    return invoker.invoke(block, reifier, fragment);
+    return callable->invoke(block, reifier, fragment);
 }
 
 tempo_utils::Status
@@ -314,15 +314,15 @@ lyric_compiler::ForBody::decide(
     TU_RETURN_IF_NOT_OK (m_fragment->loadRef(iteratorRef));
 
     // resolve Iterator.Valid() method
-    lyric_assembler::CallableInvoker validInvoker;
-    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Valid", iteratorType, validInvoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> validCallable;
+    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Valid", iteratorType, validCallable));
 
     // invoke Valid method
     lyric_typing::CallsiteReifier validReifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (validReifier.initialize(validInvoker, {targetRef.typeDef}));
+    TU_RETURN_IF_NOT_OK (validReifier.initialize(validCallable, {targetRef.typeDef}));
 
     lyric_common::TypeDef validReturnType;
-    TU_ASSIGN_OR_RETURN (validReturnType, validInvoker.invoke(forBlock, validReifier, m_fragment));
+    TU_ASSIGN_OR_RETURN (validReturnType, validCallable->invoke(forBlock, validReifier, m_fragment));
 
     auto boolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
@@ -339,14 +339,14 @@ lyric_compiler::ForBody::decide(
     TU_RETURN_IF_NOT_OK (m_fragment->loadRef(iteratorRef));
 
     // resolve Iterator.Next() method
-    lyric_assembler::CallableInvoker nextInvoker;
-    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Next", iteratorType, nextInvoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> nextCallable;
+    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Next", iteratorType, nextCallable));
 
     // invoke Next()
     lyric_typing::CallsiteReifier nextReifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (nextReifier.initialize(nextInvoker, {targetRef.typeDef}));
+    TU_RETURN_IF_NOT_OK (nextReifier.initialize(nextCallable, {targetRef.typeDef}));
     lyric_common::TypeDef nextReturnType;
-    TU_ASSIGN_OR_RETURN (nextReturnType, nextInvoker.invoke(forBlock, nextReifier, m_fragment));
+    TU_ASSIGN_OR_RETURN (nextReturnType, nextCallable->invoke(forBlock, nextReifier, m_fragment));
 
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_iteration->targetType, nextReturnType));
     if (!isAssignable)

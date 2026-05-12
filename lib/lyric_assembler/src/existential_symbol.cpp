@@ -304,7 +304,7 @@ tempo_utils::Status
 lyric_assembler::ExistentialSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver)
 {
     auto *priv = getPriv();
@@ -313,7 +313,7 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
         if (priv->superExistential == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing method {}", name);
-        return priv->superExistential->prepareMethod(name, receiverType, invoker, thisReceiver);
+        return priv->superExistential->prepareMethod(name, receiverType, callable, thisReceiver);
     }
 
     const auto &method = priv->methods.at(name);
@@ -325,16 +325,16 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isInline()) {
-        auto callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());
-        return invoker.initialize(std::move(callable));
+        callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());
+        return {};
     }
 
     if (!callSymbol->isBound())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<ExistentialCallable>(this, callSymbol);
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<ExistentialCallable>(this, callSymbol);
+    return {};
 }
 
 bool

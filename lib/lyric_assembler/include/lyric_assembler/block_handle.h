@@ -10,7 +10,6 @@
 #include "abstract_resolver.h"
 #include "assembler_attrs.h"
 #include "object_state.h"
-#include "callable_invoker.h"
 #include "function_callable.h"
 #include "namespace_symbol.h"
 #include "type_handle.h"
@@ -99,7 +98,7 @@ namespace lyric_assembler {
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             bool declOnly = false);
 
-        tempo_utils::Status prepareFunction(const std::string &name, CallableInvoker &invoker);
+        tempo_utils::Status prepareFunction(const std::string &name, std::unique_ptr<AbstractCallable> &callable);
 
         tempo_utils::Result<ClassSymbol *> declareClass(
             const std::string &name,

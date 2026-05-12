@@ -87,7 +87,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareExtension(
             const std::string &name,
             const DataReference &ref,
-            CallableInvoker &invoker);
+            std::unique_ptr<AbstractCallable> &callable);
 
         bool isCompletelyDefined() const;
 

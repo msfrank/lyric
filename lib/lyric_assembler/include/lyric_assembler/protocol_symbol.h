@@ -3,7 +3,6 @@
 
 #include "abstract_symbol.h"
 #include "base_symbol.h"
-#include "callable_invoker.h"
 #include "function_callable.h"
 #include "initializer_handle.h"
 #include "object_state.h"
@@ -73,13 +72,13 @@ namespace lyric_assembler {
         tempo_utils::Status prepareGlobalMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool thisReceiver) const;
 
         tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool thisReceiver = false) const;
 
     private:

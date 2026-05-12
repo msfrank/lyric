@@ -345,7 +345,7 @@ lyric_assembler::NamespaceSymbol::resolveTargetMember(
 tempo_utils::Status
 lyric_assembler::NamespaceSymbol::prepareTargetMethod(
     const std::string &name,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     const BlockHandle *currentBlock) const
 {
     auto *symbolCache = m_state->symbolCache();
@@ -379,6 +379,6 @@ lyric_assembler::NamespaceSymbol::prepareTargetMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }

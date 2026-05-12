@@ -16,7 +16,7 @@
 
 namespace lyric_assembler {
 
-    class CtorConstructable : public AbstractConstructable {
+    class CtorConstructable : public AbstractCallable {
 
     public:
         CtorConstructable();
@@ -34,6 +34,11 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
+            BlockHandle *block,
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment) override;
+
+        tempo_utils::Result<lyric_common::TypeDef> invokeCtor(
             BlockHandle *block,
             const AbstractCallsiteReifier &reifier,
             CodeFragment *fragment,

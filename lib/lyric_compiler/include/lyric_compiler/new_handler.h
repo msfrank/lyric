@@ -37,7 +37,7 @@ namespace lyric_compiler {
         lyric_common::TypeDef m_typeHint;
         bool m_isSideEffect;
         lyric_assembler::CodeFragment *m_fragment;
-        lyric_assembler::ConstructableInvoker m_invoker;
+        std::unique_ptr<lyric_assembler::AbstractCallable> m_callable;
         std::unique_ptr<lyric_typing::CallsiteReifier> m_reifier;
     };
 }

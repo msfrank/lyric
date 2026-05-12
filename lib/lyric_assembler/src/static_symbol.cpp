@@ -187,7 +187,7 @@ lyric_assembler::StaticSymbol::defineInitializer()
 }
 
 tempo_utils::Status
-lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
+lyric_assembler::StaticSymbol::prepareInitializer(std::unique_ptr<AbstractCallable> &callable)
 {
     auto *priv = getPriv();
 
@@ -202,8 +202,8 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
     CallSymbol *initSymbol;
     TU_ASSIGN_OR_RETURN (initSymbol, symbolCache->getOrImportCall(initializerUrl));
 
-    auto callable = std::make_unique<FunctionCallable>(initSymbol, /* isInlined= */ false);
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(initSymbol, /* isInlined= */ false);
+    return {};
 }
 
 lyric_assembler::DataReference

@@ -53,14 +53,14 @@ invoke_call(
         TU_ASSIGN_OR_RETURN (callsiteArguments, typeSystem->resolveTypeArguments(invokeBlock, typeArgumentsSpec));
     }
 
-    auto invoker = std::make_unique<lyric_assembler::CallableInvoker>();
-    TU_RETURN_IF_NOT_OK (bindingBlock->prepareFunction(identifier, *invoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (bindingBlock->prepareFunction(identifier, callable));
 
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
+    TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
 
     auto call = std::make_unique<lyric_compiler::DataDerefCall>(dataDeref, bindingBlock, invokeBlock,
-        std::move(invoker), std::move(reifier), dataDeref->fragment, driver);
+        std::move(callable), std::move(reifier), dataDeref->fragment, driver);
     ctx.setGrouping(std::move(call));
 
     return {};
@@ -136,50 +136,50 @@ invoke_method(
     lyric_assembler::AbstractSymbol *receiver;
     TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
 
-    auto invoker = std::make_unique<lyric_assembler::CallableInvoker>();
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
 
     // prepare method on receiver
     switch (receiver->getSymbolType()) {
 
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(receiver);
-            TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::CONCEPT: {
             auto *conceptSymbol = cast_symbol_to_concept(receiver);
-            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = cast_symbol_to_enum(receiver);
-            TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::EXISTENTIAL: {
             auto *existentialSymbol = cast_symbol_to_existential(receiver);
-            TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(receiver);
-            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::PROTOCOL: {
             auto *protocolSymbol = cast_symbol_to_protocol(receiver);
-            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(receiver);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
@@ -189,10 +189,10 @@ invoke_method(
     }
 
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
+    TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
 
     auto method = std::make_unique<lyric_compiler::DataDerefMethod>(dataDeref, bindingBlock, invokeBlock,
-        std::move(invoker), std::move(reifier), dataDeref->fragment, driver);
+        std::move(callable), std::move(reifier), dataDeref->fragment, driver);
     ctx.setGrouping(std::move(method));
 
     return {};
@@ -264,50 +264,50 @@ invoke_global_method(
         TU_ASSIGN_OR_RETURN (callsiteArguments, typeSystem->resolveTypeArguments(invokeBlock, typeArgumentsSpec));
     }
 
-    auto invoker = std::make_unique<lyric_assembler::CallableInvoker>();
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
 
     // prepare method on receiver
     switch (derefSymbol->getSymbolType()) {
 
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = lyric_assembler::cast_symbol_to_class(derefSymbol);
-            TU_RETURN_IF_NOT_OK (classSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::CONCEPT: {
             auto *conceptSymbol = lyric_assembler::cast_symbol_to_concept(derefSymbol);
-            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
-            TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
-            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::NAMESPACE: {
             auto *namespaceSymbol = lyric_assembler::cast_symbol_to_namespace(derefSymbol);
-            TU_RETURN_IF_NOT_OK (namespaceSymbol->prepareTargetMethod(identifier, *invoker, dataDeref->block));
+            TU_RETURN_IF_NOT_OK (namespaceSymbol->prepareTargetMethod(identifier, callable, dataDeref->block));
             break;
         }
 
         case lyric_assembler::SymbolType::PROTOCOL: {
             auto *protocolSymbol = lyric_assembler::cast_symbol_to_protocol(derefSymbol);
-            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, dataDeref->block));
+            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareGlobalMethod(identifier, receiverType, callable, dataDeref->block));
             break;
         }
 
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(identifier, receiverType, *invoker, thisReceiver));
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
             break;
         }
 
@@ -317,10 +317,10 @@ invoke_global_method(
     }
 
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
+    TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
 
     auto method = std::make_unique<lyric_compiler::DataDerefMethod>(dataDeref, bindingBlock, invokeBlock,
-        std::move(invoker), std::move(reifier), dataDeref->fragment, driver);
+        std::move(callable), std::move(reifier), dataDeref->fragment, driver);
     ctx.setGrouping(std::move(method));
 
     return {};
@@ -783,17 +783,17 @@ lyric_compiler::DataDerefCall::DataDerefCall(
     DataDeref *deref,
     lyric_assembler::BlockHandle *bindingBlock,
     lyric_assembler::BlockHandle *invokeBlock,
-    std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+    std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
     std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
     : BaseInvokableHandler(bindingBlock, invokeBlock, fragment, driver),
       m_deref(deref),
-      m_invoker(std::move(invoker)),
+      m_callable(std::move(callable)),
       m_reifier(std::move(reifier))
 {
     TU_NOTNULL (m_deref);
-    TU_NOTNULL (m_invoker);
+    TU_NOTNULL (m_callable);
     TU_NOTNULL (m_reifier);
 }
 
@@ -807,10 +807,10 @@ lyric_compiler::DataDerefCall::after(
     auto *symbolCache = driver->getSymbolCache();
     auto *fragment = getFragment();
 
-    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker->getCallable(), *m_reifier, fragment));
+    TU_RETURN_IF_NOT_OK (placeArguments(m_callable.get(), *m_reifier, fragment));
 
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
+    TU_ASSIGN_OR_RETURN (returnType, m_callable->invoke(getInvokeBlock(), *m_reifier, fragment));
 
     lyric_assembler::AbstractSymbol *derefSymbol;
 
@@ -848,17 +848,17 @@ lyric_compiler::DataDerefMethod::DataDerefMethod(
     DataDeref *deref,
     lyric_assembler::BlockHandle *bindingBlock,
     lyric_assembler::BlockHandle *invokeBlock,
-    std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+    std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
     std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
     lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
     : BaseInvokableHandler(bindingBlock, invokeBlock, fragment, driver),
       m_deref(deref),
-      m_invoker(std::move(invoker)),
+      m_callable(std::move(callable)),
       m_reifier(std::move(reifier))
 {
     TU_NOTNULL (m_deref);
-    TU_NOTNULL (m_invoker);
+    TU_NOTNULL (m_callable);
     TU_NOTNULL (m_reifier);
 }
 
@@ -872,10 +872,10 @@ lyric_compiler::DataDerefMethod::after(
     auto *symbolCache = driver->getSymbolCache();
     auto *fragment = getFragment();
 
-    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker->getCallable(), *m_reifier, fragment));
+    TU_RETURN_IF_NOT_OK (placeArguments(m_callable.get(), *m_reifier, fragment));
 
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
+    TU_ASSIGN_OR_RETURN (returnType, m_callable->invoke(getInvokeBlock(), *m_reifier, fragment));
 
     lyric_assembler::AbstractSymbol *derefSymbol;
 

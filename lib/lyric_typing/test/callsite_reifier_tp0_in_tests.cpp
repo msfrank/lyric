@@ -38,13 +38,11 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     p0.typeDef = templateHandle->getPlaceholder(0);
     p0.placement = lyric_object::PlacementType::List;
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
-    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
 
     // simulate the function f[T](p0: T): Bool
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize(invoker).isOk());
+    ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // apply Int argument
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());

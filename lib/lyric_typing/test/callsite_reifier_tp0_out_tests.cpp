@@ -32,13 +32,11 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()));
 
-    lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}, templateHandle));
-    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
 
     // simulate the function f[T](): T with the given callsite type arguments [Int]
     lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize(invoker, {IntType}).isOk());
+    ASSERT_TRUE (reifier.initialize(callable.get(), {IntType}).isOk());
 
     // result type should be Int
     auto reifyReturnResult = reifier.reifyResult(templateHandle->getPlaceholder(0));

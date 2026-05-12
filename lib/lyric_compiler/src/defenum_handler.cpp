@@ -309,24 +309,24 @@ lyric_compiler::EnumCase::decide(
     auto *fragment = procHandle->procFragment();
 
     // find the superenum ctor
-    auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-    TU_RETURN_IF_NOT_OK (m_enumcase->superEnum()->prepareCtor(*superInvoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> superCtor;
+    TU_RETURN_IF_NOT_OK (m_enumcase->superEnum()->prepareCtor(superCtor));
 
-    auto caseinit = std::make_unique<CaseInit>(std::move(superInvoker), fragment, block, driver);
+    auto caseinit = std::make_unique<CaseInit>(std::move(superCtor), fragment, block, driver);
     ctx.setGrouping(std::move(caseinit));
 
     return {};
 }
 
 lyric_compiler::CaseInit::CaseInit(
-    std::unique_ptr<lyric_assembler::ConstructableInvoker> &&invoker,
+    std::unique_ptr<lyric_assembler::AbstractCallable> &&callable,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseInvokableHandler(block, block, fragment, driver),
-      m_invoker(std::move(invoker))
+      m_callable(std::move(callable))
 {
-    TU_ASSERT (m_invoker != nullptr);
+    TU_ASSERT (m_callable != nullptr);
 }
 
 tempo_utils::Status
@@ -355,13 +355,12 @@ lyric_compiler::CaseInit::after(
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
 
-    TU_RETURN_IF_NOT_OK (reifier.initialize(*m_invoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(m_callable.get()));
 
-    auto *constructable = m_invoker->getConstructable();
-    TU_RETURN_IF_NOT_OK (placeArguments(constructable, reifier, fragment));
+    TU_RETURN_IF_NOT_OK (placeArguments(m_callable.get(), reifier, fragment));
 
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
+    TU_ASSIGN_OR_RETURN (returnType, m_callable->invokeCtor(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
 
     TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
 

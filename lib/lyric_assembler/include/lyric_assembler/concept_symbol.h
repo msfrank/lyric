@@ -88,7 +88,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareGlobalMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool thisReceiver) const;
 
         /*
@@ -107,7 +107,7 @@ namespace lyric_assembler {
         tempo_utils::Status prepareAction(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            CallableInvoker &invoker,
+            std::unique_ptr<AbstractCallable> &callable,
             bool isReceiver = false);
 
         /*

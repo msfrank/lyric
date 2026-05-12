@@ -104,15 +104,15 @@ lyric_compiler::LambdaHandler::after(
         m_lambda.callSymbol, block, fundamentalCache, symbolCache, typeSystem));
 
     // invoke the lambda builder
-    lyric_assembler::CallableInvoker invoker;
-    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), invoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), callable));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get()));
 
     // the return value of the lambda builder is the lambda closure
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, invoker.invoke(block, reifier, m_fragment));
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, m_fragment));
 
     if (m_isSideEffect) {
         if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
@@ -190,15 +190,15 @@ lyric_compiler::LambdaFrom::decide(
         cast_symbol_to_call(sym), block, fundamentalCache, symbolCache, typeSystem));
 
     // invoke the lambda builder
-    lyric_assembler::CallableInvoker invoker;
-    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), invoker));
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), callable));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get()));
 
     // the return value of the lambda builder is the lambda closure
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, invoker.invoke(block, reifier, m_fragment));
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, m_fragment));
 
     if (m_isSideEffect) {
         if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {

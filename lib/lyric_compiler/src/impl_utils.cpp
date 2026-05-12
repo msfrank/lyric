@@ -87,11 +87,11 @@ tempo_utils::Status
 lyric_compiler::prepare_impl_action(
     const std::string &actionName,
     const lyric_assembler::ImplReference &implRef,
-    lyric_assembler::CallableInvoker &invoker,
+    std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
     lyric_assembler::BlockHandle *block,
     lyric_assembler::SymbolCache *symbolCache)
 {
     lyric_assembler::ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, resolve_impl_handle(implRef, block, symbolCache));
-    return implHandle->prepareExtension(actionName, implRef.usingRef, invoker);
+    return implHandle->prepareExtension(actionName, implRef.usingRef, callable);
 }

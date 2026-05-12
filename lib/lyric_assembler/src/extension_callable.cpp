@@ -129,3 +129,25 @@ lyric_assembler::ExtensionCallable::invoke(
             TU_UNREACHABLE();
     }
 }
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ExtensionCallable::invokeCtor(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeCtor not supported on extension callable");
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ExtensionCallable::invokeNew(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
+    tu_uint8 flags)
+{
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+        "invokeNew not supported on extension callable");
+}

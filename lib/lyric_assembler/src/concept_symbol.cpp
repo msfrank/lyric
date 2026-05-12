@@ -306,7 +306,7 @@ tempo_utils::Status
 lyric_assembler::ConceptSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
@@ -320,7 +320,7 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
         if (priv->superConcept == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superConcept->prepareGlobalMethod(name, receiverType, invoker, thisReceiver);
+        return priv->superConcept->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -338,8 +338,8 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
+    return {};
 }
 
 bool
@@ -424,7 +424,7 @@ tempo_utils::Status
 lyric_assembler::ConceptSymbol::prepareAction(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    CallableInvoker &invoker,
+    std::unique_ptr<AbstractCallable> &callable,
     bool thisReceiver)
 {
     auto *priv = getPriv();
@@ -435,8 +435,8 @@ lyric_assembler::ConceptSymbol::prepareAction(
             "missing action {}", name);
     auto *actionSymbol = entry->second;
 
-    auto callable = std::make_unique<ActionCallable>(actionSymbol, this);
-    return invoker.initialize(std::move(callable));
+    callable = std::make_unique<ActionCallable>(actionSymbol, this);
+    return {};
 }
 
 bool
