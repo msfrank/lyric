@@ -42,7 +42,7 @@ build_core_BoolInstance(
     auto *BoolPropositionType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
         PropositionConcept->concept_index,
-        {BoolType, BoolType});
+        {BoolType});
 
     auto *BoolInstance = state.addInstance(instancePath,
         lyo1::InstanceFlags::NONE, SingletonInstance);

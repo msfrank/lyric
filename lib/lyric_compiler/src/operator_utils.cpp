@@ -1,13 +1,12 @@
 
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
-#include <lyric_assembler/enum_symbol.h>
-#include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/impl_utils.h>
 #include <lyric_compiler/operator_utils.h>
-#include <lyric_typing/callsite_reifier.h>
+#include <lyric_typing/impl_selector.h>
+#include <lyric_typing/summon_reifier.h>
 
 tempo_utils::Status
 lyric_compiler::compile_unary_operator(
@@ -22,29 +21,23 @@ lyric_compiler::compile_unary_operator(
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
     auto *symbolCache = state->symbolCache();
-    auto *typeSystem = driver->getTypeSystem();
 
     lyric_common::TypeDef operandType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
-    lyric_common::TypeDef operatorType;
-    TU_ASSIGN_OR_RETURN (operatorType, resolve_unary_operator_concept_type(
-        fundamentalCache, operationId, operandType));
+    lyric_assembler::ActionSymbol *actionSymbol;
+    TU_ASSIGN_OR_RETURN (actionSymbol, resolve_operator_action(operationId, fundamentalCache, symbolCache));
 
-    std::string actionName;
-    TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
+    lyric_typing::SummonReifier reifier(state);
 
-    // resolve operator impl reference
-    lyric_assembler::ImplReference implRef;
-    TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(actionSymbol));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
+    TU_RETURN_IF_NOT_OK (reifier.finalize());
+
+    lyric_typing::ImplSelector selector(block);
 
     std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, callable, block, symbolCache));
-
-    lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable));
-
-    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
+    TU_RETURN_IF_NOT_OK (selector.select(reifier, callable));
 
     lyric_common::TypeDef resultType;
     TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
@@ -65,7 +58,6 @@ lyric_compiler::compile_binary_operator(
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
     auto *symbolCache = state->symbolCache();
-    auto *typeSystem = driver->getTypeSystem();
 
     lyric_common::TypeDef rhsType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
@@ -73,25 +65,20 @@ lyric_compiler::compile_binary_operator(
     lyric_common::TypeDef lhsType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
-    lyric_common::TypeDef operatorType;
-    TU_ASSIGN_OR_RETURN (operatorType, resolve_binary_operator_concept_type(
-        fundamentalCache, operationId, lhsType, rhsType));
+    lyric_assembler::ActionSymbol *actionSymbol;
+    TU_ASSIGN_OR_RETURN (actionSymbol, resolve_operator_action(operationId, fundamentalCache, symbolCache));
 
-    std::string actionName;
-    TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
+    lyric_typing::SummonReifier reifier(state);
 
-    // resolve operator impl reference
-    lyric_assembler::ImplReference implRef;
-    TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
-
-    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, callable, block, symbolCache));
-
-    lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable));
-
+    TU_RETURN_IF_NOT_OK (reifier.initialize(actionSymbol));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(lhsType));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
+    TU_RETURN_IF_NOT_OK (reifier.finalize());
+
+    lyric_typing::ImplSelector selector(block);
+
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (selector.select(reifier, callable));
 
     lyric_common::TypeDef resultType;
     TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));

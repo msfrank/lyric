@@ -72,7 +72,7 @@ TEST_F(CompileCast, EvaluateImplCastWithImplementedConcept)
 TEST_F(CompileCast, EvaluateImplCastWithMultipleImplementedConcepts)
 {
     auto result = m_tester->runModule(R"(
-        val eq = IntInstance as Equality[Int,Int] & Arithmetic[Int,Int]
+        val eq = IntInstance as Equality[Int,Int] & Arithmetic[Int]
         eq
     )");
 

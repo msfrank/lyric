@@ -24,6 +24,10 @@ lyric_typing::SummonReifier::SummonReifier(TypeSystem *typeSystem)
     m_state->objectState = typeSystem->getState();
 }
 
+lyric_typing::SummonReifier::~SummonReifier()
+{
+}
+
 tempo_utils::Status
 lyric_typing::SummonReifier::initialize(lyric_assembler::ActionSymbol *actionSymbol)
 {
@@ -54,6 +58,18 @@ lyric_typing::SummonReifier::initialize(lyric_assembler::ActionSymbol *actionSym
 
     m_initialized = true;
     return {};
+}
+
+lyric_assembler::ActionSymbol *
+lyric_typing::SummonReifier::summonAction() const
+{
+    return m_actionSymbol;
+}
+
+size_t
+lyric_typing::SummonReifier::numReifiedArguments() const
+{
+    return m_argumentTypes.size();
 }
 
 tempo_utils::Status
@@ -164,18 +180,25 @@ lyric_typing::SummonReifier::reifyNextArgument(const lyric_common::TypeDef &argu
     return {};
 }
 
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_typing::SummonReifier::reifyNextContext()
+{
+    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+        "ctx parameter is unsupported for a summon reifier");
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_typing::SummonReifier::reifyResult(const lyric_common::TypeDef &returnType) const
+{
+    return internal::reify_result_type(returnType, m_state.get());
+}
+
 lyric_common::TypeDef
 lyric_typing::SummonReifier::getReifiedArgument(int index) const
 {
     if (0 <= index && index < m_argumentTypes.size())
         return m_argumentTypes.at(index);
     return {};
-}
-
-int
-lyric_typing::SummonReifier::numReifiedArguments() const
-{
-    return m_argumentTypes.size();
 }
 
 tempo_utils::Status

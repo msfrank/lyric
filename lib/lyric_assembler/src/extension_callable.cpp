@@ -21,9 +21,17 @@ lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol)
 }
 
 lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol, const DataReference &implRef)
-    : m_type(InvokeType::VIRTUAL),
+    : m_type(InvokeType::REF),
       m_callSymbol(callSymbol),
       m_implRef(implRef)
+{
+    TU_ASSERT (m_callSymbol != nullptr);
+}
+
+lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol, tu_uint16 offset)
+    : m_type(InvokeType::OFFSET),
+      m_callSymbol(callSymbol),
+      m_offset(offset)
 {
     TU_ASSERT (m_callSymbol != nullptr);
 }
@@ -118,8 +126,15 @@ lyric_assembler::ExtensionCallable::invoke(
             return reifier.reifyResult(m_callSymbol->getReturnType());
         }
 
-        case InvokeType::VIRTUAL: {
+        case InvokeType::REF: {
             TU_RETURN_IF_NOT_OK (fragment->loadRef(m_implRef));
+            TU_RETURN_IF_NOT_OK (fragment->callVirtual(
+                m_callSymbol, placementSize, lyric_object::CALL_RECEIVER_FOLLOWS));
+            return reifier.reifyResult(m_callSymbol->getReturnType());
+        }
+
+        case InvokeType::OFFSET: {
+            TU_RETURN_IF_NOT_OK (fragment->rpickValue(m_offset));
             TU_RETURN_IF_NOT_OK (fragment->callVirtual(
                 m_callSymbol, placementSize, lyric_object::CALL_RECEIVER_FOLLOWS));
             return reifier.reifyResult(m_callSymbol->getReturnType());

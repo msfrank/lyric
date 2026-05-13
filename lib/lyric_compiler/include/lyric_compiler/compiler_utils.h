@@ -7,6 +7,8 @@
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/result.h>
 
+#include "lyric_assembler/action_symbol.h"
+
 namespace lyric_compiler {
 
     lyric_object::DeriveType convert_derive_type(lyric_parser::DeriveType derive);
@@ -23,6 +25,11 @@ namespace lyric_compiler {
         lyric_schema::LyricAstId operatorClass,
         const lyric_common::TypeDef &operand1,
         const lyric_common::TypeDef &operand2);
+
+    tempo_utils::Result<lyric_assembler::ActionSymbol *> resolve_operator_action(
+        lyric_schema::LyricAstId operatorClass,
+        lyric_assembler::FundamentalCache *fundamentalCache,
+        lyric_assembler::SymbolCache *symbolCache);
 }
 
 #endif // LYRIC_COMPILER_COMPILER_UTILS_H

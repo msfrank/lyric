@@ -71,6 +71,12 @@ namespace lyric_assembler {
         ActionSymbol *getAction(const std::string &name) const;
 
         /*
+         * access to impl methods
+         */
+        bool hasMethod(const std::string &name) const;
+        CallSymbol *getMethod(const std::string &name) const;
+
+        /*
          * impl extension management
          */
         bool hasExtension(const std::string &name) const;

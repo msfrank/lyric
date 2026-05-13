@@ -34,6 +34,24 @@ namespace lyric_assembler {
         std::vector<ImplHandle *>::const_iterator implsEnd() const;
         int numImpls() const;
 
+        tempo_utils::Result<ImplHandle *> getOrImportImpl(
+            const ImplReference &implRef,
+            bool allowMissing = false) const;
+        tempo_utils::Result<ImplHandle *> getOrImportImpl(
+            const lyric_common::SymbolUrl &symbolUrl,
+            const lyric_common::TypeDef &implType,
+            bool allowMissing = false) const;
+
+        tempo_utils::Result<CallSymbol *> getOrImportImplMethod(
+            const ImplReference &implRef,
+            const ActionSymbol *actionSymbol,
+            bool allowMissing = false) const;
+        tempo_utils::Result<CallSymbol *> getOrImportImplMethod(
+            const lyric_common::SymbolUrl &symbolUrl,
+            const lyric_common::TypeDef &implType,
+            const ActionSymbol *actionSymbol,
+            bool allowMissing = false) const;
+
         bool hasEnvImpl(const lyric_common::TypeDef &type) const;
         lyric_common::SymbolUrl getEnvImpl(const lyric_common::TypeDef &type) const;
         tempo_utils::Status insertEnvImpl(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url);

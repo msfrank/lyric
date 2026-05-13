@@ -31,7 +31,7 @@ build_core_IntInstance(
     auto *IntArithmeticType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
         ArithmeticConcept->concept_index,
-        {IntType, IntType});
+        {IntType});
 
     auto *IntComparisonType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,

@@ -54,7 +54,7 @@ build_core_FloatInstance(
     auto *FloatArithmeticType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
         ArithmeticConcept->concept_index,
-        {FloatType, FloatType});
+        {FloatType});
 
     auto *FloatComparisonType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,

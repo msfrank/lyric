@@ -17,18 +17,25 @@ namespace lyric_typing {
         struct DispatchState;
     }
 
-    class SummonReifier {
+    class SummonReifier : public lyric_assembler::AbstractCallsiteReifier {
 
     public:
         explicit SummonReifier(lyric_assembler::ObjectState *state);
         explicit SummonReifier(TypeSystem *typeSystem);
+        ~SummonReifier();
 
         tempo_utils::Status initialize(lyric_assembler::ActionSymbol *actionSymbol);
-        tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType);
+
+        lyric_assembler::ActionSymbol *summonAction() const;
+
+        size_t numReifiedArguments() const override;
+        tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType) override;
+        tempo_utils::Result<lyric_common::TypeDef> reifyNextContext() override;
+        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &returnType) const override;
+
         tempo_utils::Status finalize();
 
         lyric_common::TypeDef getReifiedArgument(int index) const;
-        int numReifiedArguments() const;
         tempo_utils::Result<lyric_common::TypeDef> reifySummonType() const;
         tempo_utils::Result<Option<tu_uint16>> findFirstPlacement(const lyric_common::TypeDef &argumentType) const;
 

@@ -123,7 +123,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunctionWithUpperBound)
 TEST_F(CompileDef, EvaluateDefGenericFunctionWithCtxParameter)
 {
     auto result = m_tester->runModule(R"(
-        def sum[A](x1: A, x2: A, using math: Arithmetic[A, A]): A {
+        def sum[A](x1: A, x2: A, using math: Arithmetic[A]): A {
             math.Add(x1, x2)
         }
         sum(5, 5)

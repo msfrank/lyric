@@ -177,6 +177,30 @@ lyric_assembler::ImplHandle::getAction(const std::string &name) const
 }
 
 bool
+lyric_assembler::ImplHandle::hasMethod(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->extensions.contains(name);
+}
+
+lyric_assembler::CallSymbol *
+lyric_assembler::ImplHandle::getMethod(const std::string &name) const
+{
+    auto *priv = getPriv();
+
+    auto entry = priv->extensions.find(name);
+    if (entry == priv->extensions.cend())
+        return nullptr;
+    const auto &extension = entry->second;
+
+    auto *symbolCache = m_state->symbolCache();
+    auto *symbol = symbolCache->getSymbolOrNull(extension.methodCall);
+    if (symbol == nullptr || symbol->getSymbolType() != SymbolType::CALL)
+        return nullptr;
+    return cast_symbol_to_call(symbol);
+}
+
+bool
 lyric_assembler::ImplHandle::hasExtension(const std::string &name) const
 {
     auto *priv = getPriv();

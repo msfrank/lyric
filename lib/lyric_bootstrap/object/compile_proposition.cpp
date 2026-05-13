@@ -8,31 +8,29 @@ CoreConcept *build_core_Proposition(BuilderState &state, const CoreConcept *Idea
     auto *PropositionTemplate = state.addTemplate(
         conceptPath,
         {
-            {"L", lyo1::PlaceholderVariance::Invariant},
-            {"R", lyo1::PlaceholderVariance::Invariant},
+            {"T", lyo1::PlaceholderVariance::Invariant},
         });
 
-    auto *LType = PropositionTemplate->types["L"];
-    auto *RType = PropositionTemplate->types["R"];
+    auto *TType = PropositionTemplate->types["T"];
 
     auto *PropositionConcept = state.addGenericConcept(conceptPath, PropositionTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
     state.addConceptAction("Conjunct", PropositionConcept,
         {
-            make_list_param("lhs", LType),
-            make_list_param("rhs", RType),
+            make_list_param("lhs", TType),
+            make_list_param("rhs", TType),
         },
         BoolType);
     state.addConceptAction("Disjunct", PropositionConcept,
         {
-            make_list_param("lhs", LType),
-            make_list_param("rhs", RType),
+            make_list_param("lhs", TType),
+            make_list_param("rhs", TType),
         },
         BoolType);
     state.addConceptAction("Complement", PropositionConcept,
         {
-            make_list_param("lhs", LType),
+            make_list_param("lhs", TType),
         },
         BoolType);
 

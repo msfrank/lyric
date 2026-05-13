@@ -20,13 +20,15 @@ namespace lyric_assembler {
         enum class InvokeType {
             INVALID,
             INLINE,
-            VIRTUAL,
+            REF,
+            OFFSET,
         };
 
     public:
         ExtensionCallable();
         explicit ExtensionCallable(CallSymbol *callSymbol);
         ExtensionCallable(CallSymbol *callSymbol, const DataReference &implRef);
+        ExtensionCallable(CallSymbol *callSymbol, tu_uint16 offset);
 
         bool isValid() const;
 
@@ -60,6 +62,7 @@ namespace lyric_assembler {
         InvokeType m_type;
         CallSymbol *m_callSymbol;
         DataReference m_implRef;
+        tu_uint16 m_offset;
 
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;
