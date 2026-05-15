@@ -168,6 +168,12 @@ lyric_assembler::TemplateHandle::resolveSingular(
     return typeDef;
 }
 
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_assembler::TemplateHandle::resolveDefinition(const lyric_common::SymbolPath &symbolPath)
+{
+    return m_parentBlock->resolveDefinition(symbolPath);
+}
+
 lyric_assembler::TemplateHandle *
 lyric_assembler::TemplateHandle::superTemplate() const
 {

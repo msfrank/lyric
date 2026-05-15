@@ -41,6 +41,11 @@ namespace lyric_typing {
             lyric_assembler::AbstractResolver *resolver,
             const TypeSpec &assignable);
 
+        tempo_utils::Result<lyric_common::TypeDef>
+        resolveImplementable(
+            lyric_assembler::AbstractResolver *resolver,
+            const TypeSpec &assignable);
+
         tempo_utils::Result<std::vector<lyric_common::TypeDef>>
         resolveTypeArguments(
             lyric_assembler::AbstractResolver *resolver,

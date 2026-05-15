@@ -13,6 +13,9 @@ namespace lyric_assembler {
         virtual tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_common::SymbolPath &typePath,
             const std::vector<lyric_common::TypeDef> &typeArguments) = 0;
+
+        virtual tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
+            const lyric_common::SymbolPath &symbolPath) = 0;
     };
 }
 

@@ -11,6 +11,7 @@ set(TEST_CASES
     parse_constant_tests.cpp
     parse_def_tests.cpp
     parse_defclass_tests.cpp
+    parse_impl_tests.cpp
     parse_macro_tests.cpp
     parse_parameter_spec_tests.cpp
     parse_precedence_tests.cpp

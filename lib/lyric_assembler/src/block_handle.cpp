@@ -486,11 +486,7 @@ lyric_assembler::BlockHandle::resolveSingular(
 tempo_utils::Result<lyric_common::SymbolUrl>
 lyric_assembler::BlockHandle::resolveDefinition(const lyric_common::SymbolPath &symbolPath)
 {
-    std::vector<std::string> path;
-    for (const auto &part : symbolPath.getPath()) {
-        path.push_back(part);
-    }
-    return resolveDefinition(path);
+    return resolveDefinition(symbolPath.getPath());
 }
 
 static tempo_utils::Result<lyric_common::SymbolUrl>

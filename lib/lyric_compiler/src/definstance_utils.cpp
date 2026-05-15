@@ -284,7 +284,7 @@ lyric_compiler::declare_instance_impl(
     Impl impl;
 
     // resolve the impl type
-    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(instanceBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveImplementable(instanceBlock, implSpec));
 
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, instanceSymbol->declareImpl(impl.implType));

@@ -290,7 +290,8 @@ defStatement        : definitionMacro? DefKeyword
 // impl spec
 
 implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
-implSpec            : implDef ;
+implExt             : aliasStatement ;
+implSpec            : implDef | implExt ;
 
 
 // global spec

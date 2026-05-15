@@ -44,7 +44,6 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
 
 TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
 {
-    GTEST_SKIP();
     auto result = runModule(R"(
 
         defclass CountdownIterator {

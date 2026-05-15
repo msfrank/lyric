@@ -274,7 +274,7 @@ lyric_compiler::declare_enum_impl(
     Impl impl;
 
     // resolve the impl type
-    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(enumBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveImplementable(enumBlock, implSpec));
 
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, enumSymbol->declareImpl(impl.implType));

@@ -179,6 +179,8 @@ namespace lyric_parser::internal {
         void exitDefStatement(ModuleParser::DefStatementContext *ctx) override;
         void enterImplDef(ModuleParser::ImplDefContext *ctx) override;
         void exitImplDef(ModuleParser::ImplDefContext *ctx) override;
+        void enterImplExt(ModuleParser::ImplExtContext *ctx) override;
+        void exitImplExt(ModuleParser::ImplExtContext *ctx) override;
         void exitModifierSpec(ModuleParser::ModifierSpecContext *ctx) override;
         void enterGlobalSpec(ModuleParser::GlobalSpecContext *ctx) override;
         void enterGlobalVal(ModuleParser::GlobalValContext *ctx) override;

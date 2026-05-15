@@ -63,7 +63,7 @@ lyric_compiler::declare_concept_impl(
     Impl impl;
 
     // resolve the impl type
-    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(conceptBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveImplementable(conceptBlock, implSpec));
 
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, conceptSymbol->declareImpl(impl.implType));

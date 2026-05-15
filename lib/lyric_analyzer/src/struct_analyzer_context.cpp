@@ -213,7 +213,7 @@ lyric_analyzer::StructAnalyzerContext::declareImpl(const lyric_parser::Archetype
     lyric_typing::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(block, typeNode));
     lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(block, implSpec));
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveImplementable(block, implSpec));
 
     lyric_assembler::ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, m_structSymbol->declareImpl(implType));

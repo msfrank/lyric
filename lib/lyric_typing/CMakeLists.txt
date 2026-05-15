@@ -18,6 +18,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/parse_pack.h
     include/lyric_typing/resolve_alias.h
     include/lyric_typing/resolve_assignable.h
+    include/lyric_typing/resolve_implementable.h
     include/lyric_typing/resolve_pack.h
     include/lyric_typing/resolve_template.h
     include/lyric_typing/summon_reifier.h
@@ -41,6 +42,7 @@ target_sources(lyric_typing PRIVATE
     src/parse_pack.cpp
     src/resolve_alias.cpp
     src/resolve_assignable.cpp
+    src/resolve_implementable.cpp
     src/resolve_pack.cpp
     src/resolve_template.cpp
     src/summon_reifier.cpp

@@ -384,7 +384,7 @@ lyric_compiler::declare_struct_impl(
     Impl impl;
 
     // resolve the impl type
-    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(structBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveImplementable(structBlock, implSpec));
 
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, structSymbol->declareImpl(impl.implType));

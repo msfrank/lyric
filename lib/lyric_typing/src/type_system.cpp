@@ -1,16 +1,15 @@
 
 #include <lyric_assembler/call_symbol.h>
-#include <lyric_assembler/type_set.h>
+#include <lyric_typing/check_dispatchable.h>
 #include <lyric_typing/compare_assignable.h>
 #include <lyric_typing/parse_assignable.h>
 #include <lyric_typing/parse_pack.h>
 #include <lyric_typing/resolve_assignable.h>
+#include <lyric_typing/resolve_implementable.h>
 #include <lyric_typing/resolve_pack.h>
 #include <lyric_typing/resolve_template.h>
 #include <lyric_typing/type_system.h>
 #include <lyric_typing/unify_assignable.h>
-
-#include "lyric_typing/check_dispatchable.h"
 
 lyric_typing::TypeSystem::TypeSystem(lyric_assembler::ObjectState *state)
     : m_state(state)
@@ -62,6 +61,14 @@ lyric_typing::TypeSystem::resolveAssignable(
     const TypeSpec &assignable)
 {
     return resolve_assignable(assignable, resolver, m_state);
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_typing::TypeSystem::resolveImplementable(
+    lyric_assembler::AbstractResolver *resolver,
+    const TypeSpec &implementable)
+{
+    return resolve_implementable(implementable, resolver, m_state);
 }
 
 tempo_utils::Result<std::vector<lyric_common::TypeDef>>

@@ -36,6 +36,8 @@ namespace lyric_assembler {
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_common::SymbolPath &typePath,
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
+        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
+            const lyric_common::SymbolPath &symbolPath) override;
 
         lyric_common::SymbolUrl getTemplateUrl() const;
         TemplateHandle *superTemplate() const;

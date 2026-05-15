@@ -228,7 +228,7 @@ lyric_analyzer::EnumAnalyzerContext::declareImpl(const lyric_parser::ArchetypeNo
     lyric_typing::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(block, typeNode));
     lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(block, implSpec));
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveImplementable(block, implSpec));
 
     lyric_assembler::ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, m_enumSymbol->declareImpl(implType));

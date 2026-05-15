@@ -364,7 +364,7 @@ lyric_compiler::declare_class_impl(
     Impl impl;
 
     // resolve the impl type
-    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveAssignable(classBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (impl.implType, typeSystem->resolveImplementable(classBlock, implSpec));
 
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(impl.implType));

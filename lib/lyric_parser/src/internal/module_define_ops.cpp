@@ -191,6 +191,48 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 }
 
 void
+lyric_parser::internal::ModuleDefineOps::enterImplExt(ModuleParser::ImplExtContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefineOps::enterImplExt");
+}
+
+void
+lyric_parser::internal::ModuleDefineOps::exitImplExt(ModuleParser::ImplExtContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *extNode;
+    TU_ASSIGN_OR_RAISE (extNode, state->popNode());
+
+    lyric_schema::LyricAstId astId;
+    TU_RAISE_IF_NOT_OK (extNode->parseId(lyric_schema::kLyricAstVocabulary, astId));
+    switch (astId) {
+        case lyric_schema::LyricAstId::Alias:
+        case lyric_schema::LyricAstId::DefClass:
+        case lyric_schema::LyricAstId::DefConcept:
+        case lyric_schema::LyricAstId::DefEnum:
+        case lyric_schema::LyricAstId::DefInstance:
+        case lyric_schema::LyricAstId::DefStruct:
+            break;
+        default:
+            throw tempo_utils::StatusException(ParseStatus::forCondition(
+                ParseCondition::kParseInvariant, "invalid external definition"));
+    }
+
+    // peek node on stack, verify it is impl
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, state->peekNode(lyric_schema::kLyricAstImplClass));
+
+    // append ext node to impl
+    TU_RAISE_IF_NOT_OK (implNode->appendChild(extNode));
+}
+
+void
 lyric_parser::internal::ModuleDefineOps::parseModifierSpec(ModuleParser::ModifierSpecContext *ctx)
 {
     auto *state = getState();

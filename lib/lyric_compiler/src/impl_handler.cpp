@@ -8,8 +8,7 @@
 #include <lyric_compiler/pack_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
-
-#include "lyric_typing/overload_reifier.h"
+#include <lyric_typing/overload_reifier.h>
 
 lyric_compiler::ImplHandler::ImplHandler(
     Impl impl,
