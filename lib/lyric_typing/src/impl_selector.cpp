@@ -1,25 +1,16 @@
 
 #include <lyric_assembler/binding_symbol.h>
-#include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/concept_symbol.h>
-#include <lyric_assembler/enum_symbol.h>
-#include <lyric_assembler/existential_symbol.h>
+#include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/impl_cache.h>
-#include <lyric_assembler/impl_handle.h>
-#include <lyric_assembler/instance_symbol.h>
-#include <lyric_assembler/proc_handle.h>
-#include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_typing/impl_selector.h>
 #include <lyric_typing/typing_result.h>
 
-#include "lyric_assembler/extension_callable.h"
-#include "lyric_assembler/lexical_variable.h"
-#include "lyric_assembler/local_variable.h"
-
-lyric_typing::ImplSelector::ImplSelector(lyric_assembler::BlockHandle *block)
-    : m_block(block)
+lyric_typing::ImplSelector::ImplSelector(const SummonReifier *reifier, lyric_assembler::BlockHandle *block)
+    : m_reifier(reifier),
+      m_block(block)
 {
+    TU_NOTNULL (m_reifier);
     TU_NOTNULL (m_block);
 }
 
@@ -50,15 +41,63 @@ lyric_typing::ImplSelector::findImplInsideProc(
     return {};
 }
 
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_typing::ImplSelector::findGenericImplForArgument(
+    const lyric_common::TypeDef &implType,
+    const lyric_assembler::ActionSymbol *actionSymbol,
+    const lyric_common::TypeDef &argumentType)
+{
+    auto *state = m_block->blockState();
+    auto *symbolCache = state->symbolCache();
+    auto *implCache = state->implCache();
+
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(argumentType.getConcreteUrl()));
+
+    lyric_common::TypeDef definitionType;
+    switch (symbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::CLASS:
+        case lyric_assembler::SymbolType::CONCEPT:
+        case lyric_assembler::SymbolType::EXISTENTIAL:
+            definitionType = symbol->getTypeDef();
+            break;
+        default:
+            return nullptr;
+    }
+
+    if (definitionType == argumentType)
+        return nullptr;
+
+    std::vector implArguments(implType.concreteArgumentsBegin(), implType.concreteArgumentsEnd());
+    for (auto &implArg : implArguments) {
+        if (implArg == argumentType) {
+            implArg = definitionType;
+        }
+    }
+
+    lyric_common::TypeDef genericImplType;
+    TU_ASSIGN_OR_RETURN (genericImplType, lyric_common::TypeDef::forConcrete(
+        implType.getConcreteUrl(), implArguments));
+    if (genericImplType == implType)
+        return nullptr;
+
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, implCache->getOrImportImplMethod(
+        argumentType.getConcreteUrl(), genericImplType, actionSymbol, /* allowMissing= */ true));
+
+    m_callsiteArguments = std::vector(argumentType.concreteArgumentsBegin(), argumentType.concreteArgumentsEnd());
+
+    return callSymbol;
+}
+
 tempo_utils::Status
 lyric_typing::ImplSelector::findImplInArgument(
     const lyric_common::TypeDef &implType,
     const lyric_assembler::ActionSymbol *actionSymbol,
     int index,
-    const SummonReifier &reifier,
     std::unique_ptr<lyric_assembler::AbstractCallable> &callable)
 {
-    auto argumentType = reifier.getReifiedArgument(index);
+    auto argumentType = m_reifier->getReifiedArgument(index);
 
     // if argument type is not concrete then it cannot participate in resolution
     if (argumentType.getType() != lyric_common::TypeDefType::Concrete)
@@ -71,12 +110,15 @@ lyric_typing::ImplSelector::findImplInArgument(
     TU_ASSIGN_OR_RETURN (callSymbol, implCache->getOrImportImplMethod(
         argumentType.getConcreteUrl(), implType, actionSymbol, /* allowMissing= */ true));
 
-    if (callSymbol == nullptr)
-        return {};
+    if (callSymbol == nullptr) {
+        TU_ASSIGN_OR_RETURN (callSymbol, findGenericImplForArgument(implType, actionSymbol, argumentType));
+        if (callSymbol == nullptr)
+            return {};
+    }
 
     // find the stack offset of the first argument which matches the argument type
     Option<tu_uint16> firstOption;
-    TU_ASSIGN_OR_RETURN (firstOption, reifier.findFirstPlacement(argumentType));
+    TU_ASSIGN_OR_RETURN (firstOption, m_reifier->findFirstPlacement(argumentType));
     if (firstOption.isEmpty())
         return {};
     auto stackOffset = firstOption.getValue();
@@ -154,14 +196,12 @@ lyric_typing::ImplSelector::findImplOutsideProc(
 }
 
 tempo_utils::Status
-lyric_typing::ImplSelector::select(
-    const SummonReifier &reifier,
-    std::unique_ptr<lyric_assembler::AbstractCallable> &callable)
+lyric_typing::ImplSelector::select(std::unique_ptr<lyric_assembler::AbstractCallable> &callable)
 {
     lyric_common::TypeDef consumerType;
-    TU_ASSIGN_OR_RETURN (consumerType, reifier.reifySummonType());
+    TU_ASSIGN_OR_RETURN (consumerType, m_reifier->reifySummonType());
 
-    auto *actionSymbol = reifier.summonAction();
+    auto *actionSymbol = m_reifier->summonAction();
 
     std::unique_ptr<lyric_assembler::AbstractCallable> summonCallable;
 
@@ -173,8 +213,8 @@ lyric_typing::ImplSelector::select(
     }
 
     // step 2: check the definition of each impl argument for a matching impl
-    for (int i = 0; i < reifier.numReifiedArguments(); i++) {
-        TU_RETURN_IF_NOT_OK (findImplInArgument(consumerType, actionSymbol, i, reifier, summonCallable));
+    for (int i = 0; i < m_reifier->numReifiedArguments(); i++) {
+        TU_RETURN_IF_NOT_OK (findImplInArgument(consumerType, actionSymbol, i, summonCallable));
         if (summonCallable != nullptr) {
             callable = std::move(summonCallable);
             return {};
@@ -204,4 +244,10 @@ lyric_typing::ImplSelector::select(
     // impl not found
     return TypingStatus::forCondition(TypingCondition::kInvalidType,
         "missing impl for {}", consumerType.toString());
+}
+
+std::vector<lyric_common::TypeDef>
+lyric_typing::ImplSelector::getCallsiteArguments() const
+{
+    return m_callsiteArguments;
 }

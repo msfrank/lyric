@@ -107,6 +107,8 @@ lyric_importer::TemplateImport::load()
                 "cannot import template at index {} in module {}; invalid template parameter at index {}",
                 m_templateOffset, objectLocation.toString(), i));
 
+        tp.isAlias = templateParameter.isAlias();
+
         tp.variance = templateParameter.getPlaceholderVariance();
         if (tp.variance == lyric_object::VarianceType::Invalid)
             throw tempo_utils::StatusException(

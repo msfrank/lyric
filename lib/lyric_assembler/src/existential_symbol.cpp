@@ -146,8 +146,23 @@ lyric_assembler::ExistentialSymbol::load()
                 AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
         TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
-        auto implType = it->first;
-        priv->impls[implType] = implHandle;
+        auto contract = implHandle->getContract();
+
+        auto consumerType = contract.getConsumerType();
+        if (priv->impls.contains(consumerType))
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "impl {} is already imported for {}",
+                    consumerType.toString(), m_existentialUrl.toString()));
+        priv->impls[consumerType] = implHandle;
+
+        auto implementationType = contract.getImplementationType();
+        if (implementationType == consumerType)
+            continue;
+        if (priv->impls.contains(implementationType))
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "impl {} is already imported for {}",
+                    implementationType.toString(), m_existentialUrl.toString()));
+        priv->impls[implementationType] = implHandle;
     }
 
     for (auto iterator = m_existentialImport->sealedTypesBegin(); iterator != m_existentialImport->sealedTypesEnd(); iterator++) {

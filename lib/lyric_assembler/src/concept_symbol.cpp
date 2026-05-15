@@ -148,8 +148,23 @@ lyric_assembler::ConceptSymbol::load()
                 AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
         TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
-        auto implType = it->first;
-        priv->impls[implType] = implHandle;
+        auto contract = implHandle->getContract();
+
+        auto consumerType = contract.getConsumerType();
+        if (priv->impls.contains(consumerType))
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "impl {} is already imported for {}",
+                    consumerType.toString(), m_conceptUrl.toString()));
+        priv->impls[consumerType] = implHandle;
+
+        auto implementationType = contract.getImplementationType();
+        if (implementationType == consumerType)
+            continue;
+        if (priv->impls.contains(implementationType))
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "impl {} is already imported for {}",
+                    implementationType.toString(), m_conceptUrl.toString()));
+        priv->impls[implementationType] = implHandle;
     }
 
     for (auto it = m_conceptImport->sealedTypesBegin(); it != m_conceptImport->sealedTypesEnd(); it++) {

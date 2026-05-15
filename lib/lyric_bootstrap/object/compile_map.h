@@ -6,12 +6,10 @@
 CoreStruct *build_core_Map(
     BuilderState &state,
     const CoreStruct *RecordStruct,
-    const CoreConcept *IteratorConcept,
     const CoreConcept *IterableConcept,
     const CoreClass *MapIteratorClass,
     const CoreType *DataType,
     const CoreType *DataIteratorType,
-    const CoreType *DataIterableType,
     const CoreType *BoolType,
     const CoreType *IntegerType);
 

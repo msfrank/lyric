@@ -17,7 +17,7 @@ namespace lyric_typing {
         struct DispatchState;
     }
 
-    class SummonReifier : public lyric_assembler::AbstractCallsiteReifier {
+    class SummonReifier {
 
     public:
         explicit SummonReifier(lyric_assembler::ObjectState *state);
@@ -28,10 +28,10 @@ namespace lyric_typing {
 
         lyric_assembler::ActionSymbol *summonAction() const;
 
-        size_t numReifiedArguments() const override;
-        tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType) override;
-        tempo_utils::Result<lyric_common::TypeDef> reifyNextContext() override;
-        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &returnType) const override;
+        size_t numReifiedArguments() const;
+        tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType);
+        tempo_utils::Result<lyric_common::TypeDef> reifyNextContext();
+        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &returnType) const;
 
         tempo_utils::Status finalize();
 

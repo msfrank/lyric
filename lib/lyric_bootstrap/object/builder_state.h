@@ -105,9 +105,10 @@ struct CoreCall {
 
 struct CoreImpl {
     tu_uint32 impl_index;
-    const CoreType *implType;
-    const CoreConcept *implConcept;
     lyric_common::SymbolPath receiverPath;
+    const CoreType *implType;
+    const CoreTemplate *receiverTemplate;
+    const CoreConcept *implConcept;
     tu_uint32 receiver_symbol_index;
     lyo1::ImplFlags flags;
     std::vector<lyo1::ImplExtension> extensions;

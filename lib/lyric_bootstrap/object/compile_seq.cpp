@@ -5,13 +5,10 @@ CoreStruct *
 build_core_Seq(
     BuilderState &state,
     const CoreStruct *RecordStruct,
-    const CoreConcept *IteratorConcept,
     const CoreConcept *IterableConcept,
     const CoreClass *SeqIteratorClass,
     const CoreType *DataType,
     const CoreType *DataIteratorType,
-    const CoreType *DataIterableType,
-    const CoreType *BoolType,
     const CoreType *IntegerType)
 {
     lyric_common::SymbolPath structPath({"Seq"});
@@ -97,14 +94,21 @@ build_core_Seq(
             SeqStruct->structType);
     }
 
-    auto *IterableImpl = state.addImpl(structPath, DataIterableType, IterableConcept);
+    auto *SeqIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IterableConcept->concept_index, {SeqStruct->structType, DataType});
 
+    auto *IterableImpl = state.addImpl(structPath, SeqIterableType, IterableConcept);
     {
         lyric_object::BytecodeBuilder code;
         code.loadClass(SeqIteratorClass->class_index);
         state.writeTrap(code, "SeqIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
+        state.addImplExtension("Iterate", IterableImpl,
+            {
+                make_list_param("source", SeqStruct->structType),
+            },
+            code,
+            DataIteratorType);
     }
 
     return SeqStruct;

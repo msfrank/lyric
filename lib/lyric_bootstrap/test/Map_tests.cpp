@@ -110,7 +110,6 @@ TEST_F(MapTests, TestEvaluateMapRemove)
 
 TEST_F(MapTests, TestEvaluateMapIterateImpl)
 {
-    GTEST_SKIP();
     auto result = runModule(R"(
         val names: Map = Map{
             Pair{first = "one", second = 1},

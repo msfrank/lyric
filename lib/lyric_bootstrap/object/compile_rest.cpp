@@ -51,10 +51,10 @@ build_core_Rest(
             code, TOrUndefType);
     }
 
-    auto *IterableTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IterableConcept->concept_index, {TType});
+    auto *RestIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IterableConcept->concept_index, {RestExistential->existentialType, TType});
 
-    auto *IterableImpl = state.addImpl(RestExistential->existentialPath, IterableTType, IterableConcept);
+    auto *IterableImpl = state.addImpl(RestExistential->existentialPath, RestIterableType, IterableConcept);
 
     {
         auto *IteratorTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
@@ -63,7 +63,12 @@ build_core_Rest(
         code.loadClass(RestIteratorClass->class_index);
         state.writeTrap(code, "RestIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Iterate", IterableImpl, {}, code, IteratorTType);
+        state.addImplExtension("Iterate", IterableImpl,
+            {
+                make_list_param("source", RestExistential->existentialType),
+            },
+            code,
+            IteratorTType);
     }
 }
 

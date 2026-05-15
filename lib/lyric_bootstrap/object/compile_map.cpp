@@ -5,12 +5,10 @@ CoreStruct *
 build_core_Map(
     BuilderState &state,
     const CoreStruct *RecordStruct,
-    const CoreConcept *IteratorConcept,
     const CoreConcept *IterableConcept,
     const CoreClass *MapIteratorClass,
     const CoreType *DataType,
     const CoreType *DataIteratorType,
-    const CoreType *DataIterableType,
     const CoreType *BoolType,
     const CoreType *IntegerType)
 {
@@ -96,14 +94,22 @@ build_core_Map(
             MapStruct->structType);
     }
 
-    auto *IterableImpl = state.addImpl(structPath, DataIterableType, IterableConcept);
+    auto *MapIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IterableConcept->concept_index, {MapStruct->structType, DataType});
+
+    auto *IterableImpl = state.addImpl(structPath, MapIterableType, IterableConcept);
 
     {
         lyric_object::BytecodeBuilder code;
         code.loadClass(MapIteratorClass->class_index);
         state.writeTrap(code, "MapIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
+        state.addImplExtension("Iterate", IterableImpl,
+            {
+                make_list_param("source", MapStruct->structType),
+            },
+            code,
+            DataIteratorType);
     }
 
     return MapStruct;

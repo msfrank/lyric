@@ -8,6 +8,9 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/callsite_reifier.h>
 
+#include "lyric_typing/impl_selector.h"
+#include "lyric_typing/summon_reifier.h"
+
 lyric_compiler::WhileHandler::WhileHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
@@ -197,53 +200,66 @@ lyric_compiler::ForBody::ForBody(
     TU_ASSERT (m_fragment != nullptr);
 }
 
+/**
+ * if generator base type is not Iterator then we need to construct an iterator
+ */
 static tempo_utils::Result<lyric_common::TypeDef>
-get_or_construct_iterator(
+summon_iterator(
+    lyric_compiler::Iteration *iteration,
     lyric_assembler::BlockHandle *block,
     lyric_typing::TypeSystem *typeSystem,
-    lyric_assembler::ConceptSymbol *iteratorConcept,
-    lyric_assembler::ConceptSymbol *iterableConcept,
-    const lyric_common::TypeDef &generatorType,
-    const lyric_common::TypeDef &targetType,
     lyric_assembler::CodeFragment *fragment)
 {
-    // if target type is specified then the iterator type must conform to Iterator[targetType]
-    if (targetType.isValid()) {
-        lyric_common::TypeDef iteratorType;
-        TU_ASSIGN_OR_RETURN (iteratorType, lyric_common::TypeDef::forConcrete(
-            iteratorConcept->getSymbolUrl(), {targetType}));
+    TU_NOTNULL (iteration);
+    auto *state = block->blockState();
+    auto *fundamentalCache = state->fundamentalCache();
+    auto *symbolCache = state->symbolCache();
 
-        // if generatorType implements iteratorType then we are done
-        bool implementsIterator;
-        TU_ASSIGN_OR_RETURN (implementsIterator, typeSystem->isImplementable(
-            iteratorType, generatorType));
-        if (implementsIterator)
-            return iteratorType;
+    auto IterableUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Iterable);
+    lyric_assembler::ConceptSymbol *iterableConcept;
+    TU_ASSIGN_OR_RETURN (iterableConcept, symbolCache->getOrImportConcept(IterableUrl));
 
-        // if generatorType doesn't implement Iterator then fall through
-    }
+    auto *iterateAction = iterableConcept->getAction("Iterate");
 
-    // otherwise check if generatorType implements Iterable[targetType]
     lyric_common::TypeDef iterableType;
-    TU_ASSIGN_OR_RETURN (iterableType, lyric_common::TypeDef::forConcrete(
-        iterableConcept->getSymbolUrl(), {targetType}));
-    bool implementsIterable;
-    TU_ASSIGN_OR_RETURN (implementsIterable, typeSystem->isImplementable(
-        iterableType, generatorType));
-    if (!implementsIterable)
-        return lyric_compiler::CompilerStatus::forCondition(
-            lyric_compiler::CompilerCondition::kIncompatibleType,
-            "generator type {} is not iterable", generatorType.toString());
+    TU_ASSIGN_OR_RETURN (iterableType, lyric_common::TypeDef::forConcrete(IterableUrl, {iteration->generatorType}));
 
-    // resolve the Iterate impl method
+    lyric_typing::SummonReifier summoner(state);
+
+    TU_RETURN_IF_NOT_OK (summoner.initialize(iterateAction));
+    TU_RETURN_IF_NOT_OK (summoner.reifyNextArgument(iteration->generatorType));
+    TU_RETURN_IF_NOT_OK (summoner.finalize());
+
+    lyric_typing::ImplSelector selector(&summoner, block);
     std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (iterableConcept->prepareAction("Iterate", iterableType, callable));
+    TU_RETURN_IF_NOT_OK (selector.select(callable));
 
-    // invoke Iterate()
-    lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), {targetType}));
+    lyric_typing::CallsiteReifier reifier(state);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(iteration->generatorType));
 
-    return callable->invoke(block, reifier, fragment);
+    lyric_common::TypeDef resultType;
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
+
+    return reifier.reifyResult(resultType);
+}
+
+static bool
+get_element_type_if_iterator(
+    const lyric_common::TypeDef &generatorType,
+    lyric_common::TypeDef &elementType,
+    lyric_assembler::FundamentalCache *fundamentalCache)
+{
+    auto IteratorUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Iterator);
+    if (generatorType.getType() != lyric_common::TypeDefType::Concrete)
+        return false;
+    if (generatorType.getConcreteUrl() != IteratorUrl)
+        return false;
+    auto typeArguments = generatorType.getConcreteArguments();
+    if (typeArguments.size() != 1)
+        return false;
+    elementType = typeArguments[0];
+    return true;
 }
 
 tempo_utils::Status
@@ -262,32 +278,33 @@ lyric_compiler::ForBody::decide(
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     // look up the Iterator concept symbol
-    auto fundamentalIterator = fundamentalCache->getFundamentalUrl(
-        lyric_assembler::FundamentalSymbol::Iterator);
-    lyric_assembler::AbstractSymbol *iteratorSym;
-    TU_ASSIGN_OR_RETURN (iteratorSym, symbolCache->getOrImportSymbol(fundamentalIterator));
-    if (iteratorSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
-            "invalid concept symbol {}", fundamentalIterator.toString());
-    auto *iteratorConcept = cast_symbol_to_concept(iteratorSym);
+    auto IteratorUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Iterator);
+    lyric_assembler::ConceptSymbol *iteratorConcept;
+    TU_ASSIGN_OR_RETURN (iteratorConcept, symbolCache->getOrImportConcept(IteratorUrl));
 
-    // look up the Iterable concept symbol
-    auto fundamentalIterable = fundamentalCache->getFundamentalUrl(
-        lyric_assembler::FundamentalSymbol::Iterable);
-    lyric_assembler::AbstractSymbol *iterableSym;
-    TU_ASSIGN_OR_RETURN (iterableSym, symbolCache->getOrImportSymbol(fundamentalIterable));
-    if (iterableSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
-            "invalid concept symbol {}", fundamentalIterator.toString());
-    auto *iterableConcept = cast_symbol_to_concept(iterableSym);
-
-    // put the iterator on the top of the stack. if the result of the generator is the iterator then this
-    // call does not modify the stack. otherwise if the generator type implements Iterable then generator
-    // will be swapped on the stack with the result of Iterate().
     lyric_common::TypeDef iteratorType;
-    TU_ASSIGN_OR_RETURN (iteratorType, get_or_construct_iterator(
-        block, typeSystem, iteratorConcept, iterableConcept,
-        m_iteration->generatorType, m_iteration->targetType, m_fragment));
+    lyric_common::TypeDef elementType;
+
+    // if the generator base type is not Iterator then summon the iterator
+    iteratorType = m_iteration->generatorType;
+    if (!get_element_type_if_iterator(m_iteration->generatorType, elementType, fundamentalCache)) {
+        TU_ASSIGN_OR_RETURN (iteratorType, summon_iterator(m_iteration, block, typeSystem, m_fragment));
+        if (!get_element_type_if_iterator(iteratorType, elementType, fundamentalCache))
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                "could not summon iterator from {}", m_iteration->generatorType.toString());
+    }
+
+    // if target type is defined then verify element type is assignable
+    if (m_iteration->targetType.isValid()) {
+        bool isAssignable;
+        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_iteration->targetType, elementType));
+        if (!isAssignable)
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                "iterator element type {} cannot be assigned to target type {}",
+                elementType.toString(), m_iteration->targetType.toString());
+    } else {
+        m_iteration->targetType = elementType;
+    }
 
     // declare temp variable to store the iterator
     lyric_assembler::DataReference iteratorRef;
@@ -301,7 +318,7 @@ lyric_compiler::ForBody::decide(
         block->blockProc(), block, block->blockState());
     auto *forBlock = m_iteration->forBlock.get();
 
-    //
+    // make label for the top of the loop
     TU_ASSIGN_OR_RETURN (m_iteration->topOfLoop, m_fragment->appendLabel());
 
     // declare the target variable which stores the value yielded from the iterator on each loop iteration

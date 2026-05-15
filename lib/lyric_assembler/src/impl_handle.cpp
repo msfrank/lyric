@@ -273,13 +273,11 @@ lyric_assembler::ImplHandle::defineExtension(
     methodPath.push_back(absl::StrCat(priv->name, "$", name));
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
-    TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
-
     // construct call symbol
     std::unique_ptr<CallSymbol> callSymbol;
-    if (conceptTemplate != nullptr) {
+    if (priv->receiverTemplate != nullptr) {
         callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,
-            lyric_object::CallMode::Normal, /* isFinal= */ true, conceptTemplate, priv->isDeclOnly,
+            lyric_object::CallMode::Normal, /* isFinal= */ true, priv->receiverTemplate, priv->isDeclOnly,
             priv->implBlock.get(), m_state);
     } else {
         callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,

@@ -165,6 +165,7 @@ lyric_runtime::internal::get_existential_table(
             auto returnsValue = !call.isNoReturn();
 
             extensions.try_emplace(implAction, callSegment, callIndex, procOffset, returnsValue);
+            methods.try_emplace(implCall, callSegment, callIndex, procOffset, returnsValue);
         }
 
         // resolve the concept for the impl

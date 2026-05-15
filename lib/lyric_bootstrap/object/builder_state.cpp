@@ -1278,6 +1278,7 @@ BuilderState::addImpl(
 
     Impl->receiverPath = receiverPath;
     Impl->implType = implType;
+    Impl->receiverTemplate = nullptr;
     Impl->implConcept = implConcept;
     Impl->flags = lyo1::ImplFlags::NONE;
 
@@ -1288,6 +1289,7 @@ BuilderState::addImpl(
         case lyo1::DescriptorSection::Class: {
             Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = classes.at(symbol->index);
+            Impl->receiverTemplate = receiver->classTemplate;
             receiver->impls.push_back(Impl);
             break;
         }
@@ -1295,6 +1297,7 @@ BuilderState::addImpl(
         case lyo1::DescriptorSection::Concept: {
             Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = concepts.at(symbol->index);
+            Impl->receiverTemplate = receiver->conceptTemplate;
             receiver->impls.push_back(Impl);
             break;
         }
@@ -1309,6 +1312,7 @@ BuilderState::addImpl(
         case lyo1::DescriptorSection::Existential: {
             Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = existentials.at(symbol->index);
+            Impl->receiverTemplate = receiver->existentialTemplate;
             receiver->impls.push_back(Impl);
             break;
         }
@@ -1378,7 +1382,7 @@ BuilderState::addImplExtension(
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
-    Call->callTemplate = ImplConcept->conceptTemplate;
+    Call->callTemplate = receiver->receiverTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = receiver->receiver_symbol_index;
     Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;

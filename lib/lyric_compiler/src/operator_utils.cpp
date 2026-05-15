@@ -28,16 +28,20 @@ lyric_compiler::compile_unary_operator(
     lyric_assembler::ActionSymbol *actionSymbol;
     TU_ASSIGN_OR_RETURN (actionSymbol, resolve_operator_action(operationId, fundamentalCache, symbolCache));
 
-    lyric_typing::SummonReifier reifier(state);
+    lyric_typing::SummonReifier summoner(state);
 
-    TU_RETURN_IF_NOT_OK (reifier.initialize(actionSymbol));
-    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
-    TU_RETURN_IF_NOT_OK (reifier.finalize());
+    TU_RETURN_IF_NOT_OK (summoner.initialize(actionSymbol));
+    TU_RETURN_IF_NOT_OK (summoner.reifyNextArgument(operandType));
+    TU_RETURN_IF_NOT_OK (summoner.finalize());
 
-    lyric_typing::ImplSelector selector(block);
+    lyric_typing::ImplSelector selector(&summoner, block);
 
     std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (selector.select(reifier, callable));
+    TU_RETURN_IF_NOT_OK (selector.select(callable));
+
+    lyric_typing::CallsiteReifier reifier(state);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
 
     lyric_common::TypeDef resultType;
     TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
@@ -68,17 +72,22 @@ lyric_compiler::compile_binary_operator(
     lyric_assembler::ActionSymbol *actionSymbol;
     TU_ASSIGN_OR_RETURN (actionSymbol, resolve_operator_action(operationId, fundamentalCache, symbolCache));
 
-    lyric_typing::SummonReifier reifier(state);
+    lyric_typing::SummonReifier summoner(state);
 
-    TU_RETURN_IF_NOT_OK (reifier.initialize(actionSymbol));
-    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(lhsType));
-    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
-    TU_RETURN_IF_NOT_OK (reifier.finalize());
+    TU_RETURN_IF_NOT_OK (summoner.initialize(actionSymbol));
+    TU_RETURN_IF_NOT_OK (summoner.reifyNextArgument(lhsType));
+    TU_RETURN_IF_NOT_OK (summoner.reifyNextArgument(rhsType));
+    TU_RETURN_IF_NOT_OK (summoner.finalize());
 
-    lyric_typing::ImplSelector selector(block);
+    lyric_typing::ImplSelector selector(&summoner, block);
 
     std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (selector.select(reifier, callable));
+    TU_RETURN_IF_NOT_OK (selector.select(callable));
+
+    lyric_typing::CallsiteReifier reifier(state);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(lhsType));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
 
     lyric_common::TypeDef resultType;
     TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));

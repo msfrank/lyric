@@ -39,6 +39,7 @@ namespace lyric_importer {
             std::weak_ptr<TypeImport> type;     /**< The constraint type. */
         };
         std::optional<Constraint> constraint;   /**< Contains the constraint on the template parameter, or empty if there is no constraint. */
+        bool isAlias;                           /**< true if the template parameter is an alias. */
     };
 
     /**

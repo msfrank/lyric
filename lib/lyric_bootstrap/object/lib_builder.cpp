@@ -226,8 +226,6 @@ main(int argc, char *argv[])
 
     // define Data union type
     auto *DataUnionType = state.addUnionType({IntrinsicExistential->existentialType, RecordStruct->structType});
-    auto *DataIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IterableConcept->concept_index, {DataUnionType});
     auto *DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
         IteratorConcept->concept_index, {DataUnionType});
 
@@ -237,20 +235,20 @@ main(int argc, char *argv[])
     // define Rest existential
     auto *RestIteratorClass = build_core_RestIterator(state, ObjectClass, IteratorConcept,
         BoolExistential->existentialType);
-    build_core_Rest(state, RestExistential, IterableConcept, IterableConcept, RestIteratorClass,
+    build_core_Rest(state, RestExistential, IterableConcept, IteratorConcept, RestIteratorClass,
         IntExistential->existentialType, UndefExistential->existentialType);
 
     // define Seq struct
     auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
         DataIteratorType, BoolExistential->existentialType);
-    build_core_Seq(state, RecordStruct, IteratorConcept, IterableConcept, SeqIteratorClass, DataUnionType,
-        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+    build_core_Seq(state, RecordStruct, IterableConcept, SeqIteratorClass, DataUnionType,
+        DataIteratorType, IntExistential->existentialType);
 
     // define Map struct
     auto *MapIteratorClass = build_core_MapIterator(state, ObjectClass, IteratorConcept, DataUnionType,
         DataIteratorType, BoolExistential->existentialType);
-    build_core_Map(state, RecordStruct, IteratorConcept, IterableConcept, MapIteratorClass, DataUnionType,
-        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+    build_core_Map(state, RecordStruct, IterableConcept, MapIteratorClass, DataUnionType,
+        DataIteratorType, BoolExistential->existentialType, IntExistential->existentialType);
 
     // define DiscardProtocol
     build_core_DiscardProtocol(state, ProtocolExistential, AnyExistential->existentialType,

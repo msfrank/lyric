@@ -615,6 +615,7 @@ lyric_assembler::TypeCache::importTemplate(std::shared_ptr<lyric_importer::Templ
         tp.index = it->index;
         tp.name = it->name;
         tp.variance = it->variance;
+        tp.isAlias = it->isAlias;
 
         if (it->constraint.has_value()) {
             const auto &constraint = it->constraint.value();

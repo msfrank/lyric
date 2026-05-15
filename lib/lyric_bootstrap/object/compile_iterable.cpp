@@ -12,17 +12,23 @@ build_core_Iterable(
     auto *IterableTemplate = state.addTemplate(
         conceptPath,
         {
-            {"T", lyo1::PlaceholderVariance::Invariant},
+            {"SourceType", lyo1::PlaceholderVariance::Invariant},
+            {"ElementType", lyo1::PlaceholderVariance::Invariant, /* isAlias= */ true},
         });
 
-    auto *TType = IterableTemplate->types["T"];
+    auto *SourceType = IterableTemplate->types["SourceType"];
+    auto *ElementType = IterableTemplate->types["ElementType"];
 
     auto *IterableConcept = state.addGenericConcept(conceptPath, IterableTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
-    auto *IteratorTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IteratorConcept->concept_index, {TType});
+    auto *IteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IteratorConcept->concept_index, {ElementType});
 
-    state.addConceptAction("Iterate", IterableConcept, {}, IteratorTType);
+    state.addConceptAction("Iterate", IterableConcept,
+        {
+            make_list_param("source", SourceType),
+        },
+        IteratorType);
 
     return IterableConcept;
 }
