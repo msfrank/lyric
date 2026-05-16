@@ -128,7 +128,6 @@ main(int argc, char *argv[])
     auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
     auto *OrderedConcept = build_core_Ordered(state, IdeaConcept, IntExistential->existentialType);
     auto *PropositionConcept = build_core_Proposition(state, IdeaConcept, BoolExistential->existentialType);
-    auto *UnwrapConcept = build_core_Unwrap(state, IdeaConcept);
     build_core_Varargs(state, IdeaConcept);
 
     // define descriptor existentials
@@ -220,8 +219,9 @@ main(int argc, char *argv[])
         IntExistential->existentialType, BoolExistential->existentialType);
 
     for (int i = 1; i < NUM_TUPLE_CLASSES; i++) {
-        auto *TupleNClass = build_core_TupleN(state, i, ObjectClass);
-        build_core_TupleNInstance(state, TupleNClass, SingletonInstance, UnwrapConcept);
+        auto *TupleNClass = declare_core_TupleN(state, i, ObjectClass);
+        auto *UnwrapNConcept = build_core_UnwrapN(state, i, IdeaConcept, TupleNClass->classType);
+        build_core_TupleN(state, TupleNClass, i, UnwrapNConcept);
     }
 
     // define Data union type

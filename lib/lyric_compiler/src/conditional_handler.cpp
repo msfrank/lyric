@@ -150,9 +150,9 @@ lyric_compiler::CondHandler::after(
         m_conditional.alternative->alternativeType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
     } else {
-        TU_RETURN_IF_NOT_OK (m_fragment->immediateNil());
+        TU_RETURN_IF_NOT_OK (m_fragment->immediateUndef());
         m_conditional.alternative->alternativeType = fundamentalCache->getFundamentalType(
-            lyric_assembler::FundamentalSymbol::Nil);
+            lyric_assembler::FundamentalSymbol::Undef);
     }
 
     lyric_assembler::JumpLabel exitLabel;

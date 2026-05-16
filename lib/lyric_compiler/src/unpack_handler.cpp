@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -9,6 +10,9 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/callsite_reifier.h>
 #include <lyric_typing/member_reifier.h>
+
+#include "lyric_typing/impl_selector.h"
+#include "lyric_typing/summon_reifier.h"
 
 lyric_compiler::UnpackHandler::UnpackHandler(
     const lyric_common::TypeDef &unwrapType,
@@ -49,56 +53,54 @@ tempo_utils::Status lyric_compiler::UnpackHandler::before(
     return {};
 }
 
-static tempo_utils::Result<lyric_assembler::ImplReference>
-resolve_unwrap_impl(
-    const lyric_common::TypeDef &unwrapType,
+static tempo_utils::Result<lyric_common::TypeDef>
+invoke_unwrap(
+    const lyric_assembler::DataReference &wrappedRef,
     const std::vector<lyric_common::TypeDef> &tupleTypeArguments,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    lyric_assembler::CodeFragment *fragment)
 {
-    auto *fundamentalCache = driver->getFundamentalCache();
-    auto *symbolCache = driver->getSymbolCache();
+    auto *state = block->blockState();
+    auto *fundamentalCache = state->fundamentalCache();
+    auto *symbolCache = state->symbolCache();
 
-    // construct the tuple type
-    int tupleTypeArity = tupleTypeArguments.size();
-    auto fundamentalTuple = fundamentalCache->getTupleUrl(tupleTypeArity);
-    if (!fundamentalTuple.isValid())
-        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kCompilerInvariant,
-            "tuple arity is too large");
-    lyric_common::TypeDef tupleType;
-    TU_ASSIGN_OR_RETURN (tupleType, lyric_common::TypeDef::forConcrete(fundamentalTuple, tupleTypeArguments));
+    auto wrappedType = wrappedRef.typeDef;
 
-    // resolve the instance implementing unwrap() for the specified unwrap type and tuple type
-    auto fundamentalUnwrap = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Unwrap);
-    lyric_common::TypeDef concreteReceiverType;
-    TU_ASSIGN_OR_RETURN (concreteReceiverType, lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {unwrapType, tupleType}));
+    int arity = tupleTypeArguments.size();
+    auto UnwrapUrl = fundamentalCache->getUnwrapUrl(arity);
 
-    // resolve the instance for a generic unwrap type with a concrete tuple type
-    lyric_assembler::AbstractSymbol *unwrapSym;
-    TU_ASSIGN_OR_RETURN (unwrapSym, symbolCache->getOrImportSymbol(unwrapType.getConcreteUrl()));
-    auto genericUnwrapType = unwrapSym->getTypeDef();
-    lyric_common::TypeDef genericConcreteReceiverType;
-    TU_ASSIGN_OR_RETURN (genericConcreteReceiverType, lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {genericUnwrapType, tupleType}));
+    std::vector<lyric_common::TypeDef> unwrapArguments;
+    unwrapArguments.push_back(wrappedType);
+    unwrapArguments.insert(unwrapArguments.end(), tupleTypeArguments.cbegin(), tupleTypeArguments.cend());
 
-    // resolve the instance for a generic unwrap type with a generic tuple type of the same arity
-    auto genericUnwrapTypeArguments = genericUnwrapType.getConcreteArguments();
-    int genericTupleTypeArity = genericUnwrapTypeArguments.size();
-    auto genericTupleUrl = fundamentalCache->getTupleUrl(genericTupleTypeArity);
-    if (!genericTupleUrl.isValid())
-        return lyric_compiler::CompilerStatus::forCondition(
-            lyric_compiler::CompilerCondition::kCompilerInvariant, "tuple arity is too large");
-    lyric_common::TypeDef genericTupleType;
-    TU_ASSIGN_OR_RETURN (genericTupleType, lyric_common::TypeDef::forConcrete(
-        genericTupleUrl, std::vector<lyric_common::TypeDef>(
-            genericUnwrapTypeArguments.begin(), genericUnwrapTypeArguments.end())));
-    lyric_common::TypeDef genericGenericReceiverType;
-    TU_ASSIGN_OR_RETURN (genericGenericReceiverType, lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {genericUnwrapType, genericTupleType}));
+    lyric_common::TypeDef unwrapType;
+    TU_ASSIGN_OR_RETURN (unwrapType, lyric_common::TypeDef::forConcrete(UnwrapUrl, unwrapArguments));
 
-    return block->resolveImpl(concreteReceiverType,
-        { genericConcreteReceiverType, genericGenericReceiverType});
+    lyric_assembler::ConceptSymbol *unwrapConcept;
+    TU_ASSIGN_OR_RETURN (unwrapConcept, symbolCache->getOrImportConcept(UnwrapUrl));
+    auto *unwrapAction = unwrapConcept->getAction("Unwrap");
+
+    // load wrapped reference onto the top of the stack as the first argument to unwrap
+    TU_RETURN_IF_NOT_OK (fragment->loadRef(wrappedRef));
+
+    lyric_typing::SummonReifier summoner(state);
+
+    TU_RETURN_IF_NOT_OK (summoner.initialize(unwrapAction));
+    TU_RETURN_IF_NOT_OK (summoner.reifyNextArgument(wrappedType));
+    TU_RETURN_IF_NOT_OK (summoner.finalize());
+
+    lyric_typing::ImplSelector selector(&summoner, block);
+    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
+    TU_RETURN_IF_NOT_OK (selector.select(callable));
+
+    lyric_typing::CallsiteReifier reifier(state);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(wrappedType));
+
+    lyric_common::TypeDef resultType;
+    TU_ASSIGN_OR_RETURN (resultType, callable->invoke(block, reifier, fragment));
+
+    return reifier.reifyResult(resultType);
 }
 
 tempo_utils::Status
@@ -116,28 +118,14 @@ lyric_compiler::UnpackHandler::after(
     if (m_unpack.tupleTypeArguments.empty())
         return {};
 
-    // resolve the impl implementing unwrap() for the specified unwrap type and tuple type
-    lyric_assembler::ImplReference implRef;
-    TU_ASSIGN_OR_RETURN (implRef, resolve_unwrap_impl(
-        m_unpack.unwrapType, m_unpack.tupleTypeArguments, block, driver));
-
-    std::unique_ptr<lyric_assembler::AbstractCallable> callable;
-    TU_RETURN_IF_NOT_OK (prepare_impl_action(kUnwrapExtensionName, implRef, callable, block, symbolCache));
-
-    auto &usingRef = implRef.usingRef;
-    auto instanceTypeArguments = usingRef.typeDef.getConcreteArguments();
-    std::vector<lyric_common::TypeDef> callsiteTypeArguments(
-        instanceTypeArguments.begin(), instanceTypeArguments.end());
-    lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, callsiteTypeArguments));
-
-    TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_unpack.targetRef));
-    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(m_unpack.unwrapType));
-
-    // invoke unwrap
+    // invoke unwrap for the specified wrapped type
     lyric_common::TypeDef tupleType;
-    TU_ASSIGN_OR_RETURN (tupleType, callable->invoke(block, reifier, m_fragment));
-    auto tupleUrl = tupleType.getConcreteUrl();
+    TU_ASSIGN_OR_RETURN (tupleType, invoke_unwrap(
+        m_unpack.targetRef, m_unpack.tupleTypeArguments, block, m_fragment));
+
+    // resolve the class symbol for the tuple
+    lyric_assembler::ClassSymbol *classSymbol;
+    TU_ASSIGN_OR_RETURN (classSymbol, symbolCache->getOrImportClass(tupleType.getConcreteUrl()));
 
     // declare a temporary to store the result of the unwrap
     lyric_assembler::DataReference tupleRef;
@@ -150,22 +138,10 @@ lyric_compiler::UnpackHandler::after(
     for (tu_uint32 i = 0; i < m_unpack.tupleTypeArguments.size(); i++) {
         auto tupleMember = absl::StrCat("Element", i);
 
-        lyric_assembler::AbstractSymbol *receiver;
-        TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(tupleUrl));
-
         lyric_assembler::DataReference memberRef;
-        switch (receiver->getSymbolType()) {
-            case lyric_assembler::SymbolType::CLASS: {
-                auto *classSymbol = cast_symbol_to_class(receiver);
-                lyric_typing::MemberReifier memberReifier(typeSystem);
-                TU_RETURN_IF_NOT_OK (memberReifier.initialize(tupleType, classSymbol->classTemplate()));
-                TU_ASSIGN_OR_RETURN (memberRef, classSymbol->resolveMember(tupleMember, memberReifier, tupleType));
-                break;
-            }
-            default:
-                return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
-                    "invalid receiver symbol {}", tupleUrl.toString());
-        }
+        lyric_typing::MemberReifier memberReifier(typeSystem);
+        TU_RETURN_IF_NOT_OK (memberReifier.initialize(tupleType, classSymbol->classTemplate()));
+        TU_ASSIGN_OR_RETURN (memberRef, classSymbol->resolveMember(tupleMember, memberReifier, tupleType));
 
         // load tuple onto the top of the stack
         TU_RETURN_IF_NOT_OK (m_fragment->loadRef(tupleRef));
@@ -177,10 +153,6 @@ lyric_compiler::UnpackHandler::after(
         auto &unwrapRef = m_unpack.unwrapRefs[i];
         TU_RETURN_IF_NOT_OK (m_fragment->storeRef(unwrapRef.second, /* initialStore= */ true));
     }
-
-    // FIXME: was this a remnant of previous behavior? removing the pop fixes test case
-    // pop the tuple off the stack
-    //TU_RETURN_IF_NOT_OK (m_fragment->popValue());
 
     return {};
 }

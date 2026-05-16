@@ -9,11 +9,9 @@
 
 namespace lyric_assembler {
 
-    /** */
     constexpr int kNumFunctionClasses = 8;
-
-    /** */
     constexpr int kNumTupleClasses = 8;
+    constexpr int kNumUnwrapClasses = 8;
 
     enum class FundamentalSymbol {
         Any,
@@ -55,7 +53,6 @@ namespace lyric_assembler {
         Struct,
         Type,
         Undef,
-        Unwrap,
 
         // statuses
         Ok,
@@ -94,6 +91,17 @@ namespace lyric_assembler {
         Tuple5,
         Tuple6,
         Tuple7,
+        Tuple8,
+
+        // unwraps
+        Unwrap1,
+        Unwrap2,
+        Unwrap3,
+        Unwrap4,
+        Unwrap5,
+        Unwrap6,
+        Unwrap7,
+        Unwrap8,
 
         // companion instances
         BoolInstance,

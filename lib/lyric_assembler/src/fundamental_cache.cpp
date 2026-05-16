@@ -85,8 +85,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Type));
     m_fundamentalUndef = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Undef));
-    m_fundamentalUnwrap = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap));
 
     // cache symbol urls for statuses
     m_fundamentalOk = lyric_common::SymbolUrl(preludeLocation,
@@ -157,41 +155,43 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
     m_fundamentalFunction[7] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Function7));
 
-    // cache symbol urls for Tuple1 through TupleN
+    // cache symbol urls for Tuple1 through TupleN. note that index is `arity - 1`
     m_fundamentalTuple.resize(kNumTupleClasses);
-    m_fundamentalTuple[0] = {};     // no such thing as Tuple0 but insert into the array
-    m_fundamentalTuple[1] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[0] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple1));
-    m_fundamentalTuple[2] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[1] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple2));
-    m_fundamentalTuple[3] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[2] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple3));
-    m_fundamentalTuple[4] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[3] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple4));
-    m_fundamentalTuple[5] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[4] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple5));
-    m_fundamentalTuple[6] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[5] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple6));
-    m_fundamentalTuple[7] = lyric_common::SymbolUrl(
+    m_fundamentalTuple[6] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple7));
+    m_fundamentalTuple[7] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple8));
 
-    // cache symbol urls for Tuple1Instance through TupleNInstance
-    m_fundamentalTupleInstance.resize(kNumTupleClasses);
-    m_fundamentalTupleInstance[0] = {};     // no such thing as Tuple0 but insert into the array
-    m_fundamentalTupleInstance[1] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple1Instance));
-    m_fundamentalTupleInstance[2] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple2Instance));
-    m_fundamentalTupleInstance[3] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple3Instance));
-    m_fundamentalTupleInstance[4] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple4Instance));
-    m_fundamentalTupleInstance[5] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple5Instance));
-    m_fundamentalTupleInstance[6] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple6Instance));
-    m_fundamentalTupleInstance[7] = lyric_common::SymbolUrl(
-        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple7Instance));
+    // cache symbol urls for Unwrap1 through UnwrapN. note that index is `arity - 1`
+    m_fundamentalUnwrap.resize(kNumUnwrapClasses);
+    m_fundamentalUnwrap[0] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap1));
+    m_fundamentalUnwrap[1] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap2));
+    m_fundamentalUnwrap[2] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap3));
+    m_fundamentalUnwrap[3] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap4));
+    m_fundamentalUnwrap[4] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap5));
+    m_fundamentalUnwrap[5] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap6));
+    m_fundamentalUnwrap[6] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap7));
+    m_fundamentalUnwrap[7] = lyric_common::SymbolUrl(
+        preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap8));
 
     //
     m_fundamentalDiscardProtocol = lyric_common::SymbolUrl(preludeLocation,
@@ -295,8 +295,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalType;
         case FundamentalSymbol::Undef:
             return m_fundamentalUndef;
-        case FundamentalSymbol::Unwrap:
-            return m_fundamentalUnwrap;
 
         case FundamentalSymbol::Ok:
             return m_fundamentalOk;
@@ -351,20 +349,38 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalFunction.at(7);
 
         case FundamentalSymbol::Tuple1:
-            return m_fundamentalTuple.at(1);
+            return m_fundamentalTuple.at(0);
         case FundamentalSymbol::Tuple2:
-            return m_fundamentalTuple.at(2);
+            return m_fundamentalTuple.at(1);
         case FundamentalSymbol::Tuple3:
-            return m_fundamentalTuple.at(3);
+            return m_fundamentalTuple.at(2);
         case FundamentalSymbol::Tuple4:
-            return m_fundamentalTuple.at(4);
+            return m_fundamentalTuple.at(3);
         case FundamentalSymbol::Tuple5:
-            return m_fundamentalTuple.at(5);
+            return m_fundamentalTuple.at(4);
         case FundamentalSymbol::Tuple6:
-            return m_fundamentalTuple.at(6);
+            return m_fundamentalTuple.at(5);
         case FundamentalSymbol::Tuple7:
+            return m_fundamentalTuple.at(6);
+        case FundamentalSymbol::Tuple8:
             return m_fundamentalTuple.at(7);
 
+        case FundamentalSymbol::Unwrap1:
+            return m_fundamentalUnwrap.at(0);
+        case FundamentalSymbol::Unwrap2:
+            return m_fundamentalUnwrap.at(1);
+        case FundamentalSymbol::Unwrap3:
+            return m_fundamentalUnwrap.at(2);
+        case FundamentalSymbol::Unwrap4:
+            return m_fundamentalUnwrap.at(3);
+        case FundamentalSymbol::Unwrap5:
+            return m_fundamentalUnwrap.at(4);
+        case FundamentalSymbol::Unwrap6:
+            return m_fundamentalUnwrap.at(5);
+        case FundamentalSymbol::Unwrap7:
+            return m_fundamentalUnwrap.at(6);
+        case FundamentalSymbol::Unwrap8:
+            return m_fundamentalUnwrap.at(7);
 
         case FundamentalSymbol::BoolInstance:
             return m_fundamentalBoolInstance;
@@ -378,21 +394,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalBytesInstance;
         case FundamentalSymbol::StringInstance:
             return m_fundamentalStringInstance;
-
-        case FundamentalSymbol::Tuple1Instance:
-            return m_fundamentalTupleInstance.at(1);
-        case FundamentalSymbol::Tuple2Instance:
-            return m_fundamentalTupleInstance.at(2);
-        case FundamentalSymbol::Tuple3Instance:
-            return m_fundamentalTupleInstance.at(3);
-        case FundamentalSymbol::Tuple4Instance:
-            return m_fundamentalTupleInstance.at(4);
-        case FundamentalSymbol::Tuple5Instance:
-            return m_fundamentalTupleInstance.at(5);
-        case FundamentalSymbol::Tuple6Instance:
-            return m_fundamentalTupleInstance.at(6);
-        case FundamentalSymbol::Tuple7Instance:
-            return m_fundamentalTupleInstance.at(7);
 
         case FundamentalSymbol::DiscardProtocol:
             return m_fundamentalDiscardProtocol;
@@ -413,7 +414,15 @@ lyric_assembler::FundamentalCache::getFunctionUrl(int arity) const
 lyric_common::SymbolUrl
 lyric_assembler::FundamentalCache::getTupleUrl(int arity) const
 {
-    if (0 <= arity && std::cmp_less(arity, m_fundamentalTuple.size()))
-        return m_fundamentalTuple.at(arity);
+    if (1 <= arity && std::cmp_less_equal(arity, m_fundamentalTuple.size()))
+        return m_fundamentalTuple.at(arity - 1);
+    return {};
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::FundamentalCache::getUnwrapUrl(int arity) const
+{
+    if (1 <= arity && std::cmp_less_equal(arity, m_fundamentalUnwrap.size()))
+        return m_fundamentalUnwrap.at(arity - 1);
     return {};
 }

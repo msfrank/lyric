@@ -83,8 +83,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Type";
         case FundamentalSymbol::Undef:
             return "Undef";
-        case FundamentalSymbol::Unwrap:
-            return "Unwrap";
 
         case FundamentalSymbol::Ok:
             return "Ok";
@@ -152,6 +150,25 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Tuple6";
         case FundamentalSymbol::Tuple7:
             return "Tuple7";
+        case FundamentalSymbol::Tuple8:
+            return "Tuple8";
+
+        case FundamentalSymbol::Unwrap1:
+            return "Unwrap1";
+        case FundamentalSymbol::Unwrap2:
+            return "Unwrap2";
+        case FundamentalSymbol::Unwrap3:
+            return "Unwrap3";
+        case FundamentalSymbol::Unwrap4:
+            return "Unwrap4";
+        case FundamentalSymbol::Unwrap5:
+            return "Unwrap5";
+        case FundamentalSymbol::Unwrap6:
+            return "Unwrap6";
+        case FundamentalSymbol::Unwrap7:
+            return "Unwrap7";
+        case FundamentalSymbol::Unwrap8:
+            return "Unwrap8";
 
         case FundamentalSymbol::BoolInstance:
             return "BoolInstance";
@@ -199,7 +216,6 @@ lyric_assembler::fundamentalTypeToSymbolPath(FundamentalSymbol fundamentalType)
 }
 
 lyric_assembler::TypeSignature::TypeSignature()
-    : m_signature()
 {
 }
 

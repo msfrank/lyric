@@ -3,13 +3,12 @@
 
 #include "builder_state.h"
 
-CoreClass *build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass);
+CoreClass *declare_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass);
 
-const CoreInstance *
-build_core_TupleNInstance(
+void build_core_TupleN(
     BuilderState &state,
     const CoreClass *TupleNClass,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *UnwrapConcept);
+    int arity,
+    const CoreConcept *UnwrapNConcept);
 
 #endif // ZURI_CORE_COMPILE_TUPLE_H

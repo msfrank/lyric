@@ -18,6 +18,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getFundamentalUrl(FundamentalSymbol fundamental) const;
         lyric_common::SymbolUrl getFunctionUrl(int arity) const;
         lyric_common::SymbolUrl getTupleUrl(int arity) const;
+        lyric_common::SymbolUrl getUnwrapUrl(int arity) const;
 
     private:
         lyric_common::ModuleLocation m_preludeLocation;
@@ -61,7 +62,6 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalStruct;
         lyric_common::SymbolUrl m_fundamentalType;
         lyric_common::SymbolUrl m_fundamentalUndef;
-        lyric_common::SymbolUrl m_fundamentalUnwrap;
 
         lyric_common::SymbolUrl m_fundamentalOk;
         lyric_common::SymbolUrl m_fundamentalCancelled;
@@ -83,6 +83,7 @@ namespace lyric_assembler {
 
         std::vector<lyric_common::SymbolUrl> m_fundamentalFunction;
         std::vector<lyric_common::SymbolUrl> m_fundamentalTuple;
+        std::vector<lyric_common::SymbolUrl> m_fundamentalUnwrap;
 
         lyric_common::SymbolUrl m_fundamentalBoolInstance;
         lyric_common::SymbolUrl m_fundamentalCharInstance;
@@ -90,7 +91,6 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalIntInstance;
         lyric_common::SymbolUrl m_fundamentalBytesInstance;
         lyric_common::SymbolUrl m_fundamentalStringInstance;
-        std::vector<lyric_common::SymbolUrl> m_fundamentalTupleInstance;
 
         lyric_common::SymbolUrl m_fundamentalDiscardProtocol;
     };

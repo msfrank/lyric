@@ -112,6 +112,8 @@ namespace lyric_parser::internal {
         void enterDoStatement(ModuleParser::DoStatementContext *ctx) override;
         void exitDoWhen(ModuleParser::DoWhenContext *ctx) override;
         void exitDoElse(ModuleParser::DoElseContext *ctx) override;
+        void exitContinueStatement(ModuleParser::ContinueStatementContext *ctx) override;
+        void exitBreakStatement(ModuleParser::BreakStatementContext *ctx) override;
         void enterWhileStatement(ModuleParser::WhileStatementContext *ctx) override;
         void exitWhileStatement(ModuleParser::WhileStatementContext *ctx) override;
         void enterForStatement(ModuleParser::ForStatementContext *ctx) override;

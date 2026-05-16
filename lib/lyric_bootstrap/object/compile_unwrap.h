@@ -3,6 +3,10 @@
 
 #include "builder_state.h"
 
-CoreConcept *build_core_Unwrap(BuilderState &state, const CoreConcept *IdeaConcept);
+CoreConcept *build_core_UnwrapN(
+    BuilderState &state,
+    int arity,
+    const CoreConcept *IdeaConcept,
+    const CoreType *TupleNType);
 
 #endif // ZURI_CORE_COMPILE_UNWRAP_H

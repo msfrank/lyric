@@ -80,6 +80,8 @@ namespace lyric_schema {
         When,                       // when clause
         While,                      // while statement
         For,                        // for statement
+        Continue,                   // continue statement
+        Break,                      // break statement
         Try,                        // try statement
         Catch,                      // catch clause
         Finally,                    // finally clause
@@ -285,6 +287,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::While, "While");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstForClass(
         &kLyricAstNs, LyricAstId::For, "For");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstContinueClass(
+        &kLyricAstNs, LyricAstId::Continue, "Continue");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBreakClass(
+        &kLyricAstNs, LyricAstId::Break, "Break");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTryClass(
         &kLyricAstNs, LyricAstId::Try, "Try");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCatchClass(
@@ -559,6 +565,8 @@ namespace lyric_schema {
         &kLyricAstWhenClass,
         &kLyricAstWhileClass,
         &kLyricAstForClass,
+        &kLyricAstContinueClass,
+        &kLyricAstBreakClass,
         &kLyricAstTryClass,
         &kLyricAstCatchClass,
         &kLyricAstFinallyClass,

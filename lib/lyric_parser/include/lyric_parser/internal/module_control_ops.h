@@ -21,6 +21,8 @@ namespace lyric_parser::internal {
         void enterDoStatement(ModuleParser::DoStatementContext *ctx);
         void exitDoWhen(ModuleParser::DoWhenContext *ctx);
         void exitDoElse(ModuleParser::DoElseContext *ctx);
+        void parseContinueStatement(ModuleParser::ContinueStatementContext *ctx);
+        void parseBreakStatement(ModuleParser::BreakStatementContext *ctx);
         void enterWhileStatement(ModuleParser::WhileStatementContext *ctx);
         void exitWhileStatement(ModuleParser::WhileStatementContext *ctx);
         void enterForStatement(ModuleParser::ForStatementContext *ctx);

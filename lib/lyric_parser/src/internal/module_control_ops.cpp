@@ -192,6 +192,34 @@ lyric_parser::internal::ModuleControlOps::exitDoElse(ModuleParser::DoElseContext
 }
 
 void
+lyric_parser::internal::ModuleControlOps::parseContinueStatement(ModuleParser::ContinueStatementContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto location = get_token_location(ctx->getStart());
+
+    ArchetypeNode *continueNode;
+    TU_ASSIGN_OR_RAISE (continueNode, state->appendNode(lyric_schema::kLyricAstContinueClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(continueNode));
+}
+
+void
+lyric_parser::internal::ModuleControlOps::parseBreakStatement(ModuleParser::BreakStatementContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto location = get_token_location(ctx->getStart());
+
+    ArchetypeNode *breakNode;
+    TU_ASSIGN_OR_RAISE (breakNode, state->appendNode(lyric_schema::kLyricAstBreakClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(breakNode));
+}
+
+void
 lyric_parser::internal::ModuleControlOps::enterWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
     auto *state = getState();

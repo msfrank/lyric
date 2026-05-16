@@ -587,6 +587,18 @@ void lyric_parser::internal::ModuleArchetype::exitDoElse(ModuleParser::DoElseCon
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDoElse(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::exitContinueStatement(ModuleParser::ContinueStatementContext *ctx)
+{
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseContinueStatement(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitBreakStatement(ModuleParser::BreakStatementContext *ctx)
+{
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseBreakStatement(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
     ModuleControlOps ops(this);

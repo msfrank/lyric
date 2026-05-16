@@ -57,6 +57,8 @@ definitionStatement : valStatement
 
 controlStatement    : ifStatement
                     | doStatement
+                    | continueStatement
+                    | breakStatement
                     | whileStatement
                     | forStatement
                     | tryStatement
@@ -519,6 +521,16 @@ matchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec claus
                     ;
 matchElse           : ElseKeyword clauseBlock ;
 matchExpression     : MatchKeyword matchTarget CurlyOpen matchWhen+ matchElse? CurlyClose ;
+
+
+// continue statement
+
+continueStatement   : ContinueKeyword ;
+
+
+// break statement
+
+breakStatement      : BreakKeyword ;
 
 
 // while statement
