@@ -205,6 +205,52 @@ lyric_assembler::ProcHandle::numLexicals() const
     return m_lexicals.size();
 }
 
+tempo_utils::Result<lyric_assembler::LoopHandle *>
+lyric_assembler::ProcHandle::declareLoop(const JumpLabel &topOfLoop)
+{
+    auto loopHandle = std::make_unique<LoopHandle>(topOfLoop, this, m_state);
+    auto *loopPtr = loopHandle.get();
+    m_loops.push_back(std::move(loopHandle));
+    m_loopStack.push(loopPtr);
+    return loopPtr;
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::continueCurrentLoop(const JumpTarget &continueTarget)
+{
+    if (m_loopStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "loop stack is empty");
+    auto *currentLoop = m_loopStack.top();
+    return currentLoop->continueLoop(continueTarget);
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::breakCurrentLoop(const JumpTarget &breakTarget)
+{
+    if (m_loopStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "loop stack is empty");
+    auto *currentLoop = m_loopStack.top();
+    return currentLoop->breakLoop(breakTarget);
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::popLoop()
+{
+    if (m_loopStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "loop stack is empty");
+    m_loopStack.pop();
+    return {};
+}
+
+int
+lyric_assembler::ProcHandle::numLoops() const
+{
+    return m_loops.size();
+}
+
 tempo_utils::Result<lyric_assembler::CheckHandle *>
 lyric_assembler::ProcHandle::declareCheck(const JumpLabel &checkStart)
 {
@@ -477,6 +523,16 @@ lyric_assembler::ProcHandle::build(
 
     // ensure fragment is valid
     TU_RETURN_IF_NOT_OK (validate_fragment(m_fragment.get()));
+
+    // verify loop stack is empty
+    if (!m_loopStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "loop stack is not empty");
+
+    // verify check stack is empty
+    if (!m_checkStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "check stack is not empty");
 
     // write the main bytecode
     TU_RETURN_IF_NOT_OK (m_fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));

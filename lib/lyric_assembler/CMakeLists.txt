@@ -51,6 +51,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/literal_cache.h
     include/lyric_assembler/literal_handle.h
     include/lyric_assembler/local_variable.h
+    include/lyric_assembler/loop_handle.h
     include/lyric_assembler/method_callable.h
     include/lyric_assembler/namespace_symbol.h
     include/lyric_assembler/object_plugin.h
@@ -109,6 +110,7 @@ target_sources(lyric_assembler PRIVATE
     src/literal_cache.cpp
     src/literal_handle.cpp
     src/local_variable.cpp
+    src/loop_handle.cpp
     src/method_callable.cpp
     src/namespace_symbol.cpp
     src/object_plugin.cpp

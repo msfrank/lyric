@@ -11,8 +11,7 @@
 namespace lyric_compiler {
 
     struct Loop {
-        lyric_assembler::JumpLabel beginIterationLabel;
-        lyric_assembler::JumpTarget exitLoopTarget;
+        lyric_assembler::LoopHandle *loopHandle = nullptr;
     };
 
     class WhileHandler : public BaseGrouping {
@@ -62,8 +61,7 @@ namespace lyric_compiler {
         lyric_common::TypeDef targetType;
         lyric_common::TypeDef generatorType;
         std::unique_ptr<lyric_assembler::BlockHandle> forBlock;
-        lyric_assembler::JumpLabel topOfLoop;
-        lyric_assembler::JumpTarget predicateJump;
+        lyric_assembler::LoopHandle *loopHandle = nullptr;
     };
 
     class ForHandler : public BaseGrouping {
@@ -105,6 +103,42 @@ namespace lyric_compiler {
 
     private:
         Iteration *m_iteration;
+        lyric_assembler::CodeFragment *m_fragment;
+    };
+
+    class ContinueHandler : public BaseChoice {
+    public:
+        ContinueHandler(
+            bool isSideEffect,
+            lyric_assembler::CodeFragment *fragment,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        bool m_isSideEffect;
+        lyric_assembler::CodeFragment *m_fragment;
+    };
+
+    class BreakHandler : public BaseChoice {
+    public:
+        BreakHandler(
+            bool isSideEffect,
+            lyric_assembler::CodeFragment *fragment,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        bool m_isSideEffect;
         lyric_assembler::CodeFragment *m_fragment;
     };
 }

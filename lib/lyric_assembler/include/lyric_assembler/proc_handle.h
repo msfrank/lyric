@@ -6,11 +6,12 @@
 #include <lyric_common/symbol_url.h>
 #include <tempo_utils/bytes_appender.h>
 
+#include "block_handle.h"
 #include "catch_handle.h"
 #include "check_handle.h"
 #include "cleanup_handle.h"
+#include "loop_handle.h"
 #include "object_state.h"
-#include "block_handle.h"
 
 namespace lyric_assembler {
 
@@ -91,6 +92,15 @@ namespace lyric_assembler {
         tempo_utils::Status patchTarget(tu_uint32 targetId, std::string_view labelName);
 
         /*
+         * loops
+         */
+
+        tempo_utils::Result<LoopHandle *> declareLoop(const JumpLabel &topOfLoop);
+        int numLoops() const;
+        tempo_utils::Status continueCurrentLoop(const JumpTarget &continueTarget);
+        tempo_utils::Status breakCurrentLoop(const JumpTarget &breakTarget);
+
+        /*
          * exceptions and cleanup
          */
 
@@ -132,6 +142,9 @@ namespace lyric_assembler {
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
 
+        std::vector<std::unique_ptr<LoopHandle>> m_loops;
+        std::stack<LoopHandle *> m_loopStack;
+
         std::vector<std::unique_ptr<CheckHandle>> m_checks;
         std::stack<CheckHandle *> m_checkStack;
         std::vector<CheckHandle *> m_checkRoots;
@@ -146,8 +159,10 @@ namespace lyric_assembler {
         absl::flat_hash_map<tu_uint32,std::string> m_jumpLabels;
 
         friend class CheckHandle;
+        friend class LoopHandle;
 
         tempo_utils::Status popCheck();
+        tempo_utils::Status popLoop();
     };
 }
 

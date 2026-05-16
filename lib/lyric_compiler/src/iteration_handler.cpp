@@ -7,9 +7,8 @@
 #include <lyric_compiler/iteration_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/callsite_reifier.h>
-
-#include "lyric_typing/impl_selector.h"
-#include "lyric_typing/summon_reifier.h"
+#include <lyric_typing/impl_selector.h>
+#include <lyric_typing/summon_reifier.h>
 
 lyric_compiler::WhileHandler::WhileHandler(
     bool isSideEffect,
@@ -30,9 +29,12 @@ lyric_compiler::WhileHandler::before(
     BeforeContext &ctx)
 {
     auto *block = getBlock();
+    auto *proc = block->blockProc();
     auto *driver = getDriver();
 
-    TU_ASSIGN_OR_RETURN (m_loop.beginIterationLabel, m_fragment->appendLabel());
+    lyric_assembler::JumpLabel topOfLoop;
+    TU_ASSIGN_OR_RETURN (topOfLoop, m_fragment->appendLabel());
+    TU_ASSIGN_OR_RETURN (m_loop.loopHandle, proc->declareLoop(topOfLoop));
 
     auto predicate = std::make_unique<FormChoice>(
         FormType::Expression, m_fragment, block, driver);
@@ -51,15 +53,15 @@ lyric_compiler::WhileHandler::after(
     AfterContext &ctx)
 {
     auto *driver = getDriver();
+    auto *loopHandle = m_loop.loopHandle;
 
-    lyric_assembler::JumpTarget nextIterationTarget;
-    TU_ASSIGN_OR_RETURN (nextIterationTarget, m_fragment->unconditionalJump());
-    TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(nextIterationTarget, m_loop.beginIterationLabel));
+    lyric_assembler::JumpTarget nextIteration;
+    TU_ASSIGN_OR_RETURN (nextIteration, m_fragment->unconditionalJump());
+    TU_RETURN_IF_NOT_OK (loopHandle->continueLoop(nextIteration));
 
-    lyric_assembler::JumpLabel loopFinishedLabel;
-    TU_ASSIGN_OR_RETURN (loopFinishedLabel, m_fragment->appendLabel());
-
-    TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(m_loop.exitLoopTarget, loopFinishedLabel));
+    lyric_assembler::JumpLabel loopExit;
+    TU_ASSIGN_OR_RETURN (loopExit, m_fragment->appendLabel());
+    TU_RETURN_IF_NOT_OK (loopHandle->finalizeLoop(loopExit));
 
     // if handler is not a side effect then push a NoReturn result
     if (!m_isSideEffect) {
@@ -104,7 +106,10 @@ lyric_compiler::WhileBody::decide(
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "expected test expression to return {}; found {}", BoolType.toString(), testType.toString());
 
-    TU_ASSIGN_OR_RETURN (m_loop->exitLoopTarget, m_fragment->jumpIfFalse());
+    // break loop implicitly if predicate returns false
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, m_fragment->jumpIfFalse());
+    TU_RETURN_IF_NOT_OK (m_loop->loopHandle->breakLoop(predicateJump));
 
     auto whileBlock = std::make_unique<lyric_assembler::BlockHandle>(
         block->blockProc(), block, block->blockState());
@@ -169,15 +174,15 @@ lyric_compiler::ForHandler::after(
     AfterContext &ctx)
 {
     auto *driver = getDriver();
+    auto *loopHandle = m_iteration.loopHandle;
 
     lyric_assembler::JumpTarget nextIteration;
     TU_ASSIGN_OR_RETURN (nextIteration, m_fragment->unconditionalJump());
-    TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(nextIteration, m_iteration.topOfLoop));
+    TU_RETURN_IF_NOT_OK (loopHandle->continueLoop(nextIteration));
 
-    lyric_assembler::JumpLabel exitLoop;
-    TU_ASSIGN_OR_RETURN (exitLoop, m_fragment->appendLabel());
-
-    TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(m_iteration.predicateJump, exitLoop));
+    lyric_assembler::JumpLabel loopExit;
+    TU_ASSIGN_OR_RETURN (loopExit, m_fragment->appendLabel());
+    TU_RETURN_IF_NOT_OK (loopHandle->finalizeLoop(loopExit));
 
     // if handler is not a side effect then push a NoReturn result
     if (!m_isSideEffect) {
@@ -269,6 +274,7 @@ lyric_compiler::ForBody::decide(
     DecideContext &ctx)
 {
     auto *block = getBlock();
+    auto *proc = block->blockProc();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
     auto *symbolCache = driver->getSymbolCache();
@@ -314,12 +320,13 @@ lyric_compiler::ForBody::decide(
     TU_RETURN_IF_NOT_OK (m_fragment->storeRef(iteratorRef, /* initialStore= */ true));
 
     // create a new block for the body of the loop
-    m_iteration->forBlock = std::make_unique<lyric_assembler::BlockHandle>(
-        block->blockProc(), block, block->blockState());
+    m_iteration->forBlock = std::make_unique<lyric_assembler::BlockHandle>(proc, block, block->blockState());
     auto *forBlock = m_iteration->forBlock.get();
 
-    // make label for the top of the loop
-    TU_ASSIGN_OR_RETURN (m_iteration->topOfLoop, m_fragment->appendLabel());
+    // declare loop
+    lyric_assembler::JumpLabel topOfLoop;
+    TU_ASSIGN_OR_RETURN (topOfLoop, m_fragment->appendLabel());
+    TU_ASSIGN_OR_RETURN (m_iteration->loopHandle, proc->declareLoop(topOfLoop));
 
     // declare the target variable which stores the value yielded from the iterator on each loop iteration
     lyric_assembler::DataReference targetRef;
@@ -350,7 +357,10 @@ lyric_compiler::ForBody::decide(
             "expected Valid method to return {}; found {}",
             boolType.toString(), validReturnType.toString());
 
-    TU_ASSIGN_OR_RETURN (m_iteration->predicateJump, m_fragment->jumpIfFalse());
+    // break loop implicitly if predicate returns false
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, m_fragment->jumpIfFalse());
+    TU_RETURN_IF_NOT_OK (m_iteration->loopHandle->breakLoop(predicateJump));
 
     // push the iterator onto the stack, and invoke Next() method
     TU_RETURN_IF_NOT_OK (m_fragment->loadRef(iteratorRef));
@@ -378,6 +388,74 @@ lyric_compiler::ForBody::decide(
         std::move(m_iteration->forBlock), /* requiresResult= */ false, /* isSideEffect= */ true,
         m_fragment, driver);
     ctx.setGrouping(std::move(group));
+
+    return {};
+}
+
+lyric_compiler::ContinueHandler::ContinueHandler(
+    bool isSideEffect,
+    lyric_assembler::CodeFragment *fragment,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_fragment(fragment)
+{
+    TU_NOTNULL (m_fragment);
+}
+
+tempo_utils::Status
+lyric_compiler::ContinueHandler::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    DecideContext &ctx)
+{
+    auto *block = getBlock();
+    auto *proc = block->blockProc();
+    auto *driver = getDriver();
+
+    lyric_assembler::JumpTarget continueTarget;
+    TU_ASSIGN_OR_RETURN (continueTarget, m_fragment->unconditionalJump());
+    TU_RETURN_IF_NOT_OK (proc->continueCurrentLoop(continueTarget));
+
+    // if handler is not a side effect then push a NoReturn result
+    if (!m_isSideEffect) {
+        TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
+    }
+
+    return {};
+}
+
+lyric_compiler::BreakHandler::BreakHandler(
+    bool isSideEffect,
+    lyric_assembler::CodeFragment *fragment,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_fragment(fragment)
+{
+    TU_NOTNULL (m_fragment);
+}
+
+tempo_utils::Status
+lyric_compiler::BreakHandler::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    DecideContext &ctx)
+{
+    auto *block = getBlock();
+    auto *proc = block->blockProc();
+    auto *driver = getDriver();
+
+    lyric_assembler::JumpTarget breakTarget;
+    TU_ASSIGN_OR_RETURN (breakTarget, m_fragment->unconditionalJump());
+    TU_RETURN_IF_NOT_OK (proc->breakCurrentLoop(breakTarget));
+
+    // if handler is not a side effect then push a NoReturn result
+    if (!m_isSideEffect) {
+        TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
+    }
 
     return {};
 }

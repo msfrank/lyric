@@ -1,14 +1,15 @@
 
+#include <lyric_compiler/alias_handler.h>
 #include <lyric_compiler/assembler_handler.h>
 #include <lyric_compiler/assignment_handler.h>
 #include <lyric_compiler/binary_operation_handler.h>
 #include <lyric_compiler/block_handler.h>
+#include <lyric_compiler/cast_handler.h>
 #include <lyric_compiler/compiler_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/alias_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
 #include <lyric_compiler/defenum_handler.h>
@@ -16,7 +17,6 @@
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/data_deref_handler.h>
-#include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/expect_handler.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/import_handler.h>
@@ -36,8 +36,6 @@
 #include <lyric_schema/assembler_schema.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_schema/compiler_schema.h>
-
-#include "lyric_compiler/cast_handler.h"
 
 lyric_compiler::TerminalFormBehavior::TerminalFormBehavior(
     bool isSideEffect,
@@ -204,6 +202,8 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::If:
         case lyric_schema::LyricAstId::While:
         case lyric_schema::LyricAstId::For:
+        case lyric_schema::LyricAstId::Continue:
+        case lyric_schema::LyricAstId::Break:
         case lyric_schema::LyricAstId::Try:
         case lyric_schema::LyricAstId::Return:
         case lyric_schema::LyricAstId::ImportModule:
@@ -409,6 +409,20 @@ lyric_compiler::FormChoice::decide(
             auto handler = std::make_unique<ForHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(handler));
+            break;
+        }
+
+        // continue form
+        case lyric_schema::LyricAstId::Continue: {
+            auto handler = std::make_unique<ContinueHandler>(isSideEffect, m_fragment, block, driver);
+            ctx.setChoice(std::move(handler));
+            break;
+        }
+
+        // break form
+        case lyric_schema::LyricAstId::Break: {
+            auto handler = std::make_unique<BreakHandler>(isSideEffect, m_fragment, block, driver);
+            ctx.setChoice(std::move(handler));
             break;
         }
 
