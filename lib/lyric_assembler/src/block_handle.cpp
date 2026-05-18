@@ -1,7 +1,7 @@
 
 #include <absl/container/flat_hash_set.h>
-#include <lyric_assembler/binding_symbol.h>
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/call_symbol.h>
@@ -1597,30 +1597,6 @@ lyric_assembler::BlockHandle::getImpl(const lyric_common::TypeDef &implType) con
     if (entry != m_impls.cend())
         return Option(entry->second);
     return {};
-}
-
-tempo_utils::Result<lyric_assembler::ImplReference>
-lyric_assembler::BlockHandle::resolveImpl(
-    const lyric_common::TypeDef &implType,
-    const std::vector<lyric_common::TypeDef> &fallbackImplTypes)
-{
-    // look for a suitable instance in the current block or an ancestor block
-    for (auto *block = this; block != nullptr; block = block->m_parentBlock) {
-        if (block->m_impls.contains(implType)) {
-            auto entry = block->m_impls.find(implType);
-            if (entry != m_impls.cend())
-                return entry->second;
-        }
-    }
-
-    if (fallbackImplTypes.empty())
-        return AssemblerStatus::forCondition(AssemblerCondition::kMissingImpl,
-            "no instance found implementing {}", implType.toString());
-
-    auto &front = fallbackImplTypes.front();
-    auto cbegin = fallbackImplTypes.cbegin();
-    std::vector remaining(++cbegin, fallbackImplTypes.cend());
-    return resolveImpl(front, remaining);
 }
 
 tempo_utils::Result<lyric_assembler::BindingSymbol *>

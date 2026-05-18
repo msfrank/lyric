@@ -172,9 +172,6 @@ namespace lyric_assembler {
 
         bool hasImpl(const lyric_common::TypeDef &implType) const;
         Option<ImplReference> getImpl(const lyric_common::TypeDef &implType) const;
-        tempo_utils::Result<ImplReference> resolveImpl(
-            const lyric_common::TypeDef &implType,
-            const std::vector<lyric_common::TypeDef> &fallbackImplTypes = {});
 
         tempo_utils::Result<BindingSymbol *> declareBinding(
             const std::string &name,

@@ -8,8 +8,9 @@ add_library(lyric::lyric_typing ALIAS lyric_typing)
 
 set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/callsite_reifier.h
-    include/lyric_typing/compare_assignable.h
     include/lyric_typing/check_dispatchable.h
+    include/lyric_typing/compare_assignable.h
+    include/lyric_typing/ctx_resolver.h
     include/lyric_typing/impl_reifier.h
     include/lyric_typing/impl_selector.h
     include/lyric_typing/member_reifier.h
@@ -32,8 +33,9 @@ set_target_properties(lyric_typing PROPERTIES PUBLIC_HEADER "${LYRIC_TYPING_INCL
 
 target_sources(lyric_typing PRIVATE
     src/callsite_reifier.cpp
-    src/compare_assignable.cpp
     src/check_dispatchable.cpp
+    src/compare_assignable.cpp
+    src/ctx_resolver.cpp
     src/impl_reifier.cpp
     src/impl_selector.cpp
     src/member_reifier.cpp

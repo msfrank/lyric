@@ -6,6 +6,7 @@
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
+#include <lyric_typing/ctx_resolver.h>
 
 lyric_compiler::BaseInvokableHandler::BaseInvokableHandler(
     lyric_assembler::BlockHandle *bindingBlock,
@@ -209,8 +210,9 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
                 auto entry = m_invocation.keywordOffsets.find(param->name);
 
                 if (entry == m_invocation.keywordOffsets.cend()) {
+                    lyric_typing::CtxResolver resolver(m_bindingBlock);
                     lyric_assembler::ImplReference implRef;
-                    TU_ASSIGN_OR_RETURN (implRef, m_bindingBlock->resolveImpl(contextType));
+                    TU_ASSIGN_OR_RETURN (implRef, resolver.resolve(contextType));
                     TU_RETURN_IF_NOT_OK (fragment->loadRef(implRef));
                 }
                 else {
