@@ -34,11 +34,11 @@ lyric_assembler::internal::touch_class(
     }
 
     for (auto it = classSymbol->membersBegin(); it != classSymbol->membersEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
 
     for (auto it = classSymbol->methodsBegin(); it != classSymbol->methodsEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMethod(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
     }
 
     for (auto it = classSymbol->implsBegin(); it != classSymbol->implsEnd(); it++) {
@@ -102,22 +102,25 @@ write_class(
     // serialize array of members
     std::vector<tu_uint32> members;
     for (auto iterator = classSymbol->membersBegin(); iterator != classSymbol->membersEnd(); iterator++) {
-        const auto &memberRef = iterator->second;
+        auto *fieldSymbol = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(fieldSymbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
     // serialize array of methods
     std::vector<tu_uint32> methods;
     for (auto iterator = classSymbol->methodsBegin(); iterator != classSymbol->methodsEnd(); iterator++) {
-        const auto &boundMethod = iterator->second;
+        auto *callSymbol = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(callSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
+
+    // TODO: serialize array of methods
+    std::vector<tu_uint32> stubs;
 
     // serialize array of impls
     std::vector<tu_uint32> impls;
@@ -146,7 +149,7 @@ write_class(
     classes_vector.push_back(lyo1::CreateClassDescriptor(buffer, fullyQualifiedName,
         superclassIndex, classTemplate, classType, classFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
-        buffer.CreateVector(impls), allocatorTrap,
+        buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         buffer.CreateVector(sealedSubtypes)));
 
     return {};

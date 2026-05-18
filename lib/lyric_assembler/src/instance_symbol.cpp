@@ -97,25 +97,14 @@ lyric_assembler::InstanceSymbol::load()
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(it->second));
         TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(fieldSymbol));
-
-        DataReference memberRef;
-        memberRef.symbolUrl = it->second;
-        memberRef.typeDef = fieldSymbol->getTypeDef();
-        memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
-        priv->members[it->first] = memberRef;
+        priv->members[it->first] = fieldSymbol;
     }
 
     for (auto it = m_instanceImport->methodsBegin(); it != m_instanceImport->methodsEnd(); it++) {
         CallSymbol *callSymbol;
         TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(it->second));
         TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(callSymbol));
-
-        BoundMethod methodBinding;
-        methodBinding.methodCall = it->second;
-        methodBinding.hidden = callSymbol->isHidden();
-        methodBinding.ctor = callSymbol->isCtor();
-        methodBinding.final = callSymbol->isFinal();
-        priv->methods[it->first] = methodBinding;
+        priv->methods[it->first] = callSymbol;
     }
 
     auto *implCache = m_state->implCache();
@@ -337,23 +326,24 @@ lyric_assembler::InstanceSymbol::hasMember(const std::string &name) const
     return priv->members.contains(name);
 }
 
-Option<lyric_assembler::DataReference>
+lyric_assembler::FieldSymbol *
 lyric_assembler::InstanceSymbol::getMember(const std::string &name) const
 {
     auto *priv = getPriv();
-    if (priv->members.contains(name))
-        return Option<DataReference>(priv->members.at(name));
-    return {};
+    auto entry = priv->members.find(name);
+    if (entry != priv->members.cend())
+        return entry->second;
+    return nullptr;
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::FieldSymbol *>::const_iterator
 lyric_assembler::InstanceSymbol::membersBegin() const
 {
     auto *priv = getPriv();
     return priv->members.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::FieldSymbol *>::const_iterator
 lyric_assembler::InstanceSymbol::membersEnd() const
 {
     auto *priv = getPriv();
@@ -384,7 +374,7 @@ lyric_assembler::InstanceSymbol::declareMember(
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "member {} already defined for instance {}", name, m_instanceUrl.toString());
 
-    lyric_assembler::TypeHandle *fieldType;
+    TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
 
     auto memberPath = m_instanceUrl.getSymbolPath().getPath();
@@ -398,12 +388,7 @@ lyric_assembler::InstanceSymbol::declareMember(
     FieldSymbol *fieldPtr;
     TU_ASSIGN_OR_RETURN (fieldPtr, m_state->appendField(std::move(fieldSymbol)));
     TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(fieldPtr));
-
-    DataReference ref;
-    ref.symbolUrl = memberUrl;
-    ref.typeDef = memberType;
-    ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
-    priv->members[name] = std::move(ref);
+    priv->members[name] = fieldPtr;
 
     return fieldPtr;
 }
@@ -415,19 +400,11 @@ lyric_assembler::InstanceSymbol::resolveMember(
     const lyric_common::TypeDef &receiverType,
     bool thisReceiver) const
 {
-    auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
 
-    AbstractSymbol *symbol;
     auto entry = priv->members.find(name);
-
     if (entry != priv->members.cend()) {
-        const auto &member = entry->second;
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(member.symbolUrl));
-        if (symbol->getSymbolType() != SymbolType::FIELD)
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid field symbol {}", member.symbolUrl.toString());
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
+        auto *fieldSymbol = entry->second;
 
         if (fieldSymbol->isHidden()) {
             bool thisSymbol = receiverType.getConcreteUrl() == m_instanceUrl;
@@ -479,19 +456,35 @@ lyric_assembler::InstanceSymbol::isCompletelyInitialized() const
     return true;
 }
 
-lyric_common::SymbolUrl
-lyric_assembler::InstanceSymbol::getCtor() const
-{
-    auto location = m_instanceUrl.getModuleLocation();
-    auto path = m_instanceUrl.getSymbolPath();
-    return lyric_common::SymbolUrl(location, lyric_common::SymbolPath(path.getPath(), "$ctor"));
-}
-
 std::string
 lyric_assembler::InstanceSymbol::getAllocatorTrap() const
 {
     auto *priv = getPriv();
     return priv->allocatorTrap;
+}
+
+bool
+lyric_assembler::InstanceSymbol::hasCtor(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->methods.find(name);
+    if (entry == priv->methods.cend())
+        return false;
+    auto *callSymbol = entry->second;
+    return callSymbol->isCtor();
+}
+
+lyric_assembler::CallSymbol *
+lyric_assembler::InstanceSymbol::getCtor(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->methods.find(name);
+    if (entry == priv->methods.cend())
+        return {};
+    auto *callSymbol = entry->second;
+    if (callSymbol->isCtor())
+        return callSymbol;
+    return nullptr;
 }
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
@@ -521,13 +514,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
     TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(ctorPtr));
-
-    // add bound method
-    BoundMethod method;
-    method.methodCall = ctorUrl;
-    method.hidden = isHidden;
-    method.final = false;
-    priv->methods["$ctor"] = std::move(method);
+    priv->methods["$ctor"] = ctorPtr;
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -560,23 +547,24 @@ lyric_assembler::InstanceSymbol::hasMethod(const std::string &name) const
     return priv->methods.contains(name);
 }
 
-Option<lyric_assembler::BoundMethod>
+lyric_assembler::CallSymbol *
 lyric_assembler::InstanceSymbol::getMethod(const std::string &name) const
 {
     auto *priv = getPriv();
-    if (priv->methods.contains(name))
-        return Option<BoundMethod>(priv->methods.at(name));
-    return {};
+    auto entry = priv->methods.find(name);
+    if (entry != priv->methods.cend())
+        return entry->second;
+    return nullptr;
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::CallSymbol *>::const_iterator
 lyric_assembler::InstanceSymbol::methodsBegin() const
 {
     auto *priv = getPriv();
     return priv->methods.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::CallSymbol *>::const_iterator
 lyric_assembler::InstanceSymbol::methodsEnd() const
 {
     auto *priv = getPriv();
@@ -619,13 +607,7 @@ lyric_assembler::InstanceSymbol::declareMethod(
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(callPtr));
-
-    // add bound method
-    BoundMethod method;
-    method.methodCall = methodUrl;
-    method.hidden = isHidden;
-    method.final = isFinal;
-    priv->methods[name] = std::move(method);
+    priv->methods[name] = callPtr;
 
     return callPtr;
 }
@@ -639,16 +621,9 @@ lyric_assembler::InstanceSymbol::prepareMethod(
 {
     auto *priv = getPriv();
 
-    AbstractSymbol *symbol;
     auto entry = priv->methods.find(name);
-
     if (entry != priv->methods.cend()) {
-        const auto &method = entry->second;
-        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
-        if (symbol->getSymbolType() != SymbolType::CALL)
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid call symbol {}", method.methodCall.toString());
-        auto *callSymbol = cast_symbol_to_call(symbol);
+        auto *callSymbol = entry->second;
 
         if (callSymbol->isHidden()) {
             if (!thisReceiver)

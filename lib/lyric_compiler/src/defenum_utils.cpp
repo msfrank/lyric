@@ -39,13 +39,10 @@ lyric_compiler::define_enum_default_init(
 
     // verify that super ctor takes no arguments
     auto *superEnum = enumSymbol->superEnum();
-    auto superCtorUrl = superEnum->getCtor();
-    lyric_assembler::AbstractSymbol *superCtorSymbol;
-    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
-    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    auto *superCtorCall = superEnum->getCtor(lyric_object::kCtorSpecialSymbol);
     if (superCtorCall->numParameters() > 0)
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "super enum {} is not default-constructable", superCtorUrl.toString());
+            "super enum {} is not default-constructable", superCtorCall->getSymbolUrl().toString());
 
     auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
@@ -66,31 +63,17 @@ lyric_compiler::define_enum_default_init(
 
     // default-initialize all members
     for (auto it = defenum->enumSymbol->membersBegin(); it != defenum->enumSymbol->membersEnd(); it++) {
-        auto &memberName = it->first;
-        auto &fieldRef = it->second;
-
-        lyric_assembler::AbstractSymbol *symbol;
-
-        // resolve the member binding
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid enum field {}", fieldRef.symbolUrl.toString());
-
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
+        const auto &memberName = it->first;
+        auto *fieldSymbol = it->second;
+        auto fieldRef = fieldSymbol->getReference();
 
         if (!fieldSymbol->hasInitializer())
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "missing initializer for field {}", memberName);
-
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid field initializer {}", fieldInitializerUrl.toString());
-
-        auto *initializerCall = cast_symbol_to_call(symbol);
+        lyric_assembler::CallSymbol *initializerCall;
+        TU_ASSIGN_OR_RETURN (initializerCall, symbolCache->getOrImportCall(fieldInitializerUrl));
 
         // load $this onto the top of the stack
         TU_RETURN_IF_NOT_OK (fragment->loadThis());

@@ -28,14 +28,12 @@ lyric_assembler::internal::touch_instance(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(instanceSymbol->instanceType()));
 
-    TU_RETURN_IF_NOT_OK (writer.touchConstructor(instanceSymbol->getCtor()));
-
     for (auto it = instanceSymbol->membersBegin(); it != instanceSymbol->membersEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
 
     for (auto it = instanceSymbol->methodsBegin(); it != instanceSymbol->methodsEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMethod(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
     }
 
     for (auto it = instanceSymbol->implsBegin(); it != instanceSymbol->implsEnd(); it++) {
@@ -94,20 +92,20 @@ write_instance(
     // serialize array of members
     std::vector<tu_uint32> members;
     for (auto iterator = instanceSymbol->membersBegin(); iterator != instanceSymbol->membersEnd(); iterator++) {
-        const auto &memberRef = iterator->second;
+        auto *fieldSymbol = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(fieldSymbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
     // serialize array of methods
     std::vector<tu_uint32> methods;
     for (auto iterator = instanceSymbol->methodsBegin(); iterator != instanceSymbol->methodsEnd(); iterator++) {
-        const auto &boundMethod = iterator->second;
+        auto *callSymbol = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(callSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 
@@ -121,9 +119,14 @@ write_instance(
     }
 
     // get instance ctor
+    auto *ctorSymbol = instanceSymbol->getCtor(lyric_object::kCtorSpecialSymbol);
+    if (ctorSymbol == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+            "invalid instance {}; missing default ctor", instanceSymbol->getSymbolUrl().toString());
     tu_uint32 ctorCall;
     TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSectionAddress(instanceSymbol->getCtor(), lyric_object::LinkageSection::Call));
+        writer.getSectionAddress(ctorSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

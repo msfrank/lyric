@@ -1890,6 +1890,7 @@ BuilderState::toObject() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Class->classPath.toString());
         auto fb_members = build_fields_vector(buffer, Class->members);
         auto fb_methods = build_calls_vector(buffer, Class->methods);
+        auto fb_stubs = build_actions_vector(buffer, Class->stubs);
         auto fb_impls = build_impls_vector(buffer, Class->impls);
         auto fb_sealedSubtypes = buffer.CreateVector(Class->sealedSubtypes);
 
@@ -1900,7 +1901,7 @@ BuilderState::toObject() const
 
         classes_vector.push_back(lyo1::CreateClassDescriptor(buffer,
             fb_fullyQualifiedName, superClass, classTemplate, Class->classType->type_index, Class->flags,
-            fb_members, fb_methods, fb_impls, Class->allocatorTrap, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_stubs, fb_impls, Class->allocatorTrap, fb_sealedSubtypes));
     }
 
     // write the struct descriptors

@@ -157,6 +157,7 @@ struct CoreClass {
     const CoreCall *classCtor;
     std::vector<CoreField *> members;
     std::vector<CoreCall *> methods;
+    std::vector<CoreAction *> stubs;
     std::vector<CoreImpl *> impls;
     std::vector<tu_uint32> sealedSubtypes;
 };

@@ -347,6 +347,7 @@ table ClassDescriptor {
     flags: ClassFlags;                          // bitfield containing class flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
+    stubs: [uint32];                            // array of abstract methods in the actions section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section

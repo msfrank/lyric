@@ -331,19 +331,6 @@ namespace lyric_assembler {
         size_t numUnifiedParameters() const;
     };
 
-    struct BoundMethod {
-        lyric_common::SymbolUrl methodCall;
-        bool hidden;
-        bool ctor;
-        bool final;
-        BoundMethod();
-        BoundMethod(
-            const lyric_common::SymbolUrl &methodCall,
-            bool hidden,
-            bool ctor,
-            bool final);
-    };
-
     struct ExtensionMethod {
         lyric_common::SymbolUrl methodCall;
         lyric_common::SymbolUrl methodAction;

@@ -47,9 +47,6 @@ namespace lyric_assembler {
 
         tempo_utils::Status touchConstructor(const lyric_common::SymbolUrl &ctor);
         tempo_utils::Status touchInitializer(const lyric_common::SymbolUrl &init);
-        tempo_utils::Status touchMember(const DataReference &member);
-        tempo_utils::Status touchMethod(const BoundMethod &method);
-        //tempo_utils::Status touchAction(const ActionMethod &action);
         tempo_utils::Status touchExtension(const ExtensionMethod &extension);
         tempo_utils::Status touchType(const lyric_common::TypeDef &typeDef);
 

@@ -28,14 +28,12 @@ lyric_assembler::internal::touch_enum(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(enumSymbol->enumType()));
 
-    TU_RETURN_IF_NOT_OK (writer.touchConstructor(enumSymbol->getCtor()));
-
     for (auto it = enumSymbol->membersBegin(); it != enumSymbol->membersEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
 
     for (auto it = enumSymbol->methodsBegin(); it != enumSymbol->methodsEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMethod(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
     }
 
     for (auto it = enumSymbol->implsBegin(); it != enumSymbol->implsEnd(); it++) {
@@ -94,20 +92,20 @@ write_enum(
     // serialize array of members
     std::vector<tu_uint32> members;
     for (auto iterator = enumSymbol->membersBegin(); iterator != enumSymbol->membersEnd(); iterator++) {
-        const auto &memberRef = iterator->second;
+        auto *fieldSymbol = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(fieldSymbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
     // serialize array of methods
     std::vector<tu_uint32> methods;
     for (auto iterator = enumSymbol->methodsBegin(); iterator != enumSymbol->methodsEnd(); iterator++) {
-        const auto &boundMethod = iterator->second;
+        auto *callSymbol = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(callSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 
@@ -121,9 +119,14 @@ write_enum(
     }
 
     // get enum ctor
+    auto *ctorSymbol = enumSymbol->getCtor(lyric_object::kCtorSpecialSymbol);
+    if (ctorSymbol == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+            "invalid enum {}; missing default ctor", enumSymbol->getSymbolUrl().toString());
     tu_uint32 ctorCall;
     TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSectionAddress(enumSymbol->getCtor(), lyric_object::LinkageSection::Call));
+        writer.getSectionAddress(ctorSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

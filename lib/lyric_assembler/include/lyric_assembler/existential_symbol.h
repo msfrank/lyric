@@ -19,7 +19,7 @@ namespace lyric_assembler {
         TypeHandle *existentialType = nullptr;
         TemplateHandle *existentialTemplate = nullptr;
         ExistentialSymbol *superExistential = nullptr;
-        absl::flat_hash_map<std::string, BoundMethod> methods;
+        absl::flat_hash_map<std::string, CallSymbol *> methods;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> existentialBlock;
@@ -71,9 +71,9 @@ namespace lyric_assembler {
          * existential method management
          */
         bool hasMethod(const std::string &name) const;
-        Option<BoundMethod> getMethod(const std::string &name) const;
-        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsBegin() const;
-        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
+        CallSymbol *getMethod(const std::string &name) const;
+        absl::flat_hash_map<std::string, CallSymbol *>::const_iterator methodsBegin() const;
+        absl::flat_hash_map<std::string, CallSymbol *>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
         tempo_utils::Result<CallSymbol *> declareMethod(

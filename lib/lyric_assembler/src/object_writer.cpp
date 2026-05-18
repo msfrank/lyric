@@ -768,48 +768,6 @@ lyric_assembler::ObjectWriter::touchInitializer(const lyric_common::SymbolUrl &i
 }
 
 tempo_utils::Status
-lyric_assembler::ObjectWriter::touchMember(const DataReference &member)
-{
-    auto *symbolCache = m_state->symbolCache();
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(member.symbolUrl));
-    if (symbol->getSymbolType() != SymbolType::FIELD)
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid symbol for field");
-    auto *fieldSymbol = cast_symbol_to_field(symbol);
-    return touchField(fieldSymbol);
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectWriter::touchMethod(const BoundMethod &method)
-{
-    auto *symbolCache = m_state->symbolCache();
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(method.methodCall));
-    if (symbol->getSymbolType() != SymbolType::CALL)
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid symbol for method");
-    auto *callSymbol = cast_symbol_to_call(symbol);
-    if (!callSymbol->isBound())
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid symbol for method");
-    return touchCall(callSymbol);
-}
-
-// tempo_utils::Status
-// lyric_assembler::ObjectWriter::touchAction(const ActionMethod &action)
-// {
-//     auto *symbolCache = m_state->symbolCache();
-//     AbstractSymbol *symbol;
-//     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(action.methodAction));
-//     if (symbol->getSymbolType() != SymbolType::ACTION)
-//         return AssemblerStatus::forCondition(
-//             AssemblerCondition::kAssemblerInvariant, "invalid symbol for action");
-//     auto *actionSymbol = cast_symbol_to_action(symbol);
-//     return touchAction(actionSymbol);
-// }
-
-tempo_utils::Status
 lyric_assembler::ObjectWriter::touchExtension(const ExtensionMethod &extension)
 {
     auto *symbolCache = m_state->symbolCache();

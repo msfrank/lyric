@@ -20,9 +20,9 @@ namespace lyric_assembler {
         TypeHandle *structType = nullptr;
         StructSymbol *superStruct = nullptr;
         std::string allocatorTrap;
-        absl::flat_hash_map<std::string, DataReference> members;
+        absl::flat_hash_map<std::string, FieldSymbol *> members;
         absl::flat_hash_set<std::string> initializedMembers;
-        absl::flat_hash_map<std::string, BoundMethod> methods;
+        absl::flat_hash_map<std::string, CallSymbol *> methods;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> structBlock;
@@ -81,9 +81,9 @@ namespace lyric_assembler {
          * struct member management
          */
         bool hasMember(const std::string &name) const;
-        Option<DataReference> getMember(const std::string &name) const;
-        absl::flat_hash_map<std::string, DataReference>::const_iterator membersBegin() const;
-        absl::flat_hash_map<std::string, DataReference>::const_iterator membersEnd() const;
+        FieldSymbol *getMember(const std::string &name) const;
+        absl::flat_hash_map<std::string, FieldSymbol *>::const_iterator membersBegin() const;
+        absl::flat_hash_map<std::string, FieldSymbol *>::const_iterator membersEnd() const;
         tu_uint32 numMembers() const;
 
         tempo_utils::Result<FieldSymbol *> declareMember(
@@ -106,7 +106,7 @@ namespace lyric_assembler {
          */
         std::string getAllocatorTrap() const;
         bool hasCtor(const std::string &name) const;
-        lyric_common::SymbolUrl getCtor(const std::string &name) const;
+        CallSymbol *getCtor(const std::string &name) const;
         tempo_utils::Result<CallSymbol *> declareCtor(
             const std::string &name,
             bool isHidden,
@@ -117,9 +117,9 @@ namespace lyric_assembler {
          * struct method management
          */
         bool hasMethod(const std::string &name) const;
-        Option<BoundMethod> getMethod(const std::string &name) const;
-        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsBegin() const;
-        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
+        CallSymbol *getMethod(const std::string &name) const;
+        absl::flat_hash_map<std::string, CallSymbol *>::const_iterator methodsBegin() const;
+        absl::flat_hash_map<std::string, CallSymbol *>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
         tempo_utils::Result<CallSymbol *> declareMethod(

@@ -29,14 +29,8 @@ lyric_compiler::declare_struct_default_init(
         it++)
     {
         const auto &memberName = it->first;
-        const auto &fieldRef = it->second;
-
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid struct field {}", fieldRef.symbolUrl.toString());
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
+        auto *fieldSymbol = it->second;
+        auto fieldRef = fieldSymbol->getReference();
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
         lyric_assembler::Parameter p;
@@ -87,13 +81,10 @@ lyric_compiler::define_struct_default_init(
 
     // verify that super ctor takes no arguments
     auto *superStruct = structSymbol->superStruct();
-    auto superCtorUrl = superStruct->getCtor(lyric_object::kCtorSpecialSymbol);
-    lyric_assembler::AbstractSymbol *superCtorSymbol;
-    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
-    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    auto *superCtorCall = superStruct->getCtor(lyric_object::kCtorSpecialSymbol);
     if (superCtorCall->numParameters() > 0)
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "super struct {} is not default-constructable", superCtorUrl.toString());
+            "super struct {} is not default-constructable", superCtorCall->getSymbolUrl().toString());
 
     auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
@@ -117,7 +108,8 @@ lyric_compiler::define_struct_default_init(
          it++)
     {
         const auto &memberName = it->first;
-        const auto &fieldRef = it->second;
+        auto *fieldSymbol = it->second;
+        auto fieldRef = fieldSymbol->getReference();
 
         // resolve argument binding
         lyric_assembler::DataReference argRef;
@@ -255,35 +247,21 @@ lyric_compiler::default_initialize_struct_members(
         it != structSymbol->membersEnd();
         it++)
     {
-        auto &memberName = it->first;
-        auto &fieldRef = it->second;
+        const auto &memberName = it->first;
+        auto *fieldSymbol = it->second;
+        auto fieldRef = fieldSymbol->getReference();
 
         // skip members which have been initialized already
         if (structSymbol->isMemberInitialized(memberName))
             continue;
 
-        lyric_assembler::AbstractSymbol *symbol;
-
-        // resolve the member binding
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid struct field {}", fieldRef.symbolUrl.toString());
-
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
-
         if (!fieldSymbol->hasInitializer())
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "missing initializer for field {}", memberName);
-
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-                "invalid field initializer {}", fieldInitializerUrl.toString());
-
-        auto *initializerCall = cast_symbol_to_call(symbol);
+        lyric_assembler::CallSymbol *initializerCall;
+        TU_ASSIGN_OR_RETURN (initializerCall, symbolCache->getOrImportCall(fieldInitializerUrl));
 
         // load $this onto the top of the stack
         TU_RETURN_IF_NOT_OK (fragment->loadThis());

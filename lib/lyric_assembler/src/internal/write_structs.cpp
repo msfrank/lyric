@@ -29,11 +29,11 @@ lyric_assembler::internal::touch_struct(
     TU_RETURN_IF_NOT_OK (writer.touchType(structSymbol->structType()));
 
     for (auto it = structSymbol->membersBegin(); it != structSymbol->membersEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
 
     for (auto it = structSymbol->methodsBegin(); it != structSymbol->methodsEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (writer.touchMethod(it->second));
+        TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
     }
 
     for (auto it = structSymbol->implsBegin(); it != structSymbol->implsEnd(); it++) {
@@ -92,20 +92,20 @@ write_struct(
     // serialize array of members
     std::vector<tu_uint32> members;
     for (auto iterator = structSymbol->membersBegin(); iterator != structSymbol->membersEnd(); iterator++) {
-        const auto &memberRef = iterator->second;
+        auto *fieldSymbol = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(fieldSymbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
     // serialize array of methods
     std::vector<tu_uint32> methods;
     for (auto iterator = structSymbol->methodsBegin(); iterator != structSymbol->methodsEnd(); iterator++) {
-        const auto &boundMethod = iterator->second;
+        auto *callSymbol = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(callSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 

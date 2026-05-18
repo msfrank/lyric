@@ -1,6 +1,4 @@
 
-#include <absl/strings/match.h>
-
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -130,12 +128,7 @@ lyric_assembler::ExistentialSymbol::load()
         CallSymbol *callSymbol;
         TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(it->second));
         TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callSymbol));
-
-        BoundMethod methodBinding;
-        methodBinding.methodCall = it->second;
-        methodBinding.hidden = callSymbol->isHidden();
-        methodBinding.final = false;    // FIXME: this should come from the call symbol
-        priv->methods[it->first] = methodBinding;
+        priv->methods[it->first] = callSymbol;
     }
 
     auto *implCache = m_state->implCache();
@@ -246,23 +239,24 @@ lyric_assembler::ExistentialSymbol::hasMethod(const std::string &name) const
     return priv->methods.contains(name);
 }
 
-Option<lyric_assembler::BoundMethod>
+lyric_assembler::CallSymbol *
 lyric_assembler::ExistentialSymbol::getMethod(const std::string &name) const
 {
     auto *priv = getPriv();
-    if (priv->methods.contains(name))
-        return Option<BoundMethod>(priv->methods.at(name));
-    return Option<BoundMethod>();
+    auto entry = priv->methods.find(name);
+    if (entry != priv->methods.cend())
+        return entry->second;
+    return nullptr;
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::CallSymbol *>::const_iterator
 lyric_assembler::ExistentialSymbol::methodsBegin() const
 {
     auto *priv = getPriv();
     return priv->methods.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::CallSymbol *>::const_iterator
 lyric_assembler::ExistentialSymbol::methodsEnd() const
 {
     auto *priv = getPriv();
@@ -304,13 +298,7 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callPtr));
-
-    // add bound method
-    BoundMethod method;
-    method.methodCall = methodUrl;
-    method.hidden = isHidden;
-    method.final = true;
-    priv->methods[name] = std::move(method);
+    priv->methods[name] = callPtr;
 
     return callPtr;
 }
@@ -324,32 +312,27 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
 {
     auto *priv = getPriv();
 
-    if (!priv->methods.contains(name)) {
-        if (priv->superExistential == nullptr)
-            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
-                "missing method {}", name);
-        return priv->superExistential->prepareMethod(name, receiverType, callable, thisReceiver);
-    }
+    auto entry = priv->methods.find(name);
+    if (entry != priv->methods.cend()) {
+        auto *callSymbol = entry->second;
 
-    const auto &method = priv->methods.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
-    if (symbol->getSymbolType() != SymbolType::CALL)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid call symbol {}", method.methodCall.toString());
-    auto *callSymbol = cast_symbol_to_call(symbol);
+        if (callSymbol->isInline()) {
+            callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());
+            return {};
+        }
 
-    if (callSymbol->isInline()) {
-        callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());
+        if (!callSymbol->isBound())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+        callable = std::make_unique<ExistentialCallable>(this, callSymbol);
         return {};
     }
 
-    if (!callSymbol->isBound())
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
-
-    callable = std::make_unique<ExistentialCallable>(this, callSymbol);
-    return {};
+    if (priv->superExistential == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
+            "missing method {}", name);
+    return priv->superExistential->prepareMethod(name, receiverType, callable, thisReceiver);
 }
 
 bool
