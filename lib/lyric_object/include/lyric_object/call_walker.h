@@ -42,9 +42,9 @@ namespace lyric_object {
         bool hasReceiver() const;
         SymbolWalker getReceiver() const;
 
-        AddressType virtualCallAddressType() const;
-        CallWalker getNearVirtualCall() const;
-        LinkWalker getFarVirtualCall() const;
+        AddressType baseSymbolAddressType() const;
+        SymbolWalker getNearBaseSymbol() const;
+        LinkWalker getFarBaseSymbol() const;
 
         tu_uint8 numListParameters() const;
         ParameterWalker getListParameter(tu_uint8 index) const;

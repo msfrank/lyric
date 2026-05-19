@@ -189,6 +189,20 @@ lyric_runtime::internal::resolve_link(
     return segment->getLink(index);
 }
 
+/**
+ * Resolve the descriptor in the given section at the specified address. If the address is near then the
+ * descriptor is loaded from the current segment, otherwise if the target segment does not exist in the cache
+ * then it will be loaded as a side effect. If the address is invalid, or the target segment could not be
+ * loaded, or the symbol could not be found within the target segment, then returns invalid data cell and
+ * `status` is set.
+ *
+ * @param sp The current segment
+ * @param section
+ * @param address
+ * @param segmentManagerData Segment manager data
+ * @param status If the link could not be resolved then status is set
+ * @return The resolved descriptor, or an invalid data cell if the descriptor could not be resolved.
+ */
 lyric_runtime::DataCell
 lyric_runtime::internal::resolve_descriptor(
     const BytecodeSegment *sp,
@@ -230,6 +244,48 @@ lyric_runtime::internal::resolve_descriptor(
         }
         return DataCell::forType(typeEntry);
     }
+
+    auto *descriptorEntry = segment->lookupDescriptor(section, valueIndex);
+    if (descriptorEntry == nullptr) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing descriptor");
+        return {};
+    }
+
+    return DataCell::forDescriptor(descriptorEntry);
+}
+
+lyric_runtime::DataCell
+lyric_runtime::internal::resolve_symbol(
+    const BytecodeSegment *sp,
+    tu_uint32 address,
+    SegmentManagerData *segmentManagerData,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (sp != nullptr);
+
+    tu_uint32 segmentIndex;
+    tu_uint32 valueIndex;
+    lyric_object::LinkageSection section;
+
+    if (lyric_object::IS_NEAR(address)) {
+        auto symbolIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
+        auto object = sp->getObject();
+        auto symbol = object.getSymbol(symbolIndex);
+        segmentIndex = sp->getSegmentIndex();
+        valueIndex = symbol.getLinkageIndex();
+        section = symbol.getLinkageSection();
+    } else {
+        auto index = lyric_object::GET_LINK_OFFSET(address);
+        const auto *linkage = resolve_link(sp, index, segmentManagerData, status);
+        if (linkage == nullptr)
+            return {};          // failed to resolve dynamic link
+        segmentIndex = linkage->object;
+        valueIndex = linkage->value;
+        section = linkage->linkage;
+    }
+
+    auto *segment = segmentManagerData->segments[segmentIndex];
 
     auto *descriptorEntry = segment->lookupDescriptor(section, valueIndex);
     if (descriptorEntry == nullptr) {

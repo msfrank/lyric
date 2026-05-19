@@ -205,7 +205,7 @@ table CallDescriptor {
     fqsn: string;                               // fully qualified call name
     call_template: uint32 = 0xffffffff;         // offset of the template in the templates section, or 0xffffffff if not generic
     receiver_symbol: uint32 = 0xffffffff;       // index of the receiver in the symbols section
-    virtual_call: uint32 = 0xffffffff;          // index of the virtual call if method is an override
+    base_symbol: uint32 = 0xffffffff;           // index of the base symbol if call is a method override
     bytecode_offset: uint32 = 0xffffffff;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
     list_parameters: [Parameter];               // array of list parameters
@@ -269,7 +269,7 @@ enum ConceptFlags : uint16 (bit_flags) {
 
 // a ConceptDescriptor describes a set of actions which may be implemented by a type. It is
 // analogous to a Java interface or Scala trait; i.e. it defines a contract to be implemented
-// by an Instance impl.
+// by an impl.
 
 table ConceptDescriptor {
     fqsn: string;                               // fully qualified concept name
@@ -347,7 +347,7 @@ table ClassDescriptor {
     flags: ClassFlags;                          // bitfield containing class flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
-    stubs: [uint32];                            // array of abstract methods in the actions section
+    stubs: [uint32];                            // array of stubs in the actions section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section

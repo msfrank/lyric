@@ -26,6 +26,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, FieldSymbol *> members;
         absl::flat_hash_set<std::string> initializedMembers;
         absl::flat_hash_map<std::string, CallSymbol *> methods;
+        absl::flat_hash_map<std::string, ActionSymbol *> stubs;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> classBlock;
@@ -150,6 +151,20 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &receiverType,
             std::unique_ptr<AbstractCallable> &callable,
             bool thisReceiver = false) const;
+
+        /*
+         * class stub management
+         */
+        bool hasStub(const std::string &name) const;
+        ActionSymbol *getStub(const std::string &name) const;
+        absl::flat_hash_map<std::string, ActionSymbol *>::const_iterator stubsBegin() const;
+        absl::flat_hash_map<std::string, ActionSymbol *>::const_iterator stubsEnd() const;
+        tu_uint32 numStubs() const;
+
+        tempo_utils::Result<ActionSymbol *> declareStub(
+            const std::string &name,
+            bool isHidden,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         /*
          * class impl management

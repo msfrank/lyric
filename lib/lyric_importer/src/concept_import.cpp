@@ -224,21 +224,16 @@ lyric_importer::ConceptImport::load()
 
     for (tu_uint8 i = 0; i < conceptWalker.numActions(); i++) {
         auto action = conceptWalker.getAction(i);
-        lyric_common::SymbolUrl actionUrl;
-        switch (action.actionAddressType()) {
-            case lyric_object::AddressType::Near:
-                actionUrl = lyric_common::SymbolUrl(objectLocation, action.getNearAction().getSymbolPath());
-                break;
-            case lyric_object::AddressType::Far:
-                actionUrl = action.getFarAction().getLinkUrl(objectLocation);
-                break;
-            default:
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(
-                        ImporterCondition::kImportError,
-                        "cannot import concept at index {} in module {}; invalid action at index {}",
-                        m_conceptOffset, objectLocation.toString(), i));
+        if (!action.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import concept at index {} in module {}; invalid action at index {}",
+                    m_conceptOffset, objectLocation.toString(), i));
         }
+
+        lyric_common::SymbolUrl actionUrl(objectLocation, action.getSymbolPath());
+
         auto name = actionUrl.getSymbolName();
         priv->actions[name] = actionUrl;
     }

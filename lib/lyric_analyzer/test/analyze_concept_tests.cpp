@@ -59,7 +59,7 @@ TEST_F(AnalyzeConcept, DeclareConceptAction)
     auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
 
     ASSERT_EQ (1, concept0.numActions());
-    auto action0 = concept0.getAction(0).getNearAction();
+    auto action0 = concept0.getAction(0);
     ASSERT_TRUE (action0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), action0.getSymbolPath());
     ASSERT_EQ (IntType, action0.getResultType().getTypeDef());

@@ -18,7 +18,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string,Parameter> parametersMap;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        CallSymbol *virtualCall = nullptr;
+        lyric_common::SymbolUrl baseUrl;
         bool isHidden = false;
         lyric_object::CallMode mode = lyric_object::CallMode::Invalid;
         bool isFinal = false;
@@ -73,7 +73,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             bool isHidden,
-            CallSymbol *virtualCall,
+            const lyric_common::SymbolUrl &baseUrl,
             bool isFinal,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
@@ -84,7 +84,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             bool isHidden,
-            CallSymbol *virtualCall,
+            const lyric_common::SymbolUrl &baseUrl,
             bool isFinal,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -134,7 +134,8 @@ namespace lyric_assembler {
         bool isHidden() const;
         lyric_object::CallMode getMode() const;
 
-        const CallSymbol *virtualCall() const;
+        bool hasBaseUrl() const;
+        lyric_common::SymbolUrl getBaseUrl() const;
 
         bool isBound() const;
         bool isInline() const;

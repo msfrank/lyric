@@ -62,6 +62,11 @@ namespace lyric_runtime {
             tu_uint32 address,
             tempo_utils::Status &status);
 
+        virtual DataCell resolveSymbol(
+            const BytecodeSegment *sp,
+            tu_uint32 address,
+            tempo_utils::Status &status);
+
         virtual DataCell resolveReceiver(
             const BytecodeSegment *sp,
             tu_uint32 address,

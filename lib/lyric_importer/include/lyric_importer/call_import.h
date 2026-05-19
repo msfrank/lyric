@@ -28,7 +28,7 @@ namespace lyric_importer {
         std::weak_ptr<TypeImport> getReturnType();
 
         lyric_common::SymbolUrl getReceiverUrl();
-        lyric_common::SymbolUrl getVirtualUrl();
+        lyric_common::SymbolUrl getBaseUrl();
 
         Parameter getListParameter(tu_uint8 index);
         std::vector<Parameter>::const_iterator listParametersBegin();
@@ -57,7 +57,7 @@ namespace lyric_importer {
         struct Priv {
             lyric_common::SymbolUrl symbolUrl;
             lyric_common::SymbolUrl receiverUrl;
-            lyric_common::SymbolUrl virtualUrl;
+            lyric_common::SymbolUrl baseUrl;
             bool hasTemplate = false;
             std::weak_ptr<TemplateImport> callTemplate;
             std::weak_ptr<TypeImport> returnType;

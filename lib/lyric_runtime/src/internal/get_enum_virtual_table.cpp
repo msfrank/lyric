@@ -125,27 +125,30 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         methods.try_emplace(enumCall, callSegment, callIndex, procOffset, returnsValue);
 
-        // check for existence of a virtual call
-        tu_uint32 virtualAddress = INVALID_ADDRESS_U32;
-        switch (method.virtualCallAddressType()) {
-            case lyric_object::AddressType::Far:
-                virtualAddress = method.getFarVirtualCall().getLinkAddress();
+        // check for existence of a base symbol
+        DataCell baseSymbol;
+        switch (method.baseSymbolAddressType()) {
+            case lyric_object::AddressType::Far: {
+                auto farSymbol = method.getFarBaseSymbol();
+                baseSymbol = resolve_descriptor(enumSegment, farSymbol.getLinkageSection(),
+                    farSymbol.getLinkAddress(), segmentManagerData, status);
                 break;
-            case lyric_object::AddressType::Near:
-                virtualAddress = method.getNearVirtualCall().getDescriptorOffset();
+            }
+            case lyric_object::AddressType::Near: {
+                auto nearSymbol = method.getNearBaseSymbol();
+                baseSymbol = resolve_descriptor(enumSegment, nearSymbol.getLinkageSection(),
+                    nearSymbol.getLinkageIndex(), segmentManagerData, status);
                 break;
+            }
             default:
                 break;
         }
+        if (status.notOk())
+            return nullptr;
 
-        // if virtual call exists then add key for the virtual call as well
-        if (virtualAddress != INVALID_ADDRESS_U32) {
-            auto enumVirtual = resolve_descriptor(enumSegment,
-                lyric_object::LinkageSection::Call,
-                virtualAddress, segmentManagerData, status);
-            if (status.notOk())
-                return nullptr;
-            methods.try_emplace(enumVirtual, callSegment, callIndex, procOffset, returnsValue);
+        // if base symbol exists then add key for the base as well
+        if (baseSymbol.isValid()) {
+            methods.try_emplace(baseSymbol, callSegment, callIndex, procOffset, returnsValue);
         }
     }
 

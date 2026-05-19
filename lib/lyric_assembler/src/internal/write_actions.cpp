@@ -72,6 +72,7 @@ write_action(
     lyric_object::LinkageSection receiverSection;
     TU_ASSIGN_OR_RETURN (receiverSection, writer.getSymbolSection(receiverUrl));
     switch (receiverSection) {
+        case lyric_object::LinkageSection::Class:
         case lyric_object::LinkageSection::Concept:
             break;
         default:

@@ -243,6 +243,34 @@ lyric_object::ClassWalker::getMethod(tu_uint8 index) const
 }
 
 tu_uint8
+lyric_object::ClassWalker::numStubs() const
+{
+    if (!isValid())
+        return 0;
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return 0;
+    if (classDescriptor->stubs() == nullptr)
+        return 0;
+    return classDescriptor->stubs()->size();
+}
+
+lyric_object::ActionWalker
+lyric_object::ClassWalker::getStub(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return {};
+    if (classDescriptor->stubs() == nullptr)
+        return {};
+    if (classDescriptor->stubs()->size() <= index)
+        return {};
+    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->stubs()->Get(index)));
+}
+
+tu_uint8
 lyric_object::ClassWalker::numImpls() const
 {
     if (!isValid())

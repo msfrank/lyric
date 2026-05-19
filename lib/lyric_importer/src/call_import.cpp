@@ -56,7 +56,7 @@ bool
 lyric_importer::CallImport::isOverride()
 {
     load();
-    return m_priv->virtualUrl.isValid();
+    return m_priv->baseUrl.isValid();
 }
 
 bool
@@ -95,10 +95,10 @@ lyric_importer::CallImport::getReceiverUrl()
 }
 
 lyric_common::SymbolUrl
-lyric_importer::CallImport::getVirtualUrl()
+lyric_importer::CallImport::getBaseUrl()
 {
     load();
-    return m_priv->virtualUrl;
+    return m_priv->baseUrl;
 }
 
 lyric_importer::Parameter
@@ -254,25 +254,25 @@ lyric_importer::CallImport::load()
                         callWalker.getDescriptorOffset(), objectLocation.toString()));
         }
 
-        switch (callWalker.virtualCallAddressType()) {
+        switch (callWalker.baseSymbolAddressType()) {
             case lyric_object::AddressType::Near: {
-                auto virtualCall = callWalker.getNearVirtualCall();
-                if (!virtualCall.isValid())
+                auto baseSymbol = callWalker.getNearBaseSymbol();
+                if (!baseSymbol.isValid())
                     throw tempo_utils::StatusException(
                         ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                             "cannot import call at index {} in module {}; invalid virtual call",
                             callWalker.getDescriptorOffset(), objectLocation.toString()));
-                priv->virtualUrl = lyric_common::SymbolUrl(objectLocation, virtualCall.getSymbolPath());
+                priv->baseUrl = lyric_common::SymbolUrl(objectLocation, baseSymbol.getSymbolPath());
                 break;
             }
             case lyric_object::AddressType::Far: {
-                auto virtualCall = callWalker.getFarVirtualCall();
-                if (!virtualCall.isValid())
+                auto baseSymbol = callWalker.getFarBaseSymbol();
+                if (!baseSymbol.isValid())
                     throw tempo_utils::StatusException(
                         ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                             "cannot import call at index {} in module {}; invalid virtual call",
                             callWalker.getDescriptorOffset(), objectLocation.toString()));
-                priv->virtualUrl = virtualCall.getLinkUrl(objectLocation);
+                priv->baseUrl = baseSymbol.getLinkUrl(objectLocation);
                 break;
             }
             default:

@@ -147,6 +147,13 @@ lyric_assembler::ClassSymbol::load()
         priv->methods[it->first] = callSymbol;
     }
 
+    for (auto it = m_classImport->stubsBegin(); it != m_classImport->stubsEnd(); it++) {
+        ActionSymbol *actionSymbol;
+        TU_ASSIGN_OR_RAISE (actionSymbol, importCache->importAction(it->second));
+        TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(actionSymbol));
+        priv->stubs[it->first] = actionSymbol;
+    }
+
     auto *implCache = m_state->implCache();
     for (auto it = m_classImport->implsBegin(); it != m_classImport->implsEnd(); it++) {
         auto implImport = it->second.lock();
@@ -814,6 +821,103 @@ lyric_assembler::ClassSymbol::prepareMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
     return priv->superClass->prepareMethod(name, receiverType, callable);
+}
+
+bool
+lyric_assembler::ClassSymbol::hasStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->methods.contains(name);
+}
+
+lyric_assembler::ActionSymbol *
+lyric_assembler::ClassSymbol::getStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->stubs.find(name);
+    if (entry != priv->stubs.cend())
+        return entry->second;
+    return nullptr;
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::ClassSymbol::stubsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::ClassSymbol::stubsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cend();
+}
+
+tu_uint32
+lyric_assembler::ClassSymbol::numStubs() const
+{
+    auto *priv = getPriv();
+    return static_cast<tu_uint32>(priv->stubs.size());
+}
+
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
+lyric_assembler::ClassSymbol::declareStub(
+    const std::string &name,
+    bool isHidden,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    if (isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "can't declare stub on imported class {}", m_classUrl.toString());
+
+    auto *priv = getPriv();
+
+    auto *existingOrOverridden = find_existing_or_overridden_class_binding(this, name);
+    if (existingOrOverridden == this)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} already defined for class {}", name, m_classUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden", existingOrOverridden->getSymbolUrl().toString());
+
+    // build reference path to stub
+    auto stubPath = m_classUrl.getSymbolPath().getPath();
+    stubPath.push_back(name);
+    auto stubUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(stubPath));
+
+    TemplateHandle *methodTemplate;
+
+    // if template parameters were specified then construct a template for the stub
+    if (!templateParameters.empty()) {
+        auto *typeCache = m_state->typeCache();
+        if (priv->classTemplate != nullptr) {
+            TU_ASSIGN_OR_RETURN (methodTemplate, typeCache->makeTemplate(
+                stubUrl, priv->classTemplate, templateParameters, priv->classBlock.get()));
+        } else {
+            TU_ASSIGN_OR_RETURN (methodTemplate, typeCache->makeTemplate(
+                stubUrl, templateParameters, priv->classBlock.get()));
+        }
+    } else {
+        methodTemplate = priv->classTemplate;
+    }
+
+    // construct call symbol
+    std::unique_ptr<ActionSymbol> actionSymbol;
+    if (methodTemplate != nullptr) {
+        actionSymbol = std::make_unique<ActionSymbol>(stubUrl, m_classUrl, isHidden,
+            methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
+    } else {
+        actionSymbol = std::make_unique<ActionSymbol>(stubUrl, m_classUrl, isHidden,
+            priv->isDeclOnly, priv->classBlock.get(), m_state);
+    }
+
+    ActionSymbol *actionPtr;
+    TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->classBlock->putBinding(actionPtr));
+    priv->stubs[name] = actionPtr;
+
+    return actionPtr;
 }
 
 bool

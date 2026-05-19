@@ -134,7 +134,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     bool isHidden,
-    CallSymbol *virtualCall,
+    const lyric_common::SymbolUrl &baseUrl,
     bool isFinal,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -150,8 +150,8 @@ lyric_assembler::CallSymbol::CallSymbol(
         state)
 {
     auto *priv = getPriv();
-    priv->virtualCall = virtualCall;
-    TU_ASSERT (priv->virtualCall != nullptr);
+    priv->baseUrl = baseUrl;
+    TU_ASSERT (priv->baseUrl.isValid());
 }
 
 /**
@@ -171,7 +171,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     bool isHidden,
-    CallSymbol *virtualCall,
+    const lyric_common::SymbolUrl &baseUrl,
     bool isFinal,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
@@ -181,7 +181,7 @@ lyric_assembler::CallSymbol::CallSymbol(
         callUrl,
         receiverUrl,
         isHidden,
-        virtualCall,
+        baseUrl,
         isFinal,
         isDeclOnly,
         parentBlock,
@@ -368,9 +368,9 @@ lyric_assembler::CallSymbol::load()
         priv->isFinal = false;
     }
 
-    auto virtualUrl = m_callImport->getVirtualUrl();
-    if (virtualUrl.isValid()) {
-        TU_ASSIGN_OR_RAISE (priv->virtualCall, importCache->importCall(virtualUrl));
+    auto baseUrl = m_callImport->getBaseUrl();
+    if (baseUrl.isValid()) {
+        TU_RAISE_IF_STATUS (importCache->importSymbol(baseUrl));
     }
 
     if (m_callImport->hasCallTemplate()) {
@@ -717,11 +717,18 @@ lyric_assembler::CallSymbol::getMode() const
     return priv->mode;
 }
 
-const lyric_assembler::CallSymbol *
-lyric_assembler::CallSymbol::virtualCall() const
+bool
+lyric_assembler::CallSymbol::hasBaseUrl() const
 {
     auto *priv = getPriv();
-    return priv->virtualCall;
+    return priv->baseUrl.isValid();
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::CallSymbol::getBaseUrl() const
+{
+    auto *priv = getPriv();
+    return priv->baseUrl;
 }
 
 bool

@@ -251,6 +251,34 @@ lyric_assembler::ObjectWriter::getLinkAddress(const lyric_common::SymbolUrl &sym
 }
 
 tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getSymbolOrLinkAddress(const lyric_common::SymbolUrl &symbolUrl) const
+{
+    auto entry = m_symbolEntries.find(symbolUrl);
+    if (entry == m_symbolEntries.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+            return lyric_object::GET_DESCRIPTOR_ADDRESS(symbolEntry.index);
+        }
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
+            return lyric_object::GET_LINK_ADDRESS(symbolEntry.index);
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid symbol or link {}", symbolUrl.toString());
+    }
+}
+
+tempo_utils::Result<tu_uint32>
 lyric_assembler::ObjectWriter::getSectionAddress(
     const lyric_common::SymbolUrl &symbolUrl,
     lyric_object::LinkageSection section) const

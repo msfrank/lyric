@@ -95,7 +95,7 @@ struct CoreCall {
     const CoreTemplate *callTemplate;
     const CoreType *returnType;
     tu_uint32 receiver_symbol_index;
-    tu_uint32 virtual_call_index;
+    tu_uint32 base_symbol_index;
     lyo1::CallFlags flags;
     std::vector<lyo1::ParameterT> listParameters;
     std::vector<lyo1::ParameterT> namedParameters;

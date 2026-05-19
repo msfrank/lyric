@@ -359,7 +359,7 @@ BuilderState::addExistentialMethod(
     Call->callTemplate = ReceiverExistential->existentialTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->existentialPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -424,7 +424,7 @@ BuilderState::addFunction(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = lyric_object::INVALID_ADDRESS_U32;
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -472,7 +472,7 @@ BuilderState::addGenericFunction(
     Call->callTemplate = functionTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = lyric_object::INVALID_ADDRESS_U32;
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -733,7 +733,7 @@ BuilderState::addClassCtor(
     Call->callTemplate = ReceiverClass->classTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->classPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -826,7 +826,7 @@ BuilderState::addClassMethod(
     Call->callTemplate = ReceiverClass->classTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->classPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -933,7 +933,7 @@ BuilderState::addStructCtor(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->structPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1026,7 +1026,7 @@ BuilderState::addStructMethod(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->structPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1133,7 +1133,7 @@ BuilderState::addInstanceCtor(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->instancePath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1228,7 +1228,7 @@ BuilderState::addInstanceMethod(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->instancePath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1385,7 +1385,7 @@ BuilderState::addImplExtension(
     Call->callTemplate = receiver->receiverTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = receiver->receiver_symbol_index;
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1477,7 +1477,7 @@ BuilderState::addEnumCtor(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->enumPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1570,7 +1570,7 @@ BuilderState::addEnumMethod(
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->enumPath);
-    Call->virtual_call_index = lyric_object::INVALID_ADDRESS_U32;
+    Call->base_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1872,7 +1872,7 @@ BuilderState::toObject() const
         bytecode.insert(bytecode.cend(), Call->code.bytecodeBegin(), Call->code.bytecodeEnd());
 
         calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
-            callTemplate, Call->receiver_symbol_index, Call->virtual_call_index, bytecodeOffset,
+            callTemplate, Call->receiver_symbol_index, Call->base_symbol_index, bytecodeOffset,
             Call->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
             returnType));
     }

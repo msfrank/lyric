@@ -26,6 +26,12 @@ namespace lyric_runtime::internal {
         SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 
+    DataCell resolve_symbol(
+        const BytecodeSegment *sp,
+        tu_uint32 address,
+        SegmentManagerData *segmentManagerData,
+        tempo_utils::Status &status);
+
     std::string_view resolve_string(
         const BytecodeSegment *sp,
         tu_uint32 address,

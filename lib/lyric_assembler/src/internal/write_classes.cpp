@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/impl_handle.h>
@@ -39,6 +40,10 @@ lyric_assembler::internal::touch_class(
 
     for (auto it = classSymbol->methodsBegin(); it != classSymbol->methodsEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
+    }
+
+    for (auto it = classSymbol->stubsBegin(); it != classSymbol->stubsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchAction(it->second));
     }
 
     for (auto it = classSymbol->implsBegin(); it != classSymbol->implsEnd(); it++) {
@@ -119,8 +124,15 @@ write_class(
         methods.push_back(callIndex);
     }
 
-    // TODO: serialize array of methods
+    // serialize array of stubs
     std::vector<tu_uint32> stubs;
+    for (auto iterator = classSymbol->stubsBegin(); iterator != classSymbol->stubsEnd(); iterator++) {
+        auto *actionSymbol = iterator->second;
+        tu_uint32 actionIndex;
+        TU_ASSIGN_OR_RETURN (actionIndex,
+            writer.getSectionAddress(actionSymbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
+        stubs.push_back(actionIndex);
+    }
 
     // serialize array of impls
     std::vector<tu_uint32> impls;

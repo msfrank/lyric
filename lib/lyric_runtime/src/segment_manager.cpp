@@ -142,6 +142,15 @@ lyric_runtime::SegmentManager::resolveDescriptor(
 }
 
 lyric_runtime::DataCell
+lyric_runtime::SegmentManager::resolveSymbol(
+    const BytecodeSegment *sp,
+    tu_uint32 address,
+    tempo_utils::Status &status)
+{
+    return internal::resolve_symbol(sp, address, &m_data, status);
+}
+
+lyric_runtime::DataCell
 lyric_runtime::SegmentManager::resolveReceiver(
     const BytecodeSegment *sp,
     tu_uint32 address,

@@ -7,75 +7,6 @@
 #include <lyric_object/template_walker.h>
 #include <lyric_object/type_walker.h>
 
-lyric_object::ConceptAction::ConceptAction()
-    : m_conceptDescriptor(nullptr)
-{
-}
-
-lyric_object::ConceptAction::ConceptAction(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *conceptDescriptor,
-    tu_uint8 actionOffset)
-    : m_reader(reader),
-      m_conceptDescriptor(conceptDescriptor),
-      m_actionOffset(actionOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_conceptDescriptor != nullptr);
-}
-
-lyric_object::ConceptAction::ConceptAction(const ConceptAction &other)
-    : m_reader(other.m_reader),
-      m_conceptDescriptor(other.m_conceptDescriptor),
-      m_actionOffset(other.m_actionOffset)
-{
-}
-
-bool
-lyric_object::ConceptAction::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_conceptDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::ConceptAction::actionAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *conceptDescriptor = static_cast<const lyo1::ConceptDescriptor *>(m_conceptDescriptor);
-    if (conceptDescriptor->actions() == nullptr)
-        return AddressType::Invalid;
-    if (conceptDescriptor->actions()->size() <= m_actionOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(conceptDescriptor->actions()->Get(m_actionOffset));
-}
-
-lyric_object::ActionWalker
-lyric_object::ConceptAction::getNearAction() const
-{
-    if (!isValid())
-        return {};
-    auto *conceptDescriptor = static_cast<const lyo1::ConceptDescriptor *>(m_conceptDescriptor);
-    if (conceptDescriptor->actions() == nullptr)
-        return {};
-    if (conceptDescriptor->actions()->size() <= m_actionOffset)
-        return {};
-    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(conceptDescriptor->actions()->Get(m_actionOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::ConceptAction::getFarAction() const
-{
-    if (!isValid())
-        return {};
-    auto *conceptDescriptor = static_cast<const lyo1::ConceptDescriptor *>(m_conceptDescriptor);
-    if (conceptDescriptor->actions() == nullptr)
-        return {};
-    if (conceptDescriptor->actions()->size() <= m_actionOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(conceptDescriptor->actions()->Get(m_actionOffset)));
-}
-
 lyric_object::ConceptWalker::ConceptWalker()
     : m_conceptOffset(INVALID_ADDRESS_U32)
 {
@@ -243,7 +174,7 @@ lyric_object::ConceptWalker::numActions() const
     return conceptDescriptor->actions()->size();
 }
 
-lyric_object::ConceptAction
+lyric_object::ActionWalker
 lyric_object::ConceptWalker::getAction(tu_uint8 index) const
 {
     if (!isValid())
@@ -255,7 +186,7 @@ lyric_object::ConceptWalker::getAction(tu_uint8 index) const
         return {};
     if (conceptDescriptor->actions()->size() <= index)
         return {};
-    return ConceptAction(m_reader, (void *) conceptDescriptor, index);
+    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(conceptDescriptor->actions()->Get(index)));
 }
 
 tu_uint8

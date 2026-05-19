@@ -16,32 +16,6 @@ namespace lyric_object {
     /**
      *
      */
-    class ConceptAction {
-    public:
-        ConceptAction();
-        ConceptAction(const ConceptAction &other);
-
-        bool isValid() const;
-        AddressType actionAddressType() const;
-        ActionWalker getNearAction() const;
-        LinkWalker getFarAction() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_conceptDescriptor;
-        tu_uint8 m_actionOffset;
-
-        ConceptAction(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *conceptDescriptor,
-            tu_uint8 actionOffset);
-
-        friend class ConceptWalker;
-    };
-
-    /**
-     *
-     */
     class ConceptWalker {
     public:
         ConceptWalker();
@@ -65,7 +39,7 @@ namespace lyric_object {
         TemplateWalker getTemplate() const;
 
         tu_uint8 numActions() const;
-        ConceptAction getAction(tu_uint8 index) const;
+        ActionWalker getAction(tu_uint8 index) const;
 
         tu_uint8 numImpls() const;
         ImplWalker getImpl(tu_uint8 index) const;
