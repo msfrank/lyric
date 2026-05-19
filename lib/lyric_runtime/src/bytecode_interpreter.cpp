@@ -1147,6 +1147,46 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
+            case lyric_object::Opcode::OP_CALL_STUB: {
+                auto actionAddress = op.operands.flags_u8_address_u32_placement_u16.address;
+                auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
+                auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
+                DataCell receiver;
+                std::vector<DataCell> placement;
+
+                if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
+                    // receiver comes after arguments so we pop receiver first
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
+                    if (!receiver.isReference())
+                        return onError(op,
+                            InterpreterStatus::forCondition(
+                                InterpreterCondition::kInvalidReceiver, "invalid receiver for stub call"));
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
+                } else {
+                    // receiver comes before arguments so we pop placement first
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
+                    if (!receiver.isReference())
+                        return onError(op,
+                            InterpreterStatus::forCondition(
+                                InterpreterCondition::kInvalidReceiver, "invalid receiver for stub call"));
+                }
+
+                if (flags & lyric_object::CALL_FORWARD_REST) {
+                    CallCell *call;
+                    ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&call));
+                    for (int i = 0; i < call->numRest(); i++) {
+                        placement.push_back(call->getRest(i));
+                    }
+                }
+
+                // construct the activation call frame
+                tempo_utils::Status status;
+                if (!subroutineManager->callStub(receiver, actionAddress, placement, currentCoro, status))
+                    return onError(op, status);
+                break;
+            }
+
             case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
                 auto callAddress = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;

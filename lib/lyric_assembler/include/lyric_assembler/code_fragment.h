@@ -118,6 +118,7 @@ namespace lyric_assembler {
         // call instructions
         tempo_utils::Status callStatic(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callVirtual(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
+        tempo_utils::Status callStub(ActionSymbol *actionSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callConcept(ActionSymbol *actionSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callExistential(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
 

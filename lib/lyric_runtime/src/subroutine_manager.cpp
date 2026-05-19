@@ -291,11 +291,11 @@ lyric_runtime::SubroutineManager::callStatic(
 }
 
 /**
- * Constructs a frame for the call specified by `address` in the vtable of the specified `receiver` and
+ * Constructs a frame for the call specified by `callAddress` in the vtable of the specified `receiver` and
  * pushes it onto the call stack. The address is resolved in relation to the SP of the `currentCoro`.
  *
  * @param receiver
- * @param address
+ * @param callAddress
  * @param args
  * @param currentCoro
  * @param status
@@ -304,7 +304,7 @@ lyric_runtime::SubroutineManager::callStatic(
 bool
 lyric_runtime::SubroutineManager::callVirtual(
     const DataCell &receiver,
-    tu_uint32 address,
+    tu_uint32 callAddress,
     std::vector<DataCell> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
@@ -343,7 +343,7 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // resolve address to a call descriptor
     auto descriptor = m_segmentManager->resolveDescriptor(
-        sp, lyric_object::LinkageSection::Call, address, status);
+        sp, lyric_object::LinkageSection::Call, callAddress, status);
     if (!descriptor.isValid())
         return false;
 
@@ -351,7 +351,112 @@ lyric_runtime::SubroutineManager::callVirtual(
     const auto *method = resolver->getMethod(descriptor);
     if (method == nullptr) {
         status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "failed to call method; missing method");
+            "failed to call method; missing method {}", descriptor.toString());
+        return false;
+    }
+
+    auto *segment = method->getSegment();
+    const auto callIndex = method->getCallIndex();
+    tu_uint32 procOffset = method->getProcOffset();
+    bool returnsValue = method->returnsValue();
+
+    auto bytecode = segment->getBytecode();
+    lyric_object::ProcInfo procInfo;
+    status = lyric_object::parse_proc_info(bytecode, procOffset, procInfo);
+    if (status.notOk())
+        return false;
+
+    const BytecodeSegment *returnSP = sp;
+    const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
+    auto stackGuard = currentCoro->dataStackSize();
+
+    // process the arguments array
+    tu_uint16 numRest;
+    status = process_arguments(procInfo, args, numRest);
+    if (status.notOk())
+        return false;
+
+    // construct the activation call frame
+    CallCell frame(callIndex, segment->getSegmentIndex(), procOffset,
+        returnSP->getSegmentIndex(), returnIP, returnsValue, stackGuard,
+        procInfo.num_arguments, numRest, procInfo.num_locals, procInfo.num_lexicals, args, receiver);
+
+    // if any lexicals are present then import them
+    if (procInfo.num_lexicals > 0) {
+        status = import_lexicals_into_frame(procInfo, currentCoro, segment, frame);
+        if (status.notOk())
+            return false;
+    }
+
+    lyric_object::BytecodeIterator ip(procInfo.code);
+    currentCoro->pushCall(frame, ip, segment);               // push the activation onto the call stack
+    TU_LOG_V << "moved ip to " << ip;
+
+    return true;
+}
+
+/**
+ * Constructs a frame for the stub specified by `actionAddress` in the vtable of the specified `receiver` and
+ * pushes it onto the call stack. The address is resolved in relation to the SP of the `currentCoro`.
+ *
+ * @param receiver
+ * @param actionAddress
+ * @param args
+ * @param currentCoro
+ * @param status
+ * @return
+ */
+bool
+lyric_runtime::SubroutineManager::callStub(
+    const DataCell &receiver,
+    tu_uint32 actionAddress,
+    std::vector<DataCell> &args,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (currentCoro != nullptr);
+
+    auto *sp = currentCoro->peekSP();
+
+    // get method resolver for receiver
+    const AbstractMethodResolver *resolver;
+    switch (receiver.type) {
+        case DataCellType::BYTES:
+            resolver = receiver.data.bytes->getMethodResolver();
+            break;
+        case DataCellType::REF:
+            resolver = receiver.data.ref->getMethodResolver();
+            break;
+        case DataCellType::REST:
+            resolver = receiver.data.rest->getMethodResolver();
+            break;
+        case DataCellType::STATUS:
+            resolver = receiver.data.status->getMethodResolver();
+            break;
+        case DataCellType::STRING:
+            resolver = receiver.data.str->getMethodResolver();
+            break;
+        default:
+            resolver = nullptr;
+            break;
+    }
+    if (resolver == nullptr) {
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot resolve method; invalid receiver {}", receiver.toString());
+        return false;
+    }
+
+    // resolve address to a call descriptor
+    auto descriptor = m_segmentManager->resolveDescriptor(
+        sp, lyric_object::LinkageSection::Action, actionAddress, status);
+    if (!descriptor.isValid())
+        return false;
+
+    // resolve the descriptor to a method
+    const auto *method = resolver->getMethod(descriptor);
+    if (method == nullptr) {
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call method; missing stub {}", descriptor.toString());
         return false;
     }
 
@@ -418,6 +523,9 @@ lyric_runtime::SubroutineManager::callConcept(
             break;
         case DataCellType::REST:
             resolver = receiver.data.rest->getExtensionResolver();
+            break;
+        case DataCellType::STATUS:
+            resolver = receiver.data.status->getExtensionResolver();
             break;
         case DataCellType::STRING:
             resolver = receiver.data.str->getExtensionResolver();

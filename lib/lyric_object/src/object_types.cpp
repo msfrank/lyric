@@ -63,6 +63,7 @@ static const char *OP_JUMP_name                = "OP_JUMP";
 static const char *OP_IMPORT_name              = "OP_IMPORT";
 static const char *OP_CALL_STATIC_name         = "OP_CALL_STATIC";
 static const char *OP_CALL_VIRTUAL_name        = "OP_CALL_VIRTUAL";
+static const char *OP_CALL_STUB_name           = "OP_CALL_STUB";
 static const char *OP_CALL_CONCEPT_name        = "OP_CALL_CONCEPT";
 static const char *OP_CALL_EXISTENTIAL_name    = "OP_CALL_EXISTENTIAL";
 static const char *OP_TRAP_name                = "OP_TRAP";
@@ -197,6 +198,8 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_CALL_STATIC_name;
         case Opcode::OP_CALL_VIRTUAL:
             return OP_CALL_VIRTUAL_name;
+        case Opcode::OP_CALL_STUB:
+            return OP_CALL_STUB_name;
         case Opcode::OP_CALL_CONCEPT:
             return OP_CALL_CONCEPT_name;
         case Opcode::OP_CALL_EXISTENTIAL:

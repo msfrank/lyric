@@ -159,12 +159,12 @@ lyric_compiler::DefClassHandler::before(
         m_defclass.members[fieldNode] = member;
     }
 
-    // declare abstract methods
+    // declare stubs
     for (auto &declNode : declNodes) {
-        Method method;
-        TU_ASSIGN_OR_RETURN (method, declare_class_abstract_method(
+        Stub stub;
+        TU_ASSIGN_OR_RETURN (stub, declare_class_stub(
             declNode, m_defclass.classSymbol, typeSystem));
-        m_defclass.methods[declNode] = method;
+        m_defclass.stubs[declNode] = stub;
     }
 
     // declare methods
@@ -261,8 +261,8 @@ lyric_compiler::ClassDefinition::decide(
             return {};
         }
         case lyric_schema::LyricAstId::Decl: {
-            auto method = m_defclass->methods.at(node);
-            auto handler = std::make_unique<AbstractMethodHandler>(method, block, driver);
+            auto stub = m_defclass->stubs.at(node);
+            auto handler = std::make_unique<StubHandler>(stub, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

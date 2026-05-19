@@ -59,34 +59,3 @@ lyric_compiler::MethodHandler::after(
 
     return {};
 }
-
-lyric_compiler::AbstractMethodHandler::AbstractMethodHandler(
-    Method method,
-    lyric_assembler::BlockHandle *block,
-    CompilerScanDriver *driver)
-    : BaseGrouping(block, driver),
-      m_method(method)
-{
-    TU_ASSERT (m_method.callSymbol != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::AbstractMethodHandler::before(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    BeforeContext &ctx)
-{
-    TU_LOG_VV << "before AbstractMethodHandler@" << this;
-    ctx.setSkipChildren(true);
-    return {};
-}
-
-tempo_utils::Status
-lyric_compiler::AbstractMethodHandler::after(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    AfterContext &ctx)
-{
-    TU_LOG_VV << "after AbstractMethodHandler@" << this;
-    return {};
-}

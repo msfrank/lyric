@@ -45,7 +45,7 @@ lyric_analyzer::ClassAnalyzerContext::enter(
         case lyric_schema::LyricAstId::Def:
             return declareMethod(node);
         case lyric_schema::LyricAstId::Decl:
-            return declareAbstract(node);
+            return declareStub(node);
         case lyric_schema::LyricAstId::Impl:
             return declareImpl(node);
         default:
@@ -214,7 +214,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::declareAbstract(const lyric_parser::ArchetypeNode *node)
+lyric_analyzer::ClassAnalyzerContext::declareStub(const lyric_parser::ArchetypeNode *node)
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
@@ -235,11 +235,10 @@ lyric_analyzer::ClassAnalyzerContext::declareAbstract(const lyric_parser::Archet
         TU_ASSIGN_OR_RETURN (spec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
-    lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
-        identifier, isHidden, lyric_assembler::DispatchType::Abstract, spec.templateParameters));
+    lyric_assembler::ActionSymbol *actionSymbol;
+    TU_ASSIGN_OR_RETURN (actionSymbol, m_classSymbol->declareStub(identifier, isHidden, spec.templateParameters));
 
-    auto *resolver = callSymbol->callResolver();
+    auto *resolver = actionSymbol->actionResolver();
 
     // determine the return type
     lyric_common::TypeDef returnType;
@@ -259,9 +258,9 @@ lyric_analyzer::ClassAnalyzerContext::declareAbstract(const lyric_parser::Archet
     TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
 
     // define the action
-    TU_RETURN_IF_NOT_OK (callSymbol->defineAbstract(parameterPack, returnType));
+    TU_RETURN_IF_NOT_OK (actionSymbol->defineAction(parameterPack, returnType));
 
-    TU_LOG_V << "declared abstract method " << callSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared stub " << actionSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
 
     return {};
 }

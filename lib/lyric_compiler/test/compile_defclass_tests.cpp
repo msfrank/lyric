@@ -273,6 +273,25 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
+TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseStub)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            decl Index(): Int
+        }
+        defclass Bar from Foo {
+            init() {}
+            def Index(): Int {
+                2
+            }
+        }
+        val foo: Foo = Bar{}
+        foo.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+}
+
 TEST_F(CompileDefclass, EvaluateDefGenericClass)
 {
     auto result = m_tester->runModule(R"(

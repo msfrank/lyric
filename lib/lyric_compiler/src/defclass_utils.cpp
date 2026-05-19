@@ -265,8 +265,8 @@ lyric_compiler::declare_class_method(
     return method;
 }
 
-tempo_utils::Result<lyric_compiler::Method>
-lyric_compiler::declare_class_abstract_method(
+tempo_utils::Result<lyric_compiler::Stub>
+lyric_compiler::declare_class_stub(
     const lyric_parser::ArchetypeNode *node,
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_typing::TypeSystem *typeSystem)
@@ -302,30 +302,16 @@ lyric_compiler::declare_class_abstract_method(
         TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(classBlock, genericNode->getArchetypeNode()));
     }
 
-    Method method;
-    method.dispatch = lyric_assembler::DispatchType::Abstract;
-    method.procHandle = nullptr;
+    Stub stub;
+    stub.actionSymbol = nullptr;
 
-    // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
-        identifier, isHidden, lyric_assembler::DispatchType::Abstract, templateSpec.templateParameters));
+    // declare the stub
+    TU_ASSIGN_OR_RETURN (stub.actionSymbol,
+        classSymbol->declareStub(identifier, isHidden, templateSpec.templateParameters));
 
-    TU_LOG_V << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared stub " << identifier << " for " << classSymbol->getSymbolUrl();
 
-    auto *resolver = method.callSymbol->callResolver();
-
-    // resolve the parameter pack
-    lyric_assembler::ParameterPack parameterPack;
-    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
-
-    // resolve the return type
-    lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
-
-    // define the method
-    TU_RETURN_IF_NOT_OK (method.callSymbol->defineAbstract(parameterPack, returnType));
-
-    return method;
+    return stub;
 }
 
 tempo_utils::Result<lyric_compiler::Impl>

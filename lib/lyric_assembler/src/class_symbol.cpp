@@ -12,6 +12,7 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/static_symbol.h>
+#include <lyric_assembler/stub_callable.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
@@ -720,23 +721,31 @@ lyric_assembler::ClassSymbol::declareMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "{} already defined for class {}", name, m_classUrl.toString());
 
-    // determine the virtual call if it exists
-    CallSymbol *virtualCall = nullptr;
+    // determine the base symbol if it exists
+    lyric_common::SymbolUrl baseUrl;
     if (existingOrOverridden != nullptr) {
-        if (existingOrOverridden->getSymbolType() != SymbolType::CALL)
-            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                "{} cannot be overridden by class {}",
-                existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
-        virtualCall = cast_symbol_to_call(existingOrOverridden);
-
-        if (virtualCall->isFinal())
-            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                "final method {} cannot be overridden by class {}",
-                existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
-        if (dispatch == DispatchType::Abstract)
-            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                "{} cannot be overridden by abstract method",
-                existingOrOverridden->getSymbolUrl().toString());
+        switch (existingOrOverridden->getSymbolType()) {
+            case SymbolType::ACTION:
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            case SymbolType::CALL: {
+                auto *baseCall = cast_symbol_to_call(existingOrOverridden);
+                if (baseCall->isFinal())
+                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                        "final method {} cannot be overridden by class {}",
+                        existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+                if (dispatch == DispatchType::Abstract)
+                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                        "{} cannot be overridden by abstract method",
+                        existingOrOverridden->getSymbolUrl().toString());
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                    "{} cannot be overridden by class {}",
+                    existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+        }
     }
 
     // build reference path to function
@@ -763,22 +772,20 @@ lyric_assembler::ClassSymbol::declareMethod(
     // construct call symbol
     std::unique_ptr<CallSymbol> callSymbol;
     if (methodTemplate != nullptr) {
-        if (virtualCall != nullptr) {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
-                virtualCall, isFinal, methodTemplate, priv->isDeclOnly,
-                priv->classBlock.get(), m_state);
+        if (baseUrl.isValid()) {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, baseUrl, isFinal,
+                methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
         } else {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
-                callMode, isFinal, methodTemplate, priv->isDeclOnly,
-                priv->classBlock.get(), m_state);
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode, isFinal,
+                methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
         }
     } else {
-        if (virtualCall != nullptr) {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, virtualCall,
-                isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        if (baseUrl.isValid()) {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, baseUrl, isFinal,
+                priv->isDeclOnly, priv->classBlock.get(), m_state);
         } else {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode,
-                isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode, isFinal,
+                priv->isDeclOnly, priv->classBlock.get(), m_state);
         }
     }
 
@@ -799,9 +806,9 @@ lyric_assembler::ClassSymbol::prepareMethod(
 {
     auto *priv = getPriv();
 
-    auto entry = priv->methods.find(name);
-    if (entry != priv->methods.cend()) {
-        auto *callSymbol = entry->second;
+    auto method = priv->methods.find(name);
+    if (method != priv->methods.cend()) {
+        auto *callSymbol = method->second;
 
         if (callSymbol->isHidden()) {
             if (!thisReceiver)
@@ -813,7 +820,39 @@ lyric_assembler::ClassSymbol::prepareMethod(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-        callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+        if (!callSymbol->hasBaseUrl()) {
+            callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+            return {};
+        }
+
+        auto *symbolCache = m_state->symbolCache();
+
+        AbstractSymbol *baseSymbol;
+        TU_ASSIGN_OR_RETURN (baseSymbol, symbolCache->getOrImportSymbol(callSymbol->getBaseUrl()));
+        switch (baseSymbol->getSymbolType()) {
+            case SymbolType::ACTION:
+                callable = std::make_unique<StubCallable>(cast_symbol_to_action(baseSymbol));
+                return {};
+            case SymbolType::CALL:
+                callable = std::make_unique<MethodCallable>(cast_symbol_to_call(baseSymbol));
+                return {};
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                    "invalid base symbol {}", baseSymbol->getSymbolUrl().toString());
+        }
+    }
+
+    auto stub = priv->stubs.find(name);
+    if (stub != priv->stubs.cend()) {
+        auto *actionSymbol = stub->second;
+
+        if (actionSymbol->isHidden()) {
+            if (!thisReceiver)
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "cannot access hidden method {} on {}", name, m_classUrl.toString());
+        }
+
+        callable = std::make_unique<StubCallable>(actionSymbol);
         return {};
     }
 

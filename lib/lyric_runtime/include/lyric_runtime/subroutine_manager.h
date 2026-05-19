@@ -34,7 +34,14 @@ namespace lyric_runtime {
 
         bool callVirtual(
             const DataCell &receiver,
-            tu_uint32 address,
+            tu_uint32 callAddress,
+            std::vector<DataCell> &args,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+
+        bool callStub(
+            const DataCell &receiver,
+            tu_uint32 actionAddress,
             std::vector<DataCell> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);

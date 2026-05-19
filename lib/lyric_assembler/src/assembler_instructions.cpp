@@ -1382,15 +1382,21 @@ lyric_assembler::CallInstruction::apply(
 
     switch (m_opcode) {
         case lyric_object::Opcode::OP_CALL_VIRTUAL: {
+            if (m_symbol->getSymbolType() != SymbolType::CALL)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid opcode");
             auto *callSymbol = cast_symbol_to_call(m_symbol);
-            auto *virtualCall = callSymbol->virtualCall();
-            if (virtualCall != nullptr) {
-                TU_ASSIGN_OR_RETURN (address,
-                    writer.getSectionAddress(virtualCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
-            } else {
-                TU_ASSIGN_OR_RETURN (address,
-                    writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
-            }
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSectionAddress(callSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
+            break;
+        }
+        case lyric_object::Opcode::OP_CALL_STUB: {
+            if (m_symbol->getSymbolType() != SymbolType::ACTION)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+            auto *actionSymbol = cast_symbol_to_action(m_symbol);
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSectionAddress(actionSymbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
             break;
         }
         case lyric_object::Opcode::OP_CALL_EXISTENTIAL:

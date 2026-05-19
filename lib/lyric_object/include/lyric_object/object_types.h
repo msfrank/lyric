@@ -327,6 +327,7 @@ namespace lyric_object {
         // procedure invocation
         OP_CALL_STATIC,
         OP_CALL_VIRTUAL,
+        OP_CALL_STUB,
         OP_CALL_CONCEPT,
         OP_CALL_EXISTENTIAL,
         OP_TRAP,

@@ -807,6 +807,18 @@ lyric_assembler::CodeFragment::callVirtual(CallSymbol *callSymbol, tu_uint16 pla
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::callStub(ActionSymbol *actionSymbol, tu_uint16 placement, tu_uint8 flags)
+{
+    TU_ASSERT (actionSymbol != nullptr);
+
+    Statement statement;
+    statement.instruction = std::make_shared<CallInstruction>(
+        lyric_object::Opcode::OP_CALL_STUB, actionSymbol, placement, flags);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::callConcept(ActionSymbol *actionSymbol, tu_uint16 placement, tu_uint8 flags)
 {
     TU_ASSERT (actionSymbol != nullptr);

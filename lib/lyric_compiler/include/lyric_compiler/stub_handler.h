@@ -1,25 +1,21 @@
-#ifndef LYRIC_COMPILER_METHOD_HANDLER_H
-#define LYRIC_COMPILER_METHOD_HANDLER_H
+#ifndef LYRIC_COMPILER_STUB_HANDLER_H
+#define LYRIC_COMPILER_STUB_HANDLER_H
 
-#include <lyric_assembler/call_symbol.h>
-#include <lyric_typing/callsite_reifier.h>
+#include <lyric_assembler/action_symbol.h>
 
 #include "base_grouping.h"
-#include "base_invokable_handler.h"
 #include "compiler_scan_driver.h"
 
 namespace lyric_compiler {
 
-    struct Method {
-        lyric_assembler::DispatchType dispatch = lyric_assembler::DispatchType::Virtual;
-        lyric_assembler::CallSymbol *callSymbol = nullptr;
-        lyric_assembler::ProcHandle *procHandle = nullptr;
+    struct Stub {
+        lyric_assembler::ActionSymbol *actionSymbol = nullptr;
     };
 
-    class MethodHandler : public BaseGrouping {
+    class StubHandler : public BaseGrouping {
     public:
-        MethodHandler(
-            Method method,
+        StubHandler(
+            Stub stub,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -34,8 +30,8 @@ namespace lyric_compiler {
             AfterContext &ctx) override;
 
     private:
-        Method m_method;
+        Stub m_stub;
     };
 }
 
-#endif // LYRIC_COMPILER_METHOD_HANDLER_H
+#endif // LYRIC_COMPILER_STUB_HANDLER_H

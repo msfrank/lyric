@@ -640,7 +640,7 @@ lyric_object::BytecodeBuilder::callVirtual(
     if (!status.isOk())
         return status;
 
-    // write virtual offset
+    // write call address
     status = writeU32(address);
     if (!status.isOk())
         return status;

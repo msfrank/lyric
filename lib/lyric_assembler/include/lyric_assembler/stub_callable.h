@@ -1,5 +1,5 @@
-#ifndef LYRIC_ASSEMBLER_METHOD_CALLABLE_H
-#define LYRIC_ASSEMBLER_METHOD_CALLABLE_H
+#ifndef LYRIC_ASSEMBLER_STUB_CALLABLE_H
+#define LYRIC_ASSEMBLER_STUB_CALLABLE_H
 
 #include <lyric_common/symbol_url.h>
 
@@ -12,19 +12,12 @@ namespace lyric_assembler {
 
     // forward declarations
     class BlockHandle;
-    class CallSymbol;
+    class ActionSymbol;
 
-    class MethodCallable : public AbstractCallable {
-
-        enum class InvokeType {
-            INVALID,
-            INLINE,
-            METHOD,
-        };
-
+    class StubCallable : public AbstractCallable {
     public:
-        MethodCallable();
-        explicit MethodCallable(CallSymbol *callSymbol, bool isInlined = false);
+        StubCallable();
+        explicit StubCallable(ActionSymbol *actionSymbol);
 
         bool isValid() const;
 
@@ -55,8 +48,7 @@ namespace lyric_assembler {
             tu_uint8 flags) override;
 
     private:
-        InvokeType m_type;
-        CallSymbol *m_callSymbol;
+        ActionSymbol *m_actionSymbol;
 
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;
@@ -67,4 +59,4 @@ namespace lyric_assembler {
     };
 }
 
-#endif // LYRIC_ASSEMBLER_METHOD_CALLABLE_H
+#endif // LYRIC_ASSEMBLER_STUB_CALLABLE_H

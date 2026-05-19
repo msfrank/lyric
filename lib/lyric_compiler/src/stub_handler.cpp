@@ -1,28 +1,26 @@
 
-#include <lyric_compiler/action_handler.h>
-#include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/pack_handler.h>
-#include <lyric_compiler/proc_handler.h>
-#include <lyric_parser/ast_attrs.h>
+#include <lyric_compiler/stub_handler.h>
 
-lyric_compiler::ActionHandler::ActionHandler(
-    Action action,
+#include "lyric_parser/ast_attrs.h"
+
+lyric_compiler::StubHandler::StubHandler(
+    Stub stub,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_action(action)
+      m_stub(stub)
 {
-    TU_ASSERT (m_action.actionSymbol != nullptr);
+    TU_ASSERT (m_stub.actionSymbol != nullptr);
 }
 
 tempo_utils::Status
-lyric_compiler::ActionHandler::before(
+lyric_compiler::StubHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_VV << "before ActionHandler@" << this;
+    TU_LOG_VV << "before StubHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -34,18 +32,18 @@ lyric_compiler::ActionHandler::before(
 }
 
 tempo_utils::Status
-lyric_compiler::ActionHandler::after(
+lyric_compiler::StubHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_VV << "after ActionHandler@" << this;
+    TU_LOG_VV << "after StubHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
 
-    auto *resolver = m_action.actionSymbol->actionResolver();
+    auto *resolver = m_stub.actionSymbol->actionResolver();
     auto *packNode = node->getChild(0);
 
     // parse the parameter pack
@@ -67,7 +65,7 @@ lyric_compiler::ActionHandler::after(
     TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
 
     // define the action
-    TU_RETURN_IF_NOT_OK (m_action.actionSymbol->defineAction(parameterPack, returnType));
+    TU_RETURN_IF_NOT_OK (m_stub.actionSymbol->defineAction(parameterPack, returnType));
 
     return {};
 }

@@ -13,7 +13,7 @@ lyric_assembler::MethodCallable::MethodCallable()
 }
 
 lyric_assembler::MethodCallable::MethodCallable(CallSymbol *callSymbol, bool isInlined)
-    : m_type(isInlined? InvokeType::INLINE : InvokeType::VIRTUAL),
+    : m_type(isInlined? InvokeType::INLINE : InvokeType::METHOD),
       m_callSymbol(callSymbol)
 {
     TU_ASSERT (m_callSymbol != nullptr);
@@ -30,7 +30,7 @@ lyric_assembler::MethodCallable::checkValid() const
 {
     if (!isValid())
         throw tempo_utils::StatusException(
-            AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant, "invalid method invoker"));
+            AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant, "invalid method callable"));
 }
 
 lyric_assembler::TemplateHandle *
@@ -110,7 +110,7 @@ lyric_assembler::MethodCallable::invoke(
             break;
         }
 
-        case InvokeType::VIRTUAL: {
+        case InvokeType::METHOD: {
             TU_RETURN_IF_NOT_OK (fragment->callVirtual(m_callSymbol, placementSize, 0));
             break;
         }

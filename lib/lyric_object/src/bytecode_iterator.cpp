@@ -67,6 +67,7 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_IMPORT,              lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_CALL_STATIC,         lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_CALL_VIRTUAL,        lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
+    { lyric_object::Opcode::OP_CALL_STUB,           lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_CALL_CONCEPT,        lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_CALL_EXISTENTIAL,    lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_TRAP,                lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32 },

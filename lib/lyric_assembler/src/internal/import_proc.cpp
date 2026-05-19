@@ -398,10 +398,6 @@ apply_call(const lyric_object::OpCell &op, ImportProcData &data)
 static tempo_utils::Status
 apply_action(const lyric_object::OpCell &op, ImportProcData &data)
 {
-    if (op.opcode != lyric_object::Opcode::OP_CALL_CONCEPT)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
-
     const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
     auto action = data.object.getAction(operands.address);
 
@@ -411,7 +407,15 @@ apply_action(const lyric_object::OpCell &op, ImportProcData &data)
     lyric_assembler::ActionSymbol *actionSymbol;
     TU_ASSIGN_OR_RETURN (actionSymbol, importCache->importAction(actionUrl));
 
-    return data.fragment->callConcept(actionSymbol, operands.placement, operands.flags);
+    switch (op.opcode) {
+        case lyric_object::Opcode::OP_CALL_CONCEPT:
+            return data.fragment->callConcept(actionSymbol, operands.placement, operands.flags);
+        case lyric_object::Opcode::OP_CALL_STUB:
+            return data.fragment->callStub(actionSymbol, operands.placement, operands.flags);
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
 }
 
 static tempo_utils::Status
@@ -631,6 +635,7 @@ lyric_assembler::internal::import_proc(
                 break;
 
             case lyric_object::Opcode::OP_CALL_CONCEPT:
+            case lyric_object::Opcode::OP_CALL_STUB:
                 TU_RETURN_IF_NOT_OK (apply_action(op, data));
                 break;
 

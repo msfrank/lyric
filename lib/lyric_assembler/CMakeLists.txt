@@ -63,6 +63,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/protocol_symbol.h
     include/lyric_assembler/static_symbol.h
     include/lyric_assembler/struct_symbol.h
+    include/lyric_assembler/stub_callable.h
     include/lyric_assembler/symbol_cache.h
     include/lyric_assembler/synthetic_symbol.h
     include/lyric_assembler/template_handle.h
@@ -122,6 +123,7 @@ target_sources(lyric_assembler PRIVATE
     src/protocol_symbol.cpp
     src/static_symbol.cpp
     src/struct_symbol.cpp
+    src/stub_callable.cpp
     src/symbol_cache.cpp
     src/synthetic_symbol.cpp
     src/template_handle.cpp

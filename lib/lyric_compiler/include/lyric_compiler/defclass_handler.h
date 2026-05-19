@@ -8,12 +8,12 @@
 
 #include "base_choice.h"
 #include "base_grouping.h"
-#include "compiler_scan_driver.h"
 #include "constructor_handler.h"
 #include "global_handler.h"
 #include "impl_handler.h"
 #include "member_handler.h"
 #include "method_handler.h"
+#include "stub_handler.h"
 
 namespace lyric_compiler {
 
@@ -26,6 +26,7 @@ namespace lyric_compiler {
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;
+        absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Stub> stubs;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;
     };
 
