@@ -373,6 +373,7 @@ table StructDescriptor {
     flags: StructFlags;                         // bitfield containing struct flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
+    stubs: [uint32];                            // array of stubs in the actions section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
@@ -399,6 +400,7 @@ table InstanceDescriptor {
     flags: InstanceFlags;                       // bitfield containing instance flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
+    stubs: [uint32];                            // array of stubs in the actions section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     initializer_call: uint32 = 0xffffffff;      // offset of the instance initializer in the calls section
@@ -426,6 +428,7 @@ table EnumDescriptor {
     flags: EnumFlags;                           // bitfield containing enum flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
+    stubs: [uint32];                            // array of stubs in the actions section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     initializer_call: uint32 = 0xffffffff;      // offset of the enum initializer in the calls section

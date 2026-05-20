@@ -32,6 +32,11 @@ namespace lyric_importer {
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator methodsEnd();
         tu_uint8 numMethods();
 
+        lyric_common::SymbolUrl getStub(std::string_view name);
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator stubsBegin();
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator stubsEnd();
+        tu_uint8 numStubs();
+
         absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>>::const_iterator implsBegin();
         absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>>::const_iterator implsEnd();
         tu_uint8 numImpls();
@@ -57,6 +62,7 @@ namespace lyric_importer {
             lyric_common::SymbolUrl superEnum;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
+            absl::flat_hash_map<std::string,lyric_common::SymbolUrl> stubs;
             absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
             absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
             std::string allocator;

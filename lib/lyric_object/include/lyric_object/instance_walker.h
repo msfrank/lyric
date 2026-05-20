@@ -6,6 +6,7 @@
 namespace lyric_object {
 
     // forward declarations
+    class ActionWalker;
     class CallWalker;
     class ExtensionWalker;
     class FieldWalker;
@@ -47,6 +48,9 @@ namespace lyric_object {
 
         tu_uint8 numMethods() const;
         CallWalker getMethod(tu_uint8 index) const;
+
+        tu_uint8 numStubs() const;
+        ActionWalker getStub(tu_uint8 index) const;
 
         tu_uint8 numImpls() const;
         ImplWalker getImpl(tu_uint8 index) const;

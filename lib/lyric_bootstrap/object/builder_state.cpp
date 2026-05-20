@@ -1909,6 +1909,7 @@ BuilderState::toObject() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Struct->structPath.toString());
         auto fb_members = build_fields_vector(buffer, Struct->members);
         auto fb_methods = build_calls_vector(buffer, Struct->methods);
+        auto fb_stubs = build_actions_vector(buffer, Struct->stubs);
         auto fb_impls = build_impls_vector(buffer, Struct->impls);
         auto fb_sealedSubtypes = buffer.CreateVector(Struct->sealedSubtypes);
 
@@ -1917,7 +1918,7 @@ BuilderState::toObject() const
 
         structs_vector.push_back(lyo1::CreateStructDescriptor(buffer,
             fb_fullyQualifiedName, superStruct, Struct->structType->type_index, Struct->flags,
-            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_stubs, fb_impls, Struct->allocatorTrap, fb_sealedSubtypes));
     }
 
     // write the concept descriptors
@@ -1950,6 +1951,7 @@ BuilderState::toObject() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Instance->instancePath.toString());
         auto fb_members = build_fields_vector(buffer, Instance->members);
         auto fb_methods = build_calls_vector(buffer, Instance->methods);
+        auto fb_stubs = build_actions_vector(buffer, Instance->stubs);
         auto fb_impls = build_impls_vector(buffer, Instance->impls);
         auto fb_sealedSubtypes = buffer.CreateVector(Instance->sealedSubtypes);
 
@@ -1959,7 +1961,7 @@ BuilderState::toObject() const
 
         instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer,
             fb_fullyQualifiedName, superInstance, Instance->instanceType->type_index, lyo1::InstanceFlags::NONE,
-            fb_members, fb_methods, fb_impls, Instance->allocatorTrap, instanceCtor, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_stubs, fb_impls, Instance->allocatorTrap, instanceCtor, fb_sealedSubtypes));
     }
 
     // write the enum descriptors
@@ -1967,6 +1969,7 @@ BuilderState::toObject() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Enum->enumPath.toString());
         auto fb_members = build_fields_vector(buffer, Enum->members);
         auto fb_methods = build_calls_vector(buffer, Enum->methods);
+        auto fb_stubs = build_actions_vector(buffer, Enum->stubs);
         auto fb_impls = build_impls_vector(buffer, Enum->impls);
         auto fb_sealedSubtypes = buffer.CreateVector(Enum->sealedSubtypes);
 
@@ -1976,7 +1979,7 @@ BuilderState::toObject() const
 
         enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer,
             fb_fullyQualifiedName, superEnum, Enum->enumType->type_index, lyo1::EnumFlags::NONE,
-            fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_stubs, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
     }
 
     // write the protocol descriptors

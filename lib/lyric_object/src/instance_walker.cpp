@@ -1,4 +1,5 @@
 
+#include <lyric_object/action_walker.h>
 #include <lyric_object/call_walker.h>
 #include <lyric_object/extension_walker.h>
 #include <lyric_object/field_walker.h>
@@ -229,6 +230,34 @@ lyric_object::InstanceWalker::getMethod(tu_uint8 index) const
     if (instanceDescriptor->methods()->size() <= index)
         return {};
     return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(instanceDescriptor->methods()->Get(index)));
+}
+
+tu_uint8
+lyric_object::InstanceWalker::numStubs() const
+{
+    if (!isValid())
+        return 0;
+    auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
+    if (instanceDescriptor == nullptr)
+        return 0;
+    if (instanceDescriptor->stubs() == nullptr)
+        return 0;
+    return instanceDescriptor->stubs()->size();
+}
+
+lyric_object::ActionWalker
+lyric_object::InstanceWalker::getStub(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
+    if (instanceDescriptor == nullptr)
+        return {};
+    if (instanceDescriptor->stubs() == nullptr)
+        return {};
+    if (instanceDescriptor->stubs()->size() <= index)
+        return {};
+    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(instanceDescriptor->stubs()->Get(index)));
 }
 
 tu_uint8

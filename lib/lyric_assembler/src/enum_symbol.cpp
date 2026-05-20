@@ -1,7 +1,5 @@
 
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
-
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/ctor_constructable.h>
@@ -16,6 +14,8 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/enum_import.h>
+
+#include "lyric_assembler/stub_callable.h"
 
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
@@ -104,6 +104,19 @@ lyric_assembler::EnumSymbol::load()
         TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(callSymbol));
         priv->methods[it->first] = callSymbol;
     }
+
+    for (auto it = m_enumImport->stubsBegin(); it != m_enumImport->stubsEnd(); it++) {
+        ActionSymbol *actionSymbol;
+        TU_ASSIGN_OR_RAISE (actionSymbol, importCache->importAction(it->second));
+        TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(actionSymbol));
+        priv->stubs[it->first] = actionSymbol;
+    }
+
+    if (!priv->stubs.empty() && !priv->isAbstract)
+        throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
+            "cannot import enum {}; enum has stubs but is not declared abstract",
+            m_enumUrl.toString()));
 
     auto *implCache = m_state->implCache();
     for (auto it = m_enumImport->implsBegin(); it != m_enumImport->implsEnd(); it++) {
@@ -355,6 +368,34 @@ lyric_assembler::EnumSymbol::numMembers() const
     return priv->members.size();
 }
 
+static lyric_assembler::AbstractSymbol *
+find_existing_or_overridden_enum_binding(
+    lyric_assembler::EnumSymbol *enumSymbol,
+    const std::string &name)
+{
+    // if enum contains the named binding then return the EnumSymbol pointer
+    auto *block = enumSymbol->enumBlock();
+    if (block->hasBinding(name))
+        return enumSymbol;
+
+    // otherwise if a superenum contains the named binding then return pointer to the binding symbol
+    for (auto *currEnum = enumSymbol->superEnum(); currEnum != nullptr; currEnum = currEnum->superEnum()) {
+        block = currEnum->enumBlock();
+        if (!block->hasBinding(name))
+            continue;
+
+        auto binding = block->getBinding(name);
+        if (binding.bindingType == lyric_assembler::BindingType::Descriptor) {
+            auto *state = block->blockState();
+            auto *symbolCache = state->symbolCache();
+            return symbolCache->getSymbolOrNull(binding.symbolUrl);
+        }
+    }
+
+    // otherwise no binding exists in any superenum
+    return nullptr;
+}
+
 tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::EnumSymbol::declareMember(
     const std::string &name,
@@ -368,9 +409,14 @@ lyric_assembler::EnumSymbol::declareMember(
 
     auto *priv = getPriv();
 
-    if (priv->members.contains(name))
+    auto *existingOrOverridden = find_existing_or_overridden_enum_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "member {} already defined for enum {}", name, m_enumUrl.toString());
+            "'{}' is already defined for enum {}", name, m_enumUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden by enum {}",
+            existingOrOverridden->getSymbolUrl().toString(), m_enumUrl.toString());
 
     TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
@@ -586,9 +632,33 @@ lyric_assembler::EnumSymbol::declareMethod(
 
     auto *priv = getPriv();
 
-    if (priv->methods.contains(name))
+    auto *existingOrOverridden = find_existing_or_overridden_enum_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "method {} already defined for enum {}", name, m_enumUrl.toString());
+            "{} already defined for enum {}", name, m_enumUrl.toString());
+
+    // determine the base symbol if it exists
+    lyric_common::SymbolUrl baseUrl;
+    if (existingOrOverridden != nullptr) {
+        switch (existingOrOverridden->getSymbolType()) {
+            case SymbolType::ACTION:
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            case SymbolType::CALL: {
+                auto *baseCall = cast_symbol_to_call(existingOrOverridden);
+                if (baseCall->isFinal())
+                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                        "final method {} cannot be overridden by enum {}",
+                        existingOrOverridden->getSymbolUrl().toString(), m_enumUrl.toString());
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                    "{} cannot be overridden by enum {}",
+                    existingOrOverridden->getSymbolUrl().toString(), m_enumUrl.toString());
+        }
+    }
 
     // build reference path to function
     auto methodPath = m_enumUrl.getSymbolPath().getPath();
@@ -596,8 +666,15 @@ lyric_assembler::EnumSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, isHidden,
-        lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    std::unique_ptr<CallSymbol> callSymbol;
+    if (baseUrl.isValid()) {
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, isHidden, baseUrl, isFinal,
+            priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    } else {
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, isHidden,
+            lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->enumBlock.get(),
+            m_state);
+    }
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
@@ -616,9 +693,9 @@ lyric_assembler::EnumSymbol::prepareMethod(
 {
     auto *priv = getPriv();
 
-    auto entry = priv->methods.find(name);
-    if (entry != priv->methods.cend()) {
-        auto *callSymbol = entry->second;
+    auto method = priv->methods.find(name);
+    if (method != priv->methods.cend()) {
+        auto *callSymbol = method->second;
 
         if (callSymbol->isHidden()) {
             if (!thisReceiver)
@@ -630,7 +707,39 @@ lyric_assembler::EnumSymbol::prepareMethod(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-        callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+        if (!callSymbol->hasBaseUrl()) {
+            callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+            return {};
+        }
+
+        auto *symbolCache = m_state->symbolCache();
+
+        AbstractSymbol *baseSymbol;
+        TU_ASSIGN_OR_RETURN (baseSymbol, symbolCache->getOrImportSymbol(callSymbol->getBaseUrl()));
+        switch (baseSymbol->getSymbolType()) {
+            case SymbolType::ACTION:
+                callable = std::make_unique<StubCallable>(cast_symbol_to_action(baseSymbol));
+                return {};
+            case SymbolType::CALL:
+                callable = std::make_unique<MethodCallable>(cast_symbol_to_call(baseSymbol));
+                return {};
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                    "invalid base symbol {}", baseSymbol->getSymbolUrl().toString());
+        }
+    }
+
+    auto stub = priv->stubs.find(name);
+    if (stub != priv->stubs.cend()) {
+        auto *actionSymbol = stub->second;
+
+        if (actionSymbol->isHidden()) {
+            if (!thisReceiver)
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "cannot access hidden method {} on {}", name, m_enumUrl.toString());
+        }
+
+        callable = std::make_unique<StubCallable>(actionSymbol);
         return {};
     }
 
@@ -638,6 +747,80 @@ lyric_assembler::EnumSymbol::prepareMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
     return priv->superEnum->prepareMethod(name, receiverType, callable);
+}
+
+bool
+lyric_assembler::EnumSymbol::hasStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->methods.contains(name);
+}
+
+lyric_assembler::ActionSymbol *
+lyric_assembler::EnumSymbol::getStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->stubs.find(name);
+    if (entry != priv->stubs.cend())
+        return entry->second;
+    return nullptr;
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::EnumSymbol::stubsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::EnumSymbol::stubsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cend();
+}
+
+tu_uint32
+lyric_assembler::EnumSymbol::numStubs() const
+{
+    auto *priv = getPriv();
+    return static_cast<tu_uint32>(priv->stubs.size());
+}
+
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
+lyric_assembler::EnumSymbol::declareStub(const std::string &name, bool isHidden)
+{
+    if (isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "can't declare stub on imported enum {}", m_enumUrl.toString());
+
+    auto *priv = getPriv();
+
+    auto *existingOrOverridden = find_existing_or_overridden_enum_binding(this, name);
+    if (existingOrOverridden == this)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} already defined for enum {}", name, m_enumUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden", existingOrOverridden->getSymbolUrl().toString());
+
+    // build reference path to stub
+    auto stubPath = m_enumUrl.getSymbolPath().getPath();
+    stubPath.push_back(name);
+    auto stubUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(stubPath));
+
+    // construct call symbol
+    auto actionSymbol = std::make_unique<ActionSymbol>(stubUrl, m_enumUrl, isHidden,
+            priv->isDeclOnly, priv->enumBlock.get(), m_state);
+
+    ActionSymbol *actionPtr;
+    TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->enumBlock->putBinding(actionPtr));
+    priv->stubs[name] = actionPtr;
+
+    priv->isAbstract =  true;
+
+    return actionPtr;
 }
 
 bool

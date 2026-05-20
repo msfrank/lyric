@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_structs.h>
@@ -34,6 +35,10 @@ lyric_assembler::internal::touch_struct(
 
     for (auto it = structSymbol->methodsBegin(); it != structSymbol->methodsEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
+    }
+
+    for (auto it = structSymbol->stubsBegin(); it != structSymbol->stubsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchAction(it->second));
     }
 
     for (auto it = structSymbol->implsBegin(); it != structSymbol->implsEnd(); it++) {
@@ -109,6 +114,16 @@ write_struct(
         methods.push_back(callIndex);
     }
 
+    // serialize array of stubs
+    std::vector<tu_uint32> stubs;
+    for (auto iterator = structSymbol->stubsBegin(); iterator != structSymbol->stubsEnd(); iterator++) {
+        auto *actionSymbol = iterator->second;
+        tu_uint32 actionIndex;
+        TU_ASSIGN_OR_RETURN (actionIndex,
+            writer.getSectionAddress(actionSymbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
+        stubs.push_back(actionIndex);
+    }
+
     // serialize array of impls
     std::vector<tu_uint32> impls;
     for (auto iterator = structSymbol->implsBegin(); iterator != structSymbol->implsEnd(); iterator++) {
@@ -135,8 +150,9 @@ write_struct(
     // add struct descriptor
     structs_vector.push_back(lyo1::CreateStructDescriptor(buffer, fullyQualifiedName,
         superstructIndex, structType, structFlags,
-        buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        allocatorTrap, buffer.CreateVector(sealedSubtypes)));
+        buffer.CreateVector(members), buffer.CreateVector(methods),
+        buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
+        buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

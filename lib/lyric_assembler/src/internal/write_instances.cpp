@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
@@ -34,6 +35,10 @@ lyric_assembler::internal::touch_instance(
 
     for (auto it = instanceSymbol->methodsBegin(); it != instanceSymbol->methodsEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchCall(it->second));
+    }
+
+    for (auto it = instanceSymbol->stubsBegin(); it != instanceSymbol->stubsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchAction(it->second));
     }
 
     for (auto it = instanceSymbol->implsBegin(); it != instanceSymbol->implsEnd(); it++) {
@@ -109,6 +114,16 @@ write_instance(
         methods.push_back(callIndex);
     }
 
+    // serialize array of stubs
+    std::vector<tu_uint32> stubs;
+    for (auto iterator = instanceSymbol->stubsBegin(); iterator != instanceSymbol->stubsEnd(); iterator++) {
+        auto *actionSymbol = iterator->second;
+        tu_uint32 actionIndex;
+        TU_ASSIGN_OR_RETURN (actionIndex,
+            writer.getSectionAddress(actionSymbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
+        stubs.push_back(actionIndex);
+    }
+
     // serialize array of impls
     std::vector<tu_uint32> impls;
     for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
@@ -145,8 +160,9 @@ write_instance(
     // add instance descriptor
     instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer, fullyQualifiedName,
         superinstanceIndex, instanceType, instanceFlags,
-        buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
+        buffer.CreateVector(members), buffer.CreateVector(methods),
+        buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
+        ctorCall, buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

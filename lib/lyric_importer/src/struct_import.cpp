@@ -122,6 +122,36 @@ lyric_importer::StructImport::numMethods()
     return m_priv->methods.size();
 }
 
+lyric_common::SymbolUrl
+lyric_importer::StructImport::getStub(std::string_view name)
+{
+    load();
+    if (m_priv->stubs.contains(name))
+        return m_priv->stubs.at(name);
+    return {};
+}
+
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_importer::StructImport::stubsBegin()
+{
+    load();
+    return m_priv->stubs.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_importer::StructImport::stubsEnd()
+{
+    load();
+    return m_priv->stubs.cend();
+}
+
+tu_uint8
+lyric_importer::StructImport::numStubs()
+{
+    load();
+    return m_priv->stubs.size();
+}
+
 absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::StructImport::implsBegin()
 {
@@ -273,6 +303,22 @@ lyric_importer::StructImport::load()
 
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
+    }
+
+    for (tu_uint8 i = 0; i < structWalker.numStubs(); i++) {
+        auto action = structWalker.getStub(i);
+        if (!action.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import struct at index {} in module {}; invalid stub at index {}",
+                    m_structOffset, objectLocation.toString(), i));
+        }
+
+        lyric_common::SymbolUrl actionUrl(objectLocation, action.getSymbolPath());
+
+        auto name = actionUrl.getSymbolName();
+        priv->stubs[name] = actionUrl;
     }
 
     for (tu_uint8 i = 0; i < structWalker.numImpls(); i++) {

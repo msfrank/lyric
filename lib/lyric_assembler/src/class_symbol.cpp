@@ -1,4 +1,3 @@
-#include <absl/container/flat_hash_set.h>
 
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/block_handle.h>
@@ -154,6 +153,12 @@ lyric_assembler::ClassSymbol::load()
         TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(actionSymbol));
         priv->stubs[it->first] = actionSymbol;
     }
+
+    if (!priv->stubs.empty() && !priv->isAbstract)
+        throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
+            "cannot import class {}; class has stubs but is not declared abstract",
+            m_classUrl.toString()));
 
     auto *implCache = m_state->implCache();
     for (auto it = m_classImport->implsBegin(); it != m_classImport->implsEnd(); it++) {
@@ -936,6 +941,8 @@ lyric_assembler::ClassSymbol::declareStub(
     TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
     TU_RETURN_IF_NOT_OK (priv->classBlock->putBinding(actionPtr));
     priv->stubs[name] = actionPtr;
+
+    priv->isAbstract =  true;
 
     return actionPtr;
 }

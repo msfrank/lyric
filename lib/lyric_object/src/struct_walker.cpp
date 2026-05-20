@@ -1,4 +1,5 @@
 
+#include <lyric_object/action_walker.h>
 #include <lyric_object/call_walker.h>
 #include <lyric_object/field_walker.h>
 #include <lyric_object/impl_walker.h>
@@ -215,6 +216,34 @@ lyric_object::StructWalker::getMethod(tu_uint8 index) const
     if (structDescriptor->methods()->size() <= index)
         return {};
     return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->methods()->Get(index)));
+}
+
+tu_uint8
+lyric_object::StructWalker::numStubs() const
+{
+    if (!isValid())
+        return 0;
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return 0;
+    if (structDescriptor->stubs() == nullptr)
+        return 0;
+    return structDescriptor->stubs()->size();
+}
+
+lyric_object::ActionWalker
+lyric_object::StructWalker::getStub(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return {};
+    if (structDescriptor->stubs() == nullptr)
+        return {};
+    if (structDescriptor->stubs()->size() <= index)
+        return {};
+    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->stubs()->Get(index)));
 }
 
 tu_uint8

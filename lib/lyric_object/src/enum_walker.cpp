@@ -1,4 +1,5 @@
 
+#include <lyric_object/action_walker.h>
 #include <lyric_object/call_walker.h>
 #include <lyric_object/enum_walker.h>
 #include <lyric_object/field_walker.h>
@@ -226,6 +227,34 @@ lyric_object::EnumWalker::getMethod(tu_uint8 index) const
     if (enumDescriptor->methods()->size() <= index)
         return {};
     return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->methods()->Get(index)));
+}
+
+tu_uint8
+lyric_object::EnumWalker::numStubs() const
+{
+    if (!isValid())
+        return 0;
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return 0;
+    if (enumDescriptor->stubs() == nullptr)
+        return 0;
+    return enumDescriptor->stubs()->size();
+}
+
+lyric_object::ActionWalker
+lyric_object::EnumWalker::getStub(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return {};
+    if (enumDescriptor->stubs() == nullptr)
+        return {};
+    if (enumDescriptor->stubs()->size() <= index)
+        return {};
+    return ActionWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->stubs()->Get(index)));
 }
 
 tu_uint8

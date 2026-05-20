@@ -1,7 +1,5 @@
 
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
-
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/ctor_constructable.h>
@@ -18,6 +16,8 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/impl_import.h>
 #include <lyric_importer/instance_import.h>
+
+#include "lyric_assembler/stub_callable.h"
 
 lyric_assembler::InstanceSymbol::InstanceSymbol(
     const lyric_common::SymbolUrl &instanceUrl,
@@ -106,6 +106,19 @@ lyric_assembler::InstanceSymbol::load()
         TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(callSymbol));
         priv->methods[it->first] = callSymbol;
     }
+
+    for (auto it = m_instanceImport->stubsBegin(); it != m_instanceImport->stubsEnd(); it++) {
+        ActionSymbol *actionSymbol;
+        TU_ASSIGN_OR_RAISE (actionSymbol, importCache->importAction(it->second));
+        TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(actionSymbol));
+        priv->stubs[it->first] = actionSymbol;
+    }
+
+    if (!priv->stubs.empty() && !priv->isAbstract)
+        throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
+            "cannot import instance {}; instance has stubs but is not declared abstract",
+            m_instanceUrl.toString()));
 
     auto *implCache = m_state->implCache();
     for (auto it = m_instanceImport->implsBegin(); it != m_instanceImport->implsEnd(); it++) {
@@ -357,6 +370,34 @@ lyric_assembler::InstanceSymbol::numMembers() const
     return priv->members.size();
 }
 
+static lyric_assembler::AbstractSymbol *
+find_existing_or_overridden_instance_binding(
+    lyric_assembler::InstanceSymbol *instanceSymbol,
+    const std::string &name)
+{
+    // if instance contains the named binding then return the InstanceSymbol pointer
+    auto *block = instanceSymbol->instanceBlock();
+    if (block->hasBinding(name))
+        return instanceSymbol;
+
+    // otherwise if a superinstance contains the named binding then return pointer to the binding symbol
+    for (auto *currInstance = instanceSymbol->superInstance(); currInstance != nullptr; currInstance = currInstance->superInstance()) {
+        block = currInstance->instanceBlock();
+        if (!block->hasBinding(name))
+            continue;
+
+        auto binding = block->getBinding(name);
+        if (binding.bindingType == lyric_assembler::BindingType::Descriptor) {
+            auto *state = block->blockState();
+            auto *symbolCache = state->symbolCache();
+            return symbolCache->getSymbolOrNull(binding.symbolUrl);
+        }
+    }
+
+    // otherwise no binding exists in any superinstance
+    return nullptr;
+}
+
 tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::InstanceSymbol::declareMember(
     const std::string &name,
@@ -370,9 +411,14 @@ lyric_assembler::InstanceSymbol::declareMember(
 
     auto *priv = getPriv();
 
-    if (priv->members.contains(name))
+    auto *existingOrOverridden = find_existing_or_overridden_instance_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "member {} already defined for instance {}", name, m_instanceUrl.toString());
+            "'{}' is already defined for instance {}", name, m_instanceUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden by instance {}",
+            existingOrOverridden->getSymbolUrl().toString(), m_instanceUrl.toString());
 
     TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
@@ -590,9 +636,33 @@ lyric_assembler::InstanceSymbol::declareMethod(
 
     auto *priv = getPriv();
 
-    if (priv->methods.contains(name))
+    auto *existingOrOverridden = find_existing_or_overridden_instance_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "method {} already defined for instance {}", name, m_instanceUrl.toString());
+            "{} already defined for instance {}", name, m_instanceUrl.toString());
+
+    // determine the base symbol if it exists
+    lyric_common::SymbolUrl baseUrl;
+    if (existingOrOverridden != nullptr) {
+        switch (existingOrOverridden->getSymbolType()) {
+            case SymbolType::ACTION:
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            case SymbolType::CALL: {
+                auto *baseCall = cast_symbol_to_call(existingOrOverridden);
+                if (baseCall->isFinal())
+                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                        "final method {} cannot be overridden by instance {}",
+                        existingOrOverridden->getSymbolUrl().toString(), m_instanceUrl.toString());
+                baseUrl = existingOrOverridden->getSymbolUrl();
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                    "{} cannot be overridden by instance {}",
+                    existingOrOverridden->getSymbolUrl().toString(), m_instanceUrl.toString());
+        }
+    }
 
     // build reference path to function
     auto methodPath = m_instanceUrl.getSymbolPath().getPath();
@@ -600,9 +670,15 @@ lyric_assembler::InstanceSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_instanceUrl,
-        isHidden, lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly,
-        priv->instanceBlock.get(), m_state);
+    std::unique_ptr<CallSymbol> callSymbol;
+    if (baseUrl.isValid()) {
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_instanceUrl, isHidden, baseUrl, isFinal,
+            priv->isDeclOnly, priv->instanceBlock.get(), m_state);
+    } else {
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_instanceUrl, isHidden,
+            lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->instanceBlock.get(),
+            m_state);
+    }
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
@@ -621,9 +697,9 @@ lyric_assembler::InstanceSymbol::prepareMethod(
 {
     auto *priv = getPriv();
 
-    auto entry = priv->methods.find(name);
-    if (entry != priv->methods.cend()) {
-        auto *callSymbol = entry->second;
+    auto method = priv->methods.find(name);
+    if (method != priv->methods.cend()) {
+        auto *callSymbol = method->second;
 
         if (callSymbol->isHidden()) {
             if (!thisReceiver)
@@ -635,7 +711,39 @@ lyric_assembler::InstanceSymbol::prepareMethod(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-        callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+        if (!callSymbol->hasBaseUrl()) {
+            callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->isInline());
+            return {};
+        }
+
+        auto *symbolCache = m_state->symbolCache();
+
+        AbstractSymbol *baseSymbol;
+        TU_ASSIGN_OR_RETURN (baseSymbol, symbolCache->getOrImportSymbol(callSymbol->getBaseUrl()));
+        switch (baseSymbol->getSymbolType()) {
+            case SymbolType::ACTION:
+                callable = std::make_unique<StubCallable>(cast_symbol_to_action(baseSymbol));
+                return {};
+            case SymbolType::CALL:
+                callable = std::make_unique<MethodCallable>(cast_symbol_to_call(baseSymbol));
+                return {};
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                    "invalid base symbol {}", baseSymbol->getSymbolUrl().toString());
+        }
+    }
+
+    auto stub = priv->stubs.find(name);
+    if (stub != priv->stubs.cend()) {
+        auto *actionSymbol = stub->second;
+
+        if (actionSymbol->isHidden()) {
+            if (!thisReceiver)
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                    "cannot access hidden method {} on {}", name, m_instanceUrl.toString());
+        }
+
+        callable = std::make_unique<StubCallable>(actionSymbol);
         return {};
     }
 
@@ -643,6 +751,80 @@ lyric_assembler::InstanceSymbol::prepareMethod(
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
     return priv->superInstance->prepareMethod(name, receiverType, callable);
+}
+
+bool
+lyric_assembler::InstanceSymbol::hasStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->methods.contains(name);
+}
+
+lyric_assembler::ActionSymbol *
+lyric_assembler::InstanceSymbol::getStub(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->stubs.find(name);
+    if (entry != priv->stubs.cend())
+        return entry->second;
+    return nullptr;
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::InstanceSymbol::stubsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::ActionSymbol *>::const_iterator
+lyric_assembler::InstanceSymbol::stubsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->stubs.cend();
+}
+
+tu_uint32
+lyric_assembler::InstanceSymbol::numStubs() const
+{
+    auto *priv = getPriv();
+    return static_cast<tu_uint32>(priv->stubs.size());
+}
+
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
+lyric_assembler::InstanceSymbol::declareStub(const std::string &name, bool isHidden)
+{
+    if (isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "can't declare stub on imported instance {}", m_instanceUrl.toString());
+
+    auto *priv = getPriv();
+
+    auto *existingOrOverridden = find_existing_or_overridden_instance_binding(this, name);
+    if (existingOrOverridden == this)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} already defined for instance {}", name, m_instanceUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden", existingOrOverridden->getSymbolUrl().toString());
+
+    // build reference path to stub
+    auto stubPath = m_instanceUrl.getSymbolPath().getPath();
+    stubPath.push_back(name);
+    auto stubUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(stubPath));
+
+    // construct call symbol
+    auto actionSymbol = std::make_unique<ActionSymbol>(stubUrl, m_instanceUrl, isHidden,
+        priv->isDeclOnly, priv->instanceBlock.get(), m_state);
+
+    ActionSymbol *actionPtr;
+    TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->instanceBlock->putBinding(actionPtr));
+    priv->stubs[name] = actionPtr;
+
+    priv->isAbstract =  true;
+
+    return actionPtr;
 }
 
 bool

@@ -54,9 +54,12 @@ namespace lyric_object {
 
         friend class ClassWalker;
         friend class ConceptWalker;
+        friend class EnumWalker;
         friend class ExtensionWalker;
+        friend class InstanceWalker;
         friend class LyricObject;
         friend class ParameterWalker;
+        friend class StructWalker;
     };
 }
 
