@@ -110,7 +110,7 @@ apply_load(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("arg", operands.address);
             auto argumentUrl = get_variable_url(name, data);
             auto argumentSymbol = std::make_unique<lyric_assembler::ArgumentVariable>(
-                argumentUrl, lyric_assembler::ArgumentOffset(operands.address), data.state);
+                argumentUrl, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(argumentUrl, argumentSymbol.get()));
             auto *symbol = argumentSymbol.release();
@@ -120,7 +120,7 @@ apply_load(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("lex", operands.address);
             auto lexicalUrl = get_variable_url(name, data);
             auto lexicalSymbol = std::make_unique<lyric_assembler::LexicalVariable>(
-                lexicalUrl, lyric_assembler::LexicalOffset(operands.address), data.state);
+                lexicalUrl, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(lexicalUrl, lexicalSymbol.get()));
             auto *symbol = lexicalSymbol.release();
@@ -130,7 +130,7 @@ apply_load(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("loc", operands.address);
             auto localUrl = get_variable_url(name, data);
             auto localSymbol = std::make_unique<lyric_assembler::LocalVariable>(
-                localUrl, /* isHidden= */ true, lyric_assembler::LocalOffset(operands.address), data.state);
+                localUrl, /* isHidden= */ true, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localSymbol.get()));
             auto *symbol = localSymbol.release();
@@ -270,7 +270,7 @@ apply_store(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("arg", operands.address);
             auto argumentUrl = get_variable_url(name, data);
             auto argumentSymbol = std::make_unique<lyric_assembler::ArgumentVariable>(
-                argumentUrl, lyric_assembler::ArgumentOffset(operands.address), data.state);
+                argumentUrl, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(argumentUrl, argumentSymbol.get()));
             auto *symbol = argumentSymbol.release();
@@ -280,7 +280,7 @@ apply_store(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("lex", operands.address);
             auto lexicalUrl = get_variable_url(name, data);
             auto lexicalSymbol = std::make_unique<lyric_assembler::LexicalVariable>(
-                lexicalUrl, lyric_assembler::LexicalOffset(operands.address), data.state);
+                lexicalUrl, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(lexicalUrl, lexicalSymbol.get()));
             auto *symbol = lexicalSymbol.release();
@@ -290,7 +290,7 @@ apply_store(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("loc", operands.address);
             auto localUrl = get_variable_url(name, data);
             auto localSymbol = std::make_unique<lyric_assembler::LocalVariable>(
-                localUrl, /* isHidden= */ true, lyric_assembler::LocalOffset(operands.address), data.state);
+                localUrl, /* isHidden= */ true, operands.address, data.state);
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localSymbol.get()));
             auto *symbol = localSymbol.release();

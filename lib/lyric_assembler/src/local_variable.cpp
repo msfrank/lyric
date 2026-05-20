@@ -6,7 +6,7 @@ lyric_assembler::LocalVariable::LocalVariable(
     const lyric_common::SymbolUrl &localUrl,
     bool isHidden,
     const lyric_common::TypeDef &assignableType,
-    LocalOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_localUrl(localUrl),
       m_isHidden(isHidden),
@@ -16,14 +16,14 @@ lyric_assembler::LocalVariable::LocalVariable(
 {
     TU_ASSERT (m_localUrl.isValid());
     TU_ASSERT (m_assignableType.isValid());
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
 lyric_assembler::LocalVariable::LocalVariable(
     const lyric_common::SymbolUrl &localUrl,
     bool isHidden,
-    LocalOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_localUrl(localUrl),
       m_isHidden(isHidden),
@@ -31,7 +31,7 @@ lyric_assembler::LocalVariable::LocalVariable(
       m_state(state)
 {
     TU_ASSERT (m_localUrl.isValid());
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
@@ -89,7 +89,7 @@ lyric_assembler::LocalVariable::isHidden() const
     return m_isHidden;
 }
 
-lyric_assembler::LocalOffset
+tu_uint32
 lyric_assembler::LocalVariable::getOffset() const
 {
     return m_offset;

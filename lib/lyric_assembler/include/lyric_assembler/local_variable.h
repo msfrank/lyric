@@ -14,12 +14,12 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &localUrl,
             bool isHidden,
             const lyric_common::TypeDef &assignableType,
-            LocalOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
         LocalVariable(
             const lyric_common::SymbolUrl &localUrl,
             bool isHidden,
-            LocalOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
 
         bool isImported() const override;
@@ -31,13 +31,13 @@ namespace lyric_assembler {
 
         std::string getName() const;
         bool isHidden() const;
-        LocalOffset getOffset() const;
+        tu_uint32 getOffset() const;
 
     private:
         lyric_common::SymbolUrl m_localUrl;
         bool m_isHidden;
         lyric_common::TypeDef m_assignableType;
-        LocalOffset m_offset;
+        tu_uint32 m_offset;
         ObjectState *m_state;
     };
 

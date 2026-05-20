@@ -141,11 +141,13 @@ lyric_assembler::ProcHandle::getArity() const
     return m_numListParameters + m_numNamedParameters;
 }
 
-lyric_assembler::LocalOffset
+tu_uint32
 lyric_assembler::ProcHandle::allocateLocal()
 {
+    if (m_numLocals == std::numeric_limits<int>::max())
+        return lyric_runtime::INVALID_ADDRESS_U32;
     auto index = m_numLocals++;
-    return LocalOffset(index);
+    return index;
 }
 
 int
@@ -172,7 +174,7 @@ lyric_assembler::ProcHandle::hasRestParameter() const
     return m_hasRestParameter;
 }
 
-lyric_assembler::LexicalOffset
+tu_uint32
 lyric_assembler::ProcHandle::allocateLexical(
     LexicalTarget lexicalTarget,
     uint32_t targetOffset,
@@ -184,7 +186,7 @@ lyric_assembler::ProcHandle::allocateLexical(
     lexical.targetOffset = targetOffset;
     lexical.activationCall = activationCall;
     m_lexicals.push_back(lexical);
-    return LexicalOffset(index);
+    return index;
 }
 
 std::vector<lyric_assembler::ProcLexical>::const_iterator
@@ -466,7 +468,7 @@ inline tempo_utils::Status
 get_caught_ref_local_offset(
     const lyric_assembler::DataReference &caughtRef,
     const lyric_assembler::ProcHandle *procHandle,
-    lyric_assembler::LocalOffset &localOffset)
+    tu_uint32 &localOffset)
 {
     auto *state = procHandle->objectState();
     auto *symbolCache = state->symbolCache();
@@ -566,7 +568,7 @@ lyric_assembler::ProcHandle::build(
 
     // define each check
     for (const auto &checkHandle : checkLevels) {
-        LocalOffset caughtLocal;
+        tu_uint32 caughtLocal;
         TU_RETURN_IF_NOT_OK (get_caught_ref_local_offset(
             checkHandle->getCaughtReference(), this, caughtLocal));
 
@@ -580,7 +582,7 @@ lyric_assembler::ProcHandle::build(
         lyric_object::ProcCheck check;
         check.interval_offset = startOffset->second;
         check.interval_size = endOffset->second - check.interval_offset;
-        check.exception_local = caughtLocal.getOffset();
+        check.exception_local = caughtLocal;
         check.first_exception = exceptions.size();
         check.num_exceptions = checkHandle->numCatches();
         checks.push_back(check);

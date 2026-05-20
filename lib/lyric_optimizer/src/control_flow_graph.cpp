@@ -158,7 +158,7 @@ lyric_optimizer::ControlFlowGraph::resolveArgument(lyric_assembler::ArgumentVari
 {
     if (m_priv == nullptr)
         return {};
-    auto offset = argumentVariable->getOffset().getOffset();
+    auto offset = argumentVariable->getOffset();
     if (m_priv->arguments.size() <= offset)
         return {};
     auto variable = m_priv->arguments.at(offset);
@@ -189,7 +189,7 @@ lyric_optimizer::ControlFlowGraph::resolveLocal(lyric_assembler::LocalVariable *
 {
     if (m_priv == nullptr)
         return {};
-    auto offset = localVariable->getOffset().getOffset();
+    auto offset = localVariable->getOffset();
     if (m_priv->locals.size() <= offset)
         return {};
     auto variable = m_priv->locals.at(offset);
@@ -219,7 +219,7 @@ lyric_optimizer::ControlFlowGraph::resolveLexical(lyric_assembler::LexicalVariab
 {
     if (m_priv == nullptr)
         return {};
-    auto offset = lexicalVariable->getOffset().getOffset();
+    auto offset = lexicalVariable->getOffset();
     if (m_priv->lexicals.size() <= offset)
         return {};
     auto variable = m_priv->lexicals.at(offset);

@@ -193,7 +193,6 @@ enum CallFlags : uint16 (bit_flags) {
     Ctor,                                       // call is a constructor
     Hidden,                                     // if bound then visible to the receiver symbol and its derived symbols only (protected),
                                                 // otherwise if free then visible to the enclosing namespace and its child namespace only
-    Abstract,                                   // if bound then the call is abstract, otherwise does nothing
     Final,                                      // if bound then the call cannot be overridden, otherwise does nothing
     DeclOnly,                                   // call descriptor is only a declaration
 }

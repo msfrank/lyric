@@ -171,9 +171,6 @@ write_call(
         case lyric_object::CallMode::Constructor:
             callFlags |= lyo1::CallFlags::Ctor;
             break;
-        case lyric_object::CallMode::Abstract:
-            callFlags |= lyo1::CallFlags::Abstract;
-            break;
         default:
             break;
     }

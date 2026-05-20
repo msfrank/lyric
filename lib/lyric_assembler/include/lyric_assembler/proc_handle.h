@@ -70,10 +70,10 @@ namespace lyric_assembler {
          * proc variables
          */
 
-        LocalOffset allocateLocal();
+        tu_uint32 allocateLocal();
         int numLocals() const;
 
-        LexicalOffset allocateLexical(
+        tu_uint32 allocateLexical(
             LexicalTarget lexicalTarget,
             uint32_t targetOffset,
             CallSymbol *activationCall);

@@ -5,7 +5,7 @@
 lyric_assembler::LexicalVariable::LexicalVariable(
     const lyric_common::SymbolUrl &lexicalUrl,
     const lyric_common::TypeDef &assignableType,
-    LexicalOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_lexicalUrl(lexicalUrl),
       m_assignableType(assignableType),
@@ -14,20 +14,20 @@ lyric_assembler::LexicalVariable::LexicalVariable(
 {
     TU_ASSERT (m_lexicalUrl.isValid());
     TU_ASSERT (m_assignableType.isValid());
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
 lyric_assembler::LexicalVariable::LexicalVariable(
     const lyric_common::SymbolUrl &lexicalUrl,
-    LexicalOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_lexicalUrl(lexicalUrl),
       m_offset(offset),
       m_state(state)
 {
     TU_ASSERT (m_lexicalUrl.isValid());
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
@@ -79,7 +79,7 @@ lyric_assembler::LexicalVariable::getName() const
     return m_lexicalUrl.getSymbolPath().getName();
 }
 
-lyric_assembler::LexicalOffset
+tu_uint32
 lyric_assembler::LexicalVariable::getOffset() const
 {
     return m_offset;

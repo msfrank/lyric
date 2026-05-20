@@ -50,7 +50,7 @@ tempo_utils::Result<lyric_optimizer::Instance>
 lyric_optimizer::ActivationState::resolveArgument(lyric_assembler::ArgumentVariable *argumentVariable)
 {
     TU_ASSERT (argumentVariable != nullptr);
-    auto offset = argumentVariable->getOffset().getOffset();
+    auto offset = argumentVariable->getOffset();
     if (m_arguments.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing argument {}", argumentVariable->getSymbolUrl().toString());
@@ -62,7 +62,7 @@ tempo_utils::Result<lyric_optimizer::Instance>
 lyric_optimizer::ActivationState::resolveLocal(lyric_assembler::LocalVariable *localVariable)
 {
     TU_ASSERT (localVariable != nullptr);
-    auto offset = localVariable->getOffset().getOffset();
+    auto offset = localVariable->getOffset();
     if (m_locals.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing local {}", localVariable->getSymbolUrl().toString());
@@ -74,7 +74,7 @@ tempo_utils::Result<lyric_optimizer::Instance>
 lyric_optimizer::ActivationState::resolveLexical(lyric_assembler::LexicalVariable *lexicalVariable)
 {
     TU_ASSERT (lexicalVariable != nullptr);
-    auto offset = lexicalVariable->getOffset().getOffset();
+    auto offset = lexicalVariable->getOffset();
     if (m_lexicals.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing lexical {}", lexicalVariable->getSymbolUrl().toString());

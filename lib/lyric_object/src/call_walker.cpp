@@ -79,17 +79,6 @@ lyric_object::CallWalker::isNoReturn() const
 }
 
 bool
-lyric_object::CallWalker::isAbstract() const
-{
-    if (!isValid())
-        return false;
-    auto *callDescriptor = m_reader->getCall(m_callOffset);
-    if (callDescriptor == nullptr)
-        return false;
-    return bool(callDescriptor->flags() & lyo1::CallFlags::Abstract);
-}
-
-bool
 lyric_object::CallWalker::isOverride() const
 {
     if (!hasReceiver())
@@ -147,8 +136,6 @@ lyric_object::CallWalker::getMode() const
 
     if (bool(callDescriptor->flags() & lyo1::CallFlags::Ctor))
         return CallMode::Constructor;
-    if (bool(callDescriptor->flags() & lyo1::CallFlags::Abstract))
-        return CallMode::Abstract;
     if (bool(callDescriptor->flags() & lyo1::CallFlags::Inline))
         return CallMode::Inline;
     return CallMode::Normal;

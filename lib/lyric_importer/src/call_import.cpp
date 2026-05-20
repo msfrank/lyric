@@ -46,13 +46,6 @@ lyric_importer::CallImport::getCallMode()
 }
 
 bool
-lyric_importer::CallImport::isAbstract()
-{
-    load();
-    return m_priv->isAbstract;
-}
-
-bool
 lyric_importer::CallImport::isOverride()
 {
     load();
@@ -280,10 +273,8 @@ lyric_importer::CallImport::load()
                 break;
         }
 
-        priv->isAbstract = callWalker.isAbstract();
         priv->isFinal = callWalker.isFinal();
     } else {
-        priv->isAbstract = false;
         priv->isFinal = false;
     }
 

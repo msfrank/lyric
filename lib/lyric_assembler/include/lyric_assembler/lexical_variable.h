@@ -13,11 +13,11 @@ namespace lyric_assembler {
         LexicalVariable(
             const lyric_common::SymbolUrl &lexicalUrl,
             const lyric_common::TypeDef &assignableType,
-            LexicalOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
         LexicalVariable(
             const lyric_common::SymbolUrl &lexicalUrl,
-            LexicalOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
 
         bool isImported() const override;
@@ -28,12 +28,12 @@ namespace lyric_assembler {
         BlockHandle *derefBlock() override;
 
         std::string getName() const;
-        LexicalOffset getOffset() const;
+        tu_uint32 getOffset() const;
 
     private:
         lyric_common::SymbolUrl m_lexicalUrl;
         lyric_common::TypeDef m_assignableType;
-        LexicalOffset m_offset;
+        tu_uint32 m_offset;
         ObjectState *m_state;
     };
 

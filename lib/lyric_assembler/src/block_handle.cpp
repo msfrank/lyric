@@ -883,7 +883,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
                             "variable {} is not visible from the current scope", name);
                     lexicalTarget = LexicalTarget::Local;
-                    targetOffset = local->getOffset().getOffset();
+                    targetOffset = local->getOffset();
                     typeDef = binding.typeDef;
                     break;
                 }

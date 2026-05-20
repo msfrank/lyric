@@ -13,11 +13,11 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &argumentUrl,
             const lyric_common::TypeDef &assignableType,
             BindingType bindingType,
-            ArgumentOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
         ArgumentVariable(
             const lyric_common::SymbolUrl &argumentUrl,
-            ArgumentOffset offset,
+            tu_uint32 offset,
             ObjectState *state);
 
         bool isImported() const override;
@@ -29,13 +29,13 @@ namespace lyric_assembler {
 
         std::string getName() const;
         BindingType getBindingType() const;
-        ArgumentOffset getOffset() const;
+        tu_uint32 getOffset() const;
 
     private:
         lyric_common::SymbolUrl m_argumentUrl;
         lyric_common::TypeDef m_assignableType;
         BindingType m_bindingType;
-        ArgumentOffset m_offset;
+        tu_uint32 m_offset;
         ObjectState *m_state;
     };
 

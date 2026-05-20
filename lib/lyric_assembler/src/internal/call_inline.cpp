@@ -74,7 +74,7 @@ lyric_assembler::internal::call_inline(
                 auto *symbol = instruction->getSymbol();
                 if (symbol->getSymbolType() == SymbolType::ARGUMENT) {
                     auto *argumentVariable = cast_symbol_to_argument(symbol);
-                    auto address = argumentVariable->getOffset().getOffset();
+                    auto address = argumentVariable->getOffset();
                     auto entry = argToTmp.find(address);
                     if (entry == argToTmp.cend())
                         return AssemblerStatus::forCondition(
@@ -92,7 +92,7 @@ lyric_assembler::internal::call_inline(
                 auto *symbol = instruction->getSymbol();
                 if (symbol->getSymbolType() == SymbolType::ARGUMENT) {
                     auto *argumentVariable = cast_symbol_to_argument(symbol);
-                    auto address = argumentVariable->getOffset().getOffset();
+                    auto address = argumentVariable->getOffset();
                     auto entry = argToTmp.find(address);
                     if (entry == argToTmp.cend())
                         return AssemblerStatus::forCondition(

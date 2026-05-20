@@ -217,9 +217,8 @@ lyric_compiler::declare_class_method(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // determine if final
-    bool noOverride;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, noOverride));
-    auto dispatch = noOverride? lyric_assembler::DispatchType::Final : lyric_assembler::DispatchType::Virtual;
+    bool isFinal;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, isFinal));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
@@ -241,11 +240,10 @@ lyric_compiler::declare_class_method(
     }
 
     Method method;
-    method.dispatch = dispatch;
 
     // declare the method
     TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
-        identifier, isHidden, dispatch, templateSpec.templateParameters));
+        identifier, isHidden, isFinal, templateSpec.templateParameters));
 
     TU_LOG_V << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
 

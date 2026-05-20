@@ -143,7 +143,7 @@ namespace lyric_assembler {
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
             bool isHidden,
-            DispatchType dispatch = DispatchType::Virtual,
+            bool isFinal = false,
             const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Status prepareMethod(

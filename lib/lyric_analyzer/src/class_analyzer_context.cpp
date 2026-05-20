@@ -162,9 +162,8 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
-    bool noOverride;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, noOverride));
-    auto dispatch = noOverride? lyric_assembler::DispatchType::Final : lyric_assembler::DispatchType::Virtual;
+    bool isFinal;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, isFinal));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -181,7 +180,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
-        identifier, isHidden, dispatch, spec.templateParameters));
+        identifier, isHidden, isFinal, spec.templateParameters));
 
     auto *resolver = callSymbol->callResolver();
 

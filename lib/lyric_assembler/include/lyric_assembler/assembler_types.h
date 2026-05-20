@@ -154,12 +154,6 @@ namespace lyric_assembler {
         Abstract,
     };
 
-    enum class DispatchType {
-        Abstract,
-        Virtual,
-        Final,
-    };
-
     enum class SyntheticType {
         This,
         Rest,
@@ -201,54 +195,6 @@ namespace lyric_assembler {
         std::string_view labelView() const { return m_label; };
     private:
         std::string m_label;
-    };
-
-    struct ArgumentOffset {
-    public:
-        ArgumentOffset() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ArgumentOffset(tu_uint32 u32) : u32(u32) {};
-        ArgumentOffset(const ArgumentOffset &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getOffset() const { return u32; };
-        bool operator==(const ArgumentOffset &other) const { return u32 == other.u32; };
-    private:
-        tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
-    };
-
-    struct LocalOffset {
-    public:
-        LocalOffset() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit LocalOffset(tu_uint32 u32) : u32(u32) {};
-        LocalOffset(const LocalOffset &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getOffset() const { return u32; };
-        bool operator==(const LocalOffset &other) const { return u32 == other.u32; };
-    private:
-        tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
-    };
-
-    struct LexicalOffset {
-    public:
-        LexicalOffset() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit LexicalOffset(tu_uint32 u32) : u32(u32) {};
-        LexicalOffset(const LexicalOffset &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getOffset() const { return u32; };
-        bool operator==(const LexicalOffset &other) const { return u32 == other.u32; };
-    private:
-        tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
-    };
-
-    struct RestOffset {
-    public:
-        RestOffset() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit RestOffset(tu_uint32 u32) : u32(u32) {};
-        RestOffset(const RestOffset &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getOffset() const { return u32; };
-        bool operator==(const RestOffset &other) const { return u32 == other.u32; };
-    private:
-        tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
     };
 
     // forward declarations

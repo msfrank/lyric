@@ -797,15 +797,15 @@ lyric_assembler::LoadDataInstruction::apply(
 
     switch (m_symbol->getSymbolType()) {
         case SymbolType::ARGUMENT:
-            address = cast_symbol_to_argument(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_argument(m_symbol)->getOffset();
             flags = lyric_object::LOAD_ARGUMENT;
             break;
         case SymbolType::LOCAL:
-            address = cast_symbol_to_local(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_local(m_symbol)->getOffset();
             flags = lyric_object::LOAD_LOCAL;
             break;
         case SymbolType::LEXICAL:
-            address = cast_symbol_to_lexical(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_lexical(m_symbol)->getOffset();
             flags = lyric_object::LOAD_LEXICAL;
             break;
         case SymbolType::ENUM:
@@ -1125,15 +1125,15 @@ lyric_assembler::StoreDataInstruction::apply(
     switch (m_symbol->getSymbolType()) {
 
         case SymbolType::ARGUMENT:
-            address = cast_symbol_to_argument(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_argument(m_symbol)->getOffset();
             flags = lyric_object::STORE_ARGUMENT;
             break;
         case SymbolType::LOCAL:
-            address = cast_symbol_to_local(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_local(m_symbol)->getOffset();
             flags = lyric_object::STORE_LOCAL;
             break;
         case SymbolType::LEXICAL:
-            address = cast_symbol_to_lexical(m_symbol)->getOffset().getOffset();
+            address = cast_symbol_to_lexical(m_symbol)->getOffset();
             flags = lyric_object::STORE_LEXICAL;
             break;
         case SymbolType::FIELD:

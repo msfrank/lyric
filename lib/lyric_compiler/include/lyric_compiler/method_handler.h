@@ -11,7 +11,6 @@
 namespace lyric_compiler {
 
     struct Method {
-        lyric_assembler::DispatchType dispatch = lyric_assembler::DispatchType::Virtual;
         lyric_assembler::CallSymbol *callSymbol = nullptr;
         lyric_assembler::ProcHandle *procHandle = nullptr;
     };

@@ -411,7 +411,7 @@ lyric_assembler::CallSymbol::load()
             importProc = priv->mode == lyric_object::CallMode::Inline;
             break;
         case ProcImportMode::All:
-            importProc = priv->mode != lyric_object::CallMode::Abstract;
+            importProc = true;
             break;
         default:
             break;
@@ -477,9 +477,6 @@ lyric_assembler::CallSymbol::defineCall(
     if (priv->proc != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "cannot redefine call {}", m_callUrl.toString());
-    if (priv->mode == lyric_object::CallMode::Abstract)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "cannot define abstract call {}", m_callUrl.toString());
 
     auto *symbolCache = m_state->symbolCache();
     auto *typeCache = m_state->typeCache();
@@ -514,7 +511,7 @@ lyric_assembler::CallSymbol::defineCall(
         paramPath.push_back(param.name);
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto offset = static_cast<tu_uint32>(param.index);
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
@@ -539,7 +536,7 @@ lyric_assembler::CallSymbol::defineCall(
         paramPath.push_back(param.name);
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto offset = static_cast<tu_uint32>(param.index);
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
@@ -607,80 +604,6 @@ lyric_assembler::CallSymbol::defineCall(
     }
 
     return priv->proc.get();
-}
-
-tempo_utils::Status
-lyric_assembler::CallSymbol::defineAbstract(
-    const ParameterPack &parameterPack,
-    const lyric_common::TypeDef &returnType)
-{
-    if (isImported())
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "cannot define imported call {}", m_callUrl.toString());
-    auto *priv = getPriv();
-
-    if (priv->mode != lyric_object::CallMode::Abstract)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "cannot define call {}; expected abstract call", m_callUrl.toString());
-
-    // if return type was explicitly declared then touch it
-    if (!returnType.isValid())
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "cannot define call {}; invalid return type", m_callUrl.toString());
-
-    auto *symbolCache = m_state->symbolCache();
-    auto *typeCache = m_state->typeCache();
-
-    priv->listParameters = parameterPack.listParameters;
-    priv->namedParameters = parameterPack.namedParameters;
-    priv->restParameter = parameterPack.restParameter;
-    priv->returnType = returnType;
-
-    // create bindings for list parameters
-    for (const auto &param : priv->listParameters) {
-        auto paramPath = m_callUrl.getSymbolPath().getPath();
-        paramPath.push_back(param.name);
-        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
-        symbolCache->insertSymbol(paramUrl, paramSymbol);
-        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
-        priv->parametersMap[param.name] = param;
-    }
-
-    // create bindings for named parameters
-    for (const auto &param : priv->namedParameters) {
-        auto paramPath = m_callUrl.getSymbolPath().getPath();
-        paramPath.push_back(param.name);
-        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset, m_state);
-        symbolCache->insertSymbol(paramUrl, paramSymbol);
-        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
-        priv->parametersMap[param.name] = param;
-    }
-
-    // if there is a rest param then ensure the rest param type exists in the type cache
-    std::string restParamName;
-    if (!priv->restParameter.isEmpty()) {
-        auto &param = priv->restParameter.peekValue();
-        restParamName = param.name;
-        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
-        // add the rest param to the parameters map, even if the param name is empty
-        priv->parametersMap[restParamName] = param;
-    }
-
-    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
-    if (priv->returnType == lyric_common::TypeDef::noReturn()) {
-        priv->isNoReturn = true;
-    }
-
-    // define a proc which is used only to indicate that the call definition has completed
-    priv->proc = std::make_unique<ProcHandle>(m_callUrl, m_state);
-
-    return {};
 }
 
 std::string

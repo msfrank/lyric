@@ -690,7 +690,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ClassSymbol::declareMethod(
     const std::string &name,
     bool isHidden,
-    DispatchType dispatch,
+    bool isFinal,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     if (isImported())
@@ -698,23 +698,6 @@ lyric_assembler::ClassSymbol::declareMethod(
             "can't declare method on imported class {}", m_classUrl.toString());
 
     auto *priv = getPriv();
-
-    lyric_object::CallMode callMode;
-    bool isFinal;
-    switch (dispatch) {
-        case DispatchType::Abstract:
-            callMode = lyric_object::CallMode::Abstract;
-            isFinal = false;
-            break;
-        case DispatchType::Virtual:
-            callMode = lyric_object::CallMode::Normal;
-            isFinal = false;
-            break;
-        case DispatchType::Final:
-            callMode = lyric_object::CallMode::Normal;
-            isFinal = true;
-            break;
-    }
 
     auto *existingOrOverridden = find_existing_or_overridden_class_binding(this, name);
     if (existingOrOverridden == this)
@@ -734,10 +717,6 @@ lyric_assembler::ClassSymbol::declareMethod(
                     return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
                         "final method {} cannot be overridden by class {}",
                         existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
-                if (dispatch == DispatchType::Abstract)
-                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                        "{} cannot be overridden by abstract method",
-                        existingOrOverridden->getSymbolUrl().toString());
                 baseUrl = existingOrOverridden->getSymbolUrl();
                 break;
             }
@@ -776,16 +755,18 @@ lyric_assembler::ClassSymbol::declareMethod(
             callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, baseUrl, isFinal,
                 methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
         } else {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode, isFinal,
-                methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
+                lyric_object::CallMode::Normal, isFinal, methodTemplate, priv->isDeclOnly,
+                priv->classBlock.get(), m_state);
         }
     } else {
         if (baseUrl.isValid()) {
             callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, baseUrl, isFinal,
                 priv->isDeclOnly, priv->classBlock.get(), m_state);
         } else {
-            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode, isFinal,
-                priv->isDeclOnly, priv->classBlock.get(), m_state);
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
+                lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->classBlock.get(),
+                m_state);
         }
     }
 

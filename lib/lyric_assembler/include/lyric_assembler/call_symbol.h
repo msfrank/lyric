@@ -124,10 +124,6 @@ namespace lyric_assembler {
             const ParameterPack &parameterPack,
             const lyric_common::TypeDef &returnType = {});
 
-        tempo_utils::Status defineAbstract(
-            const ParameterPack &parameterPack,
-            const lyric_common::TypeDef &returnType);
-
         std::string getName() const;
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;

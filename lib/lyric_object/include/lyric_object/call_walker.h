@@ -26,7 +26,6 @@ namespace lyric_object {
         bool isConstructor() const;
         bool isBound() const;
         bool isNoReturn() const;
-        bool isAbstract() const;
         bool isOverride() const;
         bool isFinal() const;
         bool isDeclOnly() const;

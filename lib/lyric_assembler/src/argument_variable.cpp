@@ -6,7 +6,7 @@ lyric_assembler::ArgumentVariable::ArgumentVariable(
     const lyric_common::SymbolUrl &argumentUrl,
     const lyric_common::TypeDef &assignableType,
     BindingType bindingType,
-    ArgumentOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_argumentUrl(argumentUrl),
       m_assignableType(assignableType),
@@ -17,13 +17,13 @@ lyric_assembler::ArgumentVariable::ArgumentVariable(
     TU_ASSERT (m_argumentUrl.isValid());
     TU_ASSERT (m_assignableType.isValid());
     TU_ASSERT (m_bindingType != BindingType::Invalid);
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
 lyric_assembler::ArgumentVariable::ArgumentVariable(
     const lyric_common::SymbolUrl &argumentUrl,
-    ArgumentOffset offset,
+    tu_uint32 offset,
     ObjectState *state)
     : m_argumentUrl(argumentUrl),
       m_bindingType(BindingType::Invalid),
@@ -31,7 +31,7 @@ lyric_assembler::ArgumentVariable::ArgumentVariable(
       m_state(state)
 {
     TU_ASSERT (m_argumentUrl.isValid());
-    TU_ASSERT (m_offset.isValid());
+    TU_ASSERT (m_offset != lyric_runtime::INVALID_ADDRESS_U32);
     TU_NOTNULL (m_state);
 }
 
@@ -89,7 +89,7 @@ lyric_assembler::ArgumentVariable::getBindingType() const
     return m_bindingType;
 }
 
-lyric_assembler::ArgumentOffset
+tu_uint32
 lyric_assembler::ArgumentVariable::getOffset() const
 {
     return m_offset;

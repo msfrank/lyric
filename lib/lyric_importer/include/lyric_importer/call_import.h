@@ -18,7 +18,6 @@ namespace lyric_importer {
         bool isDeclOnly();
         bool isHidden();
         lyric_object::CallMode getCallMode();
-        bool isAbstract();
         bool isOverride();
         bool isFinal();
 
@@ -64,7 +63,6 @@ namespace lyric_importer {
             bool isDeclOnly = false;
             bool isHidden = false;
             lyric_object::CallMode callMode = lyric_object::CallMode::Invalid;
-            bool isAbstract = false;
             bool isFinal = false;
             std::vector<Parameter> listParameters;
             std::vector<Parameter> namedParameters;
