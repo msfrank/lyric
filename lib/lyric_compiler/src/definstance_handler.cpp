@@ -75,6 +75,7 @@ lyric_compiler::DefInstanceHandler::before(
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
+    std::vector<lyric_parser::ArchetypeNode *> declNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
     std::vector<lyric_parser::ArchetypeNode *> globalNodes;
 
@@ -94,6 +95,10 @@ lyric_compiler::DefInstanceHandler::before(
             }
             case lyric_schema::LyricAstId::Def: {
                 defNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Decl: {
+                declNodes.push_back(child);
                 break;
             }
             case lyric_schema::LyricAstId::Impl: {
@@ -146,6 +151,14 @@ lyric_compiler::DefInstanceHandler::before(
         Member member;
         TU_ASSIGN_OR_RETURN (member, declare_instance_member(fieldNode, m_definstance.instanceSymbol, typeSystem));
         m_definstance.members[fieldNode] = member;
+    }
+
+    // declare stubs
+    for (auto &declNode : declNodes) {
+        Stub stub;
+        TU_ASSIGN_OR_RETURN (stub, declare_instance_stub(
+            declNode, m_definstance.instanceSymbol, typeSystem));
+        m_definstance.stubs[declNode] = stub;
     }
 
     // declare methods
@@ -239,6 +252,12 @@ lyric_compiler::InstanceDefinition::decide(
         case lyric_schema::LyricAstId::Field: {
             auto member = m_definstance->members.at(node);
             auto handler = std::make_unique<MemberHandler>(member, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Decl: {
+            auto stub = m_definstance->stubs.at(node);
+            auto handler = std::make_unique<StubHandler>(stub, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

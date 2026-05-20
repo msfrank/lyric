@@ -1223,6 +1223,18 @@ void lyric_parser::internal::ModuleArchetype::exitEnumDef(ModuleParser::EnumDefC
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumDef(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterEnumDecl(ModuleParser::EnumDeclContext *ctx)
+{
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumDecl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitEnumDecl(ModuleParser::EnumDeclContext *ctx)
+{
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumDecl(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterEnumCase(ModuleParser::EnumCaseContext *ctx)
 {
     ModuleDefenumOps ops(this);
@@ -1322,6 +1334,18 @@ void lyric_parser::internal::ModuleArchetype::exitInstanceDef(ModuleParser::Inst
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceDef(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterInstanceDecl(ModuleParser::InstanceDeclContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceDecl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitInstanceDecl(ModuleParser::InstanceDeclContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceDecl(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
     ModuleDefinstanceOps ops(this);
@@ -1395,6 +1419,18 @@ void lyric_parser::internal::ModuleArchetype::exitStructDef(ModuleParser::Struct
 {
     ModuleDefstructOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructDef(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterStructDecl(ModuleParser::StructDeclContext *ctx)
+{
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructDecl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitStructDecl(ModuleParser::StructDeclContext *ctx)
+{
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructDecl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructImpl(ModuleParser::StructImplContext *ctx)

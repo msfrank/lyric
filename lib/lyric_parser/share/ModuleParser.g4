@@ -354,10 +354,11 @@ instanceBase        : FromKeyword assignableType ;
 instanceInit        : InitKeyword paramSpec procBlock ;
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
-instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
+instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? FinalKeyword? procBlock ;
+instanceDecl        : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceGlobal      : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
-instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl | instanceGlobal ;
+instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceDecl | instanceImpl | instanceGlobal ;
 
 
 // defenum statement
@@ -368,11 +369,12 @@ defenumStatement    : definitionMacro? DefEnumKeyword symbolIdentifier
 enumBase            : FromKeyword assignableType ;
 enumInit            : InitKeyword paramSpec procBlock ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
-enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
+enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? FinalKeyword? procBlock ;
+enumDecl            : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 enumCase            : CaseKeyword symbolIdentifier callArguments? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumGlobal          : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
-enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl | enumGlobal ;
+enumSpec            : enumInit | enumVal | enumDef | enumDecl | enumCase | enumImpl | enumGlobal ;
 
 
 // defstruct statement
@@ -383,10 +385,11 @@ defstructStatement  : definitionMacro? DefStructKeyword symbolIdentifier
 structBase          : FromKeyword assignableType ;
 structInit          : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
-structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
+structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? FinalKeyword? procBlock ;
+structDecl          : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structGlobal        : GlobalKeyword CurlyOpen globalSpec* CurlyClose ;
-structSpec          : structInit | structVal | structDef | structImpl | structGlobal ;
+structSpec          : structInit | structVal | structDef | structDecl | structImpl | structGlobal ;
 
 
 // defstatic statement

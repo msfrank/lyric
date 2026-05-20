@@ -30,6 +30,7 @@ namespace lyric_analyzer {
         tempo_utils::Status declareCase(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareMethod(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status declareStub(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImpl(const lyric_parser::ArchetypeNode *node);
 
     private:

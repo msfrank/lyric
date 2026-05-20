@@ -206,6 +206,10 @@ lyric_compiler::declare_instance_method(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // determine if final
+    bool isFinal;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, isFinal));
+
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
@@ -228,7 +232,7 @@ lyric_compiler::declare_instance_method(
     Method method;
 
     // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, instanceSymbol->declareMethod(identifier, isHidden));
+    TU_ASSIGN_OR_RETURN (method.callSymbol, instanceSymbol->declareMethod(identifier, isHidden, isFinal));
 
     TU_LOG_V << "declared method " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
@@ -246,6 +250,54 @@ lyric_compiler::declare_instance_method(
     TU_ASSIGN_OR_RETURN (method.procHandle, method.callSymbol->defineCall(parameterPack, returnType));
 
     return method;
+}
+
+tempo_utils::Result<lyric_compiler::Stub>
+lyric_compiler::declare_instance_stub(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (node != nullptr);
+    TU_ASSERT (instanceSymbol != nullptr);
+    auto *instanceBlock = instanceSymbol->instanceBlock();
+
+    // get method name
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    // determine the access level
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    // parse the return type
+    lyric_parser::ArchetypeNode *typeNode;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, typeNode->getArchetypeNode()));
+
+    // parse the parameter list
+    auto *packNode = node->getChild(0);
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(instanceBlock, packNode->getArchetypeNode()));
+
+    // if method is generic, then parse the template parameter list
+    lyric_typing::TemplateSpec templateSpec;
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        lyric_parser::ArchetypeNode *genericNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(instanceBlock, genericNode->getArchetypeNode()));
+    }
+
+    Stub stub;
+    stub.actionSymbol = nullptr;
+
+    // declare the stub
+    TU_ASSIGN_OR_RETURN (stub.actionSymbol, instanceSymbol->declareStub(identifier, isHidden));
+
+    TU_LOG_V << "declared stub " << identifier << " for " << instanceSymbol->getSymbolUrl();
+
+    return stub;
 }
 
 tempo_utils::Result<lyric_compiler::Impl>

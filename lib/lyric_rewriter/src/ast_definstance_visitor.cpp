@@ -22,6 +22,7 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> initNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> memberNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> methodNodes;
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> stubNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> globalNodes;
 
@@ -38,6 +39,9 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
                 break;
             case lyric_schema::LyricAstId::Def:
                 methodNodes.emplace_back(child, i);
+                break;
+            case lyric_schema::LyricAstId::Decl:
+                stubNodes.emplace_back(child, i);
                 break;
             case lyric_schema::LyricAstId::Impl:
                 implNodes.emplace_back(child, i);
@@ -64,6 +68,12 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
     }
 
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
+        ctx.push(node, it->second, it->first, visitor);
+    }
+
+    for (auto it = stubNodes.rbegin(); it != stubNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
         ctx.push(node, it->second, it->first, visitor);

@@ -292,6 +292,60 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseStub)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
+TEST_F(CompileDefclass, CompileDefineStubOverridingMethodFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defclass Foo {
+            def Index(): Int {
+                1
+            }
+        }
+        defclass Bar from Foo {
+            decl Index(): Int
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
+TEST_F(CompileDefclass, CompileDefineStubOverridingStubFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defclass Foo {
+            decl Index(): Int
+        }
+        defclass Bar from Foo {
+            decl Index(): Int
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
+TEST_F(CompileDefclass, CompileDefineMethodOverridingFinalMethodFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defclass Foo {
+            def Index(): Int final {
+                1
+            }
+        }
+        defclass Bar from Foo {
+            def Index(): Int {
+                2
+            }
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
 TEST_F(CompileDefclass, EvaluateDefGenericClass)
 {
     auto result = m_tester->runModule(R"(

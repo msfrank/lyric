@@ -416,7 +416,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDecl(ModuleParser::ClassDecl
     ArchetypeNode *defclassNode;
     TU_ASSIGN_OR_RAISE (defclassNode, state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    // append decl node to defconcept
+    // append decl node to defclass
     TU_RAISE_IF_NOT_OK (defclassNode->appendChild(declNode));
 }
 

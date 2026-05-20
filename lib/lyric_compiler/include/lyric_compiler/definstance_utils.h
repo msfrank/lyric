@@ -41,6 +41,11 @@ namespace lyric_compiler {
         lyric_assembler::InstanceSymbol *instanceSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
+    tempo_utils::Result<Stub> declare_instance_stub(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::InstanceSymbol *instanceSymbol,
+        lyric_typing::TypeSystem *typeSystem);
+
     tempo_utils::Result<Impl>
     declare_instance_impl(
         const lyric_parser::ArchetypeNode *node,

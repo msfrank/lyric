@@ -39,6 +39,11 @@ namespace lyric_compiler {
         lyric_assembler::EnumSymbol *enumSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
+    tempo_utils::Result<Stub> declare_enum_stub(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::EnumSymbol *enumSymbol,
+        lyric_typing::TypeSystem *typeSystem);
+
     tempo_utils::Result<Impl> declare_enum_impl(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::EnumSymbol *enumSymbol,

@@ -169,6 +169,100 @@ TEST_F(CompileDefstruct, EvaluateInvokeMethodWithNoReturnType)
             MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
 }
 
+TEST_F(CompileDefstruct, EvaluateInvokeVirtualMethodOverridingBaseMethod)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            def Index(): Int {
+                1
+            }
+        }
+        defstruct Bar from Foo {
+            init() {}
+            def Index(): Int {
+                2
+            }
+        }
+        val foo: Foo = Bar{}
+        foo.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+}
+
+TEST_F(CompileDefstruct, EvaluateInvokeVirtualMethodOverridingBaseStub)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            decl Index(): Int
+        }
+        defstruct Bar from Foo {
+            init() {}
+            def Index(): Int {
+                2
+            }
+        }
+        val foo: Foo = Bar{}
+        foo.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+}
+
+TEST_F(CompileDefstruct, CompileDefineStubOverridingMethodFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defstruct Foo {
+            def Index(): Int {
+                1
+            }
+        }
+        defstruct Bar from Foo {
+            decl Index(): Int
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
+TEST_F(CompileDefstruct, CompileDefineStubOverridingStubFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defstruct Foo {
+            decl Index(): Int
+        }
+        defstruct Bar from Foo {
+            decl Index(): Int
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
+TEST_F(CompileDefstruct, CompileDefineMethodOverridingFinalMethodFails)
+{
+    auto result = m_tester->compileModule(R"(
+        defstruct Foo {
+            def Index(): Int final {
+                1
+            }
+        }
+        defstruct Bar from Foo {
+            def Index(): Int {
+                2
+            }
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSymbolAlreadyDefined))));
+}
+
 TEST_F(CompileDefstruct, EvaluateNewInstanceOfSealedStruct)
 {
     auto result = m_tester->runModule(R"(

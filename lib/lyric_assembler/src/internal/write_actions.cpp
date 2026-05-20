@@ -74,6 +74,9 @@ write_action(
     switch (receiverSection) {
         case lyric_object::LinkageSection::Class:
         case lyric_object::LinkageSection::Concept:
+        case lyric_object::LinkageSection::Enum:
+        case lyric_object::LinkageSection::Instance:
+        case lyric_object::LinkageSection::Struct:
             break;
         default:
             return lyric_assembler::AssemblerStatus::forCondition(

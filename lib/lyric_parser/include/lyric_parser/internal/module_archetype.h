@@ -230,6 +230,8 @@ namespace lyric_parser::internal {
         void exitEnumVal(ModuleParser::EnumValContext *ctx) override;
         void enterEnumDef(ModuleParser::EnumDefContext *ctx) override;
         void exitEnumDef(ModuleParser::EnumDefContext *ctx) override;
+        void enterEnumDecl(ModuleParser::EnumDeclContext *ctx) override;
+        void exitEnumDecl(ModuleParser::EnumDeclContext *ctx) override;
         void enterEnumCase(ModuleParser::EnumCaseContext *ctx) override;
         void exitEnumCase(ModuleParser::EnumCaseContext *ctx) override;
         void enterEnumImpl(ModuleParser::EnumImplContext *ctx) override;
@@ -248,6 +250,8 @@ namespace lyric_parser::internal {
         void exitInstanceVar(ModuleParser::InstanceVarContext *ctx) override;
         void enterInstanceDef(ModuleParser::InstanceDefContext *ctx) override;
         void exitInstanceDef(ModuleParser::InstanceDefContext *ctx) override;
+        void enterInstanceDecl(ModuleParser::InstanceDeclContext *ctx) override;
+        void exitInstanceDecl(ModuleParser::InstanceDeclContext *ctx) override;
         void enterInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
         void exitInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
         void enterInstanceGlobal(ModuleParser::InstanceGlobalContext *ctx) override;
@@ -262,6 +266,8 @@ namespace lyric_parser::internal {
         void exitStructVal(ModuleParser::StructValContext *ctx) override;
         void enterStructDef(ModuleParser::StructDefContext *ctx) override;
         void exitStructDef(ModuleParser::StructDefContext *ctx) override;
+        void enterStructDecl(ModuleParser::StructDeclContext *ctx) override;
+        void exitStructDecl(ModuleParser::StructDeclContext *ctx) override;
         void enterStructImpl(ModuleParser::StructImplContext *ctx) override;
         void exitStructImpl(ModuleParser::StructImplContext *ctx) override;
         void enterStructGlobal(ModuleParser::StructGlobalContext *ctx) override;

@@ -19,6 +19,8 @@ namespace lyric_parser::internal {
         void exitEnumVal(ModuleParser::EnumValContext *ctx);
         void enterEnumDef(ModuleParser::EnumDefContext *ctx);
         void exitEnumDef(ModuleParser::EnumDefContext *ctx);
+        void enterEnumDecl(ModuleParser::EnumDeclContext *ctx);
+        void exitEnumDecl(ModuleParser::EnumDeclContext *ctx);
         void enterEnumCase(ModuleParser::EnumCaseContext *ctx);
         void exitEnumCase(ModuleParser::EnumCaseContext *ctx);
         void enterEnumImpl(ModuleParser::EnumImplContext *ctx);
