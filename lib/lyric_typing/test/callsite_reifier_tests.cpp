@@ -14,13 +14,13 @@ class CallsiteReifier : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}));
 
     // simulate the function f(): Bool
-    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    lyric_typing::CallsiteReifier reifier(typeSystem.get());
     ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // result type should be Bool
@@ -35,7 +35,7 @@ TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 
 TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
     lyric_assembler::Parameter p0;
@@ -46,7 +46,7 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}));
 
     // simulate the function f(p0: Int): Int
-    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    lyric_typing::CallsiteReifier reifier(typeSystem.get());
     ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // apply Int argument
@@ -64,7 +64,7 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 
 TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
@@ -81,7 +81,7 @@ TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0, p1}, {}, {}));
 
     // simulate the function f(p0: Int, p1: Float): Int
-    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    lyric_typing::CallsiteReifier reifier(typeSystem.get());
     ASSERT_TRUE (reifier.initialize(callable.get()).isOk());
 
     // apply Int argument

@@ -620,7 +620,8 @@ CoreClass *
 BuilderState::addClass(
     const lyric_common::SymbolPath &classPath,
     lyo1::ClassFlags classFlags,
-    const CoreClass *superClass)
+    const CoreClass *superClass,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(classPath));
 
@@ -628,7 +629,9 @@ BuilderState::addClass(
     auto *Class = new CoreClass();
     classes.push_back(Class);
 
-    const CoreType *superType = superClass? superClass->classType : nullptr;
+    if (superType == nullptr) {
+        superType = superClass? superClass->classType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Class, class_index);
 
     Class->class_index = class_index;
@@ -657,7 +660,8 @@ BuilderState::addGenericClass(
     const lyric_common::SymbolPath &classPath,
     const CoreTemplate *classTemplate,
     lyo1::ClassFlags classFlags,
-    const CoreClass *superClass)
+    const CoreClass *superClass,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(classPath));
     TU_ASSERT (classTemplate != nullptr);
@@ -666,7 +670,9 @@ BuilderState::addGenericClass(
     auto *Class = new CoreClass();
     classes.push_back(Class);
 
-    const CoreType *superType = superClass? superClass->classType : nullptr;
+    if (superType == nullptr) {
+        superType = superClass? superClass->classType : nullptr;
+    }
     std::vector<const CoreType *> typeParameters;
     for (const auto &name : classTemplate->names) {
         typeParameters.push_back(classTemplate->types.at(name));
@@ -1896,12 +1902,14 @@ BuilderState::toObject() const
 
         tu_uint32 superClass = Class->superClass? Class->superClass->class_index
             : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Class->superType? Class->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 classTemplate = Class->classTemplate? Class->classTemplate->template_index
             : lyric_object::INVALID_ADDRESS_U32;
 
         classes_vector.push_back(lyo1::CreateClassDescriptor(buffer,
-            fb_fullyQualifiedName, superClass, classTemplate, Class->classType->type_index, Class->flags,
-            fb_members, fb_methods, fb_stubs, fb_impls, Class->allocatorTrap, fb_sealedSubtypes));
+            fb_fullyQualifiedName, superClass, superType, classTemplate, Class->classType->type_index,
+            Class->flags, fb_members, fb_methods, fb_stubs, fb_impls, Class->allocatorTrap, fb_sealedSubtypes));
     }
 
     // write the struct descriptors

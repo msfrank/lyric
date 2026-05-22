@@ -8,6 +8,7 @@
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
+#include <lyric_typing/impl_reifier.h>
 
 lyric_analyzer::EnumAnalyzerContext::EnumAnalyzerContext(
     AnalyzerScanDriver *driver,
@@ -281,6 +282,9 @@ lyric_analyzer::EnumAnalyzerContext::declareImpl(const lyric_parser::ArchetypeNo
     TU_LOG_V << "declared impl " << implType << " on " << m_enumSymbol->getSymbolUrl();
 
     // push the impl context
-    auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle);
+    auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle, implType);
+
+    TU_RETURN_IF_NOT_OK (ctx->processAliases(node));
+
     return m_driver->pushContext(std::move(ctx));
 }

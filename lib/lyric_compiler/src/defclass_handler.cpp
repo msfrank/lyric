@@ -78,6 +78,12 @@ lyric_compiler::DefClassHandler::before(
             lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
+    // declare the class
+    TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass( identifier, isHidden,
+        m_defclass.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
+
+    auto *classBlock = m_defclass.classSymbol->classBlock();
+
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -120,7 +126,7 @@ lyric_compiler::DefClassHandler::before(
                     "unexpected AST node");
         }
 
-        auto definition = std::make_unique<ClassDefinition>(&m_defclass, block, driver);
+        auto definition = std::make_unique<ClassDefinition>(&m_defclass, classBlock, driver);
         ctx.appendChoice(std::move(definition));
     }
 
@@ -131,19 +137,18 @@ lyric_compiler::DefClassHandler::before(
         lyric_parser::ArchetypeNode *typeNode;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superClassSpec;
-        TU_ASSIGN_OR_RETURN (superClassSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superClassType, typeSystem->resolveAssignable(block, superClassSpec));
+        TU_ASSIGN_OR_RETURN (superClassSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+        auto *resolver = m_defclass.classSymbol->classResolver();
+        TU_ASSIGN_OR_RETURN (superClassType, typeSystem->resolveAssignable(resolver, superClassSpec));
     } else {
         superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     }
 
-    // resolve the super class symbol
-    TU_ASSIGN_OR_RETURN (m_defclass.superclassSymbol, block->resolveClass(superClassType));
+    // finalize the class
+    TU_RETURN_IF_NOT_OK (m_defclass.classSymbol->finalizeClass(superClassType));
 
-    // declare the class
-    TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(
-        identifier, m_defclass.superclassSymbol, isHidden,
-        m_defclass.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
+    // verify that class is a valid subtype of superclass
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(superClassType, m_defclass.classSymbol->superClass()));
 
     // add class to the current namespace if specified
     if (m_currentNamespace != nullptr) {

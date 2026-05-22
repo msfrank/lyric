@@ -335,14 +335,6 @@ lyric_assembler::TypeCache::declareSubType(
     TU_ASSERT (subTypeUrl.isValid());
     TU_ASSERT (superType.isValid());
 
-    auto symbolCache = m_objectState->symbolCache();
-
-    // verify the subtype symbol either does not exist, or exists as a typename
-    auto *sym = symbolCache->getSymbolOrNull(subTypeUrl);
-    if (sym != nullptr && sym->getSymbolType() != SymbolType::TYPENAME)
-        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "symbol {} is already defined", subTypeUrl.toString());
-
     // ensure supertype handle exists
     auto superEntry = m_typecache.find(superType);
     if (superEntry == m_typecache.cend())

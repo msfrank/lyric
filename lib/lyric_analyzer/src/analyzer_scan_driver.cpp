@@ -370,7 +370,6 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 {
     std::string identifier;
     lyric_typing::TemplateSpec templateSpec;
-    lyric_assembler::ClassSymbol *superClass = nullptr;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -389,6 +388,10 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
         TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
+    lyric_assembler::ClassSymbol *classSymbol;
+    TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(identifier, isHidden,
+        templateSpec.templateParameters, isAbstract, internal::convert_derive_type(derive), /* declOnly= */ true));
+
     lyric_common::TypeDef superClassType;
 
     // determine the superclass type
@@ -397,25 +400,21 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superClassSpec;
         TU_ASSIGN_OR_RETURN (superClassSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superClassType, m_typeSystem->resolveAssignable(block, superClassSpec));
+        auto *resolver = classSymbol->classResolver();
+        TU_ASSIGN_OR_RETURN (superClassType, m_typeSystem->resolveAssignable(resolver, superClassSpec));
     } else {
         auto *fundamentalCache = m_state->fundamentalCache();
         superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     }
 
-    // resolve the superclass
-    TU_ASSIGN_OR_RETURN (superClass, block->resolveClass(superClassType));
-
-    lyric_assembler::ClassSymbol *classSymbol;
-    TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-        identifier, superClass, isHidden, templateSpec.templateParameters, isAbstract,
-        internal::convert_derive_type(derive), /* declOnly= */ true));
+    // finalize the class
+    TU_RETURN_IF_NOT_OK (classSymbol->finalizeClass(superClassType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(classSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
+    TU_LOG_V << "declared class " << classSymbol->getSymbolUrl() << " from " << superClassType.toString();
 
     // push the class context
     auto ctx = std::make_unique<ClassAnalyzerContext>(this, classSymbol);

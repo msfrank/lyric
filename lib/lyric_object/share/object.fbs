@@ -341,6 +341,7 @@ enum ClassFlags : uint16 (bit_flags) {
 table ClassDescriptor {
     fqsn: string;                               // fully qualified class name
     super_class: uint32 = 0xffffffff;           // offset of the super class in the classes section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     class_template: uint32 = 0xffffffff;        // offset of the template in the templates section, or 0xffffffff if not generic
     class_type: uint32 = 0xffffffff;            // offset of the class type in the types section
     flags: ClassFlags;                          // bitfield containing class flags

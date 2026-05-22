@@ -28,6 +28,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/typing_result.h
     include/lyric_typing/typing_types.h
     include/lyric_typing/unify_assignable.h
+    include/lyric_typing/validate_subtype.h
     )
 set_target_properties(lyric_typing PROPERTIES PUBLIC_HEADER "${LYRIC_TYPING_INCLUDES}")
 
@@ -53,6 +54,7 @@ target_sources(lyric_typing PRIVATE
     src/typing_result.cpp
     src/typing_types.cpp
     src/unify_assignable.cpp
+    src/validate_subtype.cpp
 
     include/lyric_typing/internal/check_placeholder.h
     src/internal/check_placeholder.cpp

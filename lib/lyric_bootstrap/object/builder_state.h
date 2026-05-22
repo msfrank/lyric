@@ -152,6 +152,7 @@ struct CoreClass {
     const CoreType *classType;
     const CoreTemplate *classTemplate;
     const CoreClass *superClass;
+    const CoreType *superType;
     lyo1::ClassFlags flags;
     tu_uint32 allocatorTrap;
     const CoreCall *classCtor;
@@ -347,12 +348,14 @@ struct BuilderState {
     CoreClass *addClass(
         const lyric_common::SymbolPath &classPath,
         lyo1::ClassFlags classFlags,
-        const CoreClass *superClass = nullptr);
+        const CoreClass *superClass = nullptr,
+        const CoreType *superType = nullptr);
     CoreClass *addGenericClass(
         const lyric_common::SymbolPath &classPath,
         const CoreTemplate *classTemplate,
         lyo1::ClassFlags classFlags,
-        const CoreClass *superClass = nullptr);
+        const CoreClass *superClass = nullptr,
+        const CoreType *superType = nullptr);
     void setClassAllocator(const CoreClass *receiver, std::string_view trapName);
     CoreCall *addClassCtor(
         const CoreClass *receiver,

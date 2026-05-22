@@ -9,12 +9,12 @@ class ComparePlaceholder : public BaseTypingFixture {};
 
 TEST_F(ComparePlaceholder, ComparisonToItselfIsEqual)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
-    auto *typeCache = m_objectState->typeCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto *typeCache = objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    lyric_assembler::BlockHandle rootBlock(m_objectState.get());
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, &rootBlock, m_objectState.get());
+    lyric_assembler::BlockHandle rootBlock(objectState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, &rootBlock, objectState.get());
 
     lyric_object::TemplateParameter tp;
     tp.index = 0;
@@ -29,6 +29,6 @@ TEST_F(ComparePlaceholder, ComparisonToItselfIsEqual)
 
     auto placeholder = templateHandle->getPlaceholder(0);
 
-    auto cmp = m_typeSystem->compareAssignable(placeholder, placeholder).orElseThrow();
+    auto cmp = typeSystem->compareAssignable(placeholder, placeholder).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::EQUAL, cmp);
 }

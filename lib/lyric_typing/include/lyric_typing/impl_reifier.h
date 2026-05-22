@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_assembler/type_contract.h>
 
@@ -19,6 +20,8 @@ namespace lyric_typing {
 
         tempo_utils::Status initialize(lyric_assembler::ConceptSymbol *conceptSymbol);
         tempo_utils::Status initialize(const lyric_common::TypeDef &implType);
+
+        lyric_assembler::ConceptSymbol *getConcept() const;
 
         tempo_utils::Status reifyNextImplArgument(const lyric_common::TypeDef &argumentType);
         tempo_utils::Status reifyAliasArgument(const lyric_assembler::BindingSymbol *bindingSymbol);

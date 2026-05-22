@@ -102,7 +102,6 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ClassSymbol *> declareClass(
             const std::string &name,
-            ClassSymbol *superClass,
             bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             bool isAbstract = false,

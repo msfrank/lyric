@@ -24,10 +24,14 @@ lyric_typing::internal::check_placeholder(
                 return {};
             break;
         default:
-            break;
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "invalid template parameter {}", tp.name);
     }
 
     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
-        "argument type {} is not substitutable for constraint {}",
-        arg.toString(), tp.typeDef.toString());
+        "argument type {} is not substitutable for constraint {}{}{}",
+        arg.toString(),
+        tp.name,
+        tp.bound == lyric_object::BoundType::Extends? "<" : ">",
+        tp.typeDef.toString());
 }

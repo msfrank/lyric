@@ -14,8 +14,9 @@ set(TEST_CASES
     compare_intersection_tests.cpp
     compare_singular_tests.cpp
     compare_union_tests.cpp
-    overload_reifier_tests.cpp
     is_assignable_tests.cpp
+    overload_reifier_tests.cpp
+    validate_subtype_tests.cpp
     )
 
 # define test suite driver

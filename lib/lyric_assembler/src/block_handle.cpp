@@ -1033,7 +1033,6 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, std::uniq
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
 lyric_assembler::BlockHandle::declareClass(
     const std::string &name,
-    ClassSymbol *superClass,
     bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool isAbstract,
@@ -1047,40 +1046,20 @@ lyric_assembler::BlockHandle::declareClass(
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, classUrl));
 
-    auto superDerive = superClass->getDeriveType();
-    if (superDerive == lyric_object::DeriveType::Final)
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive class {} from {}; base class is marked final",
-            name, superClass->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && superClass->isImported())
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive class {} from {}; sealed base class must be located in the same module",
-            name, superClass->getSymbolUrl().toString());
-
     // create the template if there are any template parameters
     TemplateHandle *classTemplate = nullptr;
     if (!templateParameters.empty()) {
         TU_ASSIGN_OR_RETURN (classTemplate, typeCache->makeTemplate(classUrl, templateParameters, this));
     }
 
-   // create the type
-    TypeHandle *typeHandle;
-    if (classTemplate) {
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            classUrl, classTemplate->getPlaceholders(), superClass->getTypeDef()));
-    } else {
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            classUrl, {}, superClass->getTypeDef()));
-    }
-
     // create the class
     std::unique_ptr<ClassSymbol> classSymbol;
     if (classTemplate) {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, isAbstract, derive, typeHandle,
-            classTemplate, superClass, declOnly, this, m_state);
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, isAbstract, derive,
+            classTemplate, declOnly, this, m_state);
     } else {
         classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, isAbstract, derive,
-            typeHandle, superClass, declOnly, this, m_state);
+            declOnly, this, m_state);
     }
 
     ClassSymbol *classPtr;

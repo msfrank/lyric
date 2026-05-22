@@ -22,8 +22,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *classType,
-    ClassSymbol *superClass,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -39,13 +37,8 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->classType = classType;
     priv->classTemplate = nullptr;
-    priv->superClass = superClass;
     priv->classBlock = std::make_unique<BlockHandle>(classUrl, parentBlock);
-
-    TU_ASSERT (priv->classType != nullptr);
-    TU_ASSERT (priv->superClass != nullptr);
 }
 
 lyric_assembler::ClassSymbol::ClassSymbol(
@@ -53,9 +46,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *classType,
     TemplateHandle *classTemplate,
-    ClassSymbol *superClass,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -64,8 +55,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
         isHidden,
         isAbstract,
         derive,
-        classType,
-        superClass,
         isDeclOnly,
         parentBlock,
         state)
@@ -256,13 +245,6 @@ lyric_assembler::ClassSymbol::isDeclOnly() const
     return priv->isDeclOnly;
 }
 
-lyric_assembler::ClassSymbol *
-lyric_assembler::ClassSymbol::superClass() const
-{
-    auto *priv = getPriv();
-    return priv->superClass;
-}
-
 lyric_assembler::TypeHandle *
 lyric_assembler::ClassSymbol::classType() const
 {
@@ -277,11 +259,79 @@ lyric_assembler::ClassSymbol::classTemplate() const
     return priv->classTemplate;
 }
 
+lyric_assembler::ClassSymbol *
+lyric_assembler::ClassSymbol::superClass() const
+{
+    auto *priv = getPriv();
+    return priv->superClass;
+}
+
+lyric_assembler::TypeHandle *
+lyric_assembler::ClassSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superType;
+}
+
 lyric_assembler::BlockHandle *
 lyric_assembler::ClassSymbol::classBlock() const
 {
     auto *priv = getPriv();
     return priv->classBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::ClassSymbol::classResolver() const
+{
+    auto *priv = getPriv();
+    if (priv->classTemplate)
+        return priv->classTemplate;
+    return priv->classBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::ClassSymbol::finalizeClass(const lyric_common::TypeDef &superClassType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    ClassSymbol *superClass;
+    TU_ASSIGN_OR_RETURN (superClass, priv->classBlock->resolveClass(superClassType));
+
+    auto superDerive = superClass->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive class {} from {}; base class is marked final",
+            m_classUrl.getSymbolPath().toString(), superClass->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superClass->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive class {} from {}; sealed base class must be located in the same module",
+            m_classUrl.getSymbolPath().toString(), superClass->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    TypeHandle *supertypeHandle;
+    if (superClassType.numConcreteArguments() > 0) {
+        auto superUrl = superClassType.getConcreteUrl();
+        std::vector superArguments(superClassType.concreteArgumentsBegin(), superClassType.concreteArgumentsEnd());
+        TU_ASSIGN_OR_RETURN (supertypeHandle, typeCache->declareParameterizedType(superUrl, superArguments));
+    } else {
+        supertypeHandle = superClass->classType();
+    }
+
+    // create the type
+    TypeHandle *typeHandle;
+    if (priv->classTemplate) {
+        auto placeholders = priv->classTemplate->getPlaceholders();
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_classUrl, placeholders, superClassType));
+    } else {
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_classUrl, {}, superClassType));
+    }
+
+    priv->superClass = superClass;
+    priv->superType = supertypeHandle;
+    priv->classType = typeHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

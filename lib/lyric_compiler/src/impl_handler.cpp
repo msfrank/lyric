@@ -29,7 +29,6 @@ lyric_compiler::ImplHandler::before(
 {
     TU_LOG_VV << "before ImplHandler@" << this;
 
-    auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
 
@@ -40,6 +39,8 @@ lyric_compiler::ImplHandler::before(
     // reify the impl type
     TU_RETURN_IF_NOT_OK (m_reifier.initialize(m_impl.implType));
 
+    auto *implBlock = m_impl.implHandle->implBlock();
+
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
         auto *child = *it;
 
@@ -48,7 +49,7 @@ lyric_compiler::ImplHandler::before(
         switch (astId) {
             case lyric_schema::LyricAstId::Alias: {
                 lyric_assembler::BindingSymbol *bindingSymbol;
-                TU_ASSIGN_OR_RETURN (bindingSymbol, declare_alias(child, block, typeSystem));
+                TU_ASSIGN_OR_RETURN (bindingSymbol, declare_alias(child, implBlock, typeSystem));
                 TU_RETURN_IF_NOT_OK (m_reifier.reifyAliasArgument(bindingSymbol));
                 break;
             }
@@ -58,15 +59,18 @@ lyric_compiler::ImplHandler::before(
                 return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
-        auto definition = std::make_unique<ImplDefinition>(&m_impl, &m_reifier, block, driver);
+        auto definition = std::make_unique<ImplDefinition>(&m_impl, &m_reifier, implBlock, driver);
         ctx.appendChoice(std::move(definition));
     }
 
-    // after all aliases have been declared we can finalize the contract
+    // after all aliases have been declared we can build the contract
     lyric_assembler::TypeContract contract;
     TU_ASSIGN_OR_RETURN (contract, m_reifier.reifyContract());
-    TU_RETURN_IF_NOT_OK (m_impl.implHandle->finalizeContract(contract));
 
+    // validate the implementation type is a subtype of the impl concept
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(contract.getImplementationType(), m_reifier.getConcept()));
+
+    TU_RETURN_IF_NOT_OK (m_impl.implHandle->finalizeContract(contract));
     return {};
 }
 

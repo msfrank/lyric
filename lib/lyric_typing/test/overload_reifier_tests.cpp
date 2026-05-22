@@ -16,9 +16,9 @@ class OverloadReifier : public BaseTypingFixture {};
 
 TEST_F(OverloadReifier, NullaryFunctionReturningConcreteType)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
-    auto *symbolCache = m_objectState->symbolCache();
-    auto *rootBlock = m_objectRoot->rootBlock();
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto *symbolCache = objectState->symbolCache();
+    auto *rootBlock = objectRoot->rootBlock();
 
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
@@ -36,7 +36,7 @@ TEST_F(OverloadReifier, NullaryFunctionReturningConcreteType)
     lyric_assembler::ParameterPack actionParameters;
     TU_RAISE_IF_NOT_OK (OverloadAction->defineAction(actionParameters, BoolType));
 
-    lyric_typing::OverloadReifier reifier(m_typeSystem.get());
+    lyric_typing::OverloadReifier reifier(typeSystem.get());
     ASSERT_THAT (reifier.initialize(OverloadAction), tempo_test::IsOk());
 
     auto reifyParametersResult = reifier.reifyParameters({});
@@ -57,9 +57,9 @@ TEST_F(OverloadReifier, NullaryFunctionReturningConcreteType)
 
 TEST_F(OverloadReifier, UnaryFunctionReceivingConcreteTypeReturningConcreteType)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
-    auto *symbolCache = m_objectState->symbolCache();
-    auto *rootBlock = m_objectRoot->rootBlock();
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto *symbolCache = objectState->symbolCache();
+    auto *rootBlock = objectRoot->rootBlock();
 
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
@@ -79,7 +79,7 @@ TEST_F(OverloadReifier, UnaryFunctionReceivingConcreteTypeReturningConcreteType)
     actionParameters.listParameters.push_back(base0);
     TU_RAISE_IF_NOT_OK (OverloadAction->defineAction(actionParameters, BoolType));
 
-    lyric_typing::OverloadReifier reifier(m_typeSystem.get());
+    lyric_typing::OverloadReifier reifier(typeSystem.get());
     ASSERT_THAT (reifier.initialize(OverloadAction), tempo_test::IsOk());
 
     lyric_assembler::Parameter overload0{0, "x","", BoolType, lyric_object::PlacementType::List, false};
@@ -105,9 +105,9 @@ TEST_F(OverloadReifier, UnaryFunctionReceivingConcreteTypeReturningConcreteType)
 
 TEST_F(OverloadReifier, UnaryFunctionReceivingPlaceholderTypeReturningPlaceholderType)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
-    auto *symbolCache = m_objectState->symbolCache();
-    auto *rootBlock = m_objectRoot->rootBlock();
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto *symbolCache = objectState->symbolCache();
+    auto *rootBlock = objectRoot->rootBlock();
 
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
@@ -133,7 +133,7 @@ TEST_F(OverloadReifier, UnaryFunctionReceivingPlaceholderTypeReturningPlaceholde
     actionParameters.listParameters.push_back(base0);
     TU_RAISE_IF_NOT_OK (OverloadAction->defineAction(actionParameters, templateHandle->getPlaceholder(0)));
 
-    lyric_typing::OverloadReifier reifier(m_typeSystem.get());
+    lyric_typing::OverloadReifier reifier(typeSystem.get());
     ASSERT_THAT (reifier.initialize(OverloadAction), tempo_test::IsOk());
 
     lyric_assembler::Parameter overload0{0, "x","", BoolType, lyric_object::PlacementType::List, false};

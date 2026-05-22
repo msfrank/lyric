@@ -12,14 +12,14 @@ class CallsiteReifierTP0Out : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_returnsT)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
-    auto *typeCache = m_objectState->typeCache();
+    auto *typeCache = objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    lyric_assembler::BlockHandle rootBlock(m_objectState.get());
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, &rootBlock, m_objectState.get());
+    lyric_assembler::BlockHandle rootBlock(objectState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, &rootBlock, objectState.get());
 
     lyric_object::TemplateParameter tp;
     tp.index = 0;
@@ -35,7 +35,7 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}, templateHandle));
 
     // simulate the function f[T](): T with the given callsite type arguments [Int]
-    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    lyric_typing::CallsiteReifier reifier(typeSystem.get());
     ASSERT_TRUE (reifier.initialize(callable.get(), {IntType}).isOk());
 
     // result type should be Int

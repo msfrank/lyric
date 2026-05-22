@@ -19,7 +19,6 @@ namespace lyric_compiler {
 
     struct DefClass {
         lyric_assembler::ClassSymbol *classSymbol = nullptr;
-        lyric_assembler::ClassSymbol *superclassSymbol = nullptr;
         lyric_assembler::CallSymbol *defaultCtor = nullptr;
         lyric_typing::TemplateSpec templateSpec;
         Global global;

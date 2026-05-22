@@ -78,6 +78,12 @@ lyric_typing::ImplReifier::initialize(const lyric_common::TypeDef &implType)
     return {};
 }
 
+lyric_assembler::ConceptSymbol *
+lyric_typing::ImplReifier::getConcept() const
+{
+    return m_concept;
+}
+
 tempo_utils::Status
 lyric_typing::ImplReifier::reifyNextImplArgument(const lyric_common::TypeDef &argumentType)
 {
@@ -93,14 +99,12 @@ lyric_typing::ImplReifier::reifyNextImplArgument(const lyric_common::TypeDef &ar
             m_implTemplateParametersIndex.size(), m_implArgumentTypes.size() + 1);
 
     int index = m_implTemplateParametersIndex.at(m_implArgumentTypes.size());
-    const auto &tp = m_templateParameters.at(index);
-    TU_RETURN_IF_NOT_OK (internal::check_placeholder(tp, argumentType, m_state));
-
     if (m_contractArgumentTypes.at(index).isValid())
         return TypingStatus::forCondition(
             TypingCondition::kTypingInvariant, "impl type argument is already declared");
-
     m_implArgumentTypes.push_back(argumentType);
+
+    const auto &tp = m_templateParameters.at(index);
     m_contractArgumentTypes[tp.index] = argumentType;
 
     return {};
@@ -127,7 +131,9 @@ lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymb
         return {};
 
     auto index = companionType.getPlaceholderIndex();
-    TU_ASSERT (index < m_templateParameters.size());
+    if (index < 0 || m_templateParameters.size() <= index)
+        return TypingStatus::forCondition(
+            TypingCondition::kTypingInvariant, "invalid companion type for alias");
 
     if (m_contractArgumentTypes.at(index).isValid())
         return TypingStatus::forCondition(
@@ -140,8 +146,6 @@ lyric_typing::ImplReifier::reifyAliasArgument(const lyric_assembler::BindingSymb
     auto argumentType = targetTypeHandle->getTypeDef();
 
     const auto &tp = m_templateParameters.at(index);
-    TU_RETURN_IF_NOT_OK (internal::check_placeholder(tp, argumentType, m_state));
-
     m_contractArgumentTypes[tp.index] = argumentType;
 
     return {};

@@ -18,7 +18,7 @@ class CallsiteReifierErrorHandling : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNonParametricArgument)
 {
-    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *fundamentalCache = objectState->fundamentalCache();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
@@ -33,10 +33,10 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
 
     std::vector<lyric_object::TemplateParameter> templateParameters{tp0};
 
-    auto *rootBlock = m_objectRoot->rootBlock();
-    auto *ObjectClass = rootBlock->resolveClass(ObjectType).orElseThrow();
+    auto *rootBlock = objectRoot->rootBlock();
     auto *FooClass = rootBlock->declareClass(
-        "Foo", ObjectClass, /* isHidden= */ false, templateParameters).orElseThrow();
+        "Foo", /* isHidden= */ false, templateParameters).orElseThrow();
+    FooClass->finalizeClass(ObjectType);
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
@@ -46,7 +46,7 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}));
 
     // simulate the function f(p0: Foo[T]): Int
-    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    lyric_typing::CallsiteReifier reifier(typeSystem.get());
     ASSERT_THAT (reifier.initialize(callable.get()), tempo_test::IsOk());
 
     // apply Int argument

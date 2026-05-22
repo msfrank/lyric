@@ -11,6 +11,8 @@
 #include <lyric_typing/type_system.h>
 #include <lyric_typing/unify_assignable.h>
 
+#include "lyric_typing/validate_subtype.h"
+
 lyric_typing::TypeSystem::TypeSystem(lyric_assembler::ObjectState *state)
     : m_state(state)
 {
@@ -115,6 +117,14 @@ lyric_typing::TypeSystem::unifyAssignable(
     const lyric_common::TypeDef &fromRef)
 {
     return unify_assignable(toRef, fromRef, m_state);
+}
+
+tempo_utils::Status
+lyric_typing::TypeSystem::validateSubtype(
+    const lyric_common::TypeDef &subType,
+    lyric_assembler::AbstractSymbol *symbol)
+{
+    return validate_subtype(subType, symbol, m_state);
 }
 
 tempo_utils::Result<bool>

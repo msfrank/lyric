@@ -22,6 +22,7 @@ namespace lyric_assembler {
         TypeHandle *classType = nullptr;
         TemplateHandle *classTemplate = nullptr;
         ClassSymbol *superClass = nullptr;
+        TypeHandle *superType = nullptr;
         std::string allocatorTrap;
         absl::flat_hash_map<std::string, FieldSymbol *> members;
         absl::flat_hash_set<std::string> initializedMembers;
@@ -39,8 +40,6 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *classType,
-            ClassSymbol *superClass,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -50,9 +49,7 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *classType,
             TemplateHandle *classTemplate,
-            ClassSymbol *superClass,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -75,10 +72,18 @@ namespace lyric_assembler {
         lyric_object::DeriveType getDeriveType() const;
         bool isDeclOnly() const;
 
-        ClassSymbol *superClass() const;
         TypeHandle *classType() const;
         TemplateHandle *classTemplate() const;
+        ClassSymbol *superClass() const;
+        TypeHandle *superType() const;
         BlockHandle *classBlock() const;
+
+        AbstractResolver *classResolver() const;
+
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeClass(const lyric_common::TypeDef &superClassType);
 
         /*
          * global management

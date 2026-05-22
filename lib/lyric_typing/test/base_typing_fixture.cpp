@@ -13,7 +13,7 @@
 void
 BaseTypingFixture::SetUp()
 {
-    m_location = lyric_common::ModuleLocation::fromString("/test");
+    location = lyric_common::ModuleLocation::fromString("/test");
     auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
@@ -23,9 +23,9 @@ BaseTypingFixture::SetUp()
     auto origin = lyric_common::ModuleLocation::fromString(
         absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toRfc4122String()));
 
-    m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, origin, localModuleCache, sharedModuleCache, shortcutResolver);
-    TU_ASSIGN_OR_RAISE (m_objectRoot, m_objectState->defineRoot());
+    objectState = std::make_unique<lyric_assembler::ObjectState>(
+        location, origin, localModuleCache, sharedModuleCache, shortcutResolver);
+    TU_ASSIGN_OR_RAISE (objectRoot, objectState->defineRoot());
 
-    m_typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_objectState.get());
+    typeSystem = std::make_unique<lyric_typing::TypeSystem>(objectState.get());
 }

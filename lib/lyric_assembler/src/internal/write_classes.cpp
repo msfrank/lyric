@@ -82,6 +82,9 @@ write_class(
             writer.getSectionAddress(superclassSymbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
     }
 
+    tu_uint32 superType;
+    TU_ASSIGN_OR_RETURN (superType, writer.getTypeOffset(classSymbol->superType()->getTypeDef()));
+
     lyo1::ClassFlags classFlags = lyo1::ClassFlags::NONE;
     if (classSymbol->isDeclOnly()) {
         classFlags |= lyo1::ClassFlags::DeclOnly;
@@ -159,7 +162,7 @@ write_class(
 
     // add class descriptor
     classes_vector.push_back(lyo1::CreateClassDescriptor(buffer, fullyQualifiedName,
-        superclassIndex, classTemplate, classType, classFlags,
+        superclassIndex, superType, classTemplate, classType, classFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
         buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         buffer.CreateVector(sealedSubtypes)));
