@@ -29,6 +29,8 @@ lyric_assembler::internal::touch_class(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(classSymbol->classType()));
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(classSymbol->superType()));
+
     auto *templateHandle = classSymbol->classTemplate();
     if (templateHandle) {
         TU_RETURN_IF_NOT_OK (writer.touchTemplate(templateHandle));

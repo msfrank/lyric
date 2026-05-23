@@ -63,6 +63,13 @@ lyric_importer::ConceptImport::getSuperConcept()
     return m_priv->superConcept;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::ConceptImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 bool
 lyric_importer::ConceptImport::hasConceptTemplate()
 {
@@ -220,6 +227,8 @@ lyric_importer::ConceptImport::load()
                         "cannot import concept at index {} in module {}; invalid super concept",
                         m_conceptOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            conceptWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < conceptWalker.numActions(); i++) {

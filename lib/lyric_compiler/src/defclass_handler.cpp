@@ -79,7 +79,7 @@ lyric_compiler::DefClassHandler::before(
     }
 
     // declare the class
-    TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass( identifier, isHidden,
+    TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(identifier, isHidden,
         m_defclass.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
 
     auto *classBlock = m_defclass.classSymbol->classBlock();

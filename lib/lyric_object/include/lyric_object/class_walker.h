@@ -59,6 +59,7 @@ namespace lyric_object {
         TypeWalker getSealedSubClass(tu_uint8 index) const;
 
         TypeWalker getClassType() const;
+        TypeWalker getSuperType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

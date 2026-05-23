@@ -76,6 +76,7 @@ namespace lyric_object {
         TypeWalker getSealedSubExistential(tu_uint8 index) const;
 
         TypeWalker getExistentialType() const;
+        TypeWalker getSuperType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

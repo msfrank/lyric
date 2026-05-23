@@ -120,6 +120,14 @@ lyric_assembler::ClassSymbol::load()
     auto superClassUrl = m_classImport->getSuperClass();
     if (superClassUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superClass, importCache->importClass(superClassUrl));
+
+        auto superTypeImport = m_classImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import class {}; missing supertype",
+                m_classUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_classImport->membersBegin(); it != m_classImport->membersEnd(); it++) {
@@ -295,6 +303,10 @@ lyric_assembler::ClassSymbol::finalizeClass(const lyric_common::TypeDef &superCl
     auto *typeCache = m_state->typeCache();
 
     auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_classUrl.toString());
 
     ClassSymbol *superClass;
     TU_ASSIGN_OR_RETURN (superClass, priv->classBlock->resolveClass(superClassType));

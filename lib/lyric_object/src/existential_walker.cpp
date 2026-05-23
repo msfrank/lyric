@@ -350,6 +350,17 @@ lyric_object::ExistentialWalker::getExistentialType() const
     return TypeWalker(m_reader, existentialDescriptor->existential_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::ExistentialWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *existentialDescriptor = m_reader->getExistential(m_existentialOffset);
+    if (existentialDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, existentialDescriptor->super_type());
+}
+
 tu_uint32
 lyric_object::ExistentialWalker::getDescriptorOffset() const
 {

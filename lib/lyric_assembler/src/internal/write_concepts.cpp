@@ -28,6 +28,8 @@ lyric_assembler::internal::touch_concept(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(conceptSymbol->conceptType()));
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(conceptSymbol->superType()));
+
     auto *templateHandle = conceptSymbol->conceptTemplate();
     if (templateHandle) {
         TU_RETURN_IF_NOT_OK (writer.touchTemplate(templateHandle));
@@ -73,6 +75,9 @@ write_concept(
             writer.getSectionAddress(superconceptSymbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
     }
 
+    tu_uint32 superType;
+    TU_ASSIGN_OR_RETURN (superType, writer.getTypeOffset(conceptSymbol->superType()->getTypeDef()));
+
     lyo1::ConceptFlags conceptFlags = lyo1::ConceptFlags::NONE;
     if (conceptSymbol->isDeclOnly()) {
         conceptFlags |= lyo1::ConceptFlags::DeclOnly;
@@ -113,7 +118,7 @@ write_concept(
 
     // add concept descriptor
     concepts_vector.push_back(lyo1::CreateConceptDescriptor(buffer, fullyQualifiedName,
-        superconceptIndex, conceptTemplate, conceptType, conceptFlags,
+        superconceptIndex, superType, conceptTemplate, conceptType, conceptFlags,
         buffer.CreateVector(actions), buffer.CreateVector(impls), buffer.CreateVector(sealedSubtypes)));
 
     return {};

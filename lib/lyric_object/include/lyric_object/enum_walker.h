@@ -58,6 +58,7 @@ namespace lyric_object {
         TypeWalker getSealedSubEnum(tu_uint8 index) const;
 
         TypeWalker getEnumType() const;
+        TypeWalker getSuperType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

@@ -62,6 +62,13 @@ lyric_importer::StructImport::getSuperStruct()
     return m_priv->superStruct;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::StructImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::StructImport::getMember(std::string_view name)
 {
@@ -271,6 +278,8 @@ lyric_importer::StructImport::load()
                         "cannot import struct at index {} in module {}; invalid super struct",
                         m_structOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            structWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < structWalker.numMembers(); i++) {

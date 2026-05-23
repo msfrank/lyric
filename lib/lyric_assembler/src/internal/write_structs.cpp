@@ -29,6 +29,8 @@ lyric_assembler::internal::touch_struct(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(structSymbol->structType()));
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(structSymbol->superType()));
+
     for (auto it = structSymbol->membersBegin(); it != structSymbol->membersEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
@@ -71,6 +73,9 @@ write_struct(
         TU_ASSIGN_OR_RETURN (superstructIndex,
             writer.getSectionAddress(superstructSymbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
     }
+
+    tu_uint32 superType;
+    TU_ASSIGN_OR_RETURN (superType, writer.getTypeOffset(structSymbol->superType()->getTypeDef()));
 
     lyo1::StructFlags structFlags = lyo1::StructFlags::NONE;
     if (structSymbol->isDeclOnly()) {
@@ -149,7 +154,7 @@ write_struct(
 
     // add struct descriptor
     structs_vector.push_back(lyo1::CreateStructDescriptor(buffer, fullyQualifiedName,
-        superstructIndex, structType, structFlags,
+        superstructIndex, structType, superType, structFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
         buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         buffer.CreateVector(sealedSubtypes)));

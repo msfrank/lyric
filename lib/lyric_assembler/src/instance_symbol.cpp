@@ -12,20 +12,17 @@
 #include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/static_symbol.h>
+#include <lyric_assembler/stub_callable.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/impl_import.h>
 #include <lyric_importer/instance_import.h>
-
-#include "lyric_assembler/stub_callable.h"
 
 lyric_assembler::InstanceSymbol::InstanceSymbol(
     const lyric_common::SymbolUrl &instanceUrl,
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *instanceType,
-    InstanceSymbol *superInstance,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -41,12 +38,7 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->instanceType = instanceType;
-    priv->superInstance = superInstance;
     priv->instanceBlock = std::make_unique<BlockHandle>(instanceUrl, parentBlock);
-
-    TU_ASSERT (priv->instanceType != nullptr);
-    TU_ASSERT (priv->superInstance != nullptr);
 }
 
 lyric_assembler::InstanceSymbol::InstanceSymbol(
@@ -91,6 +83,14 @@ lyric_assembler::InstanceSymbol::load()
     auto superInstanceUrl = m_instanceImport->getSuperInstance();
     if (superInstanceUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superInstance, importCache->importInstance(superInstanceUrl));
+
+        auto superTypeImport = m_instanceImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import instance {}; missing supertype",
+                m_instanceUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_instanceImport->membersBegin(); it != m_instanceImport->membersEnd(); it++) {
@@ -230,11 +230,62 @@ lyric_assembler::InstanceSymbol::superInstance() const
     return priv->superInstance;
 }
 
+lyric_assembler::TypeHandle *
+lyric_assembler::InstanceSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superInstance->instanceType();
+}
+
 lyric_assembler::BlockHandle *
 lyric_assembler::InstanceSymbol::instanceBlock() const
 {
     auto *priv = getPriv();
     return priv->instanceBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::InstanceSymbol::instanceResolver() const
+{
+    auto *priv = getPriv();
+    return priv->instanceBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::InstanceSymbol::finalizeInstance(const lyric_common::TypeDef &superInstanceType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_instanceUrl.toString());
+
+    InstanceSymbol *superInstance;
+    TU_ASSIGN_OR_RETURN (superInstance, priv->instanceBlock->resolveInstance(superInstanceType));
+
+    auto superDerive = superInstance->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive class {} from {}; base class is marked final",
+            m_instanceUrl.getSymbolPath().toString(), superInstance->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superInstance->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive instance {} from {}; sealed base instance must be located in the same module",
+            m_instanceUrl.getSymbolPath().toString(), superInstance->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    auto *supertypeHandle = superInstance->instanceType();
+
+    // create the type
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_instanceUrl, {}, superInstanceType));
+
+    priv->superInstance = superInstance;
+    priv->superType = supertypeHandle;
+    priv->instanceType = typeHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

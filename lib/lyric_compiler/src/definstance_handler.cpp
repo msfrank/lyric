@@ -72,6 +72,10 @@ lyric_compiler::DefInstanceHandler::before(
             lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
+    // declare the instance
+    TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
+        identifier, isHidden, isAbstract, lyric_compiler::convert_derive_type(derive)));
+
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -131,20 +135,18 @@ lyric_compiler::DefInstanceHandler::before(
         superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
     }
 
-    // resolve the super instance symbol
-    TU_ASSIGN_OR_RETURN (m_definstance.superinstanceSymbol, block->resolveInstance(superInstanceType));
+    // finalize the instance
+    TU_RETURN_IF_NOT_OK (m_definstance.instanceSymbol->finalizeInstance(superInstanceType));
 
-    // declare the instance
-    TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
-        identifier, m_definstance.superinstanceSymbol, isHidden, isAbstract,
-        lyric_compiler::convert_derive_type(derive)));
-
-    m_definstance.global.definitionBlock = m_definstance.instanceSymbol->instanceBlock();
+    // verify that instance is a valid subtype of superinstance
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(superInstanceType, m_definstance.instanceSymbol->superInstance()));
 
     // add instance to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_definstance.instanceSymbol->getSymbolUrl()));
     }
+
+    m_definstance.global.definitionBlock = m_definstance.instanceSymbol->instanceBlock();
 
     // declare members
     for (auto &fieldNode : fieldNodes) {

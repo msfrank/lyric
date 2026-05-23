@@ -21,6 +21,7 @@ namespace lyric_importer {
 
         std::weak_ptr<TypeImport> getConceptType();
         lyric_common::SymbolUrl getSuperConcept();
+        std::weak_ptr<TypeImport> getSuperType();
 
         bool hasConceptTemplate();
         std::weak_ptr<TemplateImport> getConceptTemplate();
@@ -52,6 +53,7 @@ namespace lyric_importer {
             bool hasTemplate = false;
             std::weak_ptr<TemplateImport> conceptTemplate;
             lyric_common::SymbolUrl superConcept;
+            std::weak_ptr<TypeImport> superType;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> actions;
             absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
             absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;

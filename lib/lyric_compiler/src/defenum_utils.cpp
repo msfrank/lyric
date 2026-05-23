@@ -50,7 +50,7 @@ lyric_compiler::define_enum_default_init(
 
     // find the superenum ctor
     std::unique_ptr<lyric_assembler::AbstractCallable> superCtor;
-    TU_RETURN_IF_NOT_OK (defenum->superenumSymbol->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (superEnum->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor.get()));
@@ -336,7 +336,10 @@ lyric_compiler::declare_enum_case(
 
     lyric_assembler::EnumSymbol *caseEnum;
     TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
-        identifier, enumSymbol, isHidden, /* isAbstract= */ false, lyric_object::DeriveType::Final));
+        identifier, isHidden, /* isAbstract= */ false, lyric_object::DeriveType::Final));
+
+    // finalize the case
+    TU_RETURN_IF_NOT_OK (caseEnum->finalizeEnum(enumSymbol->getTypeDef()));
 
     // add case to set of sealed subtypes
     TU_RETURN_IF_NOT_OK (enumSymbol->putSealedType(caseEnum->getTypeDef()));

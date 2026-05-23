@@ -22,8 +22,6 @@ lyric_assembler::StructSymbol::StructSymbol(
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *structType,
-    StructSymbol *superStruct,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -39,12 +37,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->structType = structType;
-    priv->superStruct = superStruct;
     priv->structBlock = std::make_unique<BlockHandle>(structUrl, parentBlock);
-
-    TU_ASSERT (priv->structType != nullptr);
-    TU_ASSERT (priv->superStruct != nullptr);
 }
 
 lyric_assembler::StructSymbol::StructSymbol(
@@ -89,6 +82,14 @@ lyric_assembler::StructSymbol::load()
     auto superStructUrl = m_structImport->getSuperStruct();
     if (superStructUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superStruct, importCache->importStruct(superStructUrl));
+
+        auto superTypeImport = m_structImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import struct {}; missing supertype",
+                m_structUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_structImport->membersBegin(); it != m_structImport->membersEnd(); it++) {
@@ -222,6 +223,13 @@ lyric_assembler::StructSymbol::superStruct() const
 }
 
 lyric_assembler::TypeHandle *
+lyric_assembler::StructSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superStruct->structType();
+}
+
+lyric_assembler::TypeHandle *
 lyric_assembler::StructSymbol::structType() const
 {
     auto *priv = getPriv();
@@ -233,6 +241,50 @@ lyric_assembler::StructSymbol::structBlock() const
 {
     auto *priv = getPriv();
     return priv->structBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::StructSymbol::structResolver() const
+{
+    auto *priv = getPriv();
+    return priv->structBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::StructSymbol::finalizeStruct(const lyric_common::TypeDef &superStructType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_structUrl.toString());
+
+    StructSymbol *superStruct;
+    TU_ASSIGN_OR_RETURN (superStruct, priv->structBlock->resolveStruct(superStructType));
+
+    auto superDerive = superStruct->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive struct {} from {}; base struct is marked final",
+            m_structUrl.getSymbolPath().toString(), superStruct->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superStruct->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive struct {} from {}; sealed base struct must be located in the same module",
+            m_structUrl.getSymbolPath().toString(), superStruct->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    auto *supertypeHandle = superStruct->structType();
+
+    // create the type
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_structUrl, {}, superStructType));
+
+    priv->superStruct = superStruct;
+    priv->superType = supertypeHandle;
+    priv->structType = typeHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

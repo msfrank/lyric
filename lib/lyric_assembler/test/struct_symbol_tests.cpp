@@ -18,12 +18,12 @@ TEST_F (StructSymbol, WriteStruct)
     auto *block = globalNs->namespaceBlock();
 
     auto RecordType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
-    lyric_assembler::StructSymbol *superStruct;
-    TU_ASSIGN_OR_RAISE (superStruct, block->resolveStruct(RecordType));
 
-    auto declareStructResult = block->declareStruct("test", superStruct, false);
+    auto declareStructResult = block->declareStruct("test", false);
     ASSERT_THAT (declareStructResult, tempo_test::IsResult());
     auto *structSymbol = declareStructResult.getResult();
+
+    ASSERT_THAT (structSymbol->finalizeStruct(RecordType), tempo_test::IsOk());
 
     TU_RAISE_IF_NOT_OK (globalNs->putTarget(structSymbol->getSymbolUrl()));
 

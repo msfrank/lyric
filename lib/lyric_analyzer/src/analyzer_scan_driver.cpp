@@ -428,7 +428,6 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 {
     std::string identifier;
     lyric_typing::TemplateSpec templateSpec;
-    lyric_assembler::ConceptSymbol *superConcept = nullptr;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -447,6 +446,10 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
         TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
+    lyric_assembler::ConceptSymbol *conceptSymbol;
+    TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(identifier, isHidden,
+        templateSpec.templateParameters, isAbstract, internal::convert_derive_type(derive), /* declOnly= */ true));
+
     lyric_common::TypeDef superConceptType;
 
     // determine the superconcept type
@@ -455,25 +458,21 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superConceptSpec;
         TU_ASSIGN_OR_RETURN (superConceptSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superConceptType, m_typeSystem->resolveAssignable(block, superConceptSpec));
+        auto *resolver = conceptSymbol->conceptResolver();
+        TU_ASSIGN_OR_RETURN (superConceptType, m_typeSystem->resolveAssignable(resolver, superConceptSpec));
     } else {
         auto *fundamentalCache = m_state->fundamentalCache();
         superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
     }
 
-    // resolve the superconcept
-    TU_ASSIGN_OR_RETURN (superConcept, block->resolveConcept(superConceptType));
-
-    lyric_assembler::ConceptSymbol *conceptSymbol;
-    TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-        identifier, superConcept, isHidden, templateSpec.templateParameters, isAbstract,
-        internal::convert_derive_type(derive), /* declOnly= */ true));
+    // finalize the concept
+    TU_RETURN_IF_NOT_OK (conceptSymbol->finalizeConcept(superConceptType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(conceptSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
+    TU_LOG_V << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConceptType.toString();
 
     // push the concept context
     auto ctx = std::make_unique<ConceptAnalyzerContext>(this, conceptSymbol);
@@ -486,13 +485,16 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     lyric_assembler::BlockHandle *block)
 {
     std::string identifier;
-    lyric_assembler::EnumSymbol *superEnum = nullptr;
     lyric_object::DeriveType derive = lyric_object::DeriveType::Sealed;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    lyric_assembler::EnumSymbol *enumSymbol;
+    TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
+        identifier, isHidden, /* isAbstract= */ true, derive, /* declOnly= */ true));
 
     lyric_common::TypeDef superEnumType;
 
@@ -502,24 +504,21 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superEnumSpec;
         TU_ASSIGN_OR_RETURN (superEnumSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superEnumType, m_typeSystem->resolveAssignable(block, superEnumSpec));
+        auto *resolver = enumSymbol->enumResolver();
+        TU_ASSIGN_OR_RETURN (superEnumType, m_typeSystem->resolveAssignable(resolver, superEnumSpec));
     } else {
         auto *fundamentalCache = m_state->fundamentalCache();
         superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
     }
 
-    // resolve the superenum
-    TU_ASSIGN_OR_RETURN (superEnum, block->resolveEnum(superEnumType));
-
-    lyric_assembler::EnumSymbol *enumSymbol;
-    TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-        identifier, superEnum, isHidden, /* isAbstract= */ true, derive, /* declOnly= */ true));
+    // finalize the enum
+    TU_RETURN_IF_NOT_OK (enumSymbol->finalizeEnum(superEnumType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(enumSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
+    TU_LOG_V << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnumType.toString();
 
     // push the enum context
     auto ctx = std::make_unique<EnumAnalyzerContext>(this, enumSymbol);
@@ -532,13 +531,16 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     lyric_assembler::BlockHandle *block)
 {
     std::string identifier;
-    lyric_assembler::InstanceSymbol *superInstance = nullptr;
     lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    lyric_assembler::InstanceSymbol *instanceSymbol;
+    TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
+        identifier, isHidden, /* isAbstract= */ false, derive, /* declOnly= */ true));
 
     lyric_common::TypeDef superInstanceType;
 
@@ -548,24 +550,21 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superInstanceSpec;
         TU_ASSIGN_OR_RETURN (superInstanceSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superInstanceType, m_typeSystem->resolveAssignable(block, superInstanceSpec));
+        auto *resolver = instanceSymbol->instanceResolver();
+        TU_ASSIGN_OR_RETURN (superInstanceType, m_typeSystem->resolveAssignable(resolver, superInstanceSpec));
     } else {
         auto *fundamentalCache = m_state->fundamentalCache();
         superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
     }
 
-    // resolve the superinstance
-    TU_ASSIGN_OR_RETURN (superInstance, block->resolveInstance(superInstanceType));
-
-    lyric_assembler::InstanceSymbol *instanceSymbol;
-    TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, isHidden, /* isAbstract= */ false, derive, /* declOnly= */ true));
+    // finalize the instance
+    TU_RETURN_IF_NOT_OK (instanceSymbol->finalizeInstance(superInstanceType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(instanceSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
+    TU_LOG_V << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstanceType.toString();
 
     // push the instance context
     auto ctx = std::make_unique<InstanceAnalyzerContext>(this, instanceSymbol);
@@ -578,7 +577,6 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     lyric_assembler::BlockHandle *block)
 {
     std::string identifier;
-    lyric_assembler::StructSymbol *superStruct = nullptr;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -591,6 +589,10 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
+    lyric_assembler::StructSymbol *structSymbol;
+    TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
+        identifier, isHidden, isAbstract, internal::convert_derive_type(derive), /* declOnly= */ true));
+
     lyric_common::TypeDef superStructType;
 
     // determine the superstruct type
@@ -599,24 +601,21 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superStructSpec;
         TU_ASSIGN_OR_RETURN (superStructSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(block, superStructSpec));
+        auto *resolver = structSymbol->structResolver();
+        TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(resolver, superStructSpec));
     } else {
         auto *fundamentalCache = m_state->fundamentalCache();
         superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     }
 
-    // resolve the superstruct
-    TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
-
-    lyric_assembler::StructSymbol *structSymbol;
-    TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, isHidden, isAbstract, internal::convert_derive_type(derive), /* declOnly= */ true));
+    // finalize the struct
+    TU_RETURN_IF_NOT_OK (structSymbol->finalizeStruct(superStructType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(structSymbol->getSymbolUrl()));
 
-    TU_LOG_V << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
+    TU_LOG_V << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStructType.toString();
 
     // push the struct context
     auto ctx = std::make_unique<StructAnalyzerContext>(this, structSymbol);

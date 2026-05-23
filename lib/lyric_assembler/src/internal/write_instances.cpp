@@ -29,6 +29,8 @@ lyric_assembler::internal::touch_instance(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(instanceSymbol->instanceType()));
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(instanceSymbol->superType()));
+
     for (auto it = instanceSymbol->membersBegin(); it != instanceSymbol->membersEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
@@ -71,6 +73,9 @@ write_instance(
         TU_ASSIGN_OR_RETURN (superinstanceIndex,
             writer.getSectionAddress(superinstanceSymbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
     }
+
+    tu_uint32 superType;
+    TU_ASSIGN_OR_RETURN (superType, writer.getTypeOffset(instanceSymbol->superType()->getTypeDef()));
 
     lyo1::InstanceFlags instanceFlags = lyo1::InstanceFlags::NONE;
     if (instanceSymbol->isDeclOnly()) {
@@ -159,7 +164,7 @@ write_instance(
 
     // add instance descriptor
     instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer, fullyQualifiedName,
-        superinstanceIndex, instanceType, instanceFlags,
+        superinstanceIndex, superType, instanceType, instanceFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
         buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         ctorCall, buffer.CreateVector(sealedSubtypes)));

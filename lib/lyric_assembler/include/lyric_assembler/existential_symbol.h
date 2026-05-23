@@ -19,6 +19,7 @@ namespace lyric_assembler {
         TypeHandle *existentialType = nullptr;
         TemplateHandle *existentialTemplate = nullptr;
         ExistentialSymbol *superExistential = nullptr;
+        TypeHandle *superType = nullptr;
         absl::flat_hash_map<std::string, CallSymbol *> methods;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
@@ -32,8 +33,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &existentialUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            TypeHandle *existentialType,
-            ExistentialSymbol *superExistential,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -41,9 +40,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &existentialUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            TypeHandle *existentialType,
             TemplateHandle *existentialTemplate,
-            ExistentialSymbol *superExistential,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -63,9 +60,18 @@ namespace lyric_assembler {
         bool isDeclOnly() const;
         lyric_object::DeriveType getDeriveType() const;
 
-        ExistentialSymbol *superExistential() const;
         TypeHandle *existentialType() const;
         TemplateHandle *existentialTemplate() const;
+        ExistentialSymbol *superExistential() const;
+        TypeHandle *superType() const;
+        BlockHandle *existentialBlock() const;
+
+        AbstractResolver *existentialResolver() const;
+
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeExistential(const lyric_common::TypeDef &superExistentialType);
 
         /*
          * existential method management

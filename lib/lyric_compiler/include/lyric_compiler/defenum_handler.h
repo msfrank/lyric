@@ -20,7 +20,6 @@ namespace lyric_compiler {
 
     struct DefEnum {
         lyric_assembler::EnumSymbol *enumSymbol = nullptr;
-        lyric_assembler::EnumSymbol *superenumSymbol = nullptr;
         lyric_assembler::CallSymbol *defaultCtor = nullptr;
         Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;

@@ -161,6 +161,7 @@ enum ExistentialFlags : uint16 (bit_flags) {
 table ExistentialDescriptor {
     fqsn: string;                               // fully qualified existential name
     super_existential: uint32 = 0xffffffff;     // offset of the super existential in the existentials section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     existential_template: uint32 = 0xffffffff;  // offset of the template in the templates section, or 0xffffffff if not generic
     existential_type: uint32 = 0xffffffff;      // offset of the existential type in the types section
     intrinsic_mapping: IntrinsicType = Invalid; // mapping to intrinsic type, or Invalid if there is no mapping
@@ -273,6 +274,7 @@ enum ConceptFlags : uint16 (bit_flags) {
 table ConceptDescriptor {
     fqsn: string;                               // fully qualified concept name
     super_concept: uint32 = 0xffffffff;         // offset of the super concept in the concepts section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     concept_template: uint32 = 0xffffffff;      // offset of the template in the templates section, or 0xffffffff if not generic
     concept_type: uint32 = 0xffffffff;          // offset of the concept type in the types section
     flags: ConceptFlags;                        // bitfield containing concept flags
@@ -370,6 +372,7 @@ enum StructFlags : uint16 (bit_flags) {
 table StructDescriptor {
     fqsn: string;                               // fully qualified struct name
     super_struct: uint32 = 0xffffffff;          // offset of the super struct in the structs section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     struct_type: uint32 = 0xffffffff;           // offset of the struct type in the types section
     flags: StructFlags;                         // bitfield containing struct flags
     members: [uint32];                          // array of members in the fields section
@@ -397,6 +400,7 @@ enum InstanceFlags : uint16 (bit_flags) {
 table InstanceDescriptor {
     fqsn: string;                               // fully qualified symbol name for the instance
     super_instance: uint32 = 0xffffffff;        // offset of the super instance in the instances section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     instance_type: uint32 = 0xffffffff;         // offset of the instance type in the types section
     flags: InstanceFlags;                       // bitfield containing instance flags
     members: [uint32];                          // array of members in the fields section
@@ -425,6 +429,7 @@ enum EnumFlags : uint16 (bit_flags) {
 table EnumDescriptor {
     fqsn: string;                               // fully qualified symbol name for the enum
     super_enum: uint32 = 0xffffffff;            // offset of the super enum in the enums section
+    super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     enum_type: uint32 = 0xffffffff;             // offset of the enum type in the types section
     flags: EnumFlags;                           // bitfield containing enum flags
     members: [uint32];                          // array of members in the fields section

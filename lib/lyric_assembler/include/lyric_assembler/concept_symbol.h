@@ -22,6 +22,7 @@ namespace lyric_assembler {
         TypeHandle *conceptType = nullptr;
         TemplateHandle *conceptTemplate = nullptr;
         ConceptSymbol *superConcept = nullptr;
+        TypeHandle *superType = nullptr;
         absl::flat_hash_map<std::string, ActionSymbol *> actions;
         absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
@@ -36,9 +37,7 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *conceptType,
             TemplateHandle *conceptTemplate,
-            ConceptSymbol *superConcept,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -48,8 +47,6 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *conceptType,
-            ConceptSymbol *superConcept,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -72,10 +69,18 @@ namespace lyric_assembler {
         bool isAbstract() const;
         lyric_object::DeriveType getDeriveType() const;
 
-        ConceptSymbol *superConcept() const;
         TypeHandle *conceptType() const;
         TemplateHandle *conceptTemplate() const;
+        ConceptSymbol *superConcept() const;
+        TypeHandle *superType() const;
         BlockHandle *conceptBlock() const;
+
+        AbstractResolver *conceptResolver() const;
+
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeConcept(const lyric_common::TypeDef &superConceptType);
 
         /*
          * global management

@@ -11,19 +11,16 @@
 #include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/static_symbol.h>
+#include <lyric_assembler/stub_callable.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/enum_import.h>
-
-#include "lyric_assembler/stub_callable.h"
 
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *enumType,
-    EnumSymbol *superEnum,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -39,12 +36,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->enumType = enumType;
-    priv->superEnum = superEnum;
     priv->enumBlock = std::make_unique<BlockHandle>(enumUrl, parentBlock);
-
-    TU_ASSERT (priv->enumType != nullptr);
-    TU_ASSERT (priv->superEnum != nullptr);
 }
 
 lyric_assembler::EnumSymbol::EnumSymbol(
@@ -89,6 +81,14 @@ lyric_assembler::EnumSymbol::load()
     auto superEnumUrl = m_enumImport->getSuperEnum();
     if (superEnumUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superEnum, importCache->importEnum(superEnumUrl));
+
+        auto superTypeImport = m_enumImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import enum {}; missing supertype",
+                m_enumUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_enumImport->membersBegin(); it != m_enumImport->membersEnd(); it++) {
@@ -228,11 +228,62 @@ lyric_assembler::EnumSymbol::superEnum() const
     return priv->superEnum;
 }
 
+lyric_assembler::TypeHandle *
+lyric_assembler::EnumSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superEnum->enumType();
+}
+
 lyric_assembler::BlockHandle *
 lyric_assembler::EnumSymbol::enumBlock() const
 {
     auto *priv = getPriv();
     return priv->enumBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::EnumSymbol::enumResolver() const
+{
+    auto *priv = getPriv();
+    return priv->enumBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::EnumSymbol::finalizeEnum(const lyric_common::TypeDef &superEnumType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_enumUrl.toString());
+
+    EnumSymbol *superEnum;
+    TU_ASSIGN_OR_RETURN (superEnum, priv->enumBlock->resolveEnum(superEnumType));
+
+    auto superDerive = superEnum->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive enum {} from {}; base enum is marked final",
+            m_enumUrl.getSymbolPath().toString(), superEnum->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superEnum->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive enum {} from {}; sealed base enum must be located in the same module",
+            m_enumUrl.getSymbolPath().toString(), superEnum->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    auto *supertypeHandle = superEnum->enumType();
+
+    // create the type
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_enumUrl, {}, superEnumType));
+
+    priv->superEnum = superEnum;
+    priv->superType = supertypeHandle;
+    priv->enumType = typeHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

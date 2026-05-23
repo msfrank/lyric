@@ -21,6 +21,7 @@ namespace lyric_assembler {
         bool isDeclOnly = false;
         TypeHandle *instanceType = nullptr;
         InstanceSymbol *superInstance = nullptr;
+        TypeHandle *superType = nullptr;
         std::string allocatorTrap;
         absl::flat_hash_map<std::string, FieldSymbol *> members;
         absl::flat_hash_set<std::string> initializedMembers;
@@ -39,8 +40,6 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *instanceType,
-            InstanceSymbol *superInstance,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -64,7 +63,15 @@ namespace lyric_assembler {
 
         TypeHandle *instanceType() const;
         InstanceSymbol *superInstance() const;
+        TypeHandle *superType() const;
         BlockHandle *instanceBlock() const;
+
+        AbstractResolver *instanceResolver() const;
+
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeInstance(const lyric_common::TypeDef &superInstanceType);
 
         /*
          * global management

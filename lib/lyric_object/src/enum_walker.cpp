@@ -324,6 +324,17 @@ lyric_object::EnumWalker::getEnumType() const
     return TypeWalker(m_reader, enumDescriptor->enum_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::EnumWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, enumDescriptor->super_type());
+}
+
 tu_uint32
 lyric_object::EnumWalker::getDescriptorOffset() const
 {

@@ -56,6 +56,13 @@ lyric_importer::ExistentialImport::getSuperExistential()
     return m_priv->superExistential;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::ExistentialImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 bool
 lyric_importer::ExistentialImport::hasExistentialTemplate()
 {
@@ -212,6 +219,8 @@ lyric_importer::ExistentialImport::load()
                         "cannot import existential at index {} in module {}; invalid super existential",
                         m_existentialOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            existentialWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < existentialWalker.numMethods(); i++) {

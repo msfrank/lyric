@@ -248,7 +248,8 @@ BuilderState::addExistential(
     const lyric_common::SymbolPath &existentialPath,
     lyo1::IntrinsicType intrinsicMapping,
     lyo1::ExistentialFlags existentialFlags,
-    const CoreExistential *superExistential)
+    const CoreExistential *superExistential,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(existentialPath));
 
@@ -256,13 +257,16 @@ BuilderState::addExistential(
     auto *Existential = new CoreExistential();
     existentials.push_back(Existential);
 
-    const CoreType *superType = superExistential? superExistential->existentialType : nullptr;
+    if (superType == nullptr) {
+        superType = superExistential? superExistential->existentialType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Existential, existential_index);
 
     Existential->existential_index = existential_index;
     Existential->existentialPath = existentialPath;
     Existential->existentialTemplate = nullptr;
     Existential->superExistential = superExistential;
+    Existential->superType = superType;
     Existential->intrinsicMapping = intrinsicMapping;
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
@@ -285,7 +289,8 @@ BuilderState::addGenericExistential(
     const CoreTemplate *existentialTemplate,
     lyo1::IntrinsicType intrinsicMapping,
     lyo1::ExistentialFlags existentialFlags,
-    const CoreExistential *superExistential)
+    const CoreExistential *superExistential,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(existentialPath));
     TU_ASSERT (existentialTemplate != nullptr);
@@ -294,7 +299,9 @@ BuilderState::addGenericExistential(
     auto *Existential = new CoreExistential();
     existentials.push_back(Existential);
 
-    const CoreType *superType = superExistential? superExistential->existentialType : nullptr;
+    if (superType == nullptr) {
+        superType = superExistential? superExistential->existentialType : nullptr;
+    }
     std::vector<const CoreType *> typeParameters;
     for (const auto &name : existentialTemplate->names) {
         typeParameters.push_back(existentialTemplate->types.at(name));
@@ -305,6 +312,7 @@ BuilderState::addGenericExistential(
     Existential->existentialPath = existentialPath;
     Existential->existentialTemplate = existentialTemplate;
     Existential->superExistential = superExistential;
+    Existential->superType = superType;
     Existential->intrinsicMapping = intrinsicMapping;
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
@@ -493,7 +501,8 @@ CoreConcept *
 BuilderState::addConcept(
     const lyric_common::SymbolPath &conceptPath,
     lyo1::ConceptFlags conceptFlags,
-    const CoreConcept *superConcept)
+    const CoreConcept *superConcept,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(conceptPath));
 
@@ -501,13 +510,16 @@ BuilderState::addConcept(
     auto *Concept = new CoreConcept();
     concepts.push_back(Concept);
 
-    const CoreType *superType = superConcept? superConcept->conceptType : nullptr;
+    if (superType == nullptr) {
+        superType = superConcept? superConcept->conceptType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Concept, concept_index);
 
     Concept->concept_index = concept_index;
     Concept->conceptPath = conceptPath;
     Concept->conceptTemplate = nullptr;
     Concept->superConcept = superConcept;
+    Concept->superType = superType;
     Concept->conceptType = Type;
     Concept->flags = conceptFlags;
 
@@ -528,7 +540,8 @@ BuilderState::addGenericConcept(
     const lyric_common::SymbolPath &conceptPath,
     const CoreTemplate *conceptTemplate,
     lyo1::ConceptFlags conceptFlags,
-    const CoreConcept *superConcept)
+    const CoreConcept *superConcept,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(conceptPath));
     TU_ASSERT (conceptTemplate != nullptr);
@@ -537,7 +550,9 @@ BuilderState::addGenericConcept(
     auto *Concept = new CoreConcept();
     concepts.push_back(Concept);
 
-    const CoreType *superType = superConcept? superConcept->conceptType : nullptr;
+    if (superType == nullptr) {
+        superType = superConcept? superConcept->conceptType : nullptr;
+    }
     std::vector<const CoreType *> typeParameters;
     for (const auto &name : conceptTemplate->names) {
         typeParameters.push_back(conceptTemplate->types.at(name));
@@ -548,6 +563,7 @@ BuilderState::addGenericConcept(
     Concept->conceptPath = conceptPath;
     Concept->conceptTemplate = conceptTemplate;
     Concept->superConcept = superConcept;
+    Concept->superType = superType;
     Concept->conceptType = Type;
     Concept->flags = conceptFlags;
 
@@ -638,6 +654,7 @@ BuilderState::addClass(
     Class->classPath = classPath;
     Class->classTemplate = nullptr;
     Class->superClass = superClass;
+    Class->superType = superType;
     Class->classType = Type;
     Class->flags = classFlags;
     Class->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -683,6 +700,7 @@ BuilderState::addGenericClass(
     Class->classPath = classPath;
     Class->classTemplate = classTemplate;
     Class->superClass = superClass;
+    Class->superType = superType;
     Class->classType = Type;
     Class->flags = classFlags;
     Class->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -870,7 +888,8 @@ CoreStruct *
 BuilderState::addStruct(
     const lyric_common::SymbolPath &structPath,
     lyo1::StructFlags structFlags,
-    const CoreStruct *superStruct)
+    const CoreStruct *superStruct,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(structPath));
 
@@ -878,12 +897,15 @@ BuilderState::addStruct(
     auto *Struct = new CoreStruct();
     structs.push_back(Struct);
 
-    const CoreType *superType = superStruct? superStruct->structType : nullptr;
+    if (superType == nullptr) {
+        superType = superStruct? superStruct->structType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Struct, struct_index);
 
     Struct->struct_index = struct_index;
     Struct->structPath = structPath;
     Struct->superStruct = superStruct;
+    Struct->superType = superType;
     Struct->structType = Type;
     Struct->flags = structFlags;
     Struct->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -1070,7 +1092,8 @@ CoreInstance *
 BuilderState::addInstance(
     const lyric_common::SymbolPath &instancePath,
     lyo1::InstanceFlags instanceFlags,
-    const CoreInstance *superInstance)
+    const CoreInstance *superInstance,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(instancePath));
 
@@ -1078,7 +1101,9 @@ BuilderState::addInstance(
     auto *Instance = new CoreInstance();
     instances.push_back(Instance);
 
-    const CoreType *superType = superInstance? superInstance->instanceType : nullptr;
+    if (superType == nullptr) {
+        superType = superInstance? superInstance->instanceType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Instance, instance_index);
 
     Instance->instance_index = instance_index;
@@ -1086,6 +1111,7 @@ BuilderState::addInstance(
     Instance->flags = instanceFlags;
     Instance->instanceType = Type;
     Instance->superInstance = superInstance;
+    Instance->superType = superType;
     Instance->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Instance->instanceCtor = nullptr;
 
@@ -1414,7 +1440,8 @@ CoreEnum *
 BuilderState::addEnum(
     const lyric_common::SymbolPath &enumPath,
     lyo1::EnumFlags enumFlags,
-    const CoreEnum *superEnum)
+    const CoreEnum *superEnum,
+    const CoreType *superType)
 {
     TU_ASSERT (!symboltable.contains(enumPath));
 
@@ -1422,7 +1449,9 @@ BuilderState::addEnum(
     auto *Enum = new CoreEnum();
     enums.push_back(Enum);
 
-    const CoreType *superType = superEnum? superEnum->enumType : nullptr;
+    if (superType == nullptr) {
+        superType = superEnum? superEnum->enumType : nullptr;
+    }
     auto *Type = addConcreteType(superType, lyo1::TypeSection::Enum, enum_index);
 
     Enum->enum_index = enum_index;
@@ -1430,6 +1459,7 @@ BuilderState::addEnum(
     Enum->flags = enumFlags;
     Enum->enumType = Type;
     Enum->superEnum = superEnum;
+    Enum->superType = superType;
     Enum->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Enum->enumCtor = nullptr;
 
@@ -1786,10 +1816,13 @@ BuilderState::toObject() const
 
         tu_uint32 superExistential = Existential->superExistential?
             Existential->superExistential->existential_index : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Existential->superType? Existential->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 existentialTemplate = Existential->existentialTemplate?
             Existential->existentialTemplate->template_index : lyric_object::INVALID_ADDRESS_U32;
+
         existentials_vector.push_back(lyo1::CreateExistentialDescriptor(buffer,
-            fb_fullyQualifiedName, superExistential, existentialTemplate,
+            fb_fullyQualifiedName, superExistential, superType, existentialTemplate,
             Existential->existentialType->type_index, Existential->intrinsicMapping,
             Existential->flags, fb_methods, fb_impls, fb_sealedSubtypes));
     }
@@ -1923,9 +1956,11 @@ BuilderState::toObject() const
 
         tu_uint32 superStruct = Struct->superStruct? Struct->superStruct->struct_index
             : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Struct->superType? Struct->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
 
         structs_vector.push_back(lyo1::CreateStructDescriptor(buffer,
-            fb_fullyQualifiedName, superStruct, Struct->structType->type_index, Struct->flags,
+            fb_fullyQualifiedName, superStruct, superType, Struct->structType->type_index, Struct->flags,
             fb_members, fb_methods, fb_stubs, fb_impls, Struct->allocatorTrap, fb_sealedSubtypes));
     }
 
@@ -1938,11 +1973,13 @@ BuilderState::toObject() const
 
         tu_uint32 superConcept = Concept->superConcept? Concept->superConcept->concept_index
             : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Concept->superType? Concept->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 conceptTemplate = Concept->conceptTemplate? Concept->conceptTemplate->template_index
             : lyric_object::INVALID_ADDRESS_U32;
 
         concepts_vector.push_back(lyo1::CreateConceptDescriptor(buffer,
-            fb_fullyQualifiedName, superConcept, conceptTemplate, Concept->conceptType->type_index,
+            fb_fullyQualifiedName, superConcept, superType, conceptTemplate, Concept->conceptType->type_index,
             Concept->flags, fb_actions, fb_impls, fb_sealedSubtypes));
     }
 
@@ -1965,11 +2002,14 @@ BuilderState::toObject() const
 
         tu_uint32 superInstance = Instance->superInstance? Instance->superInstance->instance_index
             : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Instance->superType? Instance->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 instanceCtor = Instance->instanceCtor->call_index;
 
         instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer,
-            fb_fullyQualifiedName, superInstance, Instance->instanceType->type_index, lyo1::InstanceFlags::NONE,
-            fb_members, fb_methods, fb_stubs, fb_impls, Instance->allocatorTrap, instanceCtor, fb_sealedSubtypes));
+            fb_fullyQualifiedName, superInstance, superType, Instance->instanceType->type_index,
+            lyo1::InstanceFlags::NONE, fb_members, fb_methods, fb_stubs, fb_impls,
+            Instance->allocatorTrap, instanceCtor, fb_sealedSubtypes));
     }
 
     // write the enum descriptors
@@ -1983,11 +2023,14 @@ BuilderState::toObject() const
 
         tu_uint32 superEnum = Enum->superEnum? Enum->superEnum->enum_index
             : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 superType = Enum->superType? Enum->superType->type_index
+            : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 enumCtor = Enum->enumCtor->call_index;
 
         enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer,
-            fb_fullyQualifiedName, superEnum, Enum->enumType->type_index, lyo1::EnumFlags::NONE,
-            fb_members, fb_methods, fb_stubs, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
+            fb_fullyQualifiedName, superEnum, superType, Enum->enumType->type_index,
+            lyo1::EnumFlags::NONE, fb_members, fb_methods, fb_stubs, fb_impls,
+            Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
     }
 
     // write the protocol descriptors

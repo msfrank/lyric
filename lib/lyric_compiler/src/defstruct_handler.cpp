@@ -71,6 +71,10 @@ lyric_compiler::DefStructHandler::before(
             lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
+    // declare the struct
+    TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
+        identifier, isHidden, isAbstract, lyric_compiler::convert_derive_type(derive)));
+
     std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> fieldNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -130,20 +134,18 @@ lyric_compiler::DefStructHandler::before(
         superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     }
 
-    // resolve the super struct symbol
-    TU_ASSIGN_OR_RETURN (m_defstruct.superstructSymbol, block->resolveStruct(superStructType));
+    // finalize the struct
+    TU_RETURN_IF_NOT_OK (m_defstruct.structSymbol->finalizeStruct(superStructType));
 
-    // declare the struct
-    TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
-        identifier, m_defstruct.superstructSymbol, isHidden, isAbstract,
-        lyric_compiler::convert_derive_type(derive)));
-
-    m_defstruct.global.definitionBlock = m_defstruct.structSymbol->structBlock();
+    // verify that struct is a valid subtype of superstruct
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(superStructType, m_defstruct.structSymbol->superStruct()));
 
     // add struct to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defstruct.structSymbol->getSymbolUrl()));
     }
+
+    m_defstruct.global.definitionBlock = m_defstruct.structSymbol->structBlock();
 
     // declare members
     for (auto &fieldNode : fieldNodes) {

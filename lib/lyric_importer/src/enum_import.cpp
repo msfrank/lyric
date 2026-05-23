@@ -62,6 +62,13 @@ lyric_importer::EnumImport::getSuperEnum()
     return m_priv->superEnum;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::EnumImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::EnumImport::getMember(std::string_view name)
 {
@@ -271,6 +278,8 @@ lyric_importer::EnumImport::load()
                         "cannot import enum at index {} in module {}; invalid super enum",
                         m_enumOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            enumWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numMembers(); i++) {

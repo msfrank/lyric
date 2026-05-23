@@ -20,7 +20,6 @@ namespace lyric_compiler {
 
     struct DefStruct {
         lyric_assembler::StructSymbol *structSymbol = nullptr;
-        lyric_assembler::StructSymbol *superstructSymbol = nullptr;
         lyric_assembler::CallSymbol *defaultCtor = nullptr;
         Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;

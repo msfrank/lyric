@@ -62,6 +62,13 @@ lyric_importer::InstanceImport::getSuperInstance()
     return m_priv->superInstance;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::InstanceImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::InstanceImport::getMember(std::string_view name)
 {
@@ -271,6 +278,8 @@ lyric_importer::InstanceImport::load()
                         "cannot import instance at index {} in module {}; invalid super instance",
                         m_instanceOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            instanceWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < instanceWalker.numMembers(); i++) {

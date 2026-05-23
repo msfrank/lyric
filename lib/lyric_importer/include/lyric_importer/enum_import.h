@@ -21,6 +21,7 @@ namespace lyric_importer {
 
         std::weak_ptr<TypeImport> getEnumType();
         lyric_common::SymbolUrl getSuperEnum();
+        std::weak_ptr<TypeImport> getSuperType();
 
         lyric_common::SymbolUrl getMember(std::string_view name);
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator membersBegin();
@@ -60,6 +61,7 @@ namespace lyric_importer {
             bool isHidden = false;
             std::weak_ptr<TypeImport> enumType;
             lyric_common::SymbolUrl superEnum;
+            std::weak_ptr<TypeImport> superType;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> stubs;

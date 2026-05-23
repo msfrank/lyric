@@ -21,6 +21,7 @@ namespace lyric_importer {
 
         std::weak_ptr<TypeImport> getClassType();
         lyric_common::SymbolUrl getSuperClass();
+        std::weak_ptr<TypeImport> getSuperType();
 
         bool hasClassTemplate();
         std::weak_ptr<TemplateImport> getClassTemplate();
@@ -65,6 +66,7 @@ namespace lyric_importer {
             bool hasTemplate = false;
             std::weak_ptr<TemplateImport> classTemplate;
             lyric_common::SymbolUrl superClass;
+            std::weak_ptr<TypeImport> superType;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> stubs;

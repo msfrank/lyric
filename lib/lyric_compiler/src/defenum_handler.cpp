@@ -113,6 +113,13 @@ lyric_compiler::DefEnumHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
+    // if no cases are defined then derive type is any, otherwise derive type is sealed
+    auto derive = caseNodes.empty()? lyric_object::DeriveType::Any : lyric_object::DeriveType::Sealed;
+
+    // declare the enum
+    TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
+        identifier, isHidden, /* isAbstract= */ true, derive));
+
     lyric_common::TypeDef superEnumType;
 
     // resolve the super enum type if specified, otherwise derive from Category
@@ -121,27 +128,24 @@ lyric_compiler::DefEnumHandler::before(
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
         lyric_typing::TypeSpec superEnumSpec;
         TU_ASSIGN_OR_RETURN (superEnumSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (superEnumType, typeSystem->resolveAssignable(block, superEnumSpec));
+        auto *resolver = m_defenum.enumSymbol->enumResolver();
+        TU_ASSIGN_OR_RETURN (superEnumType, typeSystem->resolveAssignable(resolver, superEnumSpec));
     } else {
         superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
     }
 
-    // resolve the super enum symbol
-    TU_ASSIGN_OR_RETURN (m_defenum.superenumSymbol, block->resolveEnum(superEnumType));
+    // finalize the enum
+    TU_RETURN_IF_NOT_OK (m_defenum.enumSymbol->finalizeEnum(superEnumType));
 
-    // if no cases are defined then derive type is any, otherwise derive type is sealed
-    auto derive = caseNodes.empty()? lyric_object::DeriveType::Any : lyric_object::DeriveType::Sealed;
-
-    // declare the enum
-    TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
-        identifier, m_defenum.superenumSymbol, isHidden, /* isAbstract= */ true, derive));
-
-    m_defenum.global.definitionBlock = m_defenum.enumSymbol->enumBlock();
+    // verify that enum is a valid subtype of superenum
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(superEnumType, m_defenum.enumSymbol->superEnum()));
 
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
         TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defenum.enumSymbol->getSymbolUrl()));
     }
+
+    m_defenum.global.definitionBlock = m_defenum.enumSymbol->enumBlock();
 
     // declare members
     for (auto &fieldNode : fieldNodes) {

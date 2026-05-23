@@ -253,9 +253,18 @@ lyric_object::ConceptWalker::getConceptType() const
     auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
     if (conceptDescriptor == nullptr)
         return {};
-    if (conceptDescriptor->concept_type() == INVALID_ADDRESS_U32)
-        return {};
     return TypeWalker(m_reader, conceptDescriptor->concept_type());
+}
+
+lyric_object::TypeWalker
+lyric_object::ConceptWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
+    if (conceptDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, conceptDescriptor->super_type());
 }
 
 tu_uint32

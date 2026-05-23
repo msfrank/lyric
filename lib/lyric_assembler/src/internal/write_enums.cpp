@@ -29,6 +29,8 @@ lyric_assembler::internal::touch_enum(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(enumSymbol->enumType()));
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(enumSymbol->superType()));
+
     for (auto it = enumSymbol->membersBegin(); it != enumSymbol->membersEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchField(it->second));
     }
@@ -71,6 +73,9 @@ write_enum(
         TU_ASSIGN_OR_RETURN (superenumIndex,
             writer.getSectionAddress(superenumSymbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
     }
+
+    tu_uint32 superType;
+    TU_ASSIGN_OR_RETURN (superType, writer.getTypeOffset(enumSymbol->superType()->getTypeDef()));
 
     lyo1::EnumFlags enumFlags = lyo1::EnumFlags::NONE;
     if (enumSymbol->isDeclOnly()) {
@@ -159,7 +164,7 @@ write_enum(
 
     // add enum descriptor
     enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer, fullyQualifiedName,
-        superenumIndex, enumType, enumFlags,
+        superenumIndex, superType, enumType, enumFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
         buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         ctorCall, buffer.CreateVector(sealedSubtypes)));

@@ -327,6 +327,17 @@ lyric_object::InstanceWalker::getInstanceType() const
     return TypeWalker(m_reader, instanceDescriptor->instance_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::InstanceWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
+    if (instanceDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, instanceDescriptor->super_type());
+}
+
 tu_uint32 lyric_object::InstanceWalker::getDescriptorOffset() const
 {
     if (!isValid())

@@ -67,6 +67,12 @@ lyric_compiler::DefConceptHandler::before(
         TU_ASSIGN_OR_RETURN (m_defconcept.templateSpec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
+    // declare the concept
+    TU_ASSIGN_OR_RETURN (m_defconcept.conceptSymbol, block->declareConcept(identifier, isHidden,
+        m_defconcept.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
+
+    auto *conceptBlock = m_defconcept.conceptSymbol->conceptBlock();
+
     std::vector<lyric_parser::ArchetypeNode *> declNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
     std::vector<lyric_parser::ArchetypeNode *> globalNodes;
@@ -98,16 +104,25 @@ lyric_compiler::DefConceptHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
+    lyric_common::TypeDef superConceptType;
+
     // resolve the super concept type if specified, otherwise derive from Idea
-    auto superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superConceptSpec;
+        TU_ASSIGN_OR_RETURN (superConceptSpec, typeSystem->parseAssignable(conceptBlock, typeNode->getArchetypeNode()));
+        auto *resolver = m_defconcept.conceptSymbol->conceptResolver();
+        TU_ASSIGN_OR_RETURN (superConceptType, typeSystem->resolveAssignable(resolver, superConceptSpec));
+    } else {
+        superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
+    }
 
-    // resolve the super class symbol
-    TU_ASSIGN_OR_RETURN (m_defconcept.superconceptSymbol, block->resolveConcept(superConceptType));
+    // finalize the concept
+    TU_RETURN_IF_NOT_OK (m_defconcept.conceptSymbol->finalizeConcept(superConceptType));
 
-    // declare the class
-    TU_ASSIGN_OR_RETURN (m_defconcept.conceptSymbol, block->declareConcept(
-        identifier, m_defconcept.superconceptSymbol, isHidden,
-        m_defconcept.templateSpec.templateParameters, isAbstract, lyric_compiler::convert_derive_type(derive)));
+    // verify that concept is a valid subtype of superconcept
+    TU_RETURN_IF_NOT_OK (typeSystem->validateSubtype(superConceptType, m_defconcept.conceptSymbol->superConcept()));
 
     m_defconcept.global.definitionBlock = m_defconcept.conceptSymbol->conceptBlock();
 

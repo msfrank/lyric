@@ -337,6 +337,17 @@ lyric_object::ClassWalker::getClassType() const
     return TypeWalker(m_reader, classDescriptor->class_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::ClassWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, classDescriptor->super_type());
+}
+
 tu_uint32
 lyric_object::ClassWalker::getDescriptorOffset() const
 {

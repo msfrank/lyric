@@ -1046,6 +1046,10 @@ lyric_assembler::BlockHandle::declareClass(
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, classUrl));
 
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare class {} as both abstract and final", name);
+
     // create the template if there are any template parameters
     TemplateHandle *classTemplate = nullptr;
     if (!templateParameters.empty()) {
@@ -1097,7 +1101,6 @@ lyric_assembler::BlockHandle::resolveClass(const lyric_common::TypeDef &classTyp
 tempo_utils::Result<lyric_assembler::ConceptSymbol *>
 lyric_assembler::BlockHandle::declareConcept(
     const std::string &name,
-    ConceptSymbol *superConcept,
     bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool isAbstract,
@@ -1111,30 +1114,24 @@ lyric_assembler::BlockHandle::declareConcept(
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, conceptUrl));
 
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare concept {} as both abstract and final", name);
+
     // create the template if there are any template parameters
     TemplateHandle *conceptTemplate = nullptr;
     if (!templateParameters.empty()) {
         TU_ASSIGN_OR_RETURN (conceptTemplate, typeCache->makeTemplate(conceptUrl, templateParameters, this));
     }
 
-    // create the type
-    TypeHandle *typeHandle;
-    if (conceptTemplate) {
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            conceptUrl, conceptTemplate->getPlaceholders(), superConcept->getTypeDef()));
-    } else {
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            conceptUrl, {}, superConcept->getTypeDef()));
-    }
-
     // create the concept
     std::unique_ptr<ConceptSymbol> conceptSymbol;
     if (conceptTemplate) {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive, typeHandle,
-            conceptTemplate, superConcept, declOnly, this, m_state);
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive,
+            conceptTemplate, declOnly, this, m_state);
     } else {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive, typeHandle,
-            superConcept, declOnly, this, m_state);
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, isAbstract, derive,
+            declOnly, this, m_state);
     }
 
     ConceptSymbol *conceptPtr;
@@ -1172,41 +1169,23 @@ lyric_assembler::BlockHandle::resolveConcept(const lyric_common::TypeDef &concep
 tempo_utils::Result<lyric_assembler::EnumSymbol *>
 lyric_assembler::BlockHandle::declareEnum(
     const std::string &name,
-    EnumSymbol *superEnum,
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
-    auto *typeCache = m_state->typeCache();
 
     auto enumUrl = makeSymbolUrl(name);
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, enumUrl));
 
-    auto superDerive = superEnum->getDeriveType();
-    if (superDerive == lyric_object::DeriveType::Final)
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive enum {} from {}; base enum is marked final",
-            name, superEnum->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && superEnum->isImported())
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive enum {} from {}; sealed base enum must be located in the same module",
-            name, superEnum->getSymbolUrl().toString());
-
     if (isAbstract && derive == lyric_object::DeriveType::Final)
         return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "cannot declare enum {} as both abstract and final", name);
 
-    // create the type
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-        enumUrl, {}, superEnum->getTypeDef()));
-
     // create the enum
-    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, isAbstract, derive,
-        typeHandle, superEnum, declOnly, this, m_state);
+    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, isAbstract, derive, declOnly, this, m_state);
 
     EnumSymbol *enumPtr;
     TU_ASSIGN_OR_RETURN (enumPtr, m_state->appendEnum(std::move(enumSymbol), existingTypename));
@@ -1240,11 +1219,11 @@ lyric_assembler::BlockHandle::resolveEnum(const lyric_common::TypeDef &enumType)
     return cast_symbol_to_enum(symbol);
 }
 
-tempo_utils::Result<lyric_assembler::InstanceSymbol *>
-lyric_assembler::BlockHandle::declareInstance(
+tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
+lyric_assembler::BlockHandle::declareExistential(
     const std::string &name,
-    InstanceSymbol *superInstance,
     bool isHidden,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
@@ -1252,32 +1231,83 @@ lyric_assembler::BlockHandle::declareInstance(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
+    auto existentialUrl = makeSymbolUrl(name);
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, existentialUrl));
+
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare existential {} as both abstract and final", name);
+
+    // create the template if there are any template parameters
+    TemplateHandle *existentialTemplate = nullptr;
+    if (!templateParameters.empty()) {
+        TU_ASSIGN_OR_RETURN (existentialTemplate, typeCache->makeTemplate(existentialUrl, templateParameters, this));
+    }
+
+    // create the existential
+    std::unique_ptr<ExistentialSymbol> existentialSymbol;
+    if (existentialTemplate != nullptr) {
+        existentialSymbol = std::make_unique<ExistentialSymbol>(existentialUrl, isHidden, derive,
+            existentialTemplate, declOnly, this, m_state);
+    } else {
+        existentialSymbol = std::make_unique<ExistentialSymbol>(existentialUrl, isHidden, derive,
+            declOnly, this, m_state);
+    }
+
+    ExistentialSymbol *existentialPtr;
+    TU_ASSIGN_OR_RETURN (existentialPtr, m_state->appendExistential(std::move(existentialSymbol), existingTypename));
+
+    SymbolBinding binding;
+    binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = existentialUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+    m_bindings[name] = binding;
+
+    return existentialPtr;
+}
+
+tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
+lyric_assembler::BlockHandle::resolveExistential(const lyric_common::TypeDef &existentialType)
+{
+    if (existentialType.getType() != lyric_common::TypeDefType::Concrete)
+        return AssemblerStatus::forCondition(AssemblerCondition::kIncompatibleType,
+            "invalid existential type {}", existentialType.toString());
+    auto existentialUrl = existentialType.getConcreteUrl();
+
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(existentialUrl.getSymbolPath()));
+
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(existentialUrl));
+    if (symbol->getSymbolType() != SymbolType::EXISTENTIAL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "type {} is not an existential", existentialType.toString());
+
+    return cast_symbol_to_existential(symbol);
+}
+
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+lyric_assembler::BlockHandle::declareInstance(
+    const std::string &name,
+    bool isHidden,
+    bool isAbstract,
+    lyric_object::DeriveType derive,
+    bool declOnly)
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+
     auto instanceUrl = makeSymbolUrl(name);
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, instanceUrl));
-
-    auto superDerive = superInstance->getDeriveType();
-    if (superDerive == lyric_object::DeriveType::Final)
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive instance {} from {}; base instance is marked final",
-            name, superInstance->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && superInstance->isImported())
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive instance {} from {}; sealed base instance must be located in the same module",
-            name, superInstance->getSymbolUrl().toString());
 
     if (isAbstract && derive == lyric_object::DeriveType::Final)
         return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "cannot declare instance {} as both abstract and final", name);
 
-    // create the type
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-        instanceUrl, {}, superInstance->getTypeDef()));
-
     // create the instance
-    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, isHidden, isAbstract, derive,
-        typeHandle, superInstance, declOnly, this, m_state);
+    auto instanceSymbol = std::make_unique<InstanceSymbol>(
+        instanceUrl, isHidden, isAbstract, derive, declOnly, this, m_state);
 
     InstanceSymbol *instancePtr;
     TU_ASSIGN_OR_RETURN (instancePtr, m_state->appendInstance(std::move(instanceSymbol), existingTypename));
@@ -1385,37 +1415,24 @@ lyric_assembler::BlockHandle::resolveProtocol(const lyric_common::TypeDef &proto
 tempo_utils::Result<lyric_assembler::StructSymbol *>
 lyric_assembler::BlockHandle::declareStruct(
     const std::string &name,
-    StructSymbol *superStruct,
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
-    auto *typeCache = m_state->typeCache();
 
     auto structUrl = makeSymbolUrl(name);
     TypenameSymbol *existingTypename;
     TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, structUrl));
 
-    auto superDerive = superStruct->getDeriveType();
-    if (superDerive == lyric_object::DeriveType::Final)
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive struct {} from {}; base struct is marked final",
-            name, superStruct->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && superStruct->isImported())
-        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-            "cannot derive struct {} from {}; sealed base struct must be located in the same module",
-            name, superStruct->getSymbolUrl().toString());
-
-    // create the type
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-        structUrl, {}, superStruct->getTypeDef()));
+    if (isAbstract && derive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
+            "cannot declare struct {} as both abstract and final", name);
 
     // create the struct
-    auto structSymbol = std::make_unique<StructSymbol>(structUrl, isHidden, isAbstract, derive,
-        typeHandle, superStruct, declOnly, this, m_state);
+    auto structSymbol = std::make_unique<StructSymbol>(
+        structUrl, isHidden, isAbstract, derive, declOnly, this, m_state);
 
     StructSymbol *structPtr;
     TU_ASSIGN_OR_RETURN (structPtr, m_state->appendStruct(std::move(structSymbol), existingTypename));

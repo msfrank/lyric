@@ -17,17 +17,13 @@ class OverloadReifier : public BaseTypingFixture {};
 TEST_F(OverloadReifier, NullaryFunctionReturningConcreteType)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
-
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *FooConcept;
-    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", false, {}));
+    TU_RAISE_IF_NOT_OK (FooConcept->finalizeConcept(IdeaType));
 
     lyric_assembler::ActionSymbol *OverloadAction;
     TU_ASSIGN_OR_RAISE (OverloadAction, FooConcept->declareAction("Overload", false));
@@ -58,17 +54,13 @@ TEST_F(OverloadReifier, NullaryFunctionReturningConcreteType)
 TEST_F(OverloadReifier, UnaryFunctionReceivingConcreteTypeReturningConcreteType)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
-
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *FooConcept;
-    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", false, {}));
+    TU_RAISE_IF_NOT_OK (FooConcept->finalizeConcept(IdeaType));
 
     lyric_assembler::ActionSymbol *OverloadAction;
     TU_ASSIGN_OR_RAISE (OverloadAction, FooConcept->declareAction("Overload", false));
@@ -106,22 +98,19 @@ TEST_F(OverloadReifier, UnaryFunctionReceivingConcreteTypeReturningConcreteType)
 TEST_F(OverloadReifier, UnaryFunctionReceivingPlaceholderTypeReturningPlaceholderType)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
-
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     std::vector<lyric_object::TemplateParameter> templateParameters;
     lyric_object::TemplateParameter tp0{"T", 0, AnyType, lyric_object::VarianceType::Invariant, lyric_object::BoundType::Extends, false};
     templateParameters.push_back(tp0);
 
     lyric_assembler::ConceptSymbol *FooConcept;
-    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", IdeaConcept, false, templateParameters));
+    TU_ASSIGN_OR_RAISE (FooConcept, rootBlock->declareConcept("Foo", false, templateParameters));
+    TU_RAISE_IF_NOT_OK (FooConcept->finalizeConcept(IdeaType));
+
     auto *templateHandle = FooConcept->conceptTemplate();
 
     lyric_assembler::ActionSymbol *OverloadAction;

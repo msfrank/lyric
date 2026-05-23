@@ -83,16 +83,13 @@ TEST_F(CompareSingular, ComparisonOfSingularMemberSubtypeToTypeUnionIsExtends)
 TEST_F(CompareSingular, ComparisonToImplementedConceptIsEqual)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));
@@ -107,16 +104,13 @@ TEST_F(CompareSingular, ComparisonToImplementedConceptIsEqual)
 TEST_F(CompareSingular, ComparisonToUnimplementedConceptIsDisjoint)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));
@@ -129,20 +123,19 @@ TEST_F(CompareSingular, ComparisonToUnimplementedConceptIsDisjoint)
 TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingAllConceptsToIntersectionIsEqual)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept2;
-    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept2->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept3;
-    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept3->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));
@@ -163,20 +156,19 @@ TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingAllConceptsToI
 TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingSubsetOfConceptsToIntersectionIsDisjoint)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept2;
-    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept2->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept3;
-    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept3->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));
@@ -196,20 +188,19 @@ TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingSubsetOfConcep
 TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingNoConceptsToIntersectionIsDisjoint)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept2;
-    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept2, rootBlock->declareConcept("Concept2", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept2->finalizeConcept(IdeaType));
     lyric_assembler::ConceptSymbol *Concept3;
-    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept3, rootBlock->declareConcept("Concept3", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept3->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));
@@ -226,16 +217,13 @@ TEST_F(CompareSingular, ComparisonOfSingularMemberTypeImplementingNoConceptsToIn
 TEST_F(CompareSingular, ComparisonOfImplementationToConceptIsDisjoint)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto *symbolCache = objectState->symbolCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-
-    lyric_assembler::ConceptSymbol *IdeaConcept;
-    TU_ASSIGN_OR_RAISE (IdeaConcept, symbolCache->getOrImportConcept(
-        fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea)));
+    auto IdeaType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
 
     lyric_assembler::ConceptSymbol *Concept1;
-    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", IdeaConcept, false, {}));
+    TU_ASSIGN_OR_RAISE (Concept1, rootBlock->declareConcept("Concept1", false, {}));
+    TU_RAISE_IF_NOT_OK (Concept1->finalizeConcept(IdeaType));
 
     lyric_assembler::ClassSymbol *Class1;
     TU_ASSIGN_OR_RAISE (Class1, rootBlock->declareClass("Class1", false, {}));

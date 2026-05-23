@@ -18,6 +18,7 @@ namespace lyric_importer {
 
         std::weak_ptr<TypeImport> getExistentialType();
         lyric_common::SymbolUrl getSuperExistential();
+        std::weak_ptr<TypeImport> getSuperType();
 
         bool hasExistentialTemplate();
         std::weak_ptr<TemplateImport> getExistentialTemplate();
@@ -48,6 +49,7 @@ namespace lyric_importer {
             bool hasTemplate = false;
             std::weak_ptr<TemplateImport> existentialTemplate;
             lyric_common::SymbolUrl superExistential;
+            std::weak_ptr<TypeImport> superType;
             absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
             absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
             absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;

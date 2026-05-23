@@ -127,6 +127,7 @@ struct CoreExistential {
     const CoreType *existentialType;
     const CoreTemplate *existentialTemplate;
     const CoreExistential *superExistential;
+    const CoreType *superType;
     lyo1::IntrinsicType intrinsicMapping;
     lyo1::ExistentialFlags flags;
     std::vector<CoreCall *> methods;
@@ -140,6 +141,7 @@ struct CoreConcept {
     const CoreType *conceptType;
     const CoreTemplate *conceptTemplate;
     const CoreConcept *superConcept;
+    const CoreType *superType;
     lyo1::ConceptFlags flags;
     std::vector<CoreAction *> actions;
     std::vector<CoreImpl *> impls;
@@ -168,6 +170,7 @@ struct CoreEnum {
     lyric_common::SymbolPath enumPath;
     const CoreType *enumType;
     const CoreEnum *superEnum;
+    const CoreType *superType;
     lyo1::EnumFlags flags;
     tu_uint32 allocatorTrap;
     const CoreCall *enumCtor;
@@ -183,6 +186,7 @@ struct CoreInstance {
     lyric_common::SymbolPath instancePath;
     const CoreType *instanceType;
     const CoreInstance *superInstance;
+    const CoreType *superType;
     lyo1::InstanceFlags flags;
     tu_uint32 allocatorTrap;
     const CoreCall *instanceCtor;
@@ -198,6 +202,7 @@ struct CoreStruct {
     lyric_common::SymbolPath structPath;
     const CoreType *structType;
     const CoreStruct *superStruct;
+    const CoreType *superType;
     lyo1::StructFlags flags;
     tu_uint32 allocatorTrap;
     const CoreCall *structCtor;
@@ -287,13 +292,15 @@ struct BuilderState {
         const lyric_common::SymbolPath &existentialPath,
         lyo1::IntrinsicType intrinsicMapping,
         lyo1::ExistentialFlags existentialFlags,
-        const CoreExistential *superExistential = nullptr);
+        const CoreExistential *superExistential = nullptr,
+        const CoreType *superType = nullptr);
     CoreExistential *addGenericExistential(
         const lyric_common::SymbolPath &existentialPath,
         const CoreTemplate *existentialTemplate,
         lyo1::IntrinsicType intrinsicMapping,
         lyo1::ExistentialFlags existentialFlags,
-        const CoreExistential *superExistential = nullptr);
+        const CoreExistential *superExistential = nullptr,
+        const CoreType *superType = nullptr);
     CoreCall *addExistentialMethod(
         const std::string &methodName,
         const CoreExistential *receiver,
@@ -328,12 +335,14 @@ struct BuilderState {
     CoreConcept *addConcept(
         const lyric_common::SymbolPath &conceptPath,
         lyo1::ConceptFlags conceptFlags,
-        const CoreConcept *superConcept = nullptr);
+        const CoreConcept *superConcept = nullptr,
+        const CoreType *superType = nullptr);
     CoreConcept *addGenericConcept(
         const lyric_common::SymbolPath &conceptPath,
         const CoreTemplate *conceptTemplate,
         lyo1::ConceptFlags conceptFlags,
-        const CoreConcept *superConcept = nullptr);
+        const CoreConcept *superConcept = nullptr,
+        const CoreType *superType = nullptr);
     CoreAction *addConceptAction(
         const std::string &actionName,
         const CoreConcept *receiver,
@@ -383,7 +392,8 @@ struct BuilderState {
     CoreStruct *addStruct(
         const lyric_common::SymbolPath &classPath,
         lyo1::StructFlags structFlags,
-        const CoreStruct *superStruct = nullptr);
+        const CoreStruct *superStruct = nullptr,
+        const CoreType *superType = nullptr);
     void setStructAllocator(const CoreStruct *receiver, std::string_view trapName);
     CoreCall *addStructCtor(
         const CoreStruct *receiver,
@@ -411,7 +421,8 @@ struct BuilderState {
     CoreInstance *addInstance(
         const lyric_common::SymbolPath &instancePath,
         lyo1::InstanceFlags instanceFlags,
-        const CoreInstance *superInstance = nullptr);
+        const CoreInstance *superInstance = nullptr,
+        const CoreType *superType = nullptr);
     void setInstanceAllocator(const CoreInstance *receiver, std::string_view trapName);
     CoreCall *addInstanceCtor(
         const CoreInstance *receiver,
@@ -454,7 +465,8 @@ struct BuilderState {
     CoreEnum *addEnum(
         const lyric_common::SymbolPath &enumPath,
         lyo1::EnumFlags enumFlags,
-        const CoreEnum *superEnum = nullptr);
+        const CoreEnum *superEnum = nullptr,
+        const CoreType *superType = nullptr);
     void setEnumAllocator(const CoreEnum *receiver, std::string_view trapName);
     CoreCall *addEnumCtor(
         const CoreEnum *receiver,

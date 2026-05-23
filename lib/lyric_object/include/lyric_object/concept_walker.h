@@ -48,6 +48,7 @@ namespace lyric_object {
         TypeWalker getSealedSubConcept(tu_uint8 index) const;
 
         TypeWalker getConceptType() const;
+        TypeWalker getSuperType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

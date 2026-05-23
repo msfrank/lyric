@@ -52,7 +52,7 @@ lyric_compiler::define_instance_default_init(
 
     // find the superinstance ctor
     std::unique_ptr<lyric_assembler::AbstractCallable> superCtor;
-    TU_RETURN_IF_NOT_OK (definstance->superinstanceSymbol->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (superInstance->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor.get()));

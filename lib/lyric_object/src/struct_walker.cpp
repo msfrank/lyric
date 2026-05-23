@@ -313,6 +313,17 @@ lyric_object::StructWalker::getStructType() const
     return TypeWalker(m_reader, structDescriptor->struct_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::StructWalker::getSuperType() const
+{
+    if (!isValid())
+        return {};
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, structDescriptor->super_type());
+}
+
 tu_uint32
 lyric_object::StructWalker::getDescriptorOffset() const
 {

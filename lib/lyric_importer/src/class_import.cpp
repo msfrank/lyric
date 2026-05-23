@@ -62,6 +62,13 @@ lyric_importer::ClassImport::getSuperClass()
     return m_priv->superClass;
 }
 
+std::weak_ptr<lyric_importer::TypeImport>
+lyric_importer::ClassImport::getSuperType()
+{
+    load();
+    return m_priv->superType;
+}
+
 bool
 lyric_importer::ClassImport::hasClassTemplate()
 {
@@ -291,6 +298,8 @@ lyric_importer::ClassImport::load()
                         "cannot import class at index {} in module {}; invalid super class",
                         m_classOffset, objectLocation.toString()));
         }
+        priv->superType = moduleImport->getType(
+            classWalker.getSuperType().getDescriptorOffset());
     }
 
     for (tu_uint8 i = 0; i < classWalker.numMembers(); i++) {

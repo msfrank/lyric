@@ -17,8 +17,6 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    TypeHandle *existentialType,
-    ExistentialSymbol *superExistential,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -33,9 +31,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     priv->isHidden = isHidden;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->existentialType = existentialType;
     priv->existentialTemplate = nullptr;
-    priv->superExistential = superExistential;
     priv->existentialBlock = std::make_unique<BlockHandle>(existentialUrl, parentBlock);
 
     TU_ASSERT (priv->existentialType != nullptr);
@@ -46,9 +42,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    TypeHandle *existentialType,
     TemplateHandle *existentialTemplate,
-    ExistentialSymbol *superExistential,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -56,8 +50,6 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
         existentialUrl,
         isHidden,
         derive,
-        existentialType,
-        superExistential,
         isDeclOnly,
         parentBlock,
         state)
@@ -122,6 +114,14 @@ lyric_assembler::ExistentialSymbol::load()
     auto superExistentialUrl = m_existentialImport->getSuperExistential();
     if (superExistentialUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superExistential, importCache->importExistential(superExistentialUrl));
+
+        auto superTypeImport = m_existentialImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import existential {}; missing supertype",
+                m_existentialUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_existentialImport->methodsBegin(); it != m_existentialImport->methodsEnd(); it++) {
@@ -211,13 +211,6 @@ lyric_assembler::ExistentialSymbol::getDeriveType() const
     return priv->derive;
 }
 
-lyric_assembler::ExistentialSymbol *
-lyric_assembler::ExistentialSymbol::superExistential() const
-{
-    auto *priv = getPriv();
-    return priv->superExistential;
-}
-
 lyric_assembler::TypeHandle *
 lyric_assembler::ExistentialSymbol::existentialType() const
 {
@@ -230,6 +223,85 @@ lyric_assembler::ExistentialSymbol::existentialTemplate() const
 {
     auto *priv = getPriv();
     return priv->existentialTemplate;
+}
+
+lyric_assembler::ExistentialSymbol *
+lyric_assembler::ExistentialSymbol::superExistential() const
+{
+    auto *priv = getPriv();
+    return priv->superExistential;
+}
+
+lyric_assembler::TypeHandle *
+lyric_assembler::ExistentialSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superType;
+}
+
+lyric_assembler::BlockHandle *
+lyric_assembler::ExistentialSymbol::existentialBlock() const
+{
+    auto *priv = getPriv();
+    return priv->existentialBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::ExistentialSymbol::existentialResolver() const
+{
+    auto *priv = getPriv();
+    if (priv->existentialTemplate)
+        return priv->existentialTemplate;
+    return priv->existentialBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::ExistentialSymbol::finalizeExistential(const lyric_common::TypeDef &superExistentialType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_existentialUrl.toString());
+
+    ExistentialSymbol *superExistential;
+    TU_ASSIGN_OR_RETURN (superExistential, priv->existentialBlock->resolveExistential(superExistentialType));
+
+    auto superDerive = superExistential->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive existential {} from {}; base existential is marked final",
+            m_existentialUrl.getSymbolPath().toString(), superExistential->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superExistential->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive existential {} from {}; sealed base existential must be located in the same module",
+            m_existentialUrl.getSymbolPath().toString(), superExistential->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    TypeHandle *supertypeHandle;
+    if (superExistentialType.numConcreteArguments() > 0) {
+        auto superUrl = superExistentialType.getConcreteUrl();
+        std::vector superArguments(superExistentialType.concreteArgumentsBegin(), superExistentialType.concreteArgumentsEnd());
+        TU_ASSIGN_OR_RETURN (supertypeHandle, typeCache->declareParameterizedType(superUrl, superArguments));
+    } else {
+        supertypeHandle = superExistential->existentialType();
+    }
+
+    // create the type
+    TypeHandle *typeHandle;
+    if (priv->existentialTemplate) {
+        auto placeholders = priv->existentialTemplate->getPlaceholders();
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_existentialUrl, placeholders, superExistentialType));
+    } else {
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_existentialUrl, {}, superExistentialType));
+    }
+
+    priv->superExistential = superExistential;
+    priv->superType = supertypeHandle;
+    priv->existentialType = typeHandle;
+    return {};
 }
 
 bool

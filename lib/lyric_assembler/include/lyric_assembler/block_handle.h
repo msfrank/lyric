@@ -112,7 +112,6 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ConceptSymbol *> declareConcept(
             const std::string &name,
-            ConceptSymbol *superConcept,
             bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             bool isAbstract = false,
@@ -123,7 +122,6 @@ namespace lyric_assembler {
 
         tempo_utils::Result<EnumSymbol *> declareEnum(
             const std::string &name,
-            EnumSymbol *superEnum,
             bool isHidden,
             bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
@@ -131,9 +129,18 @@ namespace lyric_assembler {
 
         tempo_utils::Result<EnumSymbol *> resolveEnum(const lyric_common::TypeDef &enumType);
 
+        tempo_utils::Result<ExistentialSymbol *> declareExistential(
+            const std::string &name,
+            bool isHidden,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters,
+            bool isAbstract = false,
+            lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
+            bool declOnly = false);
+
+        tempo_utils::Result<ExistentialSymbol *> resolveExistential(const lyric_common::TypeDef &existentialType);
+
         tempo_utils::Result<InstanceSymbol *> declareInstance(
             const std::string &name,
-            InstanceSymbol *superInstance,
             bool isHidden,
             bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
@@ -154,7 +161,6 @@ namespace lyric_assembler {
 
         tempo_utils::Result<StructSymbol *> declareStruct(
             const std::string &name,
-            StructSymbol *superStruct,
             bool isHidden,
             bool isAbstract = false,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,

@@ -21,6 +21,7 @@ namespace lyric_assembler {
         bool isDeclOnly = false;
         TypeHandle *enumType = nullptr;
         EnumSymbol *superEnum = nullptr;
+        TypeHandle *superType = nullptr;
         std::string allocatorTrap;
         absl::flat_hash_map<std::string, FieldSymbol *> members;
         absl::flat_hash_set<std::string> initializedMembers;
@@ -39,8 +40,6 @@ namespace lyric_assembler {
             bool isHidden,
             bool isAbstract,
             lyric_object::DeriveType derive,
-            TypeHandle *enumType,
-            EnumSymbol *superEnum,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -64,7 +63,15 @@ namespace lyric_assembler {
 
         TypeHandle *enumType() const;
         EnumSymbol *superEnum() const;
+        TypeHandle *superType() const;
         BlockHandle *enumBlock() const;
+
+        AbstractResolver *enumResolver() const;
+
+        /*
+         * contract management
+         */
+        tempo_utils::Status finalizeEnum(const lyric_common::TypeDef &superEnumType);
 
         /*
          * global management

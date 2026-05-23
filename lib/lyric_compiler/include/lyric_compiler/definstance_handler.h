@@ -20,7 +20,6 @@ namespace lyric_compiler {
 
     struct DefInstance {
         lyric_assembler::InstanceSymbol *instanceSymbol = nullptr;
-        lyric_assembler::InstanceSymbol *superinstanceSymbol = nullptr;
         lyric_assembler::CallSymbol *defaultCtor = nullptr;
         Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;

@@ -22,8 +22,6 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *conceptType,
-    ConceptSymbol *superConcept,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -39,13 +37,8 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     priv->isAbstract = isAbstract;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
-    priv->conceptType = conceptType;
-    priv->superConcept = superConcept;
     priv->conceptTemplate = nullptr;
     priv->conceptBlock = std::make_unique<BlockHandle>(conceptUrl, parentBlock);
-
-    TU_ASSERT (priv->conceptType != nullptr);
-    TU_ASSERT (priv->superConcept != nullptr);
 }
 
 lyric_assembler::ConceptSymbol::ConceptSymbol(
@@ -53,9 +46,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     bool isHidden,
     bool isAbstract,
     lyric_object::DeriveType derive,
-    TypeHandle *conceptType,
     TemplateHandle *conceptTemplate,
-    ConceptSymbol *superConcept,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -64,8 +55,6 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
         isHidden,
         isAbstract,
         derive,
-        conceptType,
-        superConcept,
         isDeclOnly,
         parentBlock,
         state)
@@ -131,6 +120,14 @@ lyric_assembler::ConceptSymbol::load()
     auto superConceptUrl = m_conceptImport->getSuperConcept();
     if (superConceptUrl.isValid()) {
         TU_ASSIGN_OR_RAISE (priv->superConcept, importCache->importConcept(superConceptUrl));
+
+        auto superTypeImport = m_conceptImport->getSuperType().lock();
+        if (superTypeImport == nullptr)
+            throw tempo_utils::StatusException(
+                AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+                "cannot import concept {}; missing supertype",
+                m_conceptUrl.toString()));
+        TU_ASSIGN_OR_RAISE (priv->superType, typeCache->importType(superTypeImport));
     }
 
     for (auto it = m_conceptImport->actionsBegin(); it != m_conceptImport->actionsEnd(); it++) {
@@ -234,13 +231,6 @@ lyric_assembler::ConceptSymbol::getDeriveType() const
     return priv->derive;
 }
 
-lyric_assembler::ConceptSymbol *
-lyric_assembler::ConceptSymbol::superConcept() const
-{
-    auto *priv = getPriv();
-    return priv->superConcept;
-}
-
 lyric_assembler::TypeHandle *
 lyric_assembler::ConceptSymbol::conceptType() const
 {
@@ -255,11 +245,83 @@ lyric_assembler::ConceptSymbol::conceptTemplate() const
     return priv->conceptTemplate;
 }
 
+lyric_assembler::ConceptSymbol *
+lyric_assembler::ConceptSymbol::superConcept() const
+{
+    auto *priv = getPriv();
+    return priv->superConcept;
+}
+
+lyric_assembler::TypeHandle *
+lyric_assembler::ConceptSymbol::superType() const
+{
+    auto *priv = getPriv();
+    return priv->superType;
+}
+
 lyric_assembler::BlockHandle *
 lyric_assembler::ConceptSymbol::conceptBlock() const
 {
     auto *priv = getPriv();
     return priv->conceptBlock.get();
+}
+
+lyric_assembler::AbstractResolver *
+lyric_assembler::ConceptSymbol::conceptResolver() const
+{
+    auto *priv = getPriv();
+    if (priv->conceptTemplate)
+        return priv->conceptTemplate;
+    return priv->conceptBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::ConceptSymbol::finalizeConcept(const lyric_common::TypeDef &superConceptType)
+{
+    auto *typeCache = m_state->typeCache();
+
+    auto *priv = getPriv();
+
+    if (priv->superType != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "{} is already finalized", m_conceptUrl.toString());
+
+    ConceptSymbol *superConcept;
+    TU_ASSIGN_OR_RETURN (superConcept, priv->conceptBlock->resolveConcept(superConceptType));
+
+    auto superDerive = superConcept->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive concept {} from {}; base concept is marked final",
+            m_conceptUrl.getSymbolPath().toString(), superConcept->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && superConcept->isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+            "cannot derive concept {} from {}; sealed base concept must be located in the same module",
+            m_conceptUrl.getSymbolPath().toString(), superConcept->getSymbolUrl().toString());
+
+    // create the supertype if necessary
+    TypeHandle *supertypeHandle;
+    if (superConceptType.numConcreteArguments() > 0) {
+        auto superUrl = superConceptType.getConcreteUrl();
+        std::vector superArguments(superConceptType.concreteArgumentsBegin(), superConceptType.concreteArgumentsEnd());
+        TU_ASSIGN_OR_RETURN (supertypeHandle, typeCache->declareParameterizedType(superUrl, superArguments));
+    } else {
+        supertypeHandle = superConcept->conceptType();
+    }
+
+    // create the type
+    TypeHandle *typeHandle;
+    if (priv->conceptTemplate) {
+        auto placeholders = priv->conceptTemplate->getPlaceholders();
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_conceptUrl, placeholders, superConceptType));
+    } else {
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(m_conceptUrl, {}, superConceptType));
+    }
+
+    priv->superConcept = superConcept;
+    priv->superType = supertypeHandle;
+    priv->conceptType = typeHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

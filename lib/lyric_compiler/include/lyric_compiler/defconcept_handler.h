@@ -17,7 +17,6 @@ namespace lyric_compiler {
 
     struct DefConcept {
         lyric_assembler::ConceptSymbol *conceptSymbol = nullptr;
-        lyric_assembler::ConceptSymbol *superconceptSymbol = nullptr;
         lyric_typing::TemplateSpec templateSpec;
         Global global;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Action> actions;
