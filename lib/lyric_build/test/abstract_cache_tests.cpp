@@ -6,7 +6,6 @@
 #include <lyric_build/filesystem_cache.h>
 #include <lyric_build/memory_cache.h>
 #include <lyric_build/metadata_writer.h>
-#include <lyric_build/rocksdb_cache.h>
 #include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_utils/memory_bytes.h>
@@ -20,27 +19,6 @@ public:
     virtual void initialize() {};
     virtual void cleanup() {};
     virtual std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const = 0;
-};
-
-class RocksdbCache : public CacheFixture {
-public:
-    void initialize() override {
-        tempo_utils::TempdirMaker dbPathMaker("rocksdb_cache.XXXXXXXX");
-        TU_RAISE_IF_NOT_OK (dbPathMaker.getStatus());
-        dbPath = dbPathMaker.getTempdir();
-        cache = std::make_shared<lyric_build::RocksdbCache>(false);
-        TU_RAISE_IF_NOT_OK (cache->initializeCache(dbPath));
-    }
-    void cleanup() override {
-        cache.reset();
-        std::filesystem::remove_all(dbPath);
-    }
-    std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const override {
-        return cache;
-    }
-private:
-    std::filesystem::path dbPath;
-    std::shared_ptr<lyric_build::RocksdbCache> cache;
 };
 
 class MemoryCache : public CacheFixture {
@@ -76,12 +54,6 @@ template <class T>
 CacheFixture* CreateCacheFixture();
 
 template <>
-CacheFixture* CreateCacheFixture<RocksdbCache>()
-{
-    return new RocksdbCache();
-}
-
-template <>
 CacheFixture* CreateCacheFixture<MemoryCache>()
 {
     return new MemoryCache();
@@ -105,7 +77,7 @@ protected:
     void TearDown() override { fixture->cleanup(); }
 };
 
-typedef ::testing::Types<MemoryCache, RocksdbCache, FilesystemCache> Implementations;
+typedef ::testing::Types<MemoryCache, FilesystemCache> Implementations;
 TYPED_TEST_SUITE(AbstractCache, Implementations);
 
 TYPED_TEST (AbstractCache, DeclareArtifact)

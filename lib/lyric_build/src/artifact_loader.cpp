@@ -4,7 +4,6 @@
 #include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/lyric_builder.h>
-#include <lyric_build/rocksdb_cache.h>
 
 #include "lyric_common/common_types.h"
 

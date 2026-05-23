@@ -2,6 +2,7 @@
 #include <span>
 
 #include <lyric_build/build_attrs.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
@@ -9,7 +10,6 @@
 #include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
 #include <lyric_build/memory_cache.h>
-#include <lyric_build/rocksdb_cache.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
 #include <lyric_runtime/chain_loader.h>

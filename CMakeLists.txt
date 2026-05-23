@@ -190,9 +190,6 @@ find_package(antlr REQUIRED)
 # find required Flatbuffers dependency
 find_package(flatbuffers REQUIRED)
 
-# find required Rocksdb dependency
-find_package(rocksdb REQUIRED)
-
 # find required Openssl dependency
 find_package(OpenSSL REQUIRED)
 
