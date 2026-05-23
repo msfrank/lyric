@@ -154,7 +154,7 @@ write_struct(
 
     // add struct descriptor
     structs_vector.push_back(lyo1::CreateStructDescriptor(buffer, fullyQualifiedName,
-        superstructIndex, structType, superType, structFlags,
+        superstructIndex, superType, structType, structFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
         buffer.CreateVector(stubs), buffer.CreateVector(impls), allocatorTrap,
         buffer.CreateVector(sealedSubtypes)));
