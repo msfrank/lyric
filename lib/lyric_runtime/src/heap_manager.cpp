@@ -252,7 +252,7 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateProtocol(const DataCell &descriptor)
 {
-    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
     auto *segment = descriptor.data.descriptor->getSegment();
     auto object = segment->getObject();
@@ -282,7 +282,7 @@ lyric_runtime::HeapManager::loadProtocolOntoStack(const DataCell &descriptor)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateNamespace(const DataCell &descriptor)
 {
-    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
     auto *segment = descriptor.data.descriptor->getSegment();
     auto object = segment->getObject();
@@ -317,7 +317,7 @@ set_reachable_for_task(lyric_runtime::Task *task)
 
     // walk the data stack and mark all reachable instances
     for (auto iterator = coro->dataBegin(); iterator != coro->dataEnd(); iterator++) {
-        if (iterator->type == lyric_runtime::DataCellType::REF) {
+        if (iterator->type == lyric_runtime::DataCellType::Ref) {
             auto *instance = iterator->data.ref;
             if (instance) {
                 instance->setReachable();

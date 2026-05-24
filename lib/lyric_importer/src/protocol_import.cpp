@@ -20,6 +20,7 @@ lyric_importer::ProtocolImport::getSymbolUrl()
 bool
 lyric_importer::ProtocolImport::isDeclOnly()
 {
+    load();
     return m_priv->isDeclOnly;
 }
 

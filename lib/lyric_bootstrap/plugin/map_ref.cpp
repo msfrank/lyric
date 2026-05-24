@@ -10,15 +10,15 @@ is_equal(const lyric_runtime::DataCell &lhs, const lyric_runtime::DataCell &rhs)
     if (lhs.type != rhs.type)
         return false;
     switch (lhs.type) {
-        case lyric_runtime::DataCellType::REF: {
+        case lyric_runtime::DataCellType::Ref: {
             if (lhs.data.ref->getVirtualTable() != rhs.data.ref->getVirtualTable())
                 return false;
             return lhs.data.ref->equals(rhs.data.ref);
         }
-        case lyric_runtime::DataCellType::STRING: {
+        case lyric_runtime::DataCellType::String: {
             return lhs.data.str->equals(rhs.data.str);
         }
-        case lyric_runtime::DataCellType::BYTES: {
+        case lyric_runtime::DataCellType::Bytes: {
             return lhs.data.bytes->equals(rhs.data.bytes);
         }
         default:
@@ -517,9 +517,9 @@ set_reachable(IndexMapNode *node)
             set_reachable(static_cast<IndexMapNode *>(child));
         } else {
             auto *value = static_cast<ValueMapNode *>(child);
-            if (value->key.type == lyric_runtime::DataCellType::REF)
+            if (value->key.type == lyric_runtime::DataCellType::Ref)
                 value->key.data.ref->setReachable();
-            if (value->value.type == lyric_runtime::DataCellType::REF)
+            if (value->value.type == lyric_runtime::DataCellType::Ref)
                 value->value.data.ref->setReachable();
         }
     }
@@ -532,9 +532,9 @@ MapRef::setMembersReachable()
         return;
     if (m_node->type == MapNodeType::VALUE) {
         auto *value = static_cast<ValueMapNode *>(m_node);
-        if (value->key.type == lyric_runtime::DataCellType::REF)
+        if (value->key.type == lyric_runtime::DataCellType::Ref)
             value->key.data.ref->setReachable();
-        if (value->value.type == lyric_runtime::DataCellType::REF)
+        if (value->value.type == lyric_runtime::DataCellType::Ref)
             value->value.data.ref->setReachable();
     } else {
         set_reachable(static_cast<IndexMapNode *>(m_node));
@@ -552,9 +552,9 @@ clear_reachable(IndexMapNode *index)
             clear_reachable(static_cast<IndexMapNode *>(child));
         } else {
             auto *value = static_cast<ValueMapNode *>(child);
-            if (value->key.type == lyric_runtime::DataCellType::REF)
+            if (value->key.type == lyric_runtime::DataCellType::Ref)
                 value->key.data.ref->clearReachable();
-            if (value->value.type == lyric_runtime::DataCellType::REF)
+            if (value->value.type == lyric_runtime::DataCellType::Ref)
                 value->value.data.ref->clearReachable();
         }
     }
@@ -567,9 +567,9 @@ MapRef::clearMembersReachable()
         return;
     if (m_node->type == MapNodeType::VALUE) {
         auto *value = static_cast<ValueMapNode *>(m_node);
-        if (value->key.type == lyric_runtime::DataCellType::REF)
+        if (value->key.type == lyric_runtime::DataCellType::Ref)
             value->key.data.ref->clearReachable();
-        if (value->value.type == lyric_runtime::DataCellType::REF)
+        if (value->value.type == lyric_runtime::DataCellType::Ref)
             value->value.data.ref->clearReachable();
     } else {
         clear_reachable(static_cast<IndexMapNode *>(m_node));
@@ -733,7 +733,7 @@ map_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     if (frame.numRest() == 1) {
@@ -741,7 +741,7 @@ map_ctor(
         node->type = MapNodeType::VALUE;
         node->refcount = 0;
         auto pair = frame.getRest(0);
-        TU_ASSERT (pair.type == lyric_runtime::DataCellType::REF);
+        TU_ASSERT (pair.type == lyric_runtime::DataCellType::Ref);
         node->key = static_cast<PairRef *>(pair.data.ref)->pairFirst();
         node->value = static_cast<PairRef *>(pair.data.ref)->pairSecond();
         node->hash = absl::HashOf(MapKey{node->key});
@@ -753,7 +753,7 @@ map_ctor(
         node->refcount = 0;
         for (uint16_t i = 0; i < frame.numRest(); i++) {
             auto pair = frame.getRest(i);
-            TU_ASSERT (pair.type == lyric_runtime::DataCellType::REF);
+            TU_ASSERT (pair.type == lyric_runtime::DataCellType::Ref);
             auto key = static_cast<PairRef *>(pair.data.ref)->pairFirst();
             auto value = static_cast<PairRef *>(pair.data.ref)->pairSecond();
             uint32_t hash = absl::HashOf(MapKey{key});
@@ -776,7 +776,7 @@ map_size(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     int64_t size = map->mapSize();
@@ -796,7 +796,7 @@ map_contains(
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     currentCoro->pushData(lyric_runtime::DataCell(map->mapContains(arg0)));
@@ -816,7 +816,7 @@ map_get(
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto value = map->mapGet(arg0);
@@ -840,7 +840,7 @@ map_update(
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapUpdate(arg0, arg1);
@@ -866,7 +866,7 @@ map_remove(
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapRemove(arg0);
@@ -897,11 +897,11 @@ map_iterate(
 
     lyric_runtime::DataCell cell;
     TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::DESCRIPTOR);
+    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
     TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<MapRef *>(receiver.data.ref);
 
     lyric_runtime::InterpreterStatus status;
@@ -943,7 +943,7 @@ map_iterator_valid(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
@@ -963,7 +963,7 @@ map_iterator_next(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
 
     lyric_runtime::DataCell next;

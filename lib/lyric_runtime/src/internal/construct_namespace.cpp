@@ -19,7 +19,7 @@ lyric_runtime::internal::construct_namespace(
     auto existing = segmentManager->loadNamespace(address, currentCoro, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    if (existing.type != DataCellType::INVALID) {
+    if (existing.type != DataCellType::Invalid) {
         TU_LOG_V << "loaded namespace " << existing;
         return currentCoro->pushData(existing);
     }

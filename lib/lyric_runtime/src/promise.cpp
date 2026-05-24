@@ -255,7 +255,7 @@ lyric_runtime::Promise::complete(const DataCell &result)
 tempo_utils::Status
 lyric_runtime::Promise::reject(const DataCell &result)
 {
-    if (result.type != DataCellType::STATUS)
+    if (result.type != DataCellType::Status)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "invalid promise result");
     switch (m_state) {

@@ -117,7 +117,7 @@ lyric_runtime::StatusRef::getMessage() const
 void
 lyric_runtime::StatusRef::setMessage(const DataCell &message)
 {
-    TU_ASSERT (message.type == DataCellType::STRING);
+    TU_ASSERT (message.type == DataCellType::String);
     m_message = message.data.str;
 }
 
@@ -141,7 +141,7 @@ lyric_runtime::StatusRef::setMembersReachable()
         m_message->setReachable();
     }
     for (auto &cell : m_fields) {
-        if (cell.type == DataCellType::REF) {
+        if (cell.type == DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->setReachable();
         }
@@ -155,7 +155,7 @@ lyric_runtime::StatusRef::clearMembersReachable()
         m_message->clearReachable();
     }
     for (auto &cell : m_fields) {
-        if (cell.type == DataCellType::REF) {
+        if (cell.type == DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->clearReachable();
         }

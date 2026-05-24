@@ -11,52 +11,52 @@ namespace lyric_runtime {
     template <typename H>
     H AbslHashValue(H h, const DataCell &cell) {
         switch (cell.type) {
-            case DataCellType::INVALID:
-            case DataCellType::NIL:
-            case DataCellType::UNDEF:
+            case DataCellType::Invalid:
+            case DataCellType::Nil:
+            case DataCellType::Undef:
                 return H::combine(std::move(h), cell.type);
-            case DataCellType::BOOL:
+            case DataCellType::Bool:
                 return H::combine(std::move(h), cell.type, cell.data.b);
-            case DataCellType::I64:
+            case DataCellType::Int64:
                 return H::combine(std::move(h), cell.type, cell.data.i64);
-            case DataCellType::DBL:
+            case DataCellType::Float64:
                 return H::combine(std::move(h), cell.type, cell.data.dbl);
-            case DataCellType::CHAR32:
+            case DataCellType::Char32:
                 return H::combine(std::move(h), cell.type, cell.data.chr);
 
-            case DataCellType::BYTES:
+            case DataCellType::Bytes:
                 // NOTE: we hash the pointer value in this case, not the string content
                 return H::combine(std::move(h), cell.type, cell.data.bytes);
 
-            case DataCellType::STRING:
+            case DataCellType::String:
                 // NOTE: we hash the pointer value in this case, not the string content
                 return H::combine(std::move(h), cell.type, cell.data.str);
 
-            case DataCellType::STATUS:
+            case DataCellType::Status:
                 // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.status);
 
-            case DataCellType::NAMESPACE:
+            case DataCellType::Namespace:
                 // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.ns);
 
-            case DataCellType::PROTOCOL:
+            case DataCellType::Protocol:
                 // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.protocol);
 
-            case DataCellType::REST:
+            case DataCellType::Rest:
                 // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.rest);
 
-            case DataCellType::REF:
+            case DataCellType::Ref:
                 // NOTE: we hash the pointer value in this case, not the ref content
                 return H::combine(std::move(h), cell.type, cell.data.ref);
 
-            case DataCellType::DESCRIPTOR:
+            case DataCellType::Descriptor:
                 // NOTE: we hash the pointer value in this case, not the descriptor content
                 return H::combine(std::move(h), cell.type, cell.data.descriptor);
 
-            case DataCellType::TYPE:
+            case DataCellType::Type:
                 // NOTE: we hash the pointer value in this case, not the type content
                 return H::combine(std::move(h), cell.type, cell.data.type);
         }

@@ -253,7 +253,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             return onError(op, status);
                         DataCell receiver;
                         ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                        if (receiver.type != DataCellType::REF)
+                        if (receiver.type != DataCellType::Ref)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for LOAD"));
                         auto *instance = receiver.data.ref;
@@ -268,7 +268,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     case lyric_object::LOAD_STATIC: {
                         tempo_utils::Status status;
                         auto value = segmentManager->loadStatic(index, currentCoro, status);
-                        if (value.type == DataCellType::INVALID) {
+                        if (value.type == DataCellType::Invalid) {
                             if (status.notOk())
                                 return onError(op, status);
                             if (!subroutineManager->initStatic(index, currentCoro, status))
@@ -345,7 +345,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             return onError(op, status);
                         DataCell receiver;
                         ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                        if (receiver.type != DataCellType::REF)
+                        if (receiver.type != DataCellType::Ref)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for STORE"));
                         auto *instance = receiver.data.ref;
@@ -375,7 +375,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(arg));
                 CallCell *activation;
                 ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
-                if (arg.type != DataCellType::I64)
+                if (arg.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "LOAD index must be Integer"));
                 if (arg.data.i64 < 0 || activation->numRest() <= arg.data.i64)
@@ -445,15 +445,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_ADD: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 + rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -463,15 +463,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_SUB: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 - rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -481,15 +481,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_MUL: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 * rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -499,15 +499,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_DIV: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 / rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -517,11 +517,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_NEG: {
                 DataCell value;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
-                if (value.type != DataCellType::I64)
+                if (value.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for value"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = -value.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -531,15 +531,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_ADD: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::DBL)
+                if (rhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::DBL)
+                if (lhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::DBL;
+                result.type = DataCellType::Float64;
                 result.data.dbl = lhs.data.dbl + rhs.data.dbl;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -549,15 +549,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_SUB: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::DBL)
+                if (rhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::DBL)
+                if (lhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::DBL;
+                result.type = DataCellType::Float64;
                 result.data.dbl = lhs.data.dbl - rhs.data.dbl;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -567,15 +567,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_MUL: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::DBL)
+                if (rhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::DBL)
+                if (lhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::DBL;
+                result.type = DataCellType::Float64;
                 result.data.dbl = lhs.data.dbl * rhs.data.dbl;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -585,15 +585,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_DIV: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::DBL)
+                if (rhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::DBL)
+                if (lhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::DBL;
+                result.type = DataCellType::Float64;
                 result.data.dbl = lhs.data.dbl / rhs.data.dbl;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -603,11 +603,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_NEG: {
                 DataCell value;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
-                if (value.type != DataCellType::DBL)
+                if (value.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
                 DataCell result;
-                result.type = DataCellType::DBL;
+                result.type = DataCellType::Float64;
                 result.data.dbl = -value.data.dbl;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -617,15 +617,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BOOL_CMP: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::BOOL)
+                if (rhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::BOOL)
+                if (lhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 if (lhs.data.b < rhs.data.b)
                     result.data.i64 = -1;
                 else if (lhs.data.b > rhs.data.b)
@@ -640,15 +640,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_I64_CMP: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 if (lhs.data.i64 < rhs.data.i64)
                     result.data.i64 = -1;
                 else if (lhs.data.i64 > rhs.data.i64)
@@ -663,15 +663,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DBL_CMP: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::DBL)
+                if (rhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::DBL)
+                if (lhs.type != DataCellType::Float64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 if (lhs.data.dbl < rhs.data.dbl)
                     result.data.i64 = -1;
                 else if (lhs.data.dbl > rhs.data.dbl)
@@ -686,15 +686,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_CHR_CMP: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::CHAR32)
+                if (rhs.type != DataCellType::Char32)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::CHAR32)
+                if (lhs.type != DataCellType::Char32)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 if (lhs.data.chr < rhs.data.chr)
                     result.data.i64 = -1;
                 else if (lhs.data.chr > rhs.data.chr)
@@ -709,18 +709,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TYPE_CMP: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::TYPE)
+                if (rhs.type != DataCellType::Type)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::TYPE)
+                if (lhs.type != DataCellType::Type)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 auto compareTypesResult = typeManager->compareTypes(lhs, rhs);
                 if (compareTypesResult.isStatus())
                     return onError(op, compareTypesResult.getStatus());
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 switch (compareTypesResult.getResult()) {
                     case TypeComparison::EXTENDS:
                         result.data.i64 = -1;
@@ -741,15 +741,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_LOGICAL_AND: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::BOOL)
+                if (rhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::BOOL)
+                if (lhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::BOOL;
+                result.type = DataCellType::Bool;
                 result.data.b = lhs.data.b && rhs.data.b;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -759,15 +759,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_LOGICAL_OR: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::BOOL)
+                if (rhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::BOOL)
+                if (lhs.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::BOOL;
+                result.type = DataCellType::Bool;
                 result.data.b = lhs.data.b || rhs.data.b;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -777,11 +777,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_LOGICAL_NOT: {
                 DataCell value;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
-                if (value.type != DataCellType::BOOL)
+                if (value.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for value"));
                 DataCell result;
-                result.type = DataCellType::BOOL;
+                result.type = DataCellType::Bool;
                 result.data.b = !value.data.b;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -790,15 +790,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_AND: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 & rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -807,15 +807,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_OR: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 | rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -824,15 +824,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_XOR: {
                 DataCell lhs, rhs;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::I64)
+                if (rhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::I64)
+                if (lhs.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 result.data.i64 = lhs.data.i64 ^ rhs.data.i64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
@@ -841,15 +841,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT: {
                 DataCell target, shift;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(shift));
-                if (shift.type != DataCellType::I64)
+                if (shift.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for shift"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(target));
-                if (target.type != DataCellType::I64)
+                if (target.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 auto nbits = shift.data.i64 & 0x3F;
                 result.data.i64 = target.data.i64 >> nbits;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
@@ -859,15 +859,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT: {
                 DataCell target, shift;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(shift));
-                if (shift.type != DataCellType::I64)
+                if (shift.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for shift"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(target));
-                if (target.type != DataCellType::I64)
+                if (target.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
-                result.type = DataCellType::I64;
+                result.type = DataCellType::Int64;
                 auto nbits = shift.data.i64 & 0x3F;
                 result.data.i64 = target.data.i64 << nbits;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
@@ -888,7 +888,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_NIL: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type == DataCellType::NIL) {
+                if (cmp.type == DataCellType::Nil) {
                     auto delta = op.operands.jump_i16.jump;
                     if (!currentCoro->moveIP(delta))
                         return onError(op, InterpreterStatus::forCondition(
@@ -902,7 +902,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_NOTNIL: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::NIL) {
+                if (cmp.type != DataCellType::Nil) {
                     auto delta = op.operands.jump_i16.jump;
                     if (!currentCoro->moveIP(delta))
                         return onError(op, InterpreterStatus::forCondition(
@@ -916,7 +916,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_TRUE: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::BOOL)
+                if (cmp.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be a boolean"));
                 if (cmp.data.b) {
@@ -933,7 +933,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_FALSE: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::BOOL)
+                if (cmp.type != DataCellType::Bool)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be a boolean"));
                 if (!cmp.data.b) {
@@ -950,7 +950,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_ZERO: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 == 0) {
@@ -967,7 +967,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_NOTZERO: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 != 0) {
@@ -984,7 +984,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_LT: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 < 0) {
@@ -1001,7 +1001,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_LE: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 <= 0) {
@@ -1018,7 +1018,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_GT: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 > 0) {
@@ -1035,7 +1035,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_IF_GE: {
                 DataCell cmp;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
-                if (cmp.type != DataCellType::I64)
+                if (cmp.type != DataCellType::Int64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
                 if (cmp.data.i64 >= 0) {
@@ -1118,7 +1118,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 DataCell conceptDescriptor;
 
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(conceptDescriptor));
-                if (conceptDescriptor.type != DataCellType::DESCRIPTOR
+                if (conceptDescriptor.type != DataCellType::Descriptor
                     || conceptDescriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Concept)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for concept call"));
@@ -1195,7 +1195,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 DataCell existentialDescriptor;
 
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(existentialDescriptor));
-                if (existentialDescriptor.type != DataCellType::DESCRIPTOR ||
+                if (existentialDescriptor.type != DataCellType::Descriptor ||
                     existentialDescriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Existential)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for existential call"));
@@ -1245,7 +1245,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_RAISE: {
                 DataCell exc;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(exc));
-                if (exc.type != DataCellType::STATUS)
+                if (exc.type != DataCellType::Status)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid exception"));
                 ON_ERROR_IF_NOT_OK (internal::raise_exception(
@@ -1263,7 +1263,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             InterpreterCondition::kInvalidOperandFlagsAddressV2, "invalid trap address operand"));
                     DataCell index;
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(index));
-                    if (index.type != DataCellType::I64)
+                    if (index.type != DataCellType::Int64)
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidDataStackV1, "invalid trap index"));
                     if (index.data.i64 < 0 || std::numeric_limits<uint32_t>::max() < index.data.i64)
@@ -1306,7 +1306,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (typeOfResult.isStatus())
                     return onError(op, typeOfResult.getStatus());
                 auto typeOf = typeOfResult.getResult();
-                if (typeOf.type != DataCellType::TYPE)
+                if (typeOf.type != DataCellType::Type)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid type result"));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(typeOf));

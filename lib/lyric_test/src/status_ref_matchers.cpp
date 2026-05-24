@@ -50,21 +50,21 @@ lyric_test::matchers::StatusRefMatcher::MatchAndExplain(
         case MatcherType::INVALID:
             return false;
         case MatcherType::STATUS_MESSAGE: {
-            if (cell.type != lyric_runtime::DataCellType::STATUS)
+            if (cell.type != lyric_runtime::DataCellType::Status)
                 return false;
             auto *status = cell.data.status;
             auto message = status->statusMessage();
             return m_message == message;
         }
         case MatcherType::STATUS_CODE: {
-            if (cell.type != lyric_runtime::DataCellType::STATUS)
+            if (cell.type != lyric_runtime::DataCellType::Status)
                 return false;
             auto *status = cell.data.status;
             auto statusCode = status->statusCode();
             return m_code == statusCode;
         }
         case MatcherType::STATUS_SYMBOL: {
-            if (cell.type != lyric_runtime::DataCellType::STATUS)
+            if (cell.type != lyric_runtime::DataCellType::Status)
                 return false;
             auto *vtable = cell.data.status->getVirtualTable();
             if (vtable == nullptr)

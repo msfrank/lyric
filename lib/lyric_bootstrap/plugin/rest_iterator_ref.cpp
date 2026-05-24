@@ -19,7 +19,7 @@ RestIterator::RestIterator(const lyric_runtime::VirtualTable *vtable, lyric_runt
 {
     TU_ASSERT (m_rest != nullptr);
     auto size = m_rest->restLength();
-    TU_ASSERT (size.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (size.type == lyric_runtime::DataCellType::Int64);
     m_size = size.data.i64;
 }
 
@@ -87,7 +87,7 @@ rest_iterator_valid(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
@@ -107,7 +107,7 @@ rest_iterator_next(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
 
     lyric_runtime::DataCell next;

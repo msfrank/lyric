@@ -12,7 +12,7 @@ float_ceil(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::DBL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Float64);
 
     lyric_runtime::DataCell floor{std::ceil(receiver.data.dbl)};
     currentCoro->pushData(floor);
@@ -30,7 +30,7 @@ float_floor(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::DBL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Float64);
 
     lyric_runtime::DataCell floor{std::floor(receiver.data.dbl)};
     currentCoro->pushData(floor);
@@ -48,7 +48,7 @@ float_trunc(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::DBL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Float64);
 
     lyric_runtime::DataCell floor{std::trunc(receiver.data.dbl)};
     currentCoro->pushData(floor);

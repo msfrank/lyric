@@ -19,9 +19,9 @@ lyric_runtime::ProtocolRef::ProtocolRef(
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (m_descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
-    TU_ASSERT (m_type.type == DataCellType::TYPE);
+    TU_ASSERT (m_type.type == DataCellType::Type);
     TU_ASSERT (m_port != lyric_object::PortType::Invalid);
     TU_ASSERT (m_comm != lyric_object::CommunicationType::Invalid);
 }

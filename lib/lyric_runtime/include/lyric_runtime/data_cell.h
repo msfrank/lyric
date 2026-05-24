@@ -19,22 +19,22 @@ namespace lyric_runtime {
     class TypeEntry;
 
     enum class DataCellType : uint8_t {
-        INVALID,
-        NIL,
-        UNDEF,
-        BOOL,
-        I64,
-        DBL,
-        CHAR32,
-        DESCRIPTOR,
-        TYPE,
-        REF,
-        BYTES,
-        NAMESPACE,
-        PROTOCOL,
-        STATUS,
-        STRING,
-        REST,
+        Invalid,
+        Nil,
+        Undef,
+        Bool,
+        Int64,
+        Float64,
+        Char32,
+        Descriptor,
+        Type,
+        Ref,
+        Bytes,
+        Namespace,
+        Protocol,
+        Status,
+        String,
+        Rest,
     };
 
     struct DataCell final {

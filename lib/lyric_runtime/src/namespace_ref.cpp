@@ -15,9 +15,9 @@ lyric_runtime::NamespaceRef::NamespaceRef(
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (m_descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
-    TU_ASSERT (m_type.type == DataCellType::TYPE);
+    TU_ASSERT (m_type.type == DataCellType::Type);
 }
 
 lyric_runtime::NamespaceRef::~NamespaceRef()

@@ -17,9 +17,9 @@ string_at(
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &index = frame.getArgument(0);
-    TU_ASSERT(index.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(index.type == lyric_runtime::DataCellType::Int64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
     auto *instance = receiver.data.str;
     currentCoro->pushData(instance->stringAt(index.data.i64));
     return {};
@@ -37,9 +37,9 @@ string_compare(
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::String);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::String);
 
     auto *lhs = arg0.data.str;
     auto *rhs = arg1.data.str;
@@ -58,7 +58,7 @@ string_length(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
     auto *instance = receiver.data.str;
     currentCoro->pushData(instance->stringLength());
     return {};
@@ -76,7 +76,7 @@ string_to_bytes(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
     auto *instance = receiver.data.str;
     std::string utf8;
     instance->utf8Value(utf8);
@@ -96,11 +96,11 @@ string_append(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
 
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::String);
 
     auto rope = receiver.data.str->getStringData().append(arg0.data.str->getStringData());;
     return heapManager->loadStringOntoStack(rope);
@@ -118,11 +118,11 @@ string_prepend(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
 
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::String);
 
     auto rope = receiver.data.str->getStringData().prepend(arg0.data.str->getStringData());;
     return heapManager->loadStringOntoStack(rope);
@@ -140,13 +140,13 @@ string_insert(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::String);
 
     auto offset = static_cast<tu_int32>(arg0.data.i64);
     auto rope = receiver.data.str->getStringData().insert(offset, arg1.data.str->getStringData());;
@@ -165,13 +165,13 @@ string_remove(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
 
     auto offset = static_cast<tu_int32>(arg0.data.i64);
     auto count = static_cast<tu_int32>(arg1.data.i64);
@@ -191,13 +191,13 @@ string_substring(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::String);
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
 
     auto offset = static_cast<tu_int32>(arg0.data.i64);
     auto count = static_cast<tu_int32>(arg1.data.i64);

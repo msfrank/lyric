@@ -131,6 +131,52 @@ lyric_typing::CallsiteReifier::numReifiedArguments() const
     return m_argumentTypes.size();
 }
 
+static tempo_utils::Result<lyric_common::TypeDef>
+find_matching_supertype(
+    const lyric_common::SymbolUrl &parameterUrl,
+    const lyric_common::TypeDef &argumentType,
+    lyric_assembler::ObjectState *objectState)
+{
+    lyric_common::SymbolUrl argumentUrl;
+    switch (argumentType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+            argumentUrl = argumentType.getConcreteUrl();
+            break;
+        default:
+            return lyric_typing::TypingStatus::forCondition(
+                lyric_typing::TypingCondition::kIncompatibleType,
+                "argument type {} does not inherit from {}",
+                argumentType.toString(), parameterUrl.toString());
+    }
+
+    if (argumentUrl == parameterUrl)
+        return argumentType;
+
+    auto *symbolCache = objectState->symbolCache();
+    auto *typeCache = objectState->typeCache();
+
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(argumentUrl));
+
+    auto *typeHandle = typeCache->getType(symbol->getTypeDef());
+    TU_NOTNULL (typeHandle);
+
+    for (typeHandle = typeHandle->getSuperType(); typeHandle != nullptr; typeHandle = typeHandle->getSuperType()) {
+        auto typeDef = typeHandle->getTypeDef();
+        if (typeDef.getType() != lyric_common::TypeDefType::Concrete)
+            return lyric_typing::TypingStatus::forCondition(
+                lyric_typing::TypingCondition::kTypingInvariant,
+                "{} has invalid supertype {}", argumentType.toString(), typeDef.toString());
+        if (typeDef.getConcreteUrl() == parameterUrl)
+            return typeDef;
+    }
+
+    return lyric_typing::TypingStatus::forCondition(
+        lyric_typing::TypingCondition::kIncompatibleType,
+        "argument type {} does not inherit from {}",
+        argumentType.toString(), parameterUrl.toString());
+}
+
 tempo_utils::Status
 lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &argumentType)
 {
@@ -164,7 +210,15 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
 
         lyric_common::TypeDef paramType;
         switch (param.typeDef.getType()) {
-            case lyric_common::TypeDefType::Concrete:
+            case lyric_common::TypeDefType::Concrete: {
+                auto parameterUrl = param.typeDef.getConcreteUrl();
+                lyric_common::TypeDef argumentOrSuperType;
+                TU_ASSIGN_OR_RETURN (argumentOrSuperType, find_matching_supertype(
+                    parameterUrl, argumentType, objectState));
+                TU_ASSIGN_OR_RETURN (paramType, internal::reify_singular_parameter(
+                    param.typeDef, argumentOrSuperType, m_state.get()));
+                break;
+            }
             case lyric_common::TypeDefType::Placeholder: {
                 TU_ASSIGN_OR_RETURN (paramType, internal::reify_singular_parameter(
                     param.typeDef, argumentType, m_state.get()));

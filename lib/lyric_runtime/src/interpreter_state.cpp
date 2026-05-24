@@ -600,7 +600,7 @@ lyric_runtime::InterpreterState::halt(tempo_utils::StatusCode statusCode)
 lyric_runtime::RefHandle
 lyric_runtime::InterpreterState::createHandle(const DataCell &ref)
 {
-    if (ref.type != DataCellType::REF)
+    if (ref.type != DataCellType::Ref)
         return {};
     void *handle = m_heap->createHandle(ref.data.ref);
     return RefHandle(shared_from_this(), handle);

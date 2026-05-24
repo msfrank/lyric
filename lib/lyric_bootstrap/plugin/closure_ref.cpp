@@ -178,7 +178,7 @@ void
 ClosureRef::setMembersReachable()
 {
     for (auto &cell : m_lexicals) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == lyric_runtime::DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->setReachable();
         }
@@ -189,7 +189,7 @@ void
 ClosureRef::clearMembersReachable()
 {
     for (auto &cell : m_lexicals) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == lyric_runtime::DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->clearReachable();
         }
@@ -222,11 +222,11 @@ closure_ctor(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::DESCRIPTOR);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Descriptor);
     TU_ASSERT(arg0.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
     instance->setSegmentIndex(arg0.data.descriptor->getSegmentIndex());
     instance->setCallIndex(arg0.data.descriptor->getDescriptorIndex());
@@ -307,7 +307,7 @@ closure_apply(
     currentCoro->resizeDataStack(frame.getStackGuard());
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
 
     auto *segment = state->segmentManager()->getSegment(instance->getSegmentIndex());

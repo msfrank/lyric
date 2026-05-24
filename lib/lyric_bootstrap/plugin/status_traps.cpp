@@ -30,18 +30,18 @@ status_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STATUS);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
     auto *instance = receiver.data.status;
 
     TU_ASSERT (frame.numArguments() > 0);
 
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT (arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (arg0.type == lyric_runtime::DataCellType::Int64);
     auto statusCode = static_cast<tempo_utils::StatusCode>(arg0.data.i64);
     instance->setStatusCode(statusCode);
 
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT (arg1.type == lyric_runtime::DataCellType::STRING);
+    TU_ASSERT (arg1.type == lyric_runtime::DataCellType::String);
     instance->setMessage(arg1);
 
     return {};
@@ -57,7 +57,7 @@ status_get_code(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STATUS);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
     auto *instance = receiver.data.status;
     currentCoro->pushData(instance->getStatusCode());
 
@@ -74,7 +74,7 @@ status_get_message(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STATUS);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
     auto *instance = receiver.data.status;
     currentCoro->pushData(instance->getMessage());
 

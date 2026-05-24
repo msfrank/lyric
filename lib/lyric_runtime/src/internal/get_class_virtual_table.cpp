@@ -17,7 +17,7 @@ lyric_runtime::internal::get_class_virtual_table(
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::DESCRIPTOR ||
+    if (descriptor.type != DataCellType::Descriptor ||
         descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Class) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid class descriptor");

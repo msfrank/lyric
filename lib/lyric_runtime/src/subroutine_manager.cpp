@@ -273,7 +273,7 @@ lyric_runtime::SubroutineManager::callStatic(
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
     TU_ASSERT (currentCoro != nullptr);
 
@@ -316,19 +316,19 @@ lyric_runtime::SubroutineManager::callVirtual(
     // get method resolver for receiver
     const AbstractMethodResolver *resolver;
     switch (receiver.type) {
-        case DataCellType::BYTES:
+        case DataCellType::Bytes:
             resolver = receiver.data.bytes->getMethodResolver();
             break;
-        case DataCellType::REF:
+        case DataCellType::Ref:
             resolver = receiver.data.ref->getMethodResolver();
             break;
-        case DataCellType::REST:
+        case DataCellType::Rest:
             resolver = receiver.data.rest->getMethodResolver();
             break;
-        case DataCellType::STATUS:
+        case DataCellType::Status:
             resolver = receiver.data.status->getMethodResolver();
             break;
-        case DataCellType::STRING:
+        case DataCellType::String:
             resolver = receiver.data.str->getMethodResolver();
             break;
         default:
@@ -421,19 +421,19 @@ lyric_runtime::SubroutineManager::callStub(
     // get method resolver for receiver
     const AbstractMethodResolver *resolver;
     switch (receiver.type) {
-        case DataCellType::BYTES:
+        case DataCellType::Bytes:
             resolver = receiver.data.bytes->getMethodResolver();
             break;
-        case DataCellType::REF:
+        case DataCellType::Ref:
             resolver = receiver.data.ref->getMethodResolver();
             break;
-        case DataCellType::REST:
+        case DataCellType::Rest:
             resolver = receiver.data.rest->getMethodResolver();
             break;
-        case DataCellType::STATUS:
+        case DataCellType::Status:
             resolver = receiver.data.status->getMethodResolver();
             break;
-        case DataCellType::STRING:
+        case DataCellType::String:
             resolver = receiver.data.str->getMethodResolver();
             break;
         default:
@@ -515,19 +515,19 @@ lyric_runtime::SubroutineManager::callConcept(
     // get extension resolver for receiver
     const AbstractExtensionResolver *resolver;
     switch (receiver.type) {
-        case DataCellType::BYTES:
+        case DataCellType::Bytes:
             resolver = receiver.data.bytes->getExtensionResolver();
             break;
-        case DataCellType::REF:
+        case DataCellType::Ref:
             resolver = receiver.data.ref->getExtensionResolver();
             break;
-        case DataCellType::REST:
+        case DataCellType::Rest:
             resolver = receiver.data.rest->getExtensionResolver();
             break;
-        case DataCellType::STATUS:
+        case DataCellType::Status:
             resolver = receiver.data.status->getExtensionResolver();
             break;
-        case DataCellType::STRING:
+        case DataCellType::String:
             resolver = receiver.data.str->getExtensionResolver();
             break;
         default:

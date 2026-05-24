@@ -17,7 +17,7 @@ protocol_is_acceptor(
 
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::PROTOCOL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
     auto *instance = receiver.data.protocol;
     auto result = instance->protocolIsAcceptor();
     currentCoro->pushData(result);
@@ -36,7 +36,7 @@ protocol_is_connector(
 
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::PROTOCOL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
     auto *instance = receiver.data.protocol;
     auto result = instance->protocolIsConnector();
     currentCoro->pushData(result);
@@ -55,7 +55,7 @@ protocol_can_send(
 
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::PROTOCOL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
     auto *instance = receiver.data.protocol;
     auto result = instance->protocolCanSend();
     currentCoro->pushData(result);
@@ -74,7 +74,7 @@ protocol_can_receive(
 
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::PROTOCOL);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
     auto *instance = receiver.data.protocol;
     auto result = instance->protocolCanReceive();
     currentCoro->pushData(result);

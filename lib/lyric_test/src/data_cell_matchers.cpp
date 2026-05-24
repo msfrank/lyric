@@ -75,7 +75,7 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
         case MatcherType::DATA_CELL:
             return cell == m_cell;
         case MatcherType::DATA_CELL_STRING: {
-            if (cell.type != lyric_runtime::DataCellType::STRING)
+            if (cell.type != lyric_runtime::DataCellType::String)
                 return false;
             std::string str;
             if (!cell.data.str->utf8Value(str))
@@ -83,13 +83,13 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
             return m_str == str;
         }
         case MatcherType::DATA_CELL_BYTES: {
-            if (cell.type != lyric_runtime::DataCellType::BYTES)
+            if (cell.type != lyric_runtime::DataCellType::Bytes)
                 return false;
             auto bytes = cell.data.bytes->getBytesData().toVector();
             return std::equal(bytes.begin(), bytes.end(), m_bytes->getSpan().begin());
         }
         case MatcherType::DATA_CELL_SYMBOL: {
-            if (cell.type != lyric_runtime::DataCellType::REF)
+            if (cell.type != lyric_runtime::DataCellType::Ref)
                 return false;
             auto *vtable = cell.data.ref->getVirtualTable();
             if (vtable == nullptr)
@@ -101,8 +101,8 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
         }
         case MatcherType::DATA_CELL_DESCRIPTOR: {
             if (m_section == lyric_object::LinkageSection::Type)
-                return cell.type == lyric_runtime::DataCellType::TYPE;
-            return cell.type == lyric_runtime::DataCellType::DESCRIPTOR
+                return cell.type == lyric_runtime::DataCellType::Type;
+            return cell.type == lyric_runtime::DataCellType::Descriptor
                 && cell.data.descriptor->getLinkageSection() == m_section;
         }
         case MatcherType::DATA_CELL_TYPE:
@@ -132,22 +132,22 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
             break;
         case MatcherType::DATA_CELL_TYPE: {
             switch (m_cell.type) {
-                case lyric_runtime::DataCellType::INVALID:     *os << "cell contains invalid cell"; break;
-                case lyric_runtime::DataCellType::NIL:         *os << "cell contains nil cell"; break;
-                case lyric_runtime::DataCellType::UNDEF:       *os << "cell contains undef cell"; break;
-                case lyric_runtime::DataCellType::BOOL:        *os << "cell contains bool cell"; break;
-                case lyric_runtime::DataCellType::I64:         *os << "cell contains i64 cell"; break;
-                case lyric_runtime::DataCellType::DBL:         *os << "cell contains dbl cell"; break;
-                case lyric_runtime::DataCellType::CHAR32:      *os << "cell contains chr cell"; break;
-                case lyric_runtime::DataCellType::BYTES:       *os << "cell contains bytes cell"; break;
-                case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
-                case lyric_runtime::DataCellType::STATUS:      *os << "cell contains status cell"; break;
-                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace cell"; break;
-                case lyric_runtime::DataCellType::PROTOCOL:    *os << "cell contains protocol cell"; break;
-                case lyric_runtime::DataCellType::REST:        *os << "cell contains rest cell"; break;
-                case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;
-                case lyric_runtime::DataCellType::DESCRIPTOR:  *os << "cell contains descriptor cell"; break;
-                case lyric_runtime::DataCellType::TYPE:        *os << "cell contains type cell"; break;
+                case lyric_runtime::DataCellType::Invalid:     *os << "cell contains invalid cell"; break;
+                case lyric_runtime::DataCellType::Nil:         *os << "cell contains nil cell"; break;
+                case lyric_runtime::DataCellType::Undef:       *os << "cell contains undef cell"; break;
+                case lyric_runtime::DataCellType::Bool:        *os << "cell contains bool cell"; break;
+                case lyric_runtime::DataCellType::Int64:         *os << "cell contains i64 cell"; break;
+                case lyric_runtime::DataCellType::Float64:         *os << "cell contains dbl cell"; break;
+                case lyric_runtime::DataCellType::Char32:      *os << "cell contains chr cell"; break;
+                case lyric_runtime::DataCellType::Bytes:       *os << "cell contains bytes cell"; break;
+                case lyric_runtime::DataCellType::String:      *os << "cell contains string cell"; break;
+                case lyric_runtime::DataCellType::Status:      *os << "cell contains status cell"; break;
+                case lyric_runtime::DataCellType::Namespace:   *os << "cell contains namespace cell"; break;
+                case lyric_runtime::DataCellType::Protocol:    *os << "cell contains protocol cell"; break;
+                case lyric_runtime::DataCellType::Rest:        *os << "cell contains rest cell"; break;
+                case lyric_runtime::DataCellType::Ref:         *os << "cell contains ref cell"; break;
+                case lyric_runtime::DataCellType::Descriptor:  *os << "cell contains descriptor cell"; break;
+                case lyric_runtime::DataCellType::Type:        *os << "cell contains type cell"; break;
             }
             break;
         }

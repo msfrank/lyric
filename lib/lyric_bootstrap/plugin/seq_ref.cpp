@@ -72,7 +72,7 @@ SeqRef::setNode(SeqNode *node)
 lyric_runtime::DataCell
 SeqRef::seqGet(const lyric_runtime::DataCell &index) const
 {
-    TU_ASSERT (index.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (index.type == lyric_runtime::DataCellType::Int64);
     int i = index.data.i64;
 
     // special case: empty seq returns invalid cell
@@ -180,9 +180,9 @@ SeqRef::seqSlice(const lyric_runtime::DataCell &start, const lyric_runtime::Data
     if (m_node == nullptr)
         return nullptr;
 
-    TU_ASSERT (start.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (start.type == lyric_runtime::DataCellType::Int64);
     int s = start.data.i64;
-    TU_ASSERT (length.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (length.type == lyric_runtime::DataCellType::Int64);
     int l = length.data.i64;
 
     if (s < 0) {                            // negative start indicates reverse slice starting from end of seq
@@ -209,7 +209,7 @@ set_reachable(SeqNode *node)
         auto *leaf = static_cast<const LeafSeqNode *>(node);
         for (int i = 0; i < leaf->count; i++) {
             auto &cell = leaf->values[i];
-            if (cell.type == lyric_runtime::DataCellType::REF)
+            if (cell.type == lyric_runtime::DataCellType::Ref)
                 cell.data.ref->setReachable();
         }
     } else {
@@ -235,7 +235,7 @@ clear_reachable(SeqNode *node)
         auto *leaf = static_cast<const LeafSeqNode *>(node);
         for (int i = 0; i < leaf->count; i++) {
             auto &cell = leaf->values[i];
-            if (cell.type == lyric_runtime::DataCellType::REF)
+            if (cell.type == lyric_runtime::DataCellType::Ref)
                 cell.data.ref->clearReachable();
         }
     } else {
@@ -269,7 +269,7 @@ SeqIterator::SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq)
 {
     TU_ASSERT (m_seq != nullptr);
     auto size = m_seq->seqSize();
-    TU_ASSERT (size.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT (size.type == lyric_runtime::DataCellType::Int64);
     m_size = size.data.i64;
 }
 
@@ -334,7 +334,7 @@ seq_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     if (frame.numRest() > 0) {
@@ -363,7 +363,7 @@ seq_size(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     currentCoro->pushData(seq->seqSize());
@@ -382,10 +382,10 @@ seq_get(
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto value = seq->seqGet(arg0);
@@ -410,7 +410,7 @@ seq_append(
     const auto &arg0 = frame.getArgument(0);
     TU_ASSERT(arg0.isValid());
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *left = seq->getNode();
@@ -459,10 +459,10 @@ seq_extend(
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Ref);
     auto *other = static_cast<SeqRef *>(arg0.data.ref);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *left = seq->getNode();
@@ -506,11 +506,11 @@ seq_slice(
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *node = seq->seqSlice(arg0, arg1);
@@ -540,11 +540,11 @@ seq_iterate(
 
     lyric_runtime::DataCell cell;
     TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::DESCRIPTOR);
+    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
     TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<SeqRef *>(receiver.data.ref);
 
     lyric_runtime::InterpreterStatus status;
@@ -586,7 +586,7 @@ seq_iterator_valid(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
@@ -606,7 +606,7 @@ seq_iterator_next(
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
 
     lyric_runtime::DataCell next;

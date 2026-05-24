@@ -275,21 +275,27 @@ lyric_build::internal::RunnerWorker::runUntilCancelled()
         // dequeue task and get the previous state, if any
         auto *task = item.task;
         auto key = task->getKey();
-        auto prevState = task->getData();
+        auto prevData = task->getData();
 
-        TU_LOG_VV << "dequeued next task " << key << " with previous state " << prevState;
+        TU_LOG_VV << "dequeued next task " << key << " with previous data " << prevData;
 
-        // if task was created in the current generation and is COMPLETED or FAILED then fetch next task
-        switch (prevState.getState()) {
+        bool isDone;
+        switch (prevData.getState()) {
             case TaskState::COMPLETED:
             case TaskState::FAILED:
-                if (prevState.getGeneration() == generation) {
-                    m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, prevState));
-                    continue;
-                }
-                [[fallthrough]];
-            default:
+                isDone = true;
                 break;
+            default:
+                isDone = false;
+                break;
+        }
+
+        // if task is done and was created in the current generation then rebroadcast the existing
+        // state and fetch next task
+        if (isDone && prevData.getGeneration() == generation) {
+            m_runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, prevData));
+            TU_LOG_VV << "skipping next task " << key << "; task is already complete";
+            continue;
         }
 
         // if task hash is not present then perform configuration and deduplication

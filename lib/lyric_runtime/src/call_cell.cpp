@@ -80,7 +80,7 @@ lyric_runtime::CallCell::CallCell(
       m_receiver(std::move(receiver)),
       m_vtable(nullptr)
 {
-    TU_ASSERT (m_receiver.type != DataCellType::INVALID);
+    TU_ASSERT (m_receiver.type != DataCellType::Invalid);
     m_data.resize(numArguments + numRest + numLocals + numLexicals);
 }
 

@@ -19,7 +19,7 @@ lyric_runtime::internal::construct_enum(
     auto existing = segmentManager->loadEnum(address, currentCoro, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    if (existing.type != DataCellType::INVALID) {
+    if (existing.type != DataCellType::Invalid) {
         TU_LOG_V << "loaded enum " << existing;
         return currentCoro->pushData(existing);
     }

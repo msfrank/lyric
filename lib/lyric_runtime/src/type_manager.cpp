@@ -20,30 +20,30 @@ tempo_utils::Result<lyric_runtime::DataCell>
 lyric_runtime::TypeManager::typeOf(const DataCell &value)
 {
     switch (value.type) {
-        case DataCellType::BOOL:
+        case DataCellType::Bool:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Bool)];
-        case DataCellType::CHAR32:
+        case DataCellType::Char32:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Char)];
-        case DataCellType::DBL:
+        case DataCellType::Float64:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Float)];
-        case DataCellType::I64:
+        case DataCellType::Int64:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Int)];
-        case DataCellType::NIL:
+        case DataCellType::Nil:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Nil)];
-        case DataCellType::STRING:
+        case DataCellType::String:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::String)];
-        case DataCellType::BYTES:
+        case DataCellType::Bytes:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Bytes)];
-        case DataCellType::UNDEF:
+        case DataCellType::Undef:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Undef)];
-        case DataCellType::REF:
+        case DataCellType::Ref:
             return value.data.ref->getVirtualTable()->getType();
-        case DataCellType::STATUS:
+        case DataCellType::Status:
             return value.data.status->getVirtualTable()->getType();
-        case DataCellType::PROTOCOL:
+        case DataCellType::Protocol:
             return value.data.protocol->protocolType();
 
-        case DataCellType::DESCRIPTOR: {
+        case DataCellType::Descriptor: {
             auto section = value.data.descriptor->getLinkageSection();
             switch (section) {
                 case lyric_object::LinkageSection::Action:
@@ -74,7 +74,7 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             }
         }
 
-        case DataCellType::TYPE:
+        case DataCellType::Type:
             return InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "type descriptor has no type");
         default:
@@ -89,7 +89,7 @@ resolve_type_to_descriptor(
     lyric_runtime::DataCell &descriptor,
     lyric_runtime::SegmentManager *segmentManager)
 {
-    TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
+    TU_ASSERT (type.type == lyric_runtime::DataCellType::Type);
     auto *entry = type.data.descriptor;
 
     // load the type descriptor from the specified assembly
@@ -145,7 +145,7 @@ resolve_super_type(
     lyric_runtime::DataCell &super,
     lyric_runtime::SegmentManager *segmentManager)
 {
-    TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
+    TU_ASSERT (type.type == lyric_runtime::DataCellType::Type);
     auto *entry = type.data.descriptor;
 
     auto *segment = entry->getSegment();
@@ -180,10 +180,10 @@ lyric_runtime::TypeManager::compareTypes(const DataCell &lhs, const DataCell &rh
     DataCell rd;
     DataCell superType;
 
-    if (lhs.type != DataCellType::TYPE)
+    if (lhs.type != DataCellType::Type)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "type comparison has invalid lhs");
-    if (rhs.type != DataCellType::TYPE)
+    if (rhs.type != DataCellType::Type)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "type comparison has invalid rhs");
 

@@ -16,7 +16,7 @@ rest_size(
     auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REST);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
     auto *instance = receiver.data.rest;
     currentCoro->pushData(instance->restLength());
     return {};
@@ -34,9 +34,9 @@ rest_get(
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &index = frame.getArgument(0);
-    TU_ASSERT(index.type == lyric_runtime::DataCellType::I64);
+    TU_ASSERT(index.type == lyric_runtime::DataCellType::Int64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REST);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
     auto *instance = receiver.data.rest;
     currentCoro->pushData(instance->restAt(index.data.i64));
     return {};
@@ -54,11 +54,11 @@ rest_iterate(
 
     lyric_runtime::DataCell cell;
     TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::DESCRIPTOR);
+    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
     TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REST);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
     auto *instance = receiver.data.rest;
 
     lyric_runtime::InterpreterStatus status;

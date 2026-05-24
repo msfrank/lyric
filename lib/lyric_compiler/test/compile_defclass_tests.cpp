@@ -249,7 +249,7 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+                     MatchesDataCellType(lyric_runtime::DataCellType::Invalid))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)

@@ -17,7 +17,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::DESCRIPTOR ||
+    if (descriptor.type != DataCellType::Descriptor ||
         descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Enum) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid enum descriptor");

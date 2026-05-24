@@ -54,18 +54,18 @@ PairRef::pairSecond() const
 void
 PairRef::setMembersReachable()
 {
-    if (m_first.type == lyric_runtime::DataCellType::REF)
+    if (m_first.type == lyric_runtime::DataCellType::Ref)
         m_first.data.ref->setReachable();
-    if (m_second.type == lyric_runtime::DataCellType::REF)
+    if (m_second.type == lyric_runtime::DataCellType::Ref)
         m_second.data.ref->setReachable();
 }
 
 void
 PairRef::clearMembersReachable()
 {
-    if (m_first.type == lyric_runtime::DataCellType::REF)
+    if (m_first.type == lyric_runtime::DataCellType::Ref)
         m_first.data.ref->clearReachable();
-    if (m_second.type == lyric_runtime::DataCellType::REF)
+    if (m_second.type == lyric_runtime::DataCellType::Ref)
         m_second.data.ref->clearReachable();
 }
 
@@ -94,7 +94,7 @@ pair_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     TU_ASSERT (frame.numArguments() == 2);
@@ -116,7 +116,7 @@ pair_first(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairFirst());
@@ -134,7 +134,7 @@ pair_second(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairSecond());

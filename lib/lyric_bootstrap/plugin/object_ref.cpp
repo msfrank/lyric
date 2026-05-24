@@ -63,7 +63,7 @@ void
 ObjectRef::setMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == lyric_runtime::DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->setReachable();
         }
@@ -74,7 +74,7 @@ void
 ObjectRef::clearMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == lyric_runtime::DataCellType::Ref) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->clearReachable();
         }
