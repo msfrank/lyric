@@ -7,6 +7,39 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_stream.h>
 
+const char *TaskState_New_name = "New";
+const char *TaskState_Blocked_name = "Blocked";
+const char *TaskState_Running_name = "Running";
+const char *TaskState_Completed_name = "Completed";
+const char *TaskState_Failed_name = "Failed";
+const char *TaskState_Invalid_name = "???";
+
+const char *
+lyric_build::task_state_to_name(TaskState state)
+{
+    switch (state) {
+        case TaskState::New:
+            return TaskState_New_name;
+        case TaskState::Blocked:
+            return TaskState_Blocked_name;
+        case TaskState::Running:
+            return TaskState_Running_name;
+        case TaskState::Completed:
+            return TaskState_Completed_name;
+        case TaskState::Failed:
+            return TaskState_Failed_name;
+        default:
+            return TaskState_Invalid_name;
+    }
+}
+
+tempo_utils::LogMessage&&
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskState &state)
+{
+    std::forward<tempo_utils::LogMessage>(message) << task_state_to_name(state);
+    return std::move(message);
+}
+
 lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid)
     : m_uuid(uuid)
 {
@@ -480,7 +513,7 @@ lyric_build::TaskData::getState() const
 {
     if (m_priv != nullptr)
         return m_priv->state;
-    return TaskState::INVALID;
+    return TaskState::Invalid;
 }
 
 lyric_build::BuildGeneration
@@ -507,23 +540,23 @@ lyric_build::TaskData::toString() const
 
     char const *statusValue = nullptr;
     switch (m_priv->state) {
-        case TaskState::INVALID:
-            statusValue = "INVALID";
+        case TaskState::Invalid:
+            statusValue = "Invalid";
             break;
-        case TaskState::QUEUED:
-            statusValue = "QUEUED";
+        case TaskState::New:
+            statusValue = "New";
             break;
-        case TaskState::RUNNING:
-            statusValue = "RUNNING";
+        case TaskState::Running:
+            statusValue = "Running";
             break;
-        case TaskState::BLOCKED:
-            statusValue = "BLOCKED";
+        case TaskState::Blocked:
+            statusValue = "Blocked";
             break;
-        case TaskState::COMPLETED:
-            statusValue = "COMPLETED";
+        case TaskState::Completed:
+            statusValue = "Completed";
             break;
-        case TaskState::FAILED:
-            statusValue = "FAILED";
+        case TaskState::Failed:
+            statusValue = "Failed";
             break;
     }
     return absl::Substitute("TaskData(status=$0, generation=$1, hash=$2)",

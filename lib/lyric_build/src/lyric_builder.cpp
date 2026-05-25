@@ -291,13 +291,13 @@ lyric_build::LyricBuilder::computeTargets(
         const auto &targetComputation = iterator->second;
         switch (targetComputation.getState().getState()) {
             // all targets should be either complete or failed
-            case TaskState::COMPLETED:
-            case TaskState::FAILED:
+            case TaskState::Completed:
+            case TaskState::Failed:
                 break;
-            case TaskState::BLOCKED:
-            case TaskState::QUEUED:
-            case TaskState::RUNNING:
-            case TaskState::INVALID:
+            case TaskState::Blocked:
+            case TaskState::New:
+            case TaskState::Running:
+            case TaskState::Invalid:
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "invalid state for task {}", iterator->first.toString());
         }
@@ -393,8 +393,8 @@ lyric_build::LyricBuilder::onTaskNotification(
 
             if (m_targets.contains(key)) {
                 switch (state.getState()) {
-                    case TaskState::COMPLETED:
-                    case TaskState::FAILED:
+                    case TaskState::Completed:
+                    case TaskState::Failed:
                         m_targets.erase(key);
                         break;
                     default:

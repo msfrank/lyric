@@ -29,13 +29,15 @@ namespace lyric_build {
     };
 
     enum class TaskState {
-        INVALID,
-        QUEUED,
-        RUNNING,
-        BLOCKED,
-        COMPLETED,
-        FAILED,
+        Invalid,
+        New,
+        Running,
+        Blocked,
+        Completed,
+        Failed,
     };
+
+    const char *task_state_to_name(TaskState state);
 
     /**
      * BuildGeneration contains the globally-unique id which identifies the build invocation
@@ -322,7 +324,8 @@ namespace lyric_build {
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey);
-    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskData &state);
+    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskState &state);
+    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskData &data);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const ArtifactId &artifactId);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TraceId &traceId);
 

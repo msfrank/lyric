@@ -16,7 +16,7 @@ lyric_build::BaseTask::BaseTask(
       m_buildState(std::move(buildState)),
       m_span(std::move(span)),
       m_lock(std::make_unique<absl::Mutex>()),
-      m_state(TaskState::INVALID)
+      m_state(TaskState::New)
 {
     TU_ASSERT (m_key.isValid());
     TU_ASSERT (m_span != nullptr);
@@ -94,10 +94,38 @@ lyric_build::BaseTask::getState() const
     return m_state;
 }
 
-lyric_build::TaskData
+tempo_utils::Result<lyric_build::TaskData>
 lyric_build::BaseTask::setState(TaskState state)
 {
     absl::WriterMutexLock locker(m_lock.get());
+
+    if (!m_owner.has_value() || m_owner.value() != uv_thread_self())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid transition for task {}; task is not locked by the current thread", m_key.toString());
+
+    // verify new state is valid to transition to
+    switch (state) {
+        case TaskState::Invalid:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid transition for task {}; cannot transition to Invalid state", m_key.toString());
+        case TaskState::New:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid transition for task {}; cannot transition to New state", m_key.toString());
+        default:
+            break;
+    }
+    // verify old state is valid to transition from
+    switch (m_state) {
+        case TaskState::Completed:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid transition for task {}; task is already Completed", m_key.toString());
+        case TaskState::Failed:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid transition for task {}; task is already Failed", m_key.toString());
+        default:
+            break;
+    }
+    TU_LOG_VV << "transitioning " << m_key << " from " << m_state << " to " << state;
     m_state = state;
     return TaskData(m_state, m_generation, m_hash.value_or(TaskHash{}));
 }
@@ -116,11 +144,16 @@ lyric_build::BaseTask::getHash() const
     return m_hash.value_or(TaskHash{});
 }
 
-lyric_build::TaskData
+tempo_utils::Result<lyric_build::TaskData>
 lyric_build::BaseTask::setHash(const TaskHash &taskHash)
 {
     absl::WriterMutexLock locker(m_lock.get());
-    TU_ASSERT (!m_hash.has_value());
+    if (!m_owner.has_value() || m_owner.value() != uv_thread_self())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid transition for task {}; task is not locked by the current thread", m_key.toString());
+    if (m_hash.has_value())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid transition for task {}; task hash is already set", m_key.toString());
     m_hash = taskHash;
     return TaskData(m_state, m_generation, taskHash);
 }
@@ -367,7 +400,7 @@ lyric_build::BaseTask::linkArtifactOverridingMetadata(
 tempo_utils::Status
 lyric_build::BaseTask::run(tempo_utils::Status &taskStatus)
 {
-    if (m_state == TaskState::COMPLETED || m_state == TaskState::FAILED)
+    if (m_state == TaskState::Completed || m_state == TaskState::Failed)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid task {}; unexpected task state", m_key.toString());
 
@@ -390,7 +423,6 @@ lyric_build::BaseTask::run(tempo_utils::Status &taskStatus)
     m_span->putTag(kLyricBuildGeneration, m_generation.toString());
     m_span->putTag(kLyricBuildTaskParams, m_key.getParams().toString());
     m_span->putTag(kLyricBuildTaskHash, taskHash.toString());
-    m_state = TaskState::RUNNING;
 
     // run the task
     m_span->activate();
@@ -398,49 +430,13 @@ lyric_build::BaseTask::run(tempo_utils::Status &taskStatus)
 
     // clean up the task
     m_span->deactivate();
-    TU_RETURN_IF_NOT_OK (this->complete(taskStatus));
 
     return {};
 }
 
 tempo_utils::Status
-lyric_build::BaseTask::cancel()
+lyric_build::BaseTask::close()
 {
-    switch (m_state) {
-        case TaskState::COMPLETED:
-        case TaskState::FAILED:
-            return {};
-        default:
-            return complete(BuildStatus::forCondition(
-                BuildCondition::kTaskFailure, "task cancelled"));
-    }
-}
-
-tempo_utils::Status
-lyric_build::BaseTask::fail(const tempo_utils::Status &status)
-{
-    switch (m_state) {
-        case TaskState::COMPLETED:
-        case TaskState::FAILED:
-            return {};
-        default:
-            if (status.notOk())
-                return complete(status);
-            return complete(BuildStatus::forCondition(
-                BuildCondition::kTaskFailure, "unknown task failure"));
-    }
-}
-
-tempo_utils::Status
-lyric_build::BaseTask::complete(const tempo_utils::Status &status)
-{
-    if (status.notOk()) {
-        logStatus(status);
-        m_state = TaskState::FAILED;
-    } else {
-        m_state = TaskState::COMPLETED;
-    }
-
     m_span->close();
 
     // remove the temp directory
@@ -504,4 +500,35 @@ lyric_build::BaseTask::logStatus(const tempo_utils::Status &status)
 {
     TU_LOG_V << "task " << m_key << " (ERROR): " << status;
     return m_span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
+}
+
+lyric_build::TaskLocker::TaskLocker(BaseTask *task)
+    : m_task(task)
+{
+    TU_NOTNULL (m_task);
+    absl::WriterMutexLock lock(m_task->m_lock.get());
+    if (m_task->m_owner.has_value()) {
+        TU_ASSERT (m_task->m_owner.value() != uv_thread_self());
+        m_locked = false;
+    } else {
+        m_task->m_owner = uv_thread_self();
+        m_locked = true;
+        TU_LOG_V << "task " << m_task->getKey() << " locked by thread " << uv_thread_self();
+    }
+}
+
+lyric_build::TaskLocker::~TaskLocker()
+{
+    absl::WriterMutexLock lock(m_task->m_lock.get());
+    if (m_locked) {
+        TU_ASSERT (m_task->m_owner.value() == uv_thread_self());
+        m_task->m_owner.reset();
+        TU_LOG_V << "task " << m_task->getKey() << " unlocked by thread " << uv_thread_self();
+    }
+}
+
+bool
+lyric_build::TaskLocker::isLocked() const
+{
+    return m_locked;
 }

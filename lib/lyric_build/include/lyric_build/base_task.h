@@ -3,6 +3,7 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+#include <uv.h>
 
 #include <tempo_tracing/trace_span.h>
 
@@ -43,10 +44,15 @@ namespace lyric_build {
 
         TaskData getData() const;
         TaskState getState() const;
-        TaskData setState(TaskState state);
         bool hasHash() const;
         TaskHash getHash() const;
-        TaskData setHash(const TaskHash &taskHash);
+
+        /*
+         * mutable data modifier methods which can only be called by the thread which has locked
+         * the task using TaskLocker
+         */
+        tempo_utils::Result<TaskData> setState(TaskState state);
+        tempo_utils::Result<TaskData> setHash(const TaskHash &taskHash);
 
         /**
          *
@@ -69,9 +75,6 @@ namespace lyric_build {
         virtual tempo_utils::Status runTask(TempDirectory *tempDirectory) = 0;
 
         tempo_utils::Status run(tempo_utils::Status &taskStatus);
-
-        tempo_utils::Status cancel();
-        tempo_utils::Status fail(const tempo_utils::Status &status);
 
     protected:
 
@@ -119,8 +122,6 @@ namespace lyric_build {
             const LyricMetadata &overrideMetadata,
             const tempo_utils::UrlPath &overrideDestinationPath = {});
 
-
-
         std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logError(std::string_view message);
@@ -140,13 +141,15 @@ namespace lyric_build {
         std::unique_ptr<absl::Mutex> m_lock;
         TaskState m_state ABSL_GUARDED_BY(m_lock);
         std::optional<TaskHash> m_hash ABSL_GUARDED_BY(m_lock);
+        std::optional<uv_thread_t> m_owner ABSL_GUARDED_BY (m_lock);
 
-        tempo_utils::Status complete(const tempo_utils::Status &status);
+        tempo_utils::Status close();
 
         friend class BuildRunner;
         friend class BuildState;
         friend class DependencyLoader;
         friend class TaskHasher;
+        friend class TaskLocker;
         friend class internal::RunnerWorker;
 
     public:
@@ -201,6 +204,23 @@ namespace lyric_build {
             auto message = fmt::vformat(messageFmt, fmt::make_format_args(messageArgs...));
             return logError(message);
         }
+    };
+
+    class TaskLocker {
+    public:
+        explicit TaskLocker(BaseTask *task);
+        ~TaskLocker();
+
+        TaskLocker(const TaskLocker &other) = delete;
+        TaskLocker(TaskLocker &&other) = delete;
+        TaskLocker& operator=(const TaskLocker &other) = delete;
+        TaskLocker& operator=(TaskLocker &&other) = delete;
+
+        bool isLocked() const;
+
+    private:
+        BaseTask *m_task;
+        bool m_locked;
     };
 }
 

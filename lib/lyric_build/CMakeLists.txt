@@ -64,6 +64,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/task_hasher.h
     include/lyric_build/task_notification.h
     include/lyric_build/task_registry.h
+    include/lyric_build/task_tracker.h
     include/lyric_build/task_utils.h
     include/lyric_build/temp_directory.h
     )
@@ -97,6 +98,7 @@ target_sources(lyric_build PRIVATE
     src/task_notification.cpp
     src/task_registry.cpp
     src/task_settings.cpp
+    src/task_tracker.cpp
     src/task_utils.cpp
     src/temp_directory.cpp
 

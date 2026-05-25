@@ -35,17 +35,17 @@ lyric_test::matchers::TestComputationMatcher::MatchAndExplain(
 inline std::string task_state_to_string(lyric_build::TaskState state)
 {
     switch (state) {
-        case lyric_build::TaskState::COMPLETED:
-            return "COMPLETED";
-        case lyric_build::TaskState::FAILED:
-            return "FAILED";
-        case lyric_build::TaskState::BLOCKED:
-            return "BLOCKED";
-        case lyric_build::TaskState::QUEUED:
-            return "QUEUED";
-        case lyric_build::TaskState::RUNNING:
-            return "RUNNING";
-        case lyric_build::TaskState::INVALID:
+        case lyric_build::TaskState::Completed:
+            return "Completed";
+        case lyric_build::TaskState::Failed:
+            return "Failed";
+        case lyric_build::TaskState::Blocked:
+            return "Blocked";
+        case lyric_build::TaskState::New:
+            return "New";
+        case lyric_build::TaskState::Running:
+            return "Running";
+        case lyric_build::TaskState::Invalid:
             return "INVALID";
     }
 }

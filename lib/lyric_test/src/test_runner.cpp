@@ -259,7 +259,7 @@ lyric_test::TestRunner::buildModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getState() == lyric_build::TaskState::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::Failed)
         return BuildModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     return BuildModule(shared_from_this(), targetComputation,
@@ -288,7 +288,7 @@ lyric_test::TestRunner::compileModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getState() == lyric_build::TaskState::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::Failed)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();
@@ -336,7 +336,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getState() == lyric_build::TaskState::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::Failed)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();
@@ -384,7 +384,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
-    if (targetState.getState() == lyric_build::TaskState::FAILED)
+    if (targetState.getState() == lyric_build::TaskState::Failed)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     auto cache = m_builder->getArtifactCache();

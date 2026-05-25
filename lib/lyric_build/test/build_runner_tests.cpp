@@ -68,7 +68,7 @@ TEST_F(BuildRunner, EnqueueNewTask)
     ASSERT_EQ (key, readyItem.task->getKey());
 
     auto taskState = state->loadState(key);
-    ASSERT_EQ (lyric_build::TaskState::QUEUED, taskState.getState());
+    ASSERT_EQ (lyric_build::TaskState::New, taskState.getState());
     ASSERT_EQ (buildgen, taskState.getGeneration());
     ASSERT_EQ (lyric_build::TaskHash{}, taskState.getHash());
 }
@@ -111,9 +111,9 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
 
     auto *task1 = readyItem1.task;
     auto state1 = task1->getState();
-    ASSERT_EQ (lyric_build::TaskState::QUEUED, state1);
+    ASSERT_EQ (lyric_build::TaskState::New, state1);
 
-    task1->setState(lyric_build::TaskState::BLOCKED);
+    task1->setState(lyric_build::TaskState::Blocked);
     ASSERT_THAT (runner->enqueueTask(key), tempo_test::IsOk());
 
     auto readyItem2 = runner->waitForNextReady(0);
@@ -122,7 +122,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
 
     auto *task2 = readyItem2.task;
     auto state2 = task2->getState();
-    ASSERT_EQ (lyric_build::TaskState::QUEUED, state2);
+    ASSERT_EQ (lyric_build::TaskState::New, state2);
 }
 
 TEST_F(BuildRunner, ShutdownEnqueuesShutdownForEachThread) {

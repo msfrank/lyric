@@ -198,11 +198,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
             return {};
         }
 
-        // look up the prior task state, which may not exist
-        //auto prevState = m_state->loadState(key);
-
         // set the task state to queued
-        task->setState(TaskState::QUEUED);
         ReadyItem item = {ReadyItem::Type::TASK, task};
 
         m_ready.push(item);                             // enqueue new ready task item
@@ -350,7 +346,7 @@ lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set
 
 /**
  * This is intended to be invoked when the state of the task referred to by `key` has
- * changed and the new state type is not a terminal state (COMPLETED or FAILED). We call
+ * changed and the new state type is not a terminal state (Completed or Failed). We call
  * such a task a *restarted task*.
  *
  * The waiting set for the restarted task is extracted. for each blocked task in the
@@ -564,8 +560,8 @@ on_async_notify(uv_async_t *async)
                 auto key = stateChanged->getKey();
                 auto state = stateChanged->getState();
                 TU_LOG_VV << "task " << key << " state changed to " << state;
-                if (state.getState() != lyric_build::TaskState::COMPLETED
-                    && state.getState() != lyric_build::TaskState::FAILED)
+                if (state.getState() != lyric_build::TaskState::Completed
+                    && state.getState() != lyric_build::TaskState::Failed)
                     break;
                 auto status = runner->restartDeps(key);
                 if (status.notOk()) {

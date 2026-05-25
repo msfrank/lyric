@@ -50,6 +50,8 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFile)
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(generation, key, buildState, span);
+    lyric_build::TaskLocker locker(task);
+
     ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
     lyric_build::TaskHash taskHash;
@@ -91,6 +93,8 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFileAndArtifactPat
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(generation, key, buildState, span);
+    lyric_build::TaskLocker locker(task);
+
     ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
     lyric_build::TaskHash taskHash;
@@ -132,6 +136,8 @@ TEST_F(FetchExternalFileTask, TaskSucceedsWhenProvidedExternalFileAndContentType
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(generation, key, buildState, span);
+    lyric_build::TaskLocker locker(task);
+
     ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
     lyric_build::TaskHash taskHash;

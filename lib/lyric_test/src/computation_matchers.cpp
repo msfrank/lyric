@@ -32,7 +32,7 @@ lyric_test::matchers::ComputationMatcher::MatchAndExplain(
     std::ostream* os) const
 {
     auto state = computation.getState();
-    if (state.getState() != lyric_build::TaskState::FAILED)
+    if (state.getState() != lyric_build::TaskState::Failed)
         return false;
     if (m_tester == nullptr)
         return true;

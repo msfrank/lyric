@@ -40,6 +40,8 @@ TEST_F(CompilePluginTask, TaskSucceeds)
         }
     }});
     auto *task = lyric_build::internal::new_compile_plugin_task(generation, key, buildState, span);
+    lyric_build::TaskLocker locker(task);
+
     ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
     lyric_build::TaskHash taskHash;

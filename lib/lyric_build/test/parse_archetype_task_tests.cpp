@@ -30,12 +30,14 @@ TEST_F(ParseArchetypeTask, TaskSucceeds)
 
     lyric_build::TaskKey key(std::string("parse_archetype"), std::string("/mod"));
     auto *task = lyric_build::internal::new_parse_archetype_task(generation, key, buildState, span);
+    lyric_build::TaskLocker locker(task);
+
     ASSERT_THAT (task->configureTask(taskSettings), tempo_test::IsOk());
 
     lyric_build::TaskHash taskHash;
     ASSERT_THAT (task->deduplicateTask(taskHash), tempo_test::IsOk());
     ASSERT_TRUE (taskHash.isValid());
-    task->setHash(taskHash);
+    ASSERT_THAT (task->setHash(taskHash), tempo_test::IsResult());
 
     auto *tmp = tempDirectory();
     ASSERT_THAT (task->runTask(tmp), tempo_test::IsOk());
