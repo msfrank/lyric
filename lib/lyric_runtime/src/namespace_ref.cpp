@@ -8,15 +8,18 @@
 lyric_runtime::NamespaceRef::NamespaceRef(
     const ExistentialTable *etable,
     const DataCell &descriptor,
+    const lyric_common::SymbolUrl &namespaceUrl,
     const DataCell &type)
     : m_etable(etable),
       m_descriptor(descriptor),
+      m_url(namespaceUrl),
       m_type(type),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
+    TU_ASSERT (m_url.isValid());
     TU_ASSERT (m_type.type == DataCellType::Type);
 }
 
@@ -58,7 +61,7 @@ lyric_runtime::NamespaceRef::namespaceType() const
 lyric_common::SymbolUrl
 lyric_runtime::NamespaceRef::getSymbolUrl() const
 {
-    return m_etable->getSymbolUrl();
+    return m_url;
 }
 
 bool

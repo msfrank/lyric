@@ -8,11 +8,13 @@
 lyric_runtime::ProtocolRef::ProtocolRef(
     const ExistentialTable *etable,
     const DataCell &descriptor,
+    const lyric_common::SymbolUrl &protocolUrl,
     const DataCell &type,
     lyric_object::PortType port,
     lyric_object::CommunicationType comm)
     : m_etable(etable),
       m_descriptor(descriptor),
+      m_url(protocolUrl),
       m_type(type),
       m_port(port),
       m_comm(comm),
@@ -21,6 +23,7 @@ lyric_runtime::ProtocolRef::ProtocolRef(
     TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
     TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
+    TU_ASSERT (m_url.isValid());
     TU_ASSERT (m_type.type == DataCellType::Type);
     TU_ASSERT (m_port != lyric_object::PortType::Invalid);
     TU_ASSERT (m_comm != lyric_object::CommunicationType::Invalid);
@@ -100,7 +103,7 @@ lyric_runtime::ProtocolRef::protocolType() const
 lyric_common::SymbolUrl
 lyric_runtime::ProtocolRef::getSymbolUrl() const
 {
-    return m_etable->getSymbolUrl();
+    return m_url;
 }
 
 bool

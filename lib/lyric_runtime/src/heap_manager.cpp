@@ -257,12 +257,13 @@ lyric_runtime::HeapManager::allocateProtocol(const DataCell &descriptor)
     auto *segment = descriptor.data.descriptor->getSegment();
     auto object = segment->getObject();
     auto walker = object.getProtocol(descriptor.data.descriptor->getDescriptorIndex());
+    lyric_common::SymbolUrl url(segment->getObjectLocation(), walker.getSymbolPath());
     auto port = walker.getPort();
     auto comm = walker.getCommunication();
     auto *protocolType = segment->lookupType(walker.getProtocolType().getDescriptorOffset());
     auto type = DataCell::forType(protocolType);
 
-    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor, type, port, comm);
+    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor, url, type, port, comm);
     m_heap->insertInstance(instance);
     return DataCell::forProtocol(instance);
 }
@@ -287,10 +288,11 @@ lyric_runtime::HeapManager::allocateNamespace(const DataCell &descriptor)
     auto *segment = descriptor.data.descriptor->getSegment();
     auto object = segment->getObject();
     auto walker = object.getNamespace(descriptor.data.descriptor->getDescriptorIndex());
+    lyric_common::SymbolUrl url(segment->getObjectLocation(), walker.getSymbolPath());
     auto *namespaceType = segment->lookupType(walker.getNamespaceType().getDescriptorOffset());
     auto type = DataCell::forType(namespaceType);
 
-    auto *instance = new NamespaceRef(m_preludeTables.NamespaceTable, descriptor, type);
+    auto *instance = new NamespaceRef(m_preludeTables.NamespaceTable, descriptor, url, type);
     m_heap->insertInstance(instance);
     return DataCell::forNamespace(instance);
 }

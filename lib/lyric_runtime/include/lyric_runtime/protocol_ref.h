@@ -10,6 +10,7 @@ namespace lyric_runtime {
         ProtocolRef(
             const ExistentialTable *etable,
             const DataCell &descriptor,
+            const lyric_common::SymbolUrl &protocolUrl,
             const DataCell &type,
             lyric_object::PortType port,
             lyric_object::CommunicationType comm);
@@ -56,6 +57,7 @@ namespace lyric_runtime {
     private:
         const ExistentialTable *m_etable;
         DataCell m_descriptor;
+        lyric_common::SymbolUrl m_url;
         DataCell m_type;
         lyric_object::PortType m_port;
         lyric_object::CommunicationType m_comm;

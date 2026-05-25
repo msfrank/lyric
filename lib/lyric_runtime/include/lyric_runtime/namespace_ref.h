@@ -10,6 +10,7 @@ namespace lyric_runtime {
         NamespaceRef(
             const ExistentialTable *etable,
             const DataCell &descriptor,
+            const lyric_common::SymbolUrl &namespaceUrl,
             const DataCell &type);
         ~NamespaceRef() override;
 
@@ -50,6 +51,7 @@ namespace lyric_runtime {
     private:
         const ExistentialTable *m_etable;
         DataCell m_descriptor;
+        lyric_common::SymbolUrl m_url;
         DataCell m_type;
         bool m_reachable;
     };
