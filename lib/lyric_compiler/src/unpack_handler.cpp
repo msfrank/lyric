@@ -94,7 +94,7 @@ invoke_unwrap(
     TU_RETURN_IF_NOT_OK (selector.select(callable));
 
     lyric_typing::CallsiteReifier reifier(state);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), selector.getCallsiteArguments()));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(wrappedType));
 
     lyric_common::TypeDef resultType;

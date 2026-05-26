@@ -12,7 +12,9 @@ lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, std::string_vi
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    m_rope = tempo_utils::Rope<tu_uint8>(literal.cbegin(), literal.cend());
+    if (!literal.empty()) {
+        m_rope = tempo_utils::Rope<tu_uint8>(literal.cbegin(), literal.cend());
+    }
     m_size = m_rope.numElements();
 }
 
@@ -21,10 +23,10 @@ lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const tu_uint8
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (src != nullptr);
-    TU_ASSERT (size >= 0);
 
-    m_rope = tempo_utils::Rope<tu_uint8>(src, src + size);
+    if (src != nullptr && size > 0) {
+        m_rope = tempo_utils::Rope<tu_uint8>(src, src + size);
+    }
     m_size = m_rope.numElements();
 }
 

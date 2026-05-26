@@ -16,6 +16,17 @@ public:
         const std::vector<lyric_assembler::Parameter> &namedParameters,
         const lyric_assembler::Parameter &restParameter,
         lyric_assembler::TemplateHandle *templateHandle);
+    TestCallable(
+        const std::vector<lyric_assembler::Parameter> &listParameters,
+        const std::vector<lyric_assembler::Parameter> &namedParameters,
+        const lyric_assembler::Parameter &restParameter,
+        const lyric_common::SymbolUrl &receiverUrl);
+    TestCallable(
+        const std::vector<lyric_assembler::Parameter> &listParameters,
+        const std::vector<lyric_assembler::Parameter> &namedParameters,
+        const lyric_assembler::Parameter &restParameter,
+        lyric_assembler::TemplateHandle *templateHandle,
+        const lyric_common::SymbolUrl &receiverUrl);
 
     lyric_assembler::TemplateHandle *getTemplate() const override;
     std::vector<lyric_assembler::Parameter>::const_iterator listPlacementBegin() const override;
@@ -25,6 +36,8 @@ public:
     const lyric_assembler::Parameter *restPlacement() const override;
     bool hasInitializer(const std::string &name) const override;
     lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
+    bool hasReceiver() const override;
+    lyric_common::SymbolUrl getReceiver() const override;
 
     tempo_utils::Result<lyric_common::TypeDef> invoke(
         lyric_assembler::BlockHandle *block,
@@ -44,7 +57,8 @@ public:
         tu_uint8 flags) override;
 
 private:
-    lyric_assembler::TemplateHandle *m_templateHandle;
+    lyric_assembler::TemplateHandle *m_templateHandle = nullptr;
+    lyric_common::SymbolUrl m_receiverUrl;
     std::vector<lyric_assembler::Parameter> m_listParameters;
     std::vector<lyric_assembler::Parameter> m_namedParameters;
     lyric_assembler::Parameter m_restParameter;

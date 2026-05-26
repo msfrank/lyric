@@ -91,6 +91,18 @@ lyric_assembler::ActionCallable::getInitializer(const std::string &name) const
     return m_actionSymbol->getInitializer(name);
 }
 
+bool
+lyric_assembler::ActionCallable::hasReceiver() const
+{
+    return false;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ActionCallable::getReceiver() const
+{
+    return {};
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ActionCallable::invoke(
     BlockHandle *block,

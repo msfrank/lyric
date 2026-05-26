@@ -89,6 +89,18 @@ lyric_assembler::MethodCallable::getInitializer(const std::string &name) const
     return m_callSymbol->getInitializer(name);
 }
 
+bool
+lyric_assembler::MethodCallable::hasReceiver() const
+{
+    return true;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::MethodCallable::getReceiver() const
+{
+    return m_callSymbol->getReceiverUrl();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::MethodCallable::invoke(
     BlockHandle *block,

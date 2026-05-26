@@ -47,48 +47,15 @@ lyric_typing::CallsiteReifier::getCallsiteArguments() const
 
 tempo_utils::Status
 lyric_typing::CallsiteReifier::initialize(
-    const std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
-    const std::vector<lyric_common::TypeDef> &callsiteArguments)
-{
-    if (m_initialized)
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "callsite reifier is already initialized");
-
-    return initialize(callable.get(), callsiteArguments);
-}
-
-tempo_utils::Status
-lyric_typing::CallsiteReifier::initialize(
-    const lyric_assembler::AbstractSymbol *symbol,
-    const std::vector<lyric_common::TypeDef> &callsiteArguments)
-{
-    if (m_initialized)
-        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-            "callsite reifier is already initialized");
-
-    switch (symbol->getSymbolType()) {
-        case lyric_assembler::SymbolType::ACTION: {
-            lyric_assembler::ActionPlacement placement(lyric_assembler::cast_symbol_to_action(symbol));
-            return initialize(&placement, callsiteArguments);
-        }
-        case lyric_assembler::SymbolType::CALL: {
-            lyric_assembler::CallPlacement placement(lyric_assembler::cast_symbol_to_call(symbol));
-            return initialize(&placement, callsiteArguments);
-        }
-        default:
-            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
-                "invalid symbol for callsite reifier");
-    }
-}
-
-tempo_utils::Status
-lyric_typing::CallsiteReifier::initialize(
     const lyric_assembler::AbstractPlacement *placement,
     const std::vector<lyric_common::TypeDef> &callsiteArguments)
 {
     if (m_initialized)
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
             "callsite reifier is already initialized");
+    if (placement->hasReceiver())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "missing required receiver for callsite");
 
     m_unifiedParameters.insert(m_unifiedParameters.begin(),
         placement->listPlacementBegin(), placement->listPlacementEnd());
@@ -99,26 +66,253 @@ lyric_typing::CallsiteReifier::initialize(
         m_restParameter = Option(*restPlacement);
     }
 
-    auto *invokerTemplate = placement->getTemplate();
+    lyric_assembler::TemplateHandle *invokerTemplate = placement->getTemplate();
 
-    if (invokerTemplate != nullptr) {
-        m_state->templateHandle = invokerTemplate;
-        m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
-        m_callsiteArguments = callsiteArguments;
-
-        if (!m_callsiteArguments.empty()) {
-            for (int i = 0; i < m_callsiteArguments.size(); i++) {
-                const auto &arg = m_callsiteArguments.at(i);
-                if (!arg.isValid())
-                    return TypingStatus::forCondition(TypingCondition::kInvalidType,
-                        "callsite type argument {} is invalid", i);
-                m_state->reifiedPlaceholders[i] = arg;
-            }
-        }
-    } else {
+    // if call is not generic, then verify there are no callsite type arguments and return
+    if (invokerTemplate == nullptr) {
         if (!callsiteArguments.empty())
             return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
                 "unexpected callsite type arguments");
+        m_initialized = true;
+        return {};
+    }
+
+    m_state->templateHandle = invokerTemplate;
+    m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
+    m_callsiteArguments = callsiteArguments;
+
+    if (!m_callsiteArguments.empty()) {
+        for (int i = 0; i < m_callsiteArguments.size(); i++) {
+            const auto &arg = m_callsiteArguments.at(i);
+            if (!arg.isValid())
+                return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                    "callsite type argument {} is invalid", i);
+            m_state->reifiedPlaceholders[i] = arg;
+        }
+    }
+
+    m_initialized = true;
+    return {};
+}
+
+static tempo_utils::Result<lyric_common::TypeDef>
+resolve_callsite_argument(
+    const lyric_common::TypeDef &callsiteArgument,
+    const absl::flat_hash_map<lyric_common::TypeDef,lyric_common::TypeDef> &inheritanceMap)
+{
+    switch (callsiteArgument.getType()) {
+        case lyric_common::TypeDefType::Concrete: {
+            if (callsiteArgument.numConcreteArguments() == 0)
+                return callsiteArgument;
+            std::vector<lyric_common::TypeDef> concreteArguments;
+            for (const auto &concreteArgument : callsiteArgument.getConcreteArguments()) {
+                lyric_common::TypeDef resolvedArgument;
+                TU_ASSIGN_OR_RETURN (resolvedArgument, resolve_callsite_argument(concreteArgument, inheritanceMap));
+            }
+            return lyric_common::TypeDef::forConcrete(callsiteArgument.getConcreteUrl(), concreteArguments);
+        }
+        case lyric_common::TypeDefType::Placeholder: {
+            lyric_common::TypeDef resolvedArgument = callsiteArgument;
+            auto entry = inheritanceMap.find(resolvedArgument);
+            while (entry != inheritanceMap.cend()) {
+                resolvedArgument = entry->second;
+                entry = inheritanceMap.find(resolvedArgument);
+            }
+            if (resolvedArgument.getType() == lyric_common::TypeDefType::Placeholder)
+                return resolvedArgument;
+            return resolve_callsite_argument(resolvedArgument, inheritanceMap);
+        }
+        case lyric_common::TypeDefType::Union: {
+            std::vector<lyric_common::TypeDef> resolvedMembers;
+            for (const auto &unionMember : callsiteArgument.getUnionMembers()) {
+                lyric_common::TypeDef resolvedMember;
+                TU_ASSIGN_OR_RETURN (resolvedMember, resolve_callsite_argument(unionMember, inheritanceMap));
+                resolvedMembers.push_back(resolvedMember);
+            }
+            return lyric_common::TypeDef::forUnion(resolvedMembers);
+        }
+        case lyric_common::TypeDefType::Intersection: {
+            std::vector<lyric_common::TypeDef> resolvedMembers;
+            for (const auto &intersectionMember : callsiteArgument.getIntersectionMembers()) {
+                lyric_common::TypeDef resolvedMember;
+                TU_ASSIGN_OR_RETURN (resolvedMember, resolve_callsite_argument(intersectionMember, inheritanceMap));
+                resolvedMembers.push_back(resolvedMember);
+            }
+            return lyric_common::TypeDef::forIntersection(resolvedMembers);
+        }
+        default:
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+                "invalid callsite argument '{}'", callsiteArgument.toString());
+    }
+}
+
+tempo_utils::Status
+lyric_typing::CallsiteReifier::initialize(
+    const lyric_common::TypeDef &receiverType,
+    const lyric_assembler::AbstractPlacement *placement)
+{
+    if (m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is already initialized");
+    if (!placement->hasReceiver())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "unexpected receiver {} for callsite", receiverType.toString());
+    if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "invalid receiver {} for callsite", receiverType.toString());
+
+    auto placementUrl = placement->getReceiver();
+
+    m_unifiedParameters.insert(m_unifiedParameters.begin(),
+        placement->listPlacementBegin(), placement->listPlacementEnd());
+    m_unifiedParameters.insert(m_unifiedParameters.end(),
+        placement->namedPlacementBegin(), placement->namedPlacementEnd());
+    auto *restPlacement = placement->restPlacement();
+    if (restPlacement != nullptr) {
+        m_restParameter = Option(*restPlacement);
+    }
+
+    lyric_assembler::TemplateHandle *invokerTemplate = placement->getTemplate();
+
+    // if call is not generic, then verify there are no callsite type arguments and return
+    if (invokerTemplate == nullptr) {
+        if (receiverType.numConcreteArguments() > 0 && receiverType.getConcreteUrl() == placementUrl)
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "unexpected callsite type arguments");
+        m_initialized = true;
+        return {};
+    }
+
+    // otherwise build the list of callsite arguments
+    std::vector<lyric_common::TypeDef> callsiteArguments;
+
+    // if the receiver url is not the same as the placement url then we need to resolve the callsite arguments
+    auto receiverUrl = receiverType.getConcreteUrl();
+    if (receiverUrl != placementUrl) {
+        auto *symbolCache = m_state->objectState->symbolCache();
+        auto *typeCache = m_state->objectState->typeCache();
+
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(receiverUrl));
+
+        //
+        std::vector<lyric_common::TypeDef> inheritanceStack;
+        inheritanceStack.push_back(receiverType);
+
+        //
+        auto *typeHandle = typeCache->getType(symbol->getTypeDef());
+        while (typeHandle != nullptr) {
+            inheritanceStack.push_back(typeHandle->getTypeDef());
+            if (typeHandle->getTypeSymbol() == placementUrl)
+                break;
+            typeHandle = typeHandle->getSuperType();
+        }
+        if (typeHandle == nullptr)
+            return TypingStatus::forCondition(TypingCondition::kTypeError,
+                "receiver {} is not a subtype of {}", receiverUrl.toString(), placementUrl.toString());
+
+        TU_LOG_VV << "inheritance stack: ";
+        for (const auto &entry : inheritanceStack) {
+            TU_LOG_VV << "  " << entry;
+        }
+
+        //
+        absl::flat_hash_map<lyric_common::TypeDef,lyric_common::TypeDef> inheritanceMap;
+        for (auto it = inheritanceStack.rbegin(); it != inheritanceStack.rend(); ++it) {
+            auto &typeDef = *it;
+            auto concreteUrl = typeDef.getConcreteUrl();
+            for (int i = 0; i < typeDef.numConcreteArguments(); i++) {
+                auto typeArgument = typeDef.getConcreteArgument(i);
+                lyric_common::TypeDef placeholderType;
+                TU_ASSIGN_OR_RETURN (placeholderType, lyric_common::TypeDef::forPlaceholder(i, concreteUrl));
+                if (typeArgument == placeholderType)
+                    continue;
+                if (inheritanceMap.contains(placeholderType))
+                    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                        "inheritance map already contains entry for {}", placeholderType.toString());
+                inheritanceMap[placeholderType] = typeArgument;
+            }
+        }
+
+        TU_LOG_VV << "inheritance map:";
+        for (const auto &entry : inheritanceMap) {
+            TU_LOG_VV << "  " << entry.first << " -> " << entry.second;
+        }
+
+        //
+        const auto &baseType = inheritanceStack.back();
+        for (const auto &baseArgument : baseType.getConcreteArguments()) {
+            lyric_common::TypeDef callsiteArgument;
+            TU_ASSIGN_OR_RETURN (callsiteArgument, resolve_callsite_argument(baseArgument, inheritanceMap));
+            callsiteArguments.push_back(callsiteArgument);
+        }
+
+    } else {
+        callsiteArguments.insert(callsiteArguments.begin(),
+            receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
+    }
+
+    m_state->templateHandle = invokerTemplate;
+    m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
+    m_callsiteArguments = callsiteArguments;
+
+    for (int i = 0; i < m_callsiteArguments.size(); i++) {
+        const auto &arg = m_callsiteArguments.at(i);
+        if (!arg.isValid())
+            return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                "callsite type argument {} is invalid", i);
+        m_state->reifiedPlaceholders[i] = arg;
+    }
+
+    m_initialized = true;
+    return {};
+}
+
+tempo_utils::Status
+lyric_typing::CallsiteReifier::initialize(
+    const lyric_common::TypeDef &receiverType,
+    const lyric_assembler::AbstractPlacement *placement,
+    const std::vector<lyric_common::TypeDef> &callsiteArgumentOverrides)
+{
+    if (m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is already initialized");
+    if (!placement->hasReceiver())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "unexpected receiver {} for callsite", receiverType.toString());
+    if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "invalid receiver {} for callsite", receiverType.toString());
+    if (callsiteArgumentOverrides.empty())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "empty type arguments list for callsite");
+
+    auto placementUrl = placement->getReceiver();
+
+    lyric_assembler::TemplateHandle *invokerTemplate = placement->getTemplate();
+    if (invokerTemplate == nullptr)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "unexpected callsite type arguments");
+
+    m_unifiedParameters.insert(m_unifiedParameters.begin(),
+        placement->listPlacementBegin(), placement->listPlacementEnd());
+    m_unifiedParameters.insert(m_unifiedParameters.end(),
+        placement->namedPlacementBegin(), placement->namedPlacementEnd());
+    auto *restPlacement = placement->restPlacement();
+    if (restPlacement != nullptr) {
+        m_restParameter = Option(*restPlacement);
+    }
+
+    m_state->templateHandle = invokerTemplate;
+    m_state->reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
+    m_callsiteArguments = callsiteArgumentOverrides;
+
+    for (int i = 0; i < m_callsiteArguments.size(); i++) {
+        const auto &arg = m_callsiteArguments.at(i);
+        if (!arg.isValid())
+            return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                "callsite type argument {} is invalid", i);
+        m_state->reifiedPlaceholders[i] = arg;
     }
 
     m_initialized = true;

@@ -117,11 +117,8 @@ invoke_method(
             "invalid receiver type {}", receiverType.toString());
     auto receiverUrl = receiverType.getConcreteUrl();
 
-    // extract the type arguments from the receiver type
-    auto concreteArguments = receiverType.getConcreteArguments();
-    std::vector<lyric_common::TypeDef> callsiteArguments(concreteArguments.begin(), concreteArguments.end());
-
     // if type arguments are specified at the callsite then use them over the receiver type arguments
+    std::vector<lyric_common::TypeDef> callsiteArgumentOverrides;
     if (node->hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset)) {
         lyric_parser::ArchetypeNode *typeArgumentsNode;
         node->parseAttr(lyric_parser::kLyricAstTypeArgumentsOffset, typeArgumentsNode);
@@ -129,67 +126,77 @@ invoke_method(
         std::vector<lyric_typing::TypeSpec> typeArgumentsSpec;
         TU_ASSIGN_OR_RETURN (typeArgumentsSpec, typeSystem->parseTypeArguments(invokeBlock, typeArgumentsWalker));
         std::vector<lyric_common::TypeDef> typeArguments;
-        TU_ASSIGN_OR_RETURN (callsiteArguments, typeSystem->resolveTypeArguments(invokeBlock, typeArgumentsSpec));
+        TU_ASSIGN_OR_RETURN (callsiteArgumentOverrides, typeSystem->resolveTypeArguments(invokeBlock, typeArgumentsSpec));
     }
 
     // get the symbol for the receiver
     lyric_assembler::AbstractSymbol *receiver;
     TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
 
+    auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
     std::unique_ptr<lyric_assembler::AbstractCallable> callable;
 
-    // prepare method on receiver
-    switch (receiver->getSymbolType()) {
+    // prepare method based on the receiver symbol type
 
-        case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(receiver);
-            TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
+    if (receiver->getSymbolType() == lyric_assembler::SymbolType::CONCEPT) {
+        auto *conceptSymbol = cast_symbol_to_concept(receiver);
+        TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, callable, thisReceiver));
+        if (callsiteArgumentOverrides.empty()) {
+            std::vector callsiteArguments(receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
+            TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
+        } else {
+            TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArgumentOverrides));
+        }
+    } else {
+        switch (receiver->getSymbolType()) {
+
+            case lyric_assembler::SymbolType::CLASS: {
+                auto *classSymbol = cast_symbol_to_class(receiver);
+                TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            case lyric_assembler::SymbolType::ENUM: {
+                auto *enumSymbol = cast_symbol_to_enum(receiver);
+                TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            case lyric_assembler::SymbolType::EXISTENTIAL: {
+                auto *existentialSymbol = cast_symbol_to_existential(receiver);
+                TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            case lyric_assembler::SymbolType::INSTANCE: {
+                auto *instanceSymbol = cast_symbol_to_instance(receiver);
+                TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            case lyric_assembler::SymbolType::PROTOCOL: {
+                auto *protocolSymbol = cast_symbol_to_protocol(receiver);
+                TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            case lyric_assembler::SymbolType::STRUCT: {
+                auto *structSymbol = cast_symbol_to_struct(receiver);
+                TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                break;
+            }
+
+            default:
+                return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
+                    "invalid receiver symbol {}", receiverUrl.toString());
         }
 
-        case lyric_assembler::SymbolType::CONCEPT: {
-            auto *conceptSymbol = cast_symbol_to_concept(receiver);
-            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, callable, thisReceiver));
-            break;
+        if (!callsiteArgumentOverrides.empty()) {
+            TU_RETURN_IF_NOT_OK (reifier->initialize(receiverType, callable.get(), callsiteArgumentOverrides));
+        } else {
+            TU_RETURN_IF_NOT_OK (reifier->initialize(receiverType, callable.get()));
         }
-
-        case lyric_assembler::SymbolType::ENUM: {
-            auto *enumSymbol = cast_symbol_to_enum(receiver);
-            TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::EXISTENTIAL: {
-            auto *existentialSymbol = cast_symbol_to_existential(receiver);
-            TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(receiver);
-            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::PROTOCOL: {
-            auto *protocolSymbol = cast_symbol_to_protocol(receiver);
-            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(receiver);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        default:
-            return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
-                "invalid receiver symbol {}", receiverUrl.toString());
     }
-
-    auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
 
     auto method = std::make_unique<lyric_compiler::DataDerefMethod>(dataDeref, bindingBlock, invokeBlock,
         std::move(callable), std::move(reifier), dataDeref->fragment, driver);

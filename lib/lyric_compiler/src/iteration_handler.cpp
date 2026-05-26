@@ -240,7 +240,7 @@ summon_iterator(
     TU_RETURN_IF_NOT_OK (selector.select(callable));
 
     lyric_typing::CallsiteReifier reifier(state);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), selector.getCallsiteArguments()));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(iteration->generatorType));
 
     lyric_common::TypeDef resultType;
@@ -343,7 +343,7 @@ lyric_compiler::ForBody::decide(
 
     // invoke Valid method
     lyric_typing::CallsiteReifier validReifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (validReifier.initialize(validCallable, {targetRef.typeDef}));
+    TU_RETURN_IF_NOT_OK (validReifier.initialize(validCallable.get(), {targetRef.typeDef}));
 
     lyric_common::TypeDef validReturnType;
     TU_ASSIGN_OR_RETURN (validReturnType, validCallable->invoke(forBlock, validReifier, m_fragment));
@@ -371,7 +371,7 @@ lyric_compiler::ForBody::decide(
 
     // invoke Next()
     lyric_typing::CallsiteReifier nextReifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (nextReifier.initialize(nextCallable, {targetRef.typeDef}));
+    TU_RETURN_IF_NOT_OK (nextReifier.initialize(nextCallable.get(), {targetRef.typeDef}));
     lyric_common::TypeDef nextReturnType;
     TU_ASSIGN_OR_RETURN (nextReturnType, nextCallable->invoke(forBlock, nextReifier, m_fragment));
 

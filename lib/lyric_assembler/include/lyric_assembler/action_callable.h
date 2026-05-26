@@ -20,7 +20,7 @@ namespace lyric_assembler {
 
         bool isValid() const;
 
-        lyric_assembler::TemplateHandle *getTemplate() const override;
+        TemplateHandle *getTemplate() const override;
         std::vector<Parameter>::const_iterator listPlacementBegin() const override;
         std::vector<Parameter>::const_iterator listPlacementEnd() const override;
         std::vector<Parameter>::const_iterator namedPlacementBegin() const override;
@@ -28,6 +28,8 @@ namespace lyric_assembler {
         const Parameter *restPlacement() const override;
         bool hasInitializer(const std::string &name) const override;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
+        bool hasReceiver() const override;
+        lyric_common::SymbolUrl getReceiver() const override;
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,

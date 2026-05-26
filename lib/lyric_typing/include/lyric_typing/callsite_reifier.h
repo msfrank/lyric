@@ -30,11 +30,12 @@ namespace lyric_typing {
             const lyric_assembler::AbstractPlacement *placement,
             const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
         tempo_utils::Status initialize(
-            const std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
-            const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
+            const lyric_common::TypeDef &receiverType,
+            const lyric_assembler::AbstractPlacement *placement);
         tempo_utils::Status initialize(
-            const lyric_assembler::AbstractSymbol *symbol,
-            const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
+            const lyric_common::TypeDef &receiverType,
+            const lyric_assembler::AbstractPlacement *placement,
+            const std::vector<lyric_common::TypeDef> &callsiteArguments);
 
         std::vector<lyric_common::TypeDef> getCallsiteArguments() const;
 

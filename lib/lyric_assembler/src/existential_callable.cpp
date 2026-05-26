@@ -106,6 +106,18 @@ lyric_assembler::ExistentialCallable::getInitializer(const std::string &name) co
     return m_callSymbol->getInitializer(name);
 }
 
+bool
+lyric_assembler::ExistentialCallable::hasReceiver() const
+{
+    return true;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ExistentialCallable::getReceiver() const
+{
+    return m_callSymbol->getReceiverUrl();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExistentialCallable::invoke(
     BlockHandle *block,

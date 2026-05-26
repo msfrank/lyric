@@ -986,3 +986,17 @@ lyric_assembler::CallPlacement::getInitializer(const std::string &name) const
 {
     return m_callSymbol->getInitializer(name);
 }
+
+bool
+lyric_assembler::CallPlacement::hasReceiver() const
+{
+    return m_callSymbol->isBound();
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::CallPlacement::getReceiver() const
+{
+    if (m_callSymbol->isBound())
+        return m_callSymbol->getReceiverUrl();
+    return {};
+}

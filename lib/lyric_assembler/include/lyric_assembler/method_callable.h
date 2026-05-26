@@ -5,7 +5,6 @@
 
 #include "abstract_callsite_reifier.h"
 #include "abstract_callable.h"
-#include "assembler_result.h"
 #include "assembler_types.h"
 
 namespace lyric_assembler {
@@ -36,6 +35,8 @@ namespace lyric_assembler {
         const Parameter *restPlacement() const override;
         bool hasInitializer(const std::string &name) const override;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
+        bool hasReceiver() const override;
+        lyric_common::SymbolUrl getReceiver() const override;
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,

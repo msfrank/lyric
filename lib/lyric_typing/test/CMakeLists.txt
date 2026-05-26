@@ -6,6 +6,7 @@ include(GoogleTest)
 
 set(TEST_CASES
     callsite_reifier_error_handling_tests.cpp
+    callsite_reifier_degree1_inheritance_tests.cpp
     callsite_reifier_tests.cpp
     callsite_reifier_tp0_in_tests.cpp
     callsite_reifier_tp0_inout_tests.cpp

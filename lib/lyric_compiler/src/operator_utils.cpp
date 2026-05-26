@@ -40,7 +40,7 @@ lyric_compiler::compile_unary_operator(
     TU_RETURN_IF_NOT_OK (selector.select(callable));
 
     lyric_typing::CallsiteReifier reifier(state);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), selector.getCallsiteArguments()));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
 
     lyric_common::TypeDef resultType;
@@ -85,7 +85,7 @@ lyric_compiler::compile_binary_operator(
     TU_RETURN_IF_NOT_OK (selector.select(callable));
 
     lyric_typing::CallsiteReifier reifier(state);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(callable, selector.getCallsiteArguments()));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(callable.get(), selector.getCallsiteArguments()));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(lhsType));
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
 

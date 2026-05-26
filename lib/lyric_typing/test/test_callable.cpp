@@ -5,8 +5,7 @@ TestCallable::TestCallable(
     const std::vector<lyric_assembler::Parameter> &listParameters,
     const std::vector<lyric_assembler::Parameter> &namedParameters,
     const lyric_assembler::Parameter &restParameter)
-    : m_templateHandle(nullptr),
-      m_listParameters(listParameters),
+    : m_listParameters(listParameters),
       m_namedParameters(namedParameters),
       m_restParameter(restParameter)
 {
@@ -22,7 +21,36 @@ TestCallable::TestCallable(
       m_namedParameters(namedParameters),
       m_restParameter(restParameter)
 {
-    TU_ASSERT (templateHandle != nullptr);
+    TU_ASSERT (m_templateHandle != nullptr);
+}
+
+TestCallable::TestCallable(
+    const std::vector<lyric_assembler::Parameter> &listParameters,
+    const std::vector<lyric_assembler::Parameter> &namedParameters,
+    const lyric_assembler::Parameter &restParameter,
+    const lyric_common::SymbolUrl &receiverUrl)
+    : m_receiverUrl(receiverUrl),
+      m_listParameters(listParameters),
+      m_namedParameters(namedParameters),
+      m_restParameter(restParameter)
+{
+    TU_ASSERT (m_receiverUrl.isValid());
+}
+
+TestCallable::TestCallable(
+    const std::vector<lyric_assembler::Parameter> &listParameters,
+    const std::vector<lyric_assembler::Parameter> &namedParameters,
+    const lyric_assembler::Parameter &restParameter,
+    lyric_assembler::TemplateHandle *templateHandle,
+    const lyric_common::SymbolUrl &receiverUrl)
+    : m_templateHandle(templateHandle),
+      m_receiverUrl(receiverUrl),
+      m_listParameters(listParameters),
+      m_namedParameters(namedParameters),
+      m_restParameter(restParameter)
+{
+    TU_ASSERT (m_templateHandle != nullptr);
+    TU_ASSERT (m_receiverUrl.isValid());
 }
 
 lyric_assembler::TemplateHandle *
@@ -71,6 +99,18 @@ lyric_common::SymbolUrl
 TestCallable::getInitializer(const std::string &name) const
 {
     return {};
+}
+
+bool
+TestCallable::hasReceiver() const
+{
+    return m_receiverUrl.isValid();
+}
+
+lyric_common::SymbolUrl
+TestCallable::getReceiver() const
+{
+    return m_receiverUrl;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

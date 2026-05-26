@@ -94,6 +94,18 @@ lyric_assembler::CtorConstructable::getInitializer(const std::string &name) cons
     return m_ctorSymbol->getInitializer(name);
 }
 
+bool
+lyric_assembler::CtorConstructable::hasReceiver() const
+{
+    return false;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::CtorConstructable::getReceiver() const
+{
+    return {};
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CtorConstructable::invoke(
     BlockHandle *block,

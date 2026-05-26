@@ -409,3 +409,15 @@ lyric_assembler::ActionPlacement::getInitializer(const std::string &name) const
 {
     return m_actionSymbol->getInitializer(name);
 }
+
+bool
+lyric_assembler::ActionPlacement::hasReceiver() const
+{
+    return true;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ActionPlacement::getReceiver() const
+{
+    return m_actionSymbol->getReceiverUrl();
+}

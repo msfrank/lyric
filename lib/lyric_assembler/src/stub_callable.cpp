@@ -86,6 +86,18 @@ lyric_assembler::StubCallable::getInitializer(const std::string &name) const
     return m_actionSymbol->getInitializer(name);
 }
 
+bool
+lyric_assembler::StubCallable::hasReceiver() const
+{
+    return true;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::StubCallable::getReceiver() const
+{
+    return m_actionSymbol->getReceiverUrl();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::StubCallable::invoke(
     BlockHandle *block,
