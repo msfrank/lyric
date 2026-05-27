@@ -151,6 +151,27 @@ TEST_F(CompileDefstruct, EvaluateInvokeMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(110))));
 }
 
+TEST_F(CompileDefstruct, EvaluateInvokePrivateMethodFromInheritedStruct)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            def _Index(): Int {
+                1
+            }
+        }
+        defstruct Bar from Foo {
+            init() {}
+            def Index(): Int {
+                this._Index()
+            }
+        }
+        val bar = Bar{}
+        bar.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+}
+
 TEST_F(CompileDefstruct, EvaluateInvokeMethodWithNoReturnType)
 {
     auto result = m_tester->runModule(R"(

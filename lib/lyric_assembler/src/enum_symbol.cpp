@@ -346,7 +346,7 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver) const
+    bool thisOrInheritedReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
@@ -359,7 +359,7 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
         if (priv->superEnum == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superEnum->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
+        return priv->superEnum->prepareGlobalMethod(name, receiverType, callable, thisOrInheritedReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -368,7 +368,7 @@ lyric_assembler::EnumSymbol::prepareGlobalMethod(
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isHidden()) {
-        if (!thisReceiver)
+        if (!thisOrInheritedReceiver)
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "cannot access hidden method {} on {}", name, m_enumUrl.toString());
     }
@@ -740,7 +740,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver) const
+    bool thisOrInheritedReceiver) const
 {
     auto *priv = getPriv();
 
@@ -749,7 +749,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
         auto *callSymbol = method->second;
 
         if (callSymbol->isHidden()) {
-            if (!thisReceiver)
+            if (!thisOrInheritedReceiver)
                 return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                     "cannot access hidden method {} on {}", name, m_enumUrl.toString());
         }
@@ -785,7 +785,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
         auto *actionSymbol = stub->second;
 
         if (actionSymbol->isHidden()) {
-            if (!thisReceiver)
+            if (!thisOrInheritedReceiver)
                 return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                     "cannot access hidden method {} on {}", name, m_enumUrl.toString());
         }
@@ -797,7 +797,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
     if (priv->superEnum == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
-    return priv->superEnum->prepareMethod(name, receiverType, callable);
+    return priv->superEnum->prepareMethod(name, receiverType, callable, thisOrInheritedReceiver);
 }
 
 bool

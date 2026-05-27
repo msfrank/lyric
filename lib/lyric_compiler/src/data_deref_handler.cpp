@@ -107,9 +107,11 @@ invoke_method(
     auto *invokeBlock = dataDeref->block;
 
     auto *typeSystem = driver->getTypeSystem();
+    auto *typeCache = driver->getTypeCache();
     auto *symbolCache = driver->getSymbolCache();
 
-    auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
+    auto thisOrInheritedReceiver = lyric_compiler::current_ref_is_this_or_inherited_receiver(
+        typeCache, symbolCache, dataDeref->block, dataDeref->effects);
 
     // verify the receiver is valid
     if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
@@ -140,7 +142,7 @@ invoke_method(
 
     if (receiver->getSymbolType() == lyric_assembler::SymbolType::CONCEPT) {
         auto *conceptSymbol = cast_symbol_to_concept(receiver);
-        TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, callable, thisReceiver));
+        TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, callable, thisOrInheritedReceiver));
         if (callsiteArgumentOverrides.empty()) {
             std::vector callsiteArguments(receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
             TU_RETURN_IF_NOT_OK (reifier->initialize(callable.get(), callsiteArguments));
@@ -152,42 +154,49 @@ invoke_method(
 
             case lyric_assembler::SymbolType::CLASS: {
                 auto *classSymbol = cast_symbol_to_class(receiver);
-                TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             case lyric_assembler::SymbolType::ENUM: {
                 auto *enumSymbol = cast_symbol_to_enum(receiver);
-                TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             case lyric_assembler::SymbolType::EXISTENTIAL: {
                 auto *existentialSymbol = cast_symbol_to_existential(receiver);
-                TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             case lyric_assembler::SymbolType::INSTANCE: {
                 auto *instanceSymbol = cast_symbol_to_instance(receiver);
-                TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             case lyric_assembler::SymbolType::PROTOCOL: {
                 auto *protocolSymbol = cast_symbol_to_protocol(receiver);
-                TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             case lyric_assembler::SymbolType::STRUCT: {
                 auto *structSymbol = cast_symbol_to_struct(receiver);
-                TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, callable, thisReceiver));
+                TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(
+                    identifier, receiverType, callable, thisOrInheritedReceiver));
                 break;
             }
 
             default:
-                return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
+                return lyric_compiler::CompilerStatus::forCondition(
+                    lyric_compiler::CompilerCondition::kInvalidSymbol,
                     "invalid receiver symbol {}", receiverUrl.toString());
         }
 
@@ -247,9 +256,11 @@ invoke_global_method(
     auto *invokeBlock = dataDeref->block;
 
     auto *typeSystem = driver->getTypeSystem();
+    auto *typeCache = driver->getTypeCache();
     auto *symbolCache = driver->getSymbolCache();
 
-    auto thisReceiver = current_ref_is_this_receiver(symbolCache, dataDeref->block, dataDeref->effects);
+    auto thisOrInheritedReceiver = lyric_compiler::current_ref_is_this_or_inherited_receiver(
+        typeCache, symbolCache, dataDeref->block, dataDeref->effects);
 
     // verify the receiver is valid
     if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
@@ -278,48 +289,56 @@ invoke_global_method(
 
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = lyric_assembler::cast_symbol_to_class(derefSymbol);
-            TU_RETURN_IF_NOT_OK (classSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, thisOrInheritedReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::CONCEPT: {
             auto *conceptSymbol = lyric_assembler::cast_symbol_to_concept(derefSymbol);
-            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
+            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, thisOrInheritedReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = lyric_assembler::cast_symbol_to_enum(derefSymbol);
-            TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
+            TU_RETURN_IF_NOT_OK (enumSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, thisOrInheritedReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = lyric_assembler::cast_symbol_to_instance(derefSymbol);
-            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::NAMESPACE: {
-            auto *namespaceSymbol = lyric_assembler::cast_symbol_to_namespace(derefSymbol);
-            TU_RETURN_IF_NOT_OK (namespaceSymbol->prepareTargetMethod(identifier, callable, dataDeref->block));
-            break;
-        }
-
-        case lyric_assembler::SymbolType::PROTOCOL: {
-            auto *protocolSymbol = lyric_assembler::cast_symbol_to_protocol(derefSymbol);
-            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareGlobalMethod(identifier, receiverType, callable, dataDeref->block));
+            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, thisOrInheritedReceiver));
             break;
         }
 
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = lyric_assembler::cast_symbol_to_struct(derefSymbol);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(identifier, receiverType, callable, thisReceiver));
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, thisOrInheritedReceiver));
+            break;
+        }
+
+        case lyric_assembler::SymbolType::NAMESPACE: {
+            auto *namespaceSymbol = lyric_assembler::cast_symbol_to_namespace(derefSymbol);
+            TU_RETURN_IF_NOT_OK (namespaceSymbol->prepareTargetMethod(
+                identifier, callable, dataDeref->block));
+            break;
+        }
+
+        case lyric_assembler::SymbolType::PROTOCOL: {
+            auto *protocolSymbol = lyric_assembler::cast_symbol_to_protocol(derefSymbol);
+            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareGlobalMethod(
+                identifier, receiverType, callable, dataDeref->block));
             break;
         }
 
         default:
-            return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
+            return lyric_compiler::CompilerStatus::forCondition(
+                lyric_compiler::CompilerCondition::kInvalidSymbol,
                 "invalid receiver symbol {}", derefSymbol->getSymbolUrl().toString());
     }
 

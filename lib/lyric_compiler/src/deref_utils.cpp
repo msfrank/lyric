@@ -1,20 +1,18 @@
 
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_assembler/type_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/deref_utils.h>
-#include <lyric_compiler/resolve_utils.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/member_reifier.h>
-
-#include "lyric_assembler/argument_variable.h"
-#include "lyric_assembler/concept_symbol.h"
 
 bool
 lyric_compiler::current_ref_is_this_receiver(
@@ -36,6 +34,42 @@ lyric_compiler::current_ref_is_this_receiver(
         return false;
     auto receiverUrl = receiverType.getConcreteUrl();
     return receiverUrl == thisUrl;
+}
+
+bool
+lyric_compiler::current_ref_is_this_or_inherited_receiver(
+    lyric_assembler::TypeCache *typeCache,
+    const lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::BlockHandle *bindingBlock,
+    const std::vector<DerefEffect> &effects)
+{
+    TU_ASSERT (!effects.empty());
+
+    const auto &definitionUrl = bindingBlock->getDefinition();
+    auto *symbol = symbolCache->getSymbolOrNull(definitionUrl);
+    TU_ASSERT (symbol && symbol->getSymbolType() == lyric_assembler::SymbolType::CALL);
+    auto *definitionCall = lyric_assembler::cast_symbol_to_call(symbol);
+
+    auto thisUrl = definitionCall->getReceiverUrl();
+    if (!thisUrl.isValid())
+        return false;
+    lyric_assembler::TypeSignature thisSig;
+    TU_ASSIGN_OR_RAISE (thisSig, typeCache->resolveSignature(thisUrl));
+
+    const auto &current = effects.back();
+    const auto &receiverType = current.receiverType;
+    if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
+        return false;
+    lyric_assembler::TypeSignature receiverSig;
+    TU_ASSIGN_OR_RAISE (receiverSig, typeCache->resolveSignature(receiverType));
+
+    switch (receiverSig.compare(thisSig)) {
+        case lyric_runtime::TypeComparison::EQUAL:
+        case lyric_runtime::TypeComparison::EXTENDS:
+            return true;
+        default:
+            return false;
+    }
 }
 
 tempo_utils::Status

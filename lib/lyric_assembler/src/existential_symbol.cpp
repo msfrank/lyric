@@ -380,7 +380,7 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver)
+    bool thisOrInheritedReceiver)
 {
     auto *priv = getPriv();
 
@@ -404,7 +404,7 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     if (priv->superExistential == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
-    return priv->superExistential->prepareMethod(name, receiverType, callable, thisReceiver);
+    return priv->superExistential->prepareMethod(name, receiverType, callable, thisOrInheritedReceiver);
 }
 
 bool

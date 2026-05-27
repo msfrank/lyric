@@ -384,7 +384,7 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver) const
+    bool thisOrInheritedReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
@@ -397,7 +397,7 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
         if (priv->superConcept == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superConcept->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
+        return priv->superConcept->prepareGlobalMethod(name, receiverType, callable, thisOrInheritedReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -406,7 +406,7 @@ lyric_assembler::ConceptSymbol::prepareGlobalMethod(
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isHidden()) {
-        if (!thisReceiver)
+        if (!thisOrInheritedReceiver)
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "cannot access hidden method {} on {}", name, m_conceptUrl.toString());
     }
@@ -502,7 +502,7 @@ lyric_assembler::ConceptSymbol::prepareAction(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver)
+    bool thisOrInheritedReceiver)
 {
     auto *priv = getPriv();
 

@@ -231,6 +231,27 @@ TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
                  tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
+TEST_F(CompileDefclass, EvaluateInvokePrivateMethodFromInheritedClass)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            def _Index(): Int {
+                1
+            }
+        }
+        defclass Bar from Foo {
+            init() {}
+            def Index(): Int {
+                this._Index()
+            }
+        }
+        val bar = Bar{}
+        bar.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+}
+
 TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
 {
     auto result = m_tester->runModule(R"(

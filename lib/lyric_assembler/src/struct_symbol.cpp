@@ -347,7 +347,7 @@ lyric_assembler::StructSymbol::prepareGlobalMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver) const
+    bool thisOrInheritedReceiver) const
 {
     auto *symbolCache = m_state->symbolCache();
     auto *priv = getPriv();
@@ -360,7 +360,7 @@ lyric_assembler::StructSymbol::prepareGlobalMethod(
         if (priv->superStruct == nullptr)
             return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing global method {}", name);
-        return priv->superStruct->prepareGlobalMethod(name, receiverType, callable, thisReceiver);
+        return priv->superStruct->prepareGlobalMethod(name, receiverType, callable, thisOrInheritedReceiver);
     }
 
     if (symbol->getSymbolType() != SymbolType::CALL)
@@ -369,7 +369,7 @@ lyric_assembler::StructSymbol::prepareGlobalMethod(
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isHidden()) {
-        if (!thisReceiver)
+        if (!thisOrInheritedReceiver)
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "cannot access hidden method {} on {}", name, m_structUrl.toString());
     }
@@ -754,7 +754,7 @@ lyric_assembler::StructSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     std::unique_ptr<AbstractCallable> &callable,
-    bool thisReceiver) const
+    bool thisOrInheritedReceiver) const
 {
     auto *priv = getPriv();
 
@@ -763,7 +763,7 @@ lyric_assembler::StructSymbol::prepareMethod(
         auto *callSymbol = method->second;
 
         if (callSymbol->isHidden()) {
-            if (!thisReceiver)
+            if (!thisOrInheritedReceiver)
                 return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                     "cannot access hidden method {} on {}", name, m_structUrl.toString());
         }
@@ -799,7 +799,7 @@ lyric_assembler::StructSymbol::prepareMethod(
         auto *actionSymbol = stub->second;
 
         if (actionSymbol->isHidden()) {
-            if (!thisReceiver)
+            if (!thisOrInheritedReceiver)
                 return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                     "cannot access hidden method {} on {}", name, m_structUrl.toString());
         }
@@ -811,7 +811,7 @@ lyric_assembler::StructSymbol::prepareMethod(
     if (priv->superStruct == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing method {}", name);
-    return priv->superStruct->prepareMethod(name, receiverType, callable);
+    return priv->superStruct->prepareMethod(name, receiverType, callable, thisOrInheritedReceiver);
 }
 
 bool

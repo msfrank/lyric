@@ -85,7 +85,7 @@ namespace lyric_assembler {
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
             std::unique_ptr<AbstractCallable> &callable,
-            bool thisReceiver) const;
+            bool thisOrInheritedReceiver) const;
 
         /*
          * instance member management
@@ -141,7 +141,7 @@ namespace lyric_assembler {
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
             std::unique_ptr<AbstractCallable> &callable,
-            bool isReceiver = false) const;
+            bool thisOrInheritedReceiver = false) const;
 
         /*
          * class stub management

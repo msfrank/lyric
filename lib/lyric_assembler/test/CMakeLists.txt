@@ -7,6 +7,7 @@ include(GoogleTest)
 set(TEST_CASES
     allocator_trap_macro_tests.cpp
     block_handle_tests.cpp
+    class_symbol_tests.cpp
     code_fragment_tests.cpp
     load_data_macro_tests.cpp
     opcode_macro_tests.cpp

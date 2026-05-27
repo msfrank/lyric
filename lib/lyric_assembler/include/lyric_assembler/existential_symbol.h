@@ -90,7 +90,7 @@ namespace lyric_assembler {
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
             std::unique_ptr<AbstractCallable> &callable,
-            bool isReceiver = false);
+            bool thisOrInheritedReceiver = false);
 
         /*
          * existential impl management

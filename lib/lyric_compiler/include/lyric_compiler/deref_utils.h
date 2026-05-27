@@ -24,6 +24,12 @@ namespace lyric_compiler {
         const lyric_assembler::BlockHandle *bindingBlock,
         const std::vector<DerefEffect> &effects);
 
+    bool current_ref_is_this_or_inherited_receiver(
+        lyric_assembler::TypeCache *typeCache,
+        const lyric_assembler::SymbolCache *symbolCache,
+        const lyric_assembler::BlockHandle *bindingBlock,
+        const std::vector<DerefEffect> &effects);
+
     tempo_utils::Status deref_literal(
         const lyric_parser::ArchetypeNode *node,
         std::vector<DerefEffect> &effects,
