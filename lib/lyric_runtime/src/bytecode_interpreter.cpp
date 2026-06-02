@@ -7,6 +7,8 @@
 #include <lyric_runtime/internal/construct_namespace.h>
 #include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/internal/construct_protocol.h>
+#include <lyric_runtime/internal/f64_ops.h>
+#include <lyric_runtime/internal/i64_ops.h>
 #include <lyric_runtime/internal/raise_exception.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
@@ -443,172 +445,98 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop 2 integer values from the stack and add them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_ADD: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                result.data.i64 = lhs.data.i64 + rhs.data.i64;
+                ON_ERROR_IF_NOT_OK (internal::i64_add(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and subtract them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_SUB: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                result.data.i64 = lhs.data.i64 - rhs.data.i64;
+                ON_ERROR_IF_NOT_OK (internal::i64_sub(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and multiply them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_MUL: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                result.data.i64 = lhs.data.i64 * rhs.data.i64;
+                ON_ERROR_IF_NOT_OK (internal::i64_mul(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and divide them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_DIV: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                result.data.i64 = lhs.data.i64 / rhs.data.i64;
+                ON_ERROR_IF_NOT_OK (internal::i64_div(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 1 integer value from the stack and negate it, and push result onto the stack
             case lyric_object::Opcode::OP_I64_NEG: {
-                DataCell value;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
-                if (value.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for value"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                result.data.i64 = -value.data.i64;
+                DataCell element, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
+                ON_ERROR_IF_NOT_OK (internal::i64_neg(element, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and add them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_ADD: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Float64;
-                result.data.f64 = lhs.data.f64 + rhs.data.f64;
+                ON_ERROR_IF_NOT_OK (internal::f64_add(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and subtract them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_SUB: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Float64;
-                result.data.f64 = lhs.data.f64 - rhs.data.f64;
+                ON_ERROR_IF_NOT_OK (internal::f64_sub(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and multiply them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_MUL: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Float64;
-                result.data.f64 = lhs.data.f64 * rhs.data.f64;
+                ON_ERROR_IF_NOT_OK (internal::f64_mul(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and divide them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_DIV: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Float64;
-                result.data.f64 = lhs.data.f64 / rhs.data.f64;
+                ON_ERROR_IF_NOT_OK (internal::f64_div(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 1 float value from the stack and negate it, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_NEG: {
-                DataCell value;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
-                if (value.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
-                DataCell result;
-                result.type = DataCellType::Float64;
-                result.data.f64 = -value.data.f64;
+                DataCell element, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
+                ON_ERROR_IF_NOT_OK (internal::f64_neg(element, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -638,46 +566,20 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop 2 integer values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_CMP: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Int64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                if (lhs.data.i64 < rhs.data.i64)
-                    result.data.i64 = -1;
-                else if (lhs.data.i64 > rhs.data.i64)
-                    result.data.i64 = 1;
-                else
-                    result.data.i64 = 0;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (internal::i64_cmp(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_CMP: {
-                DataCell lhs, rhs;
+                DataCell lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (rhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (lhs.type != DataCellType::Float64)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                DataCell result;
-                result.type = DataCellType::Int64;
-                if (lhs.data.f64 < rhs.data.f64)
-                    result.data.i64 = -1;
-                else if (lhs.data.f64 > rhs.data.f64)
-                    result.data.i64 = 1;
-                else
-                    result.data.i64 = 0;
+                ON_ERROR_IF_NOT_OK (internal::f64_cmp(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }

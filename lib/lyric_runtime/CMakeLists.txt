@@ -99,6 +99,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/construct_new.cpp
     include/lyric_runtime/internal/construct_protocol.h
     src/internal/construct_protocol.cpp
+    include/lyric_runtime/internal/f64_ops.h
+    src/internal/f64_ops.cpp
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
     include/lyric_runtime/internal/get_concept_table.h
@@ -111,6 +113,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/get_instance_virtual_table.cpp
     include/lyric_runtime/internal/get_struct_virtual_table.h
     src/internal/get_struct_virtual_table.cpp
+    include/lyric_runtime/internal/i64_ops.h
+    src/internal/i64_ops.cpp
     include/lyric_runtime/internal/load_utils.h
     src/internal/load_utils.cpp
     include/lyric_runtime/internal/raise_exception.h
@@ -157,6 +161,7 @@ target_link_libraries(lyric_runtime
     uv::uv
     PRIVATE
     absl::strings
+    Boost::headers
     flatbuffers::flatbuffers
     utfcpp::utfcpp
     )
