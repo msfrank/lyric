@@ -136,8 +136,16 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::Nil:         *os << "cell contains nil cell"; break;
                 case lyric_runtime::DataCellType::Undef:       *os << "cell contains undef cell"; break;
                 case lyric_runtime::DataCellType::Bool:        *os << "cell contains bool cell"; break;
-                case lyric_runtime::DataCellType::Int64:         *os << "cell contains i64 cell"; break;
-                case lyric_runtime::DataCellType::Float64:         *os << "cell contains dbl cell"; break;
+                case lyric_runtime::DataCellType::Int8:        *os << "cell contains i8 cell"; break;
+                case lyric_runtime::DataCellType::Int16:       *os << "cell contains i16 cell"; break;
+                case lyric_runtime::DataCellType::Int32:       *os << "cell contains i32 cell"; break;
+                case lyric_runtime::DataCellType::Int64:       *os << "cell contains i64 cell"; break;
+                case lyric_runtime::DataCellType::UInt8:       *os << "cell contains u8 cell"; break;
+                case lyric_runtime::DataCellType::UInt16:      *os << "cell contains u16 cell"; break;
+                case lyric_runtime::DataCellType::UInt32:      *os << "cell contains u32 cell"; break;
+                case lyric_runtime::DataCellType::UInt64:      *os << "cell contains u64 cell"; break;
+                case lyric_runtime::DataCellType::Float32:     *os << "cell contains f32 cell"; break;
+                case lyric_runtime::DataCellType::Float64:     *os << "cell contains f64 cell"; break;
                 case lyric_runtime::DataCellType::Char32:      *os << "cell contains chr cell"; break;
                 case lyric_runtime::DataCellType::Bytes:       *os << "cell contains bytes cell"; break;
                 case lyric_runtime::DataCellType::String:      *os << "cell contains string cell"; break;

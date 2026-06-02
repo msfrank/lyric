@@ -23,7 +23,15 @@ namespace lyric_runtime {
         Nil,
         Undef,
         Bool,
+        Int8,
+        Int16,
+        Int32,
         Int64,
+        UInt8,
+        UInt16,
+        UInt32,
+        UInt64,
+        Float32,
         Float64,
         Char32,
         Descriptor,
@@ -41,8 +49,16 @@ namespace lyric_runtime {
 
         DataCell();
         explicit DataCell(bool b);
+        explicit DataCell(tu_int8 i8);
+        explicit DataCell(tu_int16 i16);
+        explicit DataCell(tu_int32 i32);
         explicit DataCell(tu_int64 i64);
-        explicit DataCell(double dbl);
+        explicit DataCell(tu_uint8 u8);
+        explicit DataCell(tu_uint16 u16);
+        explicit DataCell(tu_uint32 u32);
+        explicit DataCell(tu_uint64 u64);
+        explicit DataCell(float f32);
+        explicit DataCell(double f64);
         explicit DataCell(char32_t char32);
         DataCell(const DataCell &other);
         DataCell(DataCell &&other) noexcept;
@@ -52,6 +68,8 @@ namespace lyric_runtime {
         DataCell& operator=(DataCell &&other) noexcept;
 
         bool isValid() const;
+        bool isIntegral() const;
+        bool isRational() const;
         bool isIntrinsic() const;
         bool isDescriptor() const;
         bool isReference() const;
@@ -76,8 +94,16 @@ namespace lyric_runtime {
         DataCellType type;
         union {
             bool b;
+            tu_int8 i8;
+            tu_int16 i16;
+            tu_int32 i32;
             tu_int64 i64;
-            double dbl;
+            tu_uint8 u8;
+            tu_uint16 u16;
+            tu_uint32 u32;
+            tu_uint64 u64;
+            float f32;
+            double f64;
             char32_t chr;
             DescriptorEntry *descriptor;
             TypeEntry *type;

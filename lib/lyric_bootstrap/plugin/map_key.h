@@ -25,12 +25,28 @@ H AbslHashValue(H state, const MapKey &key) {
             return H::combine(std::move(state), 1);
         case lyric_runtime::DataCellType::Bool:
             return H::combine(std::move(state), cell.data.b);
-        case lyric_runtime::DataCellType::Char32:
-            return H::combine(std::move(state), cell.data.chr);
+        case lyric_runtime::DataCellType::Int8:
+            return H::combine(std::move(state), cell.data.i8);
+        case lyric_runtime::DataCellType::Int16:
+            return H::combine(std::move(state), cell.data.i16);
+        case lyric_runtime::DataCellType::Int32:
+            return H::combine(std::move(state), cell.data.i32);
         case lyric_runtime::DataCellType::Int64:
             return H::combine(std::move(state), cell.data.i64);
+        case lyric_runtime::DataCellType::UInt8:
+            return H::combine(std::move(state), cell.data.u8);
+        case lyric_runtime::DataCellType::UInt16:
+            return H::combine(std::move(state), cell.data.u16);
+        case lyric_runtime::DataCellType::UInt32:
+            return H::combine(std::move(state), cell.data.u32);
+        case lyric_runtime::DataCellType::UInt64:
+            return H::combine(std::move(state), cell.data.u64);
+        case lyric_runtime::DataCellType::Float32:
+            return H::combine(std::move(state), cell.data.f32);
         case lyric_runtime::DataCellType::Float64:
-            return H::combine(std::move(state), cell.data.dbl);
+            return H::combine(std::move(state), cell.data.f64);
+        case lyric_runtime::DataCellType::Char32:
+            return H::combine(std::move(state), cell.data.chr);
         case lyric_runtime::DataCellType::Descriptor:
             return H::combine(std::move(state),
                 cell.data.descriptor->getSegmentIndex(),

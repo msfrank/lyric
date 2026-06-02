@@ -540,7 +540,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::Float64;
-                result.data.dbl = lhs.data.dbl + rhs.data.dbl;
+                result.data.f64 = lhs.data.f64 + rhs.data.f64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -558,7 +558,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::Float64;
-                result.data.dbl = lhs.data.dbl - rhs.data.dbl;
+                result.data.f64 = lhs.data.f64 - rhs.data.f64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -576,7 +576,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::Float64;
-                result.data.dbl = lhs.data.dbl * rhs.data.dbl;
+                result.data.f64 = lhs.data.f64 * rhs.data.f64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -594,7 +594,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::Float64;
-                result.data.dbl = lhs.data.dbl / rhs.data.dbl;
+                result.data.f64 = lhs.data.f64 / rhs.data.f64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -608,7 +608,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
                 DataCell result;
                 result.type = DataCellType::Float64;
-                result.data.dbl = -value.data.dbl;
+                result.data.f64 = -value.data.f64;
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -672,9 +672,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::Int64;
-                if (lhs.data.dbl < rhs.data.dbl)
+                if (lhs.data.f64 < rhs.data.f64)
                     result.data.i64 = -1;
-                else if (lhs.data.dbl > rhs.data.dbl)
+                else if (lhs.data.f64 > rhs.data.f64)
                     result.data.i64 = 1;
                 else
                     result.data.i64 = 0;

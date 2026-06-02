@@ -17,10 +17,26 @@ namespace lyric_runtime {
                 return H::combine(std::move(h), cell.type);
             case DataCellType::Bool:
                 return H::combine(std::move(h), cell.type, cell.data.b);
+            case DataCellType::Int8:
+                return H::combine(std::move(h), cell.type, cell.data.i8);
+            case DataCellType::Int16:
+                return H::combine(std::move(h), cell.type, cell.data.i16);
+            case DataCellType::Int32:
+                return H::combine(std::move(h), cell.type, cell.data.i32);
             case DataCellType::Int64:
                 return H::combine(std::move(h), cell.type, cell.data.i64);
+            case DataCellType::UInt8:
+                return H::combine(std::move(h), cell.type, cell.data.u8);
+            case DataCellType::UInt16:
+                return H::combine(std::move(h), cell.type, cell.data.u16);
+            case DataCellType::UInt32:
+                return H::combine(std::move(h), cell.type, cell.data.u32);
+            case DataCellType::UInt64:
+                return H::combine(std::move(h), cell.type, cell.data.u64);
+            case DataCellType::Float32:
+                return H::combine(std::move(h), cell.type, cell.data.f32);
             case DataCellType::Float64:
-                return H::combine(std::move(h), cell.type, cell.data.dbl);
+                return H::combine(std::move(h), cell.type, cell.data.f64);
             case DataCellType::Char32:
                 return H::combine(std::move(h), cell.type, cell.data.chr);
 
