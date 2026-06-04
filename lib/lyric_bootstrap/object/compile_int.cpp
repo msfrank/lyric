@@ -5,8 +5,8 @@ CoreExistential *
 declare_core_Int(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Int"});
-    auto *IntExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Int64,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *IntExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return IntExistential;
 }
 

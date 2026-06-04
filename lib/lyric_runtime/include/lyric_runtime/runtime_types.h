@@ -18,6 +18,35 @@ namespace lyric_runtime {
     constexpr tu_uint16 INVALID_OFFSET_U16       = 0xFFFF;
     constexpr tu_uint8 INVALID_OFFSET_U8         = 0xFF;
 
+    enum class IntrinsicType {
+        Nil,
+        Undef,
+        Bool,
+        Int64,
+        Float64,
+        Char32,
+        Bytes,
+        String,
+
+        Action,
+        Binding,
+        Call,
+        Class,
+        Concept,
+        Enum,
+        Existential,
+        Field,
+        Instance,
+        Namespace,
+        Protocol,
+        Struct,
+
+        // must be last
+        NUM_INTRINSICS,
+    };
+
+    lyric_common::SymbolPath intrinsicTypeToSymbolPath(IntrinsicType intrinsic);
+
     /**
      * Enumeration of the result of a type comparison.
      */

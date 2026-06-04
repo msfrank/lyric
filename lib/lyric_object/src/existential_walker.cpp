@@ -221,40 +221,6 @@ lyric_object::ExistentialWalker::getTemplate() const
     return TemplateWalker(m_reader, existentialDescriptor->existential_template());
 }
 
-lyric_object::IntrinsicType
-lyric_object::ExistentialWalker::getIntrinsicType() const
-{
-    if (!isValid())
-        return IntrinsicType::Invalid;
-    auto *existentialDescriptor = m_reader->getExistential(m_existentialOffset);
-    if (existentialDescriptor == nullptr)
-        return IntrinsicType::Invalid;
-
-    switch (existentialDescriptor->intrinsic_mapping()) {
-        case lyo1::IntrinsicType::Nil:          return IntrinsicType::Nil;
-        case lyo1::IntrinsicType::Undef:        return IntrinsicType::Undef;
-        case lyo1::IntrinsicType::Bool:         return IntrinsicType::Bool;
-        case lyo1::IntrinsicType::Char:         return IntrinsicType::Char;
-        case lyo1::IntrinsicType::Float64:      return IntrinsicType::Float;
-        case lyo1::IntrinsicType::Int64:        return IntrinsicType::Int;
-        case lyo1::IntrinsicType::String:       return IntrinsicType::String;
-        case lyo1::IntrinsicType::Bytes:        return IntrinsicType::Bytes;
-        case lyo1::IntrinsicType::Class:        return IntrinsicType::Class;
-        case lyo1::IntrinsicType::Concept:      return IntrinsicType::Concept;
-        case lyo1::IntrinsicType::Instance:     return IntrinsicType::Instance;
-        case lyo1::IntrinsicType::Call:         return IntrinsicType::Call;
-        case lyo1::IntrinsicType::Action:       return IntrinsicType::Action;
-        case lyo1::IntrinsicType::Field:        return IntrinsicType::Field;
-        case lyo1::IntrinsicType::Struct:       return IntrinsicType::Struct;
-        case lyo1::IntrinsicType::Enum:         return IntrinsicType::Enum;
-        case lyo1::IntrinsicType::Existential:  return IntrinsicType::Existential;
-        case lyo1::IntrinsicType::Namespace:    return IntrinsicType::Namespace;
-        case lyo1::IntrinsicType::Protocol:     return IntrinsicType::Protocol;
-        default:
-            return IntrinsicType::Invalid;
-    }
-}
-
 tu_uint8
 lyric_object::ExistentialWalker::numMethods() const
 {

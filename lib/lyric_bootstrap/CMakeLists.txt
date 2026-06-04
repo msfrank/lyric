@@ -50,6 +50,8 @@ target_link_libraries(prelude-plugin PRIVATE
 add_executable(prelude-builder
     object/builder_state.cpp
     object/builder_state.h
+    object/compile_action.cpp
+    object/compile_action.h
     object/compile_any.cpp
     object/compile_any.h
     object/compile_arithmetic.cpp
@@ -84,6 +86,10 @@ add_executable(prelude-builder
     object/compile_enum.h
     object/compile_equality.cpp
     object/compile_equality.h
+    object/compile_existential.cpp
+    object/compile_existential.h
+    object/compile_field.cpp
+    object/compile_field.h
     object/compile_float.cpp
     object/compile_float.h
     object/compile_function.cpp

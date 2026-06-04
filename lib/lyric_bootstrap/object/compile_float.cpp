@@ -7,8 +7,8 @@ CoreExistential *
 declare_core_Float(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Float"});
-    auto *FloatExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Float64,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *FloatExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return FloatExistential;
 }
 

@@ -5,6 +5,7 @@
 #include <lyric_runtime/trap_index.h>
 
 #include "builder_state.h"
+#include "compile_action.h"
 #include "compile_any.h"
 #include "compile_arithmetic.h"
 #include "compile_binding.h"
@@ -20,6 +21,8 @@
 #include "compile_discard_protocol.h"
 #include "compile_enum.h"
 #include "compile_equality.h"
+#include "compile_existential.h"
+#include "compile_field.h"
 #include "compile_float.h"
 #include "compile_function.h"
 #include "compile_idea.h"
@@ -94,16 +97,19 @@ main(int argc, char *argv[])
     auto *TypeExistential = declare_core_Type(state, AnyExistential);
 
     // define descriptor existentials
+    build_core_Action(state, DescriptorExistential);
     build_core_Binding(state, DescriptorExistential);
-    build_core_Namespace(state, DescriptorExistential);
     build_core_Class(state, DescriptorExistential);
-    build_core_Struct(state, DescriptorExistential);
-    build_core_Instance(state, DescriptorExistential);
-    build_core_Enum(state, DescriptorExistential);
     build_core_Concept(state, DescriptorExistential);
-    auto *CallExistential = build_core_Call(state, DescriptorExistential);
+    build_core_Enum(state, DescriptorExistential);
+    build_core_Existential(state, DescriptorExistential);
+    build_core_Field(state, DescriptorExistential);
+    build_core_Instance(state, DescriptorExistential);
+    build_core_Namespace(state, DescriptorExistential);
+    build_core_Struct(state, DescriptorExistential);
 
     // declare descriptor existentials
+    auto *CallExistential = build_core_Call(state, DescriptorExistential);
     auto *ProtocolExistential = declare_core_Protocol(state, DescriptorExistential);
 
     // declare (but do not define) root types for concepts, classes, structs, instances, and enums

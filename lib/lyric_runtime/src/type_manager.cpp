@@ -20,22 +20,22 @@ tempo_utils::Result<lyric_runtime::DataCell>
 lyric_runtime::TypeManager::typeOf(const DataCell &value)
 {
     switch (value.type) {
-        case DataCellType::Bool:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Bool)];
-        case DataCellType::Char32:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Char)];
-        case DataCellType::Float64:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Float)];
-        case DataCellType::Int64:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Int)];
         case DataCellType::Nil:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Nil)];
-        case DataCellType::String:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::String)];
-        case DataCellType::Bytes:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Bytes)];
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Nil)];
         case DataCellType::Undef:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Undef)];
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Undef)];
+        case DataCellType::Bool:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Bool)];
+        case DataCellType::Int64:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Int64)];
+        case DataCellType::Float64:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Float64)];
+        case DataCellType::Char32:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Char32)];
+        case DataCellType::String:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::String)];
+        case DataCellType::Bytes:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Bytes)];
         case DataCellType::Ref:
             return value.data.ref->getVirtualTable()->getType();
         case DataCellType::Status:
@@ -47,27 +47,27 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             auto section = value.data.descriptor->getLinkageSection();
             switch (section) {
                 case lyric_object::LinkageSection::Action:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Action)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Action)];
                 case lyric_object::LinkageSection::Call:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Call)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Call)];
                 case lyric_object::LinkageSection::Class:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Class)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Class)];
                 case lyric_object::LinkageSection::Concept:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Concept)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Concept)];
                 case lyric_object::LinkageSection::Enum:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Enum)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Enum)];
                 case lyric_object::LinkageSection::Existential:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Existential)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Existential)];
                 case lyric_object::LinkageSection::Field:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Field)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Field)];
                 case lyric_object::LinkageSection::Instance:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Instance)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Instance)];
                 case lyric_object::LinkageSection::Namespace:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Namespace)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Namespace)];
                 case lyric_object::LinkageSection::Protocol:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Protocol)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Protocol)];
                 case lyric_object::LinkageSection::Struct:
-                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
+                    return m_intrinsiccache[static_cast<int>(IntrinsicType::Struct)];
                 default:
                     return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
                         "{} descriptor has no type", lyric_object::linkage_section_to_name(section));

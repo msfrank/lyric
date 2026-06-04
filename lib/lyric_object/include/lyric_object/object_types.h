@@ -135,32 +135,6 @@ namespace lyric_object {
         Version1,
     };
 
-    enum class IntrinsicType {
-        Invalid,
-        Nil,
-        Undef,
-        Bool,
-        Char,
-        Float,
-        Int,
-        String,
-        Bytes,
-        Class,
-        Concept,
-        Instance,
-        Call,
-        Action,
-        Field,
-        Struct,
-        Enum,
-        Existential,
-        Namespace,
-        Protocol,
-
-        // must be last
-        NUM_INTRINSIC_TYPES,
-    };
-
     enum class AccessType {
         Invalid,
         Public,

@@ -172,6 +172,8 @@ detect_bootstrap(
     return {};
 }
 
+constexpr int kNumIntrinsics = static_cast<int>(lyric_runtime::IntrinsicType::NUM_INTRINSICS);
+
 static tempo_utils::Status
 allocate_type_manager(
     lyric_runtime::SegmentManager *segmentManager,
@@ -182,28 +184,33 @@ allocate_type_manager(
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (preludeSegment != nullptr);
 
-    std::vector<lyric_runtime::DataCell> intrinsiccache;
-    intrinsiccache.resize(static_cast<int>(lyric_object::IntrinsicType::NUM_INTRINSIC_TYPES));
+    std::vector<lyric_runtime::DataCell> intrinsiccache(kNumIntrinsics);
 
     // perform the bootstrapping process
-    for (int i = 0; i < preludeObject.numExistentials(); i++) {
-        auto existential = preludeObject.getExistential(i);
-        if (existential.getIntrinsicType() == lyric_object::IntrinsicType::Invalid)
-            continue;
-        auto index = static_cast<int>(existential.getIntrinsicType());
-        if (intrinsiccache[index].isValid())
+    for (int i = 0; i < kNumIntrinsics; i++) {
+        auto intrinsic = static_cast<lyric_runtime::IntrinsicType>(i);
+        auto symbolPath = lyric_runtime::intrinsicTypeToSymbolPath(intrinsic);
+        auto symbol = preludeObject.findSymbol(symbolPath);
+        if (!symbol.isValid() || symbol.getLinkageSection() != lyric_object::LinkageSection::Existential)
             return lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-                "duplicate intrinsic mapping detected");
-
+                "missing required prelude symbol {}", symbolPath.toString());
+        auto existential = preludeObject.getExistential(symbol.getLinkageIndex());
+        if (!existential.isValid())
+            return lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant,
+                "invalid prelude existential {}", symbolPath.toString());
         auto type = existential.getExistentialType();
         if (!type.isValid())
             return lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-                "invalid intrinsic mapping detected");
-
+                "invalid type for prelude existential {}", existential.getSymbolPath().toString());
         auto *typeEntry = preludeSegment->lookupType(type.getDescriptorOffset());
-        intrinsiccache[index] = lyric_runtime::DataCell::forType(typeEntry);
+        if (typeEntry == nullptr)
+            return lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant,
+                "missing type for prelude existential {}", existential.getSymbolPath().toString());
+        intrinsiccache[i] = lyric_runtime::DataCell::forType(typeEntry);
     }
 
     typeManagerPtr = std::make_unique<lyric_runtime::TypeManager>(

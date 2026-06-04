@@ -14,7 +14,6 @@ CoreExistential *build_core_Any(BuilderState &state)
     AnyExistential->existentialPath = lyric_common::SymbolPath({"Any"});
     AnyExistential->existentialType = AnyType;
     AnyExistential->superExistential = nullptr;
-    AnyExistential->intrinsicMapping = lyo1::IntrinsicType::Invalid;
     AnyExistential->flags = lyo1::ExistentialFlags::Sealed;
     state.existentials.push_back(AnyExistential);
     state.existentialcache[AnyExistential->existentialPath] = AnyExistential;

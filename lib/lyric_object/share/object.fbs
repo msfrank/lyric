@@ -26,31 +26,6 @@ enum DescriptorSection : uint8 {
     Binding,
 }
 
-enum IntrinsicType : uint8 {
-    Invalid,
-    Nil,
-    Undef,
-    Bool,
-    Char,
-    Float64,
-    Int64,
-    Bytes,
-    String,
-    Url,
-    Class,
-    Concept,
-    Instance,
-    Call,
-    Action,
-    Field,
-    Struct,
-    Enum,
-    Existential,
-    Namespace,
-    Binding,
-    Protocol,
-}
-
 enum TypeSection : uint8 {
     Invalid,
     Binding,
@@ -164,7 +139,6 @@ table ExistentialDescriptor {
     super_type: uint32 = 0xffffffff;            // offset of the super type in the types section
     existential_template: uint32 = 0xffffffff;  // offset of the template in the templates section, or 0xffffffff if not generic
     existential_type: uint32 = 0xffffffff;      // offset of the existential type in the types section
-    intrinsic_mapping: IntrinsicType = Invalid; // mapping to intrinsic type, or Invalid if there is no mapping
     flags: ExistentialFlags;                    // bitfield containing existential flags
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section

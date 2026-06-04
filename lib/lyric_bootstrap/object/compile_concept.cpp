@@ -7,7 +7,7 @@ CoreExistential *build_core_Concept(BuilderState &state, const CoreExistential *
 {
     lyric_common::SymbolPath existentialPath({"Concept"});
 
-    auto *ConceptExistential = state.addExistential(existentialPath,
-        lyo1::IntrinsicType::Concept, lyo1::ExistentialFlags::Final, DescriptorExistential);
+    auto *ConceptExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
     return ConceptExistential;
 }

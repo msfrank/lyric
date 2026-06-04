@@ -7,7 +7,7 @@ CoreExistential *build_core_Binding(BuilderState &state, const CoreExistential *
 {
     lyric_common::SymbolPath existentialPath({"Binding"});
 
-    auto *BindingExistential = state.addExistential(existentialPath,
-        lyo1::IntrinsicType::Binding, lyo1::ExistentialFlags::Final, DescriptorExistential);
+    auto *BindingExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
     return BindingExistential;
 }

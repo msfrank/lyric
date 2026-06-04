@@ -8,7 +8,7 @@
 #include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/internal/construct_protocol.h>
 #include <lyric_runtime/internal/f64_ops.h>
-#include <lyric_runtime/internal/i64_ops.h>
+#include <lyric_runtime/internal/signed_ops.h>
 #include <lyric_runtime/internal/raise_exception.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>

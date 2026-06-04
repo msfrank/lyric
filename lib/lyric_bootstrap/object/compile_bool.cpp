@@ -7,8 +7,8 @@ const CoreExistential *
 declare_core_Bool(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Bool"});
-    auto *BoolExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Bool,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *BoolExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return BoolExistential;
 }
 

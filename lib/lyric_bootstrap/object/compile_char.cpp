@@ -7,8 +7,8 @@ CoreExistential *
 declare_core_Char(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Char"});
-    auto *CharExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Char,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *CharExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return CharExistential;
 }
 

@@ -64,8 +64,6 @@ namespace lyric_object {
         bool hasTemplate() const;
         TemplateWalker getTemplate() const;
 
-        IntrinsicType getIntrinsicType() const;
-
         tu_uint8 numMethods() const;
         ExistentialMethod getMethod(tu_uint8 index) const;
 

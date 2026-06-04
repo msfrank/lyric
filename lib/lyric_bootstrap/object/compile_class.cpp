@@ -7,7 +7,7 @@ CoreExistential *build_core_Class(BuilderState &state, const CoreExistential *De
 {
     lyric_common::SymbolPath existentialPath({"Class"});
 
-    auto *ClassExistential = state.addExistential(existentialPath,
-        lyo1::IntrinsicType::Class, lyo1::ExistentialFlags::Final, DescriptorExistential);
+    auto *ClassExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
     return ClassExistential;
 }

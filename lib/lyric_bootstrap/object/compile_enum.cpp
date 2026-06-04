@@ -7,7 +7,7 @@ CoreExistential *build_core_Enum(BuilderState &state, const CoreExistential *Des
 {
     lyric_common::SymbolPath existentialPath({"Enum"});
 
-    auto *EnumExistential = state.addExistential(existentialPath,
-        lyo1::IntrinsicType::Enum, lyo1::ExistentialFlags::Final, DescriptorExistential);
+    auto *EnumExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
     return EnumExistential;
 }

@@ -113,8 +113,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/get_instance_virtual_table.cpp
     include/lyric_runtime/internal/get_struct_virtual_table.h
     src/internal/get_struct_virtual_table.cpp
-    include/lyric_runtime/internal/i64_ops.h
-    src/internal/i64_ops.cpp
+    include/lyric_runtime/internal/signed_ops.h
+    src/internal/signed_ops.cpp
     include/lyric_runtime/internal/load_utils.h
     src/internal/load_utils.cpp
     include/lyric_runtime/internal/raise_exception.h

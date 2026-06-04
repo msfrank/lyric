@@ -246,7 +246,6 @@ BuilderState::writeTrap(lyric_object::BytecodeBuilder &code, std::string_view tr
 CoreExistential *
 BuilderState::addExistential(
     const lyric_common::SymbolPath &existentialPath,
-    lyo1::IntrinsicType intrinsicMapping,
     lyo1::ExistentialFlags existentialFlags,
     const CoreExistential *superExistential,
     const CoreType *superType)
@@ -267,7 +266,6 @@ BuilderState::addExistential(
     Existential->existentialTemplate = nullptr;
     Existential->superExistential = superExistential;
     Existential->superType = superType;
-    Existential->intrinsicMapping = intrinsicMapping;
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
 
@@ -287,7 +285,6 @@ CoreExistential *
 BuilderState::addGenericExistential(
     const lyric_common::SymbolPath &existentialPath,
     const CoreTemplate *existentialTemplate,
-    lyo1::IntrinsicType intrinsicMapping,
     lyo1::ExistentialFlags existentialFlags,
     const CoreExistential *superExistential,
     const CoreType *superType)
@@ -313,7 +310,6 @@ BuilderState::addGenericExistential(
     Existential->existentialTemplate = existentialTemplate;
     Existential->superExistential = superExistential;
     Existential->superType = superType;
-    Existential->intrinsicMapping = intrinsicMapping;
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
 
@@ -1823,8 +1819,8 @@ BuilderState::toObject() const
 
         existentials_vector.push_back(lyo1::CreateExistentialDescriptor(buffer,
             fb_fullyQualifiedName, superExistential, superType, existentialTemplate,
-            Existential->existentialType->type_index, Existential->intrinsicMapping,
-            Existential->flags, fb_methods, fb_impls, fb_sealedSubtypes));
+            Existential->existentialType->type_index, Existential->flags,
+            fb_methods, fb_impls, fb_sealedSubtypes));
     }
 
     // write the action descriptors

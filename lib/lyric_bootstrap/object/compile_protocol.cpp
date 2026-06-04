@@ -11,8 +11,8 @@ declare_core_Protocol(BuilderState &state, const CoreExistential *DescriptorExis
     placeholders.push_back({"R", lyo1::PlaceholderVariance::Invariant});
     auto *ProtocolTemplate = state.addTemplate(existentialPath, placeholders);
 
-    auto *ProtocolExistential = state.addGenericExistential(existentialPath, ProtocolTemplate,
-        lyo1::IntrinsicType::Protocol, lyo1::ExistentialFlags::NONE, DescriptorExistential);
+    auto *ProtocolExistential = state.addGenericExistential(
+        existentialPath, ProtocolTemplate, lyo1::ExistentialFlags::NONE, DescriptorExistential);
 
     return ProtocolExistential;
 }

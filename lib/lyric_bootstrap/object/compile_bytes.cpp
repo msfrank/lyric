@@ -5,8 +5,8 @@ CoreExistential *
 declare_core_Bytes(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Bytes"});
-    auto *BytesExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Bytes,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *BytesExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return BytesExistential;
 }
 

@@ -19,7 +19,6 @@ struct CoreType {
     tu_uint32 type_index;
     lyo1::Assignable typeAssignable;
     lyo1::SpecialType specialType;
-    lyo1::IntrinsicType intrinsicType;
     lyo1::TypeSection concreteSection;
     tu_uint32 concreteDescriptor;
     const CoreTemplate *placeholderTemplate;
@@ -128,7 +127,6 @@ struct CoreExistential {
     const CoreTemplate *existentialTemplate;
     const CoreExistential *superExistential;
     const CoreType *superType;
-    lyo1::IntrinsicType intrinsicMapping;
     lyo1::ExistentialFlags flags;
     std::vector<CoreCall *> methods;
     std::vector<CoreImpl *> impls;
@@ -290,14 +288,12 @@ struct BuilderState {
      */
     CoreExistential *addExistential(
         const lyric_common::SymbolPath &existentialPath,
-        lyo1::IntrinsicType intrinsicMapping,
         lyo1::ExistentialFlags existentialFlags,
         const CoreExistential *superExistential = nullptr,
         const CoreType *superType = nullptr);
     CoreExistential *addGenericExistential(
         const lyric_common::SymbolPath &existentialPath,
         const CoreTemplate *existentialTemplate,
-        lyo1::IntrinsicType intrinsicMapping,
         lyo1::ExistentialFlags existentialFlags,
         const CoreExistential *superExistential = nullptr,
         const CoreType *superType = nullptr);

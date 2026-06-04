@@ -5,8 +5,8 @@ CoreExistential *
 declare_core_String(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"String"});
-    auto *StringExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::String,
-        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    auto *StringExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return StringExistential;
 }
 

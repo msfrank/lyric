@@ -10,8 +10,8 @@ declare_core_Rest(BuilderState &state, const CoreExistential *AnyExistential)
     placeholders.push_back({"T", lyo1::PlaceholderVariance::Invariant});
     auto *RestTemplate = state.addTemplate(existentialPath, placeholders);
 
-    auto *RestExistential = state.addGenericExistential(existentialPath, RestTemplate,
-        lyo1::IntrinsicType::Invalid, lyo1::ExistentialFlags::Final, AnyExistential);
+    auto *RestExistential = state.addGenericExistential(
+        existentialPath, RestTemplate, lyo1::ExistentialFlags::Final, AnyExistential);
     return RestExistential;
 }
 

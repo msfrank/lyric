@@ -7,8 +7,8 @@ CoreExistential *
 declare_core_Type(BuilderState &state, const CoreExistential *AnyExistential)
 {
     lyric_common::SymbolPath existentialPath({"Type"});
-    auto *TypeExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Invalid,
-        lyo1::ExistentialFlags::Final, AnyExistential);
+    auto *TypeExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, AnyExistential);
     return TypeExistential;
 }
 

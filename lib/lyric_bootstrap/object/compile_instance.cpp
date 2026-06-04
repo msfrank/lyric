@@ -7,7 +7,7 @@ CoreExistential *build_core_Instance(BuilderState &state, const CoreExistential 
 {
     lyric_common::SymbolPath existentialPath({"Instance"});
 
-    auto *InstanceExistential = state.addExistential(existentialPath,
-        lyo1::IntrinsicType::Instance, lyo1::ExistentialFlags::Final, DescriptorExistential);
+    auto *InstanceExistential = state.addExistential(
+        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
     return InstanceExistential;
 }

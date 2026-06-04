@@ -12,7 +12,6 @@ CoreExistential *build_core_Undef(BuilderState &state)
     UndefExistential->existentialPath = lyric_common::SymbolPath({"Undef"});
     UndefExistential->existentialType = UndefType;
     UndefExistential->superExistential = nullptr;
-    UndefExistential->intrinsicMapping = lyo1::IntrinsicType::Undef;
     UndefExistential->flags = lyo1::ExistentialFlags::Final;
     state.existentials.push_back(UndefExistential);
     state.existentialcache[UndefExistential->existentialPath] = UndefExistential;
