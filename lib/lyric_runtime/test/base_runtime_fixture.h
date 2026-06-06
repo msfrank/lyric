@@ -5,9 +5,12 @@
 
 #include <lyric_test/lyric_tester.h>
 
+#include "lyric_runtime/static_loader.h"
+
 class BaseRuntimeFixture : public ::testing::Test {
 protected:
-    std::unique_ptr<lyric_test::LyricTester> m_tester;
+    std::unique_ptr<lyric_test::LyricTester> tester;
+    std::shared_ptr<lyric_runtime::StaticLoader> staticLoader;
 
     void SetUp() override;
 };

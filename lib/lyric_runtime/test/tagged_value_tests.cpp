@@ -4,6 +4,8 @@
 #include <lyric_runtime/tagged_value.h>
 #include <tempo_utils/memory_bytes.h>
 
+#include "runtime_mocks.h"
+
 class TaggedValue : public ::testing::Test {};
 
 TEST_F (TaggedValue, RoundtripUndef)

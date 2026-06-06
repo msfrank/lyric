@@ -5,6 +5,12 @@
 
 #include <lyric_runtime/tagged_value.h>
 
+#include "lyric_runtime/bytes_ref.h"
+#include "lyric_runtime/namespace_ref.h"
+#include "lyric_runtime/protocol_ref.h"
+#include "lyric_runtime/status_ref.h"
+#include "lyric_runtime/string_ref.h"
+
 /*
  * TODO:
  *  - add singleword enum for empty string
@@ -27,6 +33,19 @@
  *   Num32:     101  (5)
  *   Num64:     110  (6)
  *   Pointer:   111  (7)
+ */
+
+/*
+ * Pointer highbits flags:
+ *   Ref:       00000010 (2)
+ *   Bytes:     00000100 (4)
+ *   Namespace: 00000110 (6)
+ *   Protocol:  00001000 (8)
+ *   Rest:      00001010 (10)
+ *   Status:    00001100 (12)
+ *   String:    00001110 (14)
+ *   Desc:      00010000 (16)
+ *   Type:      00010010 (18)
  */
 
 /*
@@ -65,6 +84,7 @@
 
 constexpr tu_uint8 kTagMask                 = 0x07;
 constexpr tu_uint8 kNum64Mask               = 0x0F;
+constexpr tu_uint8 kPointerMask             = 0x7E;
 
 constexpr tu_uint8 kSingleWordShortTag      = 0x00;
 constexpr tu_uint8 kSingleWordI32Tag        = 0x01;
@@ -77,7 +97,7 @@ constexpr tu_uint8 kDoubleWordSelf1Tag      = 0x03;
 constexpr tu_uint8 kDoubleWordSelf2Tag      = 0x04;
 constexpr tu_uint8 kDoubleWordNum32Tag      = 0x05;
 constexpr tu_uint8 kDoubleWordNum64Tag      = 0x06;
-//constexpr tu_uint8 kDoubleWordPointerTag    = 0x07;
+constexpr tu_uint8 kDoubleWordPointerTag    = 0x07;
 
 constexpr tu_uint8 kShortEnumTag            = 0x08;
 constexpr tu_uint8 kShortI8Tag              = 0x10;
@@ -92,6 +112,17 @@ constexpr tu_uint8 kNum32FloatTag           = 0x1D;
 
 constexpr tu_uint8 kNum64SignedTag          = 0x06;
 constexpr tu_uint8 kNum64UnsignedTag        = 0x0E;
+
+constexpr tu_uint8 kPointerRefTag           = 0x02;
+
+constexpr tu_uint8 kPointerBytesTag         = 0x04;
+constexpr tu_uint8 kPointerNamespaceTag     = 0x06;
+constexpr tu_uint8 kPointerProtocolTag      = 0x08;
+constexpr tu_uint8 kPointerRestTag          = 0x0A;
+constexpr tu_uint8 kPointerStatusTag        = 0x0C;
+constexpr tu_uint8 kPointerStringTag        = 0x0E;
+constexpr tu_uint8 kPointerDescTag          = 0x10;
+constexpr tu_uint8 kPointerTypeTag          = 0x12;
 
 constexpr tu_uint32 kUndefEnum              = 0x01;
 constexpr tu_uint32 kNilEnum                = 0x02;
@@ -109,6 +140,36 @@ lyric_runtime::TaggedValue::TaggedValue(TaggedRepresentation repr, std::array<tu
     : m_repr(repr),
       m_bytes(bytes)
 {
+}
+
+lyric_runtime::TaggedValue::TaggedValue(const TaggedValue &other)
+    : m_repr(other.m_repr),
+      m_bytes(other.m_bytes)
+{
+}
+
+lyric_runtime::TaggedValue::TaggedValue(TaggedValue &&other) noexcept
+    : m_repr(std::exchange(other.m_repr, TaggedRepresentation::Invalid)),
+      m_bytes{std::exchange(other.m_bytes, {})}
+{
+}
+
+lyric_runtime::TaggedValue&
+lyric_runtime::TaggedValue::operator=(const TaggedValue &other)
+{
+    m_repr = other.m_repr;
+    m_bytes = other.m_bytes;
+    return *this;
+}
+
+lyric_runtime::TaggedValue&
+lyric_runtime::TaggedValue::operator=(TaggedValue &&other) noexcept
+{
+    if (this != &other) {
+        m_repr = std::exchange(other.m_repr, TaggedRepresentation::Invalid);
+        m_bytes.swap(other.m_bytes);
+    }
+    return *this;
 }
 
 bool
@@ -221,7 +282,32 @@ lyric_runtime::TaggedValue::getType() const
         }
 
         case TaggedRepresentation::Pointer: {
-            TU_UNREACHABLE();
+            tu_uint8 tag = info & kTagMask;
+            if (tag != kDoubleWordPointerTag)
+                return DataCellType::Invalid;
+            tu_uint8 pointertag = m_bytes[0] & kPointerMask;
+            switch (pointertag) {
+                case kPointerRefTag:
+                    return DataCellType::Ref;
+                case kPointerBytesTag:
+                    return DataCellType::Bytes;
+                case kPointerNamespaceTag:
+                    return DataCellType::Namespace;
+                case kPointerProtocolTag:
+                    return DataCellType::Protocol;
+                case kPointerRestTag:
+                    return DataCellType::Rest;
+                case kPointerStatusTag:
+                    return DataCellType::Status;
+                case kPointerStringTag:
+                    return DataCellType::String;
+                case kPointerDescTag:
+                    return DataCellType::Descriptor;
+                case kPointerTypeTag:
+                    return DataCellType::Type;
+                default:
+                    return DataCellType::Invalid;
+            }
         }
 
         default:
@@ -467,6 +553,116 @@ lyric_runtime::TaggedValue::getF64(double &f64)
     }
 }
 
+void *
+lyric_runtime::TaggedValue::getPointer(tu_uint8 pointertag)
+{
+    TU_ASSERT ((pointertag & ~kPointerMask) == 0);
+    if (m_repr != TaggedRepresentation::Pointer)
+        return nullptr;
+    tu_uint8 tag = get_info_tag(m_bytes);
+    if (tag != kDoubleWordPointerTag)
+        return nullptr;
+    if ((m_bytes[0] & kPointerMask) != pointertag)
+        return nullptr;
+    std::uintptr_t pointer;
+    memcpy(&pointer, m_bytes.data(), 8);
+    auto *ptr = (tu_uint8 *) &pointer;
+    ptr[0] &= ~kPointerMask;
+    ptr[7] &= ~kTagMask;
+    boost::endian::big_to_native_inplace(pointer);
+    return (void *) pointer;
+}
+
+bool
+lyric_runtime::TaggedValue::getRef(AbstractRef *&ref)
+{
+    auto *ptr = getPointer(kPointerRefTag);
+    if (ptr == nullptr)
+        return false;
+    ref = (AbstractRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getBytes(BytesRef *&bytes)
+{
+    auto *ptr = getPointer(kPointerBytesTag);
+    if (ptr == nullptr)
+        return false;
+    bytes = (BytesRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getNamespace(NamespaceRef *&ns)
+{
+    auto *ptr = getPointer(kPointerNamespaceTag);
+    if (ptr == nullptr)
+        return false;
+    ns = (NamespaceRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getProtocol(ProtocolRef *&protocol)
+{
+    auto *ptr = getPointer(kPointerProtocolTag);
+    if (ptr == nullptr)
+        return false;
+    protocol = (ProtocolRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getRest(RestRef *&rest)
+{
+    auto *ptr = getPointer(kPointerRestTag);
+    if (ptr == nullptr)
+        return false;
+    rest = (RestRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getStatus(StatusRef *&status)
+{
+    auto *ptr = getPointer(kPointerStatusTag);
+    if (ptr == nullptr)
+        return false;
+    status = (StatusRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getString(StringRef *&string)
+{
+    auto *ptr = getPointer(kPointerStringTag);
+    if (ptr == nullptr)
+        return false;
+    string = (StringRef *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getDescriptor(DescriptorEntry *&descriptor)
+{
+    auto *ptr = getPointer(kPointerDescTag);
+    if (ptr == nullptr)
+        return false;
+    descriptor = (DescriptorEntry *) ptr;
+    return true;
+}
+
+bool
+lyric_runtime::TaggedValue::getType(TypeEntry *&type)
+{
+    auto *ptr = getPointer(kPointerTypeTag);
+    if (ptr == nullptr)
+        return false;
+    type = (TypeEntry *) ptr;
+    return true;
+}
+
 lyric_runtime::TaggedValue
 lyric_runtime::TaggedValue::fromBool(bool b)
 {
@@ -619,6 +815,79 @@ lyric_runtime::TaggedValue::fromF64(double f64)
         default:
             return {};
     }
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromPointer(void *ptr, tu_uint8 pointertag)
+{
+    TU_ASSERT ((pointertag & ~kPointerMask) == 0);
+    if (ptr == nullptr)
+        return {};
+    std::array<tu_uint8,8> bytes;
+    auto pointer = (std::uintptr_t) ptr;
+    boost::endian::native_to_big_inplace(pointer);
+    memcpy(bytes.data(), &pointer, 8);
+    if (bytes[0] & kPointerMask)
+        return {};
+    if (bytes[7] & kTagMask)
+        return {};
+    bytes[0] |= pointertag;
+    bytes[7] |= kDoubleWordPointerTag;
+    return TaggedValue(TaggedRepresentation::Pointer, bytes);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromRef(AbstractRef *ref)
+{
+    return fromPointer(ref, kPointerRefTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromBytes(BytesRef *bytes)
+{
+    return fromPointer(bytes, kPointerBytesTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromNamespace(NamespaceRef *ns)
+{
+    return fromPointer(ns, kPointerNamespaceTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromProtocol(ProtocolRef *protocol)
+{
+    return fromPointer(protocol, kPointerProtocolTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromRest(RestRef *rest)
+{
+    return fromPointer(rest, kPointerRestTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromStatus(StatusRef *status)
+{
+    return fromPointer(status, kPointerStatusTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromString(StringRef *str)
+{
+    return fromPointer(str, kPointerStringTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromDescriptor(DescriptorEntry *descriptor)
+{
+    return fromPointer(descriptor, kPointerDescTag);
+}
+
+lyric_runtime::TaggedValue
+lyric_runtime::TaggedValue::fromType(TypeEntry *type)
+{
+    return fromPointer(type, kPointerTypeTag);
 }
 
 lyric_runtime::TaggedValue

@@ -61,7 +61,7 @@
 int
 main(int argc, char *argv[])
 {
-    // we expect a single argument which is the destination path where to write the assembly
+    // we expect a single argument which is the destination path where to write the object
     if (argc != 2)
         return -1;
     std::filesystem::path destinationPath(argv[1]);
@@ -281,7 +281,7 @@ main(int argc, char *argv[])
     tempo_utils::FileWriter writer(destinationPath, object.bytesView(),
         tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);
     if (!writer.isValid()) {
-        TU_LOG_INFO << "failed to write output " << destinationPath;
+        TU_LOG_INFO << "failed to write output to " << destinationPath << "; " << writer.getStatus();
         return -1;
     }
 

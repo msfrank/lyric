@@ -21,6 +21,11 @@ namespace lyric_runtime {
     class TaggedValue final {
     public:
         TaggedValue();
+        TaggedValue(const TaggedValue &other);
+        TaggedValue(TaggedValue &&other) noexcept;
+
+        TaggedValue& operator=(const TaggedValue &other);
+        TaggedValue& operator=(TaggedValue &&other) noexcept;
 
         bool isValid() const;
 
@@ -43,6 +48,15 @@ namespace lyric_runtime {
         bool getC32(char32_t &c32);
         bool getF32(float &f32);
         bool getF64(double &f64);
+        bool getRef(AbstractRef *&ref);
+        bool getBytes(BytesRef *&bytes);
+        bool getNamespace(NamespaceRef *&ns);
+        bool getProtocol(ProtocolRef *&protocol);
+        bool getRest(RestRef *&rest);
+        bool getStatus(StatusRef *&status);
+        bool getString(StringRef *&string);
+        bool getDescriptor(DescriptorEntry *&descriptor);
+        bool getType(TypeEntry *&type);
 
         static TaggedValue fromBool(bool b);
         static TaggedValue fromI8(tu_int8 i8);
@@ -56,6 +70,15 @@ namespace lyric_runtime {
         static TaggedValue fromC32(char32_t c32);
         static TaggedValue fromF32(float f32);
         static TaggedValue fromF64(double f64);
+        static TaggedValue fromRef(AbstractRef *ref);
+        static TaggedValue fromBytes(BytesRef *bytes);
+        static TaggedValue fromNamespace(NamespaceRef *ns);
+        static TaggedValue fromProtocol(ProtocolRef *protocol);
+        static TaggedValue fromRest(RestRef *rest);
+        static TaggedValue fromStatus(StatusRef *status);
+        static TaggedValue fromString(StringRef *str);
+        static TaggedValue fromDescriptor(DescriptorEntry *descriptor);
+        static TaggedValue fromType(TypeEntry *type);
 
         static TaggedValue nil();
         static TaggedValue undef();
@@ -65,6 +88,9 @@ namespace lyric_runtime {
         std::array<tu_uint8,8> m_bytes;
 
         TaggedValue(TaggedRepresentation repr, std::array<tu_uint8,8> bytes);
+
+        static TaggedValue fromPointer(void *ptr, tu_uint8 pointertag);
+        void *getPointer(tu_uint8 pointertag);
     };
 }
 
