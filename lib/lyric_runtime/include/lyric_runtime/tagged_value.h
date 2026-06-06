@@ -26,6 +26,7 @@ namespace lyric_runtime {
 
         TaggedRepresentation getRepresentation() const;
         DataCellType getType() const;
+        std::span<const tu_uint8> rawValue() const;
 
         bool isUndef() const;
         bool isNil() const;
@@ -34,19 +35,27 @@ namespace lyric_runtime {
         bool getI8(tu_int8 &i8);
         bool getI16(tu_int16 &i16);
         bool getI32(tu_int32 &i32);
+        bool getI64(tu_int64 &i64);
         bool getU8(tu_uint8 &u8);
         bool getU16(tu_uint16 &u16);
         bool getU32(tu_uint32 &u32);
+        bool getU64(tu_uint64 &u64);
         bool getC32(char32_t &c32);
+        bool getF32(float &f32);
+        bool getF64(double &f64);
 
         static TaggedValue fromBool(bool b);
         static TaggedValue fromI8(tu_int8 i8);
         static TaggedValue fromI16(tu_int16 i16);
         static TaggedValue fromI32(tu_int32 i32);
+        static TaggedValue fromI64(tu_int64 i64);
         static TaggedValue fromU8(tu_uint8 u8);
         static TaggedValue fromU16(tu_uint16 u16);
         static TaggedValue fromU32(tu_uint32 u32);
+        static TaggedValue fromU64(tu_uint64 u64);
         static TaggedValue fromC32(char32_t c32);
+        static TaggedValue fromF32(float f32);
+        static TaggedValue fromF64(double f64);
 
         static TaggedValue nil();
         static TaggedValue undef();
