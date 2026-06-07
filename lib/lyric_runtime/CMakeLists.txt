@@ -22,6 +22,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/chain_loader.h
     include/lyric_runtime/connection.h
     include/lyric_runtime/data_cell.h
+    include/lyric_runtime/operand_stack.h
     include/lyric_runtime/descriptor_entry.h
     include/lyric_runtime/gc_heap.h
     include/lyric_runtime/hash_data_cell.h
@@ -45,7 +46,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/string_ref.h
     include/lyric_runtime/subroutine_manager.h
     include/lyric_runtime/system_scheduler.h
-    include/lyric_runtime/tagged_value.h
+    include/lyric_runtime/operand.h
     include/lyric_runtime/task.h
     include/lyric_runtime/trap_index.h
     include/lyric_runtime/type_entry.h
@@ -63,6 +64,7 @@ target_sources(lyric_runtime PRIVATE
     src/chain_loader.cpp
     src/connection.cpp
     src/data_cell.cpp
+    src/operand_stack.cpp
     src/descriptor_entry.cpp
     src/gc_heap.cpp
     src/heap_manager.cpp
@@ -84,7 +86,7 @@ target_sources(lyric_runtime PRIVATE
     src/string_ref.cpp
     src/subroutine_manager.cpp
     src/system_scheduler.cpp
-    src/tagged_value.cpp
+    src/operand.cpp
     src/task.cpp
     src/trap_index.cpp
     src/type_entry.cpp

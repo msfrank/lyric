@@ -3,7 +3,7 @@
 
 #include <boost/endian.hpp>
 
-#include <lyric_runtime/tagged_value.h>
+#include <lyric_runtime/operand.h>
 
 #include "lyric_runtime/bytes_ref.h"
 #include "lyric_runtime/namespace_ref.h"
@@ -50,6 +50,7 @@
 
 /*
  * Short byte tags:
+ *   Invalid:   00000000 (0)
  *   Enum:      00001000 (8)
  *   I8:        00010000 (16)
  *   U8:        00011000 (24)
@@ -73,7 +74,7 @@
 
 /*
  * Enum singleword values:
- *   Invalid:   00 00 00 08
+ *   Invalid:   00 00 00 00
  *   Undef:     00 00 01 08
  *   Nil:       00 00 02 08
  *   True:      00 00 03 08
@@ -131,75 +132,111 @@ constexpr tu_uint32 kFalseEnum              = 0x04;
 constexpr tu_uint32 kF64ZeroEnum            = 0x05;
 constexpr tu_uint32 kF64NZeroEnum           = 0x06;
 
-lyric_runtime::TaggedValue::TaggedValue()
-    : m_repr(TaggedRepresentation::Invalid)
+inline tu_uint8 get_info_byte(const std::array<tu_uint8,8> &bytes) { return bytes[7]; }
+
+inline tu_uint8 get_info_tag(const std::array<tu_uint8,8> &bytes) { return bytes[7] & kTagMask; }
+
+lyric_runtime::Operand::Operand()
+    : m_bytes{0,0,0,0,0,0,0,0}
 {
 }
 
-lyric_runtime::TaggedValue::TaggedValue(TaggedRepresentation repr, std::array<tu_uint8,8> bytes)
-    : m_repr(repr),
-      m_bytes(bytes)
+lyric_runtime::Operand::Operand(std::array<tu_uint8,8> bytes)
+    : m_bytes(bytes)
 {
 }
 
-lyric_runtime::TaggedValue::TaggedValue(const TaggedValue &other)
-    : m_repr(other.m_repr),
-      m_bytes(other.m_bytes)
+lyric_runtime::Operand::Operand(const Operand &other)
+    : m_bytes(other.m_bytes)
 {
 }
 
-lyric_runtime::TaggedValue::TaggedValue(TaggedValue &&other) noexcept
-    : m_repr(std::exchange(other.m_repr, TaggedRepresentation::Invalid)),
-      m_bytes{std::exchange(other.m_bytes, {})}
+lyric_runtime::Operand::Operand(Operand &&other) noexcept
+    : m_bytes{std::exchange(other.m_bytes, {})}
 {
 }
 
-lyric_runtime::TaggedValue&
-lyric_runtime::TaggedValue::operator=(const TaggedValue &other)
+lyric_runtime::Operand&
+lyric_runtime::Operand::operator=(const Operand &other)
 {
-    m_repr = other.m_repr;
     m_bytes = other.m_bytes;
     return *this;
 }
 
-lyric_runtime::TaggedValue&
-lyric_runtime::TaggedValue::operator=(TaggedValue &&other) noexcept
+lyric_runtime::Operand&
+lyric_runtime::Operand::operator=(Operand &&other) noexcept
 {
     if (this != &other) {
-        m_repr = std::exchange(other.m_repr, TaggedRepresentation::Invalid);
         m_bytes.swap(other.m_bytes);
     }
     return *this;
 }
 
 bool
-lyric_runtime::TaggedValue::isValid() const
+lyric_runtime::Operand::isValid() const
 {
-    return m_repr != TaggedRepresentation::Invalid;
+    return get_info_byte(m_bytes) != 0;
 }
 
-lyric_runtime::TaggedRepresentation
-lyric_runtime::TaggedValue::getRepresentation() const
+lyric_runtime::OverlayType
+lyric_runtime::Operand::getOverlay() const
 {
-    return m_repr;
+    tu_uint8 info = get_info_byte(m_bytes);
+    if (info == 0)
+        return OverlayType::Invalid;
+
+    tu_uint8 tag = info & kTagMask;
+    switch (tag) {
+        case kSingleWordShortTag:
+        case kSingleWordI32Tag:
+        case kSingleWordU32Tag:
+            return OverlayType::SmallValue;
+        case kDoubleWordSelf1Tag:
+        case kDoubleWordSelf2Tag:
+        case kDoubleWordNum32Tag:
+        case kDoubleWordNum64Tag:
+            return OverlayType::LargeValue;
+        case kDoubleWordPointerTag:
+            return OverlayType::Pointer;
+        default:
+            return OverlayType::Invalid;
+    }
+}
+
+size_t
+lyric_runtime::Operand::getSize() const
+{
+    switch (getOverlay()) {
+        case OverlayType::SmallValue:
+            return 4;
+        case OverlayType::LargeValue:
+        case OverlayType::Pointer:
+            return 8;
+        default:
+            return 0;
+    }
 }
 
 std::span<const tu_uint8>
-lyric_runtime::TaggedValue::rawValue() const
+lyric_runtime::Operand::getBytes() const
 {
-    return std::span(m_bytes.data(), m_bytes.size());
+    switch (getOverlay()) {
+        case OverlayType::SmallValue:
+            return std::span(m_bytes.data() + 4, 4);
+        case OverlayType::LargeValue:
+        case OverlayType::Pointer:
+            return std::span(m_bytes.data(), m_bytes.size());
+        default:
+            return {};
+    }
 }
 
-inline tu_uint8 get_info_byte(const std::array<tu_uint8,8> &bytes) { return bytes[7]; }
-
-inline tu_uint8 get_info_tag(const std::array<tu_uint8,8> &bytes) { return bytes[7] & kTagMask; }
-
 lyric_runtime::DataCellType
-lyric_runtime::TaggedValue::getType() const
+lyric_runtime::Operand::getType() const
 {
     tu_uint8 info = get_info_byte(m_bytes);
-    switch (m_repr) {
-        case TaggedRepresentation::SmallValue: {
+    switch (getOverlay()) {
+        case OverlayType::SmallValue: {
             tu_uint8 tag = info & kTagMask;
             switch (tag) {
                 case kSingleWordI32Tag:
@@ -245,7 +282,7 @@ lyric_runtime::TaggedValue::getType() const
             }
         }
 
-        case TaggedRepresentation::LargeValue: {
+        case OverlayType::LargeValue: {
             tu_uint8 tag = info & kTagMask;
             switch (tag) {
                 case kDoubleWordSelf1Tag:
@@ -281,7 +318,7 @@ lyric_runtime::TaggedValue::getType() const
             }
         }
 
-        case TaggedRepresentation::Pointer: {
+        case OverlayType::Pointer: {
             tu_uint8 tag = info & kTagMask;
             if (tag != kDoubleWordPointerTag)
                 return DataCellType::Invalid;
@@ -323,25 +360,25 @@ inline tu_uint8 get_enum_byte(const std::array<tu_uint8,8> &bytes)
 }
 
 bool
-lyric_runtime::TaggedValue::isUndef() const
+lyric_runtime::Operand::isUndef() const
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     return get_enum_byte(m_bytes) == kUndefEnum;
 }
 
 bool
-lyric_runtime::TaggedValue::isNil() const
+lyric_runtime::Operand::isNil() const
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     return get_enum_byte(m_bytes) == kNilEnum;
 }
 
 bool
-lyric_runtime::TaggedValue::getBool(bool &b)
+lyric_runtime::Operand::getBool(bool &b)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     switch (get_enum_byte(m_bytes)) {
         case kTrueEnum:
@@ -356,9 +393,9 @@ lyric_runtime::TaggedValue::getBool(bool &b)
 }
 
 bool
-lyric_runtime::TaggedValue::getI8(tu_int8 &i8)
+lyric_runtime::Operand::getI8(tu_int8 &i8)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kShortI8Tag)
@@ -368,9 +405,9 @@ lyric_runtime::TaggedValue::getI8(tu_int8 &i8)
 }
 
 bool
-lyric_runtime::TaggedValue::getU8(tu_uint8 &u8)
+lyric_runtime::Operand::getU8(tu_uint8 &u8)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kShortU8Tag)
@@ -380,9 +417,9 @@ lyric_runtime::TaggedValue::getU8(tu_uint8 &u8)
 }
 
 bool
-lyric_runtime::TaggedValue::getI16(tu_int16 &i16)
+lyric_runtime::Operand::getI16(tu_int16 &i16)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kShortI16Tag)
@@ -392,9 +429,9 @@ lyric_runtime::TaggedValue::getI16(tu_int16 &i16)
 }
 
 bool
-lyric_runtime::TaggedValue::getU16(tu_uint16 &u16)
+lyric_runtime::Operand::getU16(tu_uint16 &u16)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kShortU16Tag)
@@ -404,10 +441,10 @@ lyric_runtime::TaggedValue::getU16(tu_uint16 &u16)
 }
 
 bool
-lyric_runtime::TaggedValue::getI32(tu_int32 &i32)
+lyric_runtime::Operand::getI32(tu_int32 &i32)
 {
-    switch (m_repr) {
-        case TaggedRepresentation::SmallValue: {
+    switch (getOverlay()) {
+        case OverlayType::SmallValue: {
             tu_uint8 info = get_info_byte(m_bytes);
             if ((info & kTagMask) != kSingleWordI32Tag)
                 return false;
@@ -420,7 +457,7 @@ lyric_runtime::TaggedValue::getI32(tu_int32 &i32)
             }
             return true;
         }
-        case TaggedRepresentation::LargeValue: {
+        case OverlayType::LargeValue: {
             tu_uint8 info = get_info_byte(m_bytes);
             if (info != kNum32SignedTag)
                 return false;
@@ -433,10 +470,10 @@ lyric_runtime::TaggedValue::getI32(tu_int32 &i32)
 }
 
 bool
-lyric_runtime::TaggedValue::getU32(tu_uint32 &u32)
+lyric_runtime::Operand::getU32(tu_uint32 &u32)
 {
-    switch (m_repr) {
-        case TaggedRepresentation::SmallValue: {
+    switch (getOverlay()) {
+        case OverlayType::SmallValue: {
             tu_uint8 tag = get_info_tag(m_bytes);
             if (tag != kSingleWordU32Tag)
                 return false;
@@ -446,7 +483,7 @@ lyric_runtime::TaggedValue::getU32(tu_uint32 &u32)
             u32 >>= 3;
             return true;
         }
-        case TaggedRepresentation::LargeValue: {
+        case OverlayType::LargeValue: {
             tu_uint8 info = get_info_byte(m_bytes);
             if (info != kNum32UnsignedTag)
                 return false;
@@ -459,7 +496,7 @@ lyric_runtime::TaggedValue::getU32(tu_uint32 &u32)
 }
 
 bool
-lyric_runtime::TaggedValue::getI64(tu_int64 &i64)
+lyric_runtime::Operand::getI64(tu_int64 &i64)
 {
     tu_uint8 info = get_info_byte(m_bytes);
     if ((info & kNum64Mask) != kNum64SignedTag)
@@ -475,9 +512,9 @@ lyric_runtime::TaggedValue::getI64(tu_int64 &i64)
 }
 
 bool
-lyric_runtime::TaggedValue::getU64(tu_uint64 &u64)
+lyric_runtime::Operand::getU64(tu_uint64 &u64)
 {
-    if (m_repr != TaggedRepresentation::LargeValue)
+    if (getOverlay() != OverlayType::LargeValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if ((info & kNum64Mask) != kNum64UnsignedTag)
@@ -490,9 +527,9 @@ lyric_runtime::TaggedValue::getU64(tu_uint64 &u64)
 }
 
 bool
-lyric_runtime::TaggedValue::getC32(char32_t &c32)
+lyric_runtime::Operand::getC32(char32_t &c32)
 {
-    if (m_repr != TaggedRepresentation::SmallValue)
+    if (getOverlay() != OverlayType::SmallValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kShortC21Tag)
@@ -505,9 +542,9 @@ lyric_runtime::TaggedValue::getC32(char32_t &c32)
 }
 
 bool
-lyric_runtime::TaggedValue::getF32(float &f32)
+lyric_runtime::Operand::getF32(float &f32)
 {
-    if (m_repr != TaggedRepresentation::LargeValue)
+    if (getOverlay() != OverlayType::LargeValue)
         return false;
     tu_uint8 info = get_info_byte(m_bytes);
     if (info != kNum32FloatTag)
@@ -518,9 +555,9 @@ lyric_runtime::TaggedValue::getF32(float &f32)
 }
 
 bool
-lyric_runtime::TaggedValue::getF64(double &f64)
+lyric_runtime::Operand::getF64(double &f64)
 {
-    if (m_repr == TaggedRepresentation::SmallValue) [[unlikely]] {
+    if (getOverlay() == OverlayType::SmallValue) [[unlikely]] {
         switch (get_enum_byte(m_bytes)) {
             case kF64ZeroEnum:
                 f64 = 0.0;
@@ -533,7 +570,7 @@ lyric_runtime::TaggedValue::getF64(double &f64)
         }
     }
 
-    if (m_repr != TaggedRepresentation::LargeValue)
+    if (getOverlay() != OverlayType::LargeValue)
         return false;
 
     tu_uint8 tag = get_info_tag(m_bytes);
@@ -554,10 +591,10 @@ lyric_runtime::TaggedValue::getF64(double &f64)
 }
 
 void *
-lyric_runtime::TaggedValue::getPointer(tu_uint8 pointertag)
+lyric_runtime::Operand::getPointer(tu_uint8 pointertag)
 {
     TU_ASSERT ((pointertag & ~kPointerMask) == 0);
-    if (m_repr != TaggedRepresentation::Pointer)
+    if (getOverlay() != OverlayType::Pointer)
         return nullptr;
     tu_uint8 tag = get_info_tag(m_bytes);
     if (tag != kDoubleWordPointerTag)
@@ -574,7 +611,7 @@ lyric_runtime::TaggedValue::getPointer(tu_uint8 pointertag)
 }
 
 bool
-lyric_runtime::TaggedValue::getRef(AbstractRef *&ref)
+lyric_runtime::Operand::getRef(AbstractRef *&ref)
 {
     auto *ptr = getPointer(kPointerRefTag);
     if (ptr == nullptr)
@@ -584,7 +621,7 @@ lyric_runtime::TaggedValue::getRef(AbstractRef *&ref)
 }
 
 bool
-lyric_runtime::TaggedValue::getBytes(BytesRef *&bytes)
+lyric_runtime::Operand::getBytes(BytesRef *&bytes)
 {
     auto *ptr = getPointer(kPointerBytesTag);
     if (ptr == nullptr)
@@ -594,7 +631,7 @@ lyric_runtime::TaggedValue::getBytes(BytesRef *&bytes)
 }
 
 bool
-lyric_runtime::TaggedValue::getNamespace(NamespaceRef *&ns)
+lyric_runtime::Operand::getNamespace(NamespaceRef *&ns)
 {
     auto *ptr = getPointer(kPointerNamespaceTag);
     if (ptr == nullptr)
@@ -604,7 +641,7 @@ lyric_runtime::TaggedValue::getNamespace(NamespaceRef *&ns)
 }
 
 bool
-lyric_runtime::TaggedValue::getProtocol(ProtocolRef *&protocol)
+lyric_runtime::Operand::getProtocol(ProtocolRef *&protocol)
 {
     auto *ptr = getPointer(kPointerProtocolTag);
     if (ptr == nullptr)
@@ -614,7 +651,7 @@ lyric_runtime::TaggedValue::getProtocol(ProtocolRef *&protocol)
 }
 
 bool
-lyric_runtime::TaggedValue::getRest(RestRef *&rest)
+lyric_runtime::Operand::getRest(RestRef *&rest)
 {
     auto *ptr = getPointer(kPointerRestTag);
     if (ptr == nullptr)
@@ -624,7 +661,7 @@ lyric_runtime::TaggedValue::getRest(RestRef *&rest)
 }
 
 bool
-lyric_runtime::TaggedValue::getStatus(StatusRef *&status)
+lyric_runtime::Operand::getStatus(StatusRef *&status)
 {
     auto *ptr = getPointer(kPointerStatusTag);
     if (ptr == nullptr)
@@ -634,7 +671,7 @@ lyric_runtime::TaggedValue::getStatus(StatusRef *&status)
 }
 
 bool
-lyric_runtime::TaggedValue::getString(StringRef *&string)
+lyric_runtime::Operand::getString(StringRef *&string)
 {
     auto *ptr = getPointer(kPointerStringTag);
     if (ptr == nullptr)
@@ -644,7 +681,7 @@ lyric_runtime::TaggedValue::getString(StringRef *&string)
 }
 
 bool
-lyric_runtime::TaggedValue::getDescriptor(DescriptorEntry *&descriptor)
+lyric_runtime::Operand::getDescriptor(DescriptorEntry *&descriptor)
 {
     auto *ptr = getPointer(kPointerDescTag);
     if (ptr == nullptr)
@@ -654,7 +691,7 @@ lyric_runtime::TaggedValue::getDescriptor(DescriptorEntry *&descriptor)
 }
 
 bool
-lyric_runtime::TaggedValue::getType(TypeEntry *&type)
+lyric_runtime::Operand::getType(TypeEntry *&type)
 {
     auto *ptr = getPointer(kPointerTypeTag);
     if (ptr == nullptr)
@@ -663,59 +700,59 @@ lyric_runtime::TaggedValue::getType(TypeEntry *&type)
     return true;
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromBool(bool b)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromBool(bool b)
 {
     std::array<tu_uint8,8> bytes;
     bytes[6] = b? kTrueEnum : kFalseEnum;
     bytes[7] = kShortEnumTag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromI8(tu_int8 i8)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromI8(tu_int8 i8)
 {
     std::array<tu_uint8,8> bytes;
     boost::endian::endian_store<tu_int8,1,boost::endian::order::native>(bytes.data() + 6, i8);
     bytes[7] = kShortI8Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromU8(tu_uint8 u8)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromU8(tu_uint8 u8)
 {
     std::array<tu_uint8,8> bytes;
     boost::endian::endian_store<tu_uint8,1,boost::endian::order::native>(bytes.data() + 6, u8);
     bytes[7] = kShortU8Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromI16(tu_int16 i16)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromI16(tu_int16 i16)
 {
     std::array<tu_uint8,8> bytes;
     boost::endian::endian_store<tu_int16,2,boost::endian::order::native>(bytes.data() + 5, i16);
     bytes[7] = kShortI16Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromU16(tu_uint16 u16)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromU16(tu_uint16 u16)
 {
     std::array<tu_uint8,8> bytes;
     boost::endian::endian_store<tu_uint16,2,boost::endian::order::native>(bytes.data() + 5, u16);
     bytes[7] = kShortU16Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromI32(tu_int32 i32)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromI32(tu_int32 i32)
 {
     std::array<tu_uint8,8> bytes;
     if (i32 < -0x10000000 || i32 > 0x10000000) [[unlikely]] {
         boost::endian::endian_store<tu_int32,4,boost::endian::order::native>(bytes.data() + 3, i32);
         bytes[7] = kNum32SignedTag;
-        return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+        return Operand(bytes);
     }
     tu_uint32 small = std::abs(i32);
     small = boost::endian::native_to_big(small << 4);
@@ -724,26 +761,26 @@ lyric_runtime::TaggedValue::fromI32(tu_int32 i32)
     if (i32 < 0) {
         bytes[7] |= kI32SignBit;
     }
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromU32(tu_uint32 u32)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromU32(tu_uint32 u32)
 {
     std::array<tu_uint8,8> bytes;
     if (u32 > (0xffffffff >> 3)) [[unlikely]] {
         boost::endian::endian_store<tu_uint32,4,boost::endian::order::native>(bytes.data() + 3, u32);
         bytes[7] = kNum32UnsignedTag;
-        return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+        return Operand(bytes);
     }
     tu_uint32 small = boost::endian::native_to_big(u32 << 3);
     memcpy(bytes.data() + 4, &small, 4);
     bytes[7] |= kSingleWordU32Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromI64(tu_int64 i64)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromI64(tu_int64 i64)
 {
     if (i64 < -0x800000000000000 || i64 > 0x800000000000000)
         return {};
@@ -755,11 +792,11 @@ lyric_runtime::TaggedValue::fromI64(tu_int64 i64)
     if (i64 < 0) {
         bytes[7] |= kI64SignBit;
     }
-    return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromU64(tu_uint64 u64)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromU64(tu_uint64 u64)
 {
     if (u64 > (0xffffffffffffffff >> 4))
         return {};
@@ -767,11 +804,11 @@ lyric_runtime::TaggedValue::fromU64(tu_uint64 u64)
     tu_uint64 large = boost::endian::native_to_big(u64 << 4);
     memcpy(bytes.data(), &large, 8);
     bytes[7] |= kNum64UnsignedTag;
-    return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromC32(char32_t c32)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromC32(char32_t c32)
 {
     if (c32 > 0x10ffff)
         return {};
@@ -779,26 +816,26 @@ lyric_runtime::TaggedValue::fromC32(char32_t c32)
     tu_uint32 small = boost::endian::native_to_big(c32 << 8);
     memcpy(bytes.data() + 4, &small, 4);
     bytes[7] = kShortC21Tag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromF32(float f32)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromF32(float f32)
 {
     std::array<tu_uint8,8> bytes;
     memcpy(bytes.data() + 3, &f32, 4);
     bytes[7] = kNum32FloatTag;
-    return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromF64(double f64)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromF64(double f64)
 {
     std::array<tu_uint8,8> bytes;
     if (f64 == 0.0) [[unlikely]] {
         bytes[6] = std::signbit(f64)? kF64NZeroEnum : kF64ZeroEnum;
         bytes[7] = kShortEnumTag;
-        return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+        return Operand(bytes);
     }
 
     tu_uint64 large;
@@ -811,14 +848,14 @@ lyric_runtime::TaggedValue::fromF64(double f64)
     switch (tag) {
         case kDoubleWordSelf1Tag:
         case kDoubleWordSelf2Tag:
-            return TaggedValue(TaggedRepresentation::LargeValue, bytes);
+            return Operand(bytes);
         default:
             return {};
     }
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromPointer(void *ptr, tu_uint8 pointertag)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromPointer(void *ptr, tu_uint8 pointertag)
 {
     TU_ASSERT ((pointertag & ~kPointerMask) == 0);
     if (ptr == nullptr)
@@ -833,77 +870,162 @@ lyric_runtime::TaggedValue::fromPointer(void *ptr, tu_uint8 pointertag)
         return {};
     bytes[0] |= pointertag;
     bytes[7] |= kDoubleWordPointerTag;
-    return TaggedValue(TaggedRepresentation::Pointer, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromRef(AbstractRef *ref)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromRef(AbstractRef *ref)
 {
     return fromPointer(ref, kPointerRefTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromBytes(BytesRef *bytes)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromBytes(BytesRef *bytes)
 {
     return fromPointer(bytes, kPointerBytesTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromNamespace(NamespaceRef *ns)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromNamespace(NamespaceRef *ns)
 {
     return fromPointer(ns, kPointerNamespaceTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromProtocol(ProtocolRef *protocol)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromProtocol(ProtocolRef *protocol)
 {
     return fromPointer(protocol, kPointerProtocolTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromRest(RestRef *rest)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromRest(RestRef *rest)
 {
     return fromPointer(rest, kPointerRestTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromStatus(StatusRef *status)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromStatus(StatusRef *status)
 {
     return fromPointer(status, kPointerStatusTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromString(StringRef *str)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromString(StringRef *str)
 {
     return fromPointer(str, kPointerStringTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromDescriptor(DescriptorEntry *descriptor)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromDescriptor(DescriptorEntry *descriptor)
 {
     return fromPointer(descriptor, kPointerDescTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::fromType(TypeEntry *type)
+lyric_runtime::Operand
+lyric_runtime::Operand::fromType(TypeEntry *type)
 {
     return fromPointer(type, kPointerTypeTag);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::nil()
+lyric_runtime::Operand
+lyric_runtime::Operand::nil()
 {
     std::array<tu_uint8,8> bytes;
     bytes[6] = kNilEnum;
     bytes[7] = kShortEnumTag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
 }
 
-lyric_runtime::TaggedValue
-lyric_runtime::TaggedValue::undef()
+lyric_runtime::Operand
+lyric_runtime::Operand::undef()
 {
     std::array<tu_uint8,8> bytes;
     bytes[6] = kUndefEnum;
     bytes[7] = kShortEnumTag;
-    return TaggedValue(TaggedRepresentation::SmallValue, bytes);
+    return Operand(bytes);
+}
+
+lyric_runtime::Operand
+lyric_runtime::Operand::parse(std::span<const tu_uint8> raw)
+{
+    std::array<tu_uint8,8> bytes;
+
+    switch (raw.size()) {
+        case 4: {
+            tu_uint8 tag = raw[3] & kTagMask;
+            switch (tag) {
+                case kSingleWordShortTag:
+                case kSingleWordI32Tag:
+                case kSingleWordU32Tag:
+                    memcpy(bytes.data() + 4, raw.data(), 4);
+                    return Operand(bytes);
+                default:
+                    return {};
+            }
+        }
+        case 8: {
+            tu_uint8 tag = raw[7] & kTagMask;
+            switch (tag) {
+                case kSingleWordShortTag:
+                case kSingleWordI32Tag:
+                case kSingleWordU32Tag:
+                    memcpy(bytes.data() + 4, raw.data() + 4, 4);
+                    return Operand(bytes);
+                case kDoubleWordSelf1Tag:
+                case kDoubleWordSelf2Tag:
+                case kDoubleWordNum32Tag:
+                case kDoubleWordNum64Tag:
+                    memcpy(bytes.data(), raw.data(), 8);
+                    return Operand(bytes);
+                case kDoubleWordPointerTag:
+                    memcpy(bytes.data(), raw.data(), 8);
+                    return Operand(bytes);
+                default:
+                    return {};
+            }
+        }
+        default:
+            return {};
+    }
+}
+
+lyric_runtime::OverlayType
+lyric_runtime::Operand::parseRepresentation(const tu_uint8 &infoByte)
+{
+    tu_uint8 tag = infoByte & kTagMask;
+    switch (tag) {
+        case kSingleWordShortTag:
+        case kSingleWordI32Tag:
+        case kSingleWordU32Tag:
+            return OverlayType::SmallValue;
+        case kDoubleWordSelf1Tag:
+        case kDoubleWordSelf2Tag:
+        case kDoubleWordNum32Tag:
+        case kDoubleWordNum64Tag:
+            return OverlayType::LargeValue;
+        case kDoubleWordPointerTag:
+            return OverlayType::Pointer;
+        default:
+            return OverlayType::Invalid;
+    }
+}
+
+size_t
+lyric_runtime::Operand::parseSize(const tu_uint8 &infoByte)
+{
+    tu_uint8 tag = infoByte & kTagMask;
+    switch (tag) {
+        case kSingleWordShortTag:
+        case kSingleWordI32Tag:
+        case kSingleWordU32Tag:
+            return 4;
+        case kDoubleWordSelf1Tag:
+        case kDoubleWordSelf2Tag:
+        case kDoubleWordNum32Tag:
+        case kDoubleWordNum64Tag:
+        case kDoubleWordPointerTag:
+            return 8;
+        default:
+            return 0;
+    }
 }

@@ -4,13 +4,13 @@
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/static_loader.h>
-#include <lyric_runtime/tagged_value.h>
+#include <lyric_runtime/operand.h>
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/memory_bytes.h>
 
 #include "runtime_mocks.h"
 
-class TaggedPointerValue : public ::testing::Test {
+class PointerOperand : public ::testing::Test {
 protected:
     lyric_common::ModuleLocation testmodLocation;
     lyric_object::LyricObject testmodObject;
@@ -31,64 +31,64 @@ protected:
 };
 
 
-TEST_F (TaggedPointerValue, RoundtripAbstractRef)
+TEST_F (PointerOperand, RoundtripAbstractRef)
 {
     MockRef ref;
     lyric_runtime::AbstractRef *in = &ref;
-    auto value = lyric_runtime::TaggedValue::fromRef(in);
+    auto value = lyric_runtime::Operand::fromRef(in);
     ASSERT_EQ (lyric_runtime::DataCellType::Ref, value.getType());
-    ASSERT_EQ (lyric_runtime::TaggedRepresentation::Pointer, value.getRepresentation());
+    ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::AbstractRef *out;
     ASSERT_TRUE (value.getRef(out));
     ASSERT_EQ (in, out);
 }
 
-TEST_F (TaggedPointerValue, ConversionFromAbstractRefFailsWhenNullPointer)
+TEST_F (PointerOperand, ConversionFromAbstractRefFailsWhenNullPointer)
 {
     lyric_runtime::AbstractRef *in = nullptr;
-    auto value = lyric_runtime::TaggedValue::fromRef(in);
+    auto value = lyric_runtime::Operand::fromRef(in);
     ASSERT_FALSE (value.isValid());
     ASSERT_EQ (lyric_runtime::DataCellType::Invalid, value.getType());
 }
 
-TEST_F (TaggedPointerValue, RoundtripBytes)
+TEST_F (PointerOperand, RoundtripBytes)
 {
     auto *heapManager = state->heapManager();
     auto bytes = tempo_utils::MemoryBytes::copy("hello, world!");
     auto cell = heapManager->allocateBytes(bytes->getSpan());
 
     lyric_runtime::BytesRef *in = cell.data.bytes;
-    auto value = lyric_runtime::TaggedValue::fromBytes(in);
+    auto value = lyric_runtime::Operand::fromBytes(in);
     ASSERT_EQ (lyric_runtime::DataCellType::Bytes, value.getType());
-    ASSERT_EQ (lyric_runtime::TaggedRepresentation::Pointer, value.getRepresentation());
+    ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::BytesRef *out;
     ASSERT_TRUE (value.getBytes(out));
     ASSERT_EQ (in, out);
 }
 
-TEST_F (TaggedPointerValue, RoundtripStatus)
+TEST_F (PointerOperand, RoundtripStatus)
 {
     auto *heapManager = state->heapManager();
     auto cell = heapManager->allocateStatus(tempo_utils::StatusCode::kInternal, "failed");
 
     lyric_runtime::StatusRef *in = cell.data.status;
-    auto value = lyric_runtime::TaggedValue::fromStatus(in);
+    auto value = lyric_runtime::Operand::fromStatus(in);
     ASSERT_EQ (lyric_runtime::DataCellType::Status, value.getType());
-    ASSERT_EQ (lyric_runtime::TaggedRepresentation::Pointer, value.getRepresentation());
+    ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::StatusRef *out;
     ASSERT_TRUE (value.getStatus(out));
     ASSERT_EQ (in, out);
 }
 
-TEST_F (TaggedPointerValue, RoundtripString)
+TEST_F (PointerOperand, RoundtripString)
 {
     auto *heapManager = state->heapManager();
     auto cell = heapManager->allocateString("hello, world!");
 
     lyric_runtime::StringRef *in = cell.data.str;
-    auto value = lyric_runtime::TaggedValue::fromString(in);
+    auto value = lyric_runtime::Operand::fromString(in);
     ASSERT_EQ (lyric_runtime::DataCellType::String, value.getType());
-    ASSERT_EQ (lyric_runtime::TaggedRepresentation::Pointer, value.getRepresentation());
+    ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::StringRef *out;
     ASSERT_TRUE (value.getString(out));
     ASSERT_EQ (in, out);

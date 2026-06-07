@@ -6,10 +6,11 @@ include(GoogleTest)
 
 set(TEST_CASES
     connection_tests.cpp
+    operand_stack_tests.cpp
     port_multiplexer_tests.cpp
     system_scheduler_tests.cpp
-    tagged_pointer_value_tests.cpp
-    tagged_value_tests.cpp
+    pointer_operand_tests.cpp
+    operand_tests.cpp
     )
 
 # build testmod object
