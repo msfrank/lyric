@@ -1,8 +1,7 @@
 #include <absl/strings/substitute.h>
 
-#include <tempo_utils/log_stream.h>
-
 #include <lyric_runtime/interpreter_state.h>
+#include <tempo_utils/log_stream.h>
 
 #include "iterator_ref.h"
 
@@ -49,15 +48,12 @@ iterator_valid(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
-
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
-
-    return {};
+    return currentCoro->pushData(lyric_runtime::Operand::fromBool(ref->iteratorValid()));
 }
 
 tempo_utils::Status
@@ -69,16 +65,15 @@ iterator_next(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
 
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-
-    lyric_runtime::DataCell next;
-    if (!instance->iteratorNext(next)) {
-        next = lyric_runtime::DataCell();
+    lyric_runtime::Operand next;
+    if (!ref->iteratorNext(next)) {
+        next = lyric_runtime::Operand();
     }
     currentCoro->pushData(next);
 

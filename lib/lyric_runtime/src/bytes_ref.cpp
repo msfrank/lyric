@@ -47,7 +47,7 @@ lyric_runtime::BytesRef::~BytesRef()
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::BytesRef::getDescriptorEntry() const
 {
-    return m_etable->getDescriptor().data.descriptor;
+    return m_etable->getDescriptorEntry();
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -201,34 +201,34 @@ lyric_runtime::BytesRef::toString() const
     return absl::Substitute("<$0: BytesRef size=$1>", this, m_size);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytesRef::byteAt(int index) const
 {
     if (m_rope.isEmpty())
-        return DataCell::undef();
+        return Operand::undef();
 
     int curr = 0;
     auto chunks = m_rope.iterateChunks();
     tempo_utils::RopeChunk<tu_uint8> chunk;
     while (chunks.getNext(chunk)) {
         if (index < curr + chunk.size())
-            return DataCell(static_cast<tu_int64>(chunk.elementAt(index - curr)));
+            return Operand::fromI64(chunk.elementAt(index - curr));
         curr += chunk.size();
     }
-    return DataCell::undef();
+    return Operand::undef();
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytesRef::bytesCompare(BytesRef *other) const
 {
     TU_ASSERT (other != nullptr);
-    return DataCell(static_cast<tu_int64>(compare(other)));
+    return Operand::fromI64(compare(other));
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytesRef::bytesLength() const
 {
-    return DataCell(static_cast<tu_int64>(m_size));
+    return Operand::fromI64(m_size);
 }
 
 std::vector<tu_uint8>
@@ -271,13 +271,13 @@ lyric_runtime::BytesRef::clearReachable()
 }
 
 bool
-lyric_runtime::BytesRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::BytesRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::BytesRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::BytesRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -289,7 +289,7 @@ lyric_runtime::BytesRef::iteratorValid()
 }
 
 bool
-lyric_runtime::BytesRef::iteratorNext(DataCell &next)
+lyric_runtime::BytesRef::iteratorNext(Operand &next)
 {
     return false;
 }
@@ -307,13 +307,13 @@ lyric_runtime::BytesRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::BytesRef::resolveFuture(DataCell &result)
+lyric_runtime::BytesRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::BytesRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
+lyric_runtime::BytesRef::applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state)
 {
     return false;
 }

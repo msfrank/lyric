@@ -14,7 +14,7 @@ public:
 
     bool applyClosure(
         lyric_runtime::Task *task,
-        std::vector<lyric_runtime::DataCell> &args,
+        std::vector<lyric_runtime::Operand> &args,
         lyric_runtime::InterpreterState *state) override;
     std::string toString() const override;
 
@@ -29,8 +29,8 @@ public:
     lyric_object::BytecodeIterator getIP() const;
     void setIP(lyric_object::BytecodeIterator ip);
 
-    lyric_runtime::DataCell lexicalAt(int index) const;
-    void lexicalAppend(const lyric_runtime::DataCell &value);
+    lyric_runtime::Operand lexicalAt(int index) const;
+    void lexicalAppend(const lyric_runtime::Operand &value);
     int numLexicals() const;
 
 protected:
@@ -43,7 +43,7 @@ private:
     tu_uint32 m_procOffset;
     bool m_returnsValue;
     lyric_object::BytecodeIterator m_IP;
-    std::vector<lyric_runtime::DataCell> m_lexicals;
+    std::vector<lyric_runtime::Operand> m_lexicals;
 };
 
 tempo_utils::Status closure_alloc(

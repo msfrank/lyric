@@ -17,7 +17,7 @@ TEST_F(RestTests, TestEvaluateRestSize)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(5))));
+        RunModule(OperandInt(5))));
 }
 
 TEST_F(RestTests, TestEvaluateRestGet)
@@ -30,7 +30,7 @@ TEST_F(RestTests, TestEvaluateRestGet)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(1))));
+        RunModule(OperandInt(1))));
 }
 
 TEST_F(RestTests, TestEvaluateRestIterateImpl)
@@ -47,5 +47,5 @@ TEST_F(RestTests, TestEvaluateRestIterateImpl)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(15))));
+        RunModule(OperandInt(15))));
 }

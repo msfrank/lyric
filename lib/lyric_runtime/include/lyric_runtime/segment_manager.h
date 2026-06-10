@@ -4,7 +4,6 @@
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/call_cell.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/interpreter_result.h>
 #include <lyric_runtime/port_multiplexer.h>
 #include <lyric_runtime/ref_handle.h>
@@ -17,9 +16,9 @@ namespace lyric_runtime {
         std::shared_ptr<AbstractLoader> applicationLoader;
         std::vector<BytecodeSegment *> segments;
         absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> segmentcache;
-        absl::flat_hash_map<DataCell,const VirtualTable *> vtablecache;
-        absl::flat_hash_map<DataCell,const ExistentialTable *> etablecache;
-        absl::flat_hash_map<DataCell,const ConceptTable *> ctablecache;
+        absl::flat_hash_map<OperandIdentity,const VirtualTable *> vtablecache;
+        absl::flat_hash_map<OperandIdentity,const ExistentialTable *> etablecache;
+        absl::flat_hash_map<OperandIdentity,const ConceptTable *> ctablecache;
     };
 
     class SegmentManager {
@@ -56,41 +55,41 @@ namespace lyric_runtime {
             tu_uint32 index,
             tempo_utils::Status &status);
 
-        virtual DataCell resolveDescriptor(
+        virtual Operand resolveDescriptor(
             const BytecodeSegment *sp,
             lyric_object::LinkageSection section,
             tu_uint32 address,
             tempo_utils::Status &status);
 
-        virtual DataCell resolveSymbol(
+        virtual Operand resolveSymbol(
             const BytecodeSegment *sp,
             tu_uint32 address,
             tempo_utils::Status &status);
 
-        virtual DataCell resolveReceiver(
+        virtual Operand resolveReceiver(
             const BytecodeSegment *sp,
             tu_uint32 address,
             tempo_utils::Status &status);
 
         virtual const ExistentialTable *resolveExistentialTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
 
         virtual const ConceptTable *resolveConceptTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
 
         virtual const VirtualTable *resolveClassVirtualTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
         virtual const VirtualTable *resolveEnumVirtualTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
         virtual const VirtualTable *resolveInstanceVirtualTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
         virtual const VirtualTable *resolveStructVirtualTable(
-            const DataCell &descriptor,
+            const Operand &descriptor,
             tempo_utils::Status &status);
 
         virtual tempo_utils::Status pushDescriptorOntoStack(
@@ -103,53 +102,53 @@ namespace lyric_runtime {
             const BytecodeSegment *sp,
             StackfulCoroutine *currentCoro);
 
-        virtual DataCell loadStatic(
+        virtual Operand loadStatic(
             tu_uint32 address,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
         virtual bool storeStatic(
             tu_uint32 address,
-            const DataCell &value,
+            const Operand &value,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
-        virtual DataCell loadInstance(
+        virtual Operand loadInstance(
             tu_uint32 address,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
         virtual bool storeInstance(
             tu_uint32 address,
-            const DataCell &value,
+            const Operand &value,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
-        virtual DataCell loadEnum(
+        virtual Operand loadEnum(
             tu_uint32 address,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
         virtual bool storeEnum(
             tu_uint32 address,
-            const DataCell &value,
+            const Operand &value,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
-        virtual DataCell loadProtocol(
+        virtual Operand loadProtocol(
             tu_uint32 address,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
         virtual bool storeProtocol(
             tu_uint32 address,
-            const DataCell &value,
+            const Operand &value,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
-        virtual DataCell loadNamespace(
+        virtual Operand loadNamespace(
             tu_uint32 address,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
         virtual bool storeNamespace(
             tu_uint32 address,
-            const DataCell &value,
+            const Operand &value,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 

@@ -31,7 +31,7 @@ lyric_runtime::CallCell::CallCell(
     tu_uint16 numRest,
     tu_uint16 numLocals,
     tu_uint16 numLexicals,
-    const std::vector<DataCell> &data,
+    const std::vector<Operand> &data,
     const VirtualTable *vtable)
     : m_callIndex(callIndex),
       m_callSegment(callSegment),
@@ -63,8 +63,8 @@ lyric_runtime::CallCell::CallCell(
     tu_uint16 numRest,
     tu_uint16 numLocals,
     tu_uint16 numLexicals,
-    const std::vector<DataCell> &data,
-    DataCell receiver)
+    const std::vector<Operand> &data,
+    Operand receiver)
     : m_callIndex(callIndex),
       m_callSegment(callSegment),
       m_procOffset(procOffset),
@@ -80,7 +80,7 @@ lyric_runtime::CallCell::CallCell(
       m_receiver(std::move(receiver)),
       m_vtable(nullptr)
 {
-    TU_ASSERT (m_receiver.type != DataCellType::Invalid);
+    TU_ASSERT (m_receiver.isValid());
     m_data.resize(numArguments + numRest + numLocals + numLexicals);
 }
 
@@ -96,7 +96,7 @@ lyric_runtime::CallCell::CallCell(
     tu_uint16 numRest,
     tu_uint16 numLocals,
     tu_uint16 numLexicals,
-    const std::vector<DataCell> &data)
+    const std::vector<Operand> &data)
     : m_callIndex(callIndex),
       m_callSegment(callSegment),
       m_procOffset(procOffset),
@@ -275,7 +275,7 @@ lyric_runtime::CallCell::getStackGuard() const
     return m_stackGuard;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::CallCell::getReceiver() const
 {
     return m_receiver;
@@ -287,7 +287,7 @@ lyric_runtime::CallCell::getVirtualTable() const
     return m_vtable;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::CallCell::getArgument(int index) const
 {
     if (0 <= index && index < m_numArguments)
@@ -296,7 +296,7 @@ lyric_runtime::CallCell::getArgument(int index) const
 }
 
 void
-lyric_runtime::CallCell::setArgument(int index, const DataCell &cell)
+lyric_runtime::CallCell::setArgument(int index, const Operand &cell)
 {
     if (0 <= index && index < m_numArguments)
         m_data[index] = cell;
@@ -308,7 +308,7 @@ lyric_runtime::CallCell::numArguments() const
     return m_numArguments;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::CallCell::getRest(int index) const
 {
     if (0 <= index && index < m_numRest)
@@ -317,7 +317,7 @@ lyric_runtime::CallCell::getRest(int index) const
 }
 
 void
-lyric_runtime::CallCell::setRest(int index, const DataCell &cell)
+lyric_runtime::CallCell::setRest(int index, const Operand &cell)
 {
     if (0 <= index && index < m_numRest)
         m_data[m_numArguments + index] = cell;
@@ -329,7 +329,7 @@ lyric_runtime::CallCell::numRest() const
     return m_numRest;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::CallCell::getLocal(int index) const
 {
     if (0 <= index && index < m_numLocals)
@@ -338,7 +338,7 @@ lyric_runtime::CallCell::getLocal(int index) const
 }
 
 void
-lyric_runtime::CallCell::setLocal(int index, const DataCell &cell)
+lyric_runtime::CallCell::setLocal(int index, const Operand &cell)
 {
     if (0 <= index && index < m_numLocals) {
         m_data[m_numArguments + m_numRest + index] = cell;
@@ -351,7 +351,7 @@ lyric_runtime::CallCell::numLocals() const
     return m_numLocals;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::CallCell::getLexical(int index) const
 {
     if (0 <= index && index < m_numLexicals)
@@ -360,7 +360,7 @@ lyric_runtime::CallCell::getLexical(int index) const
 }
 
 void
-lyric_runtime::CallCell::setLexical(int index, const DataCell &cell)
+lyric_runtime::CallCell::setLexical(int index, const Operand &cell)
 {
     if (0 <= index && index < m_numLexicals)
         m_data[m_numArguments + m_numRest + m_numLocals + index] = cell;

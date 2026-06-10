@@ -19,7 +19,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructor)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultSuperInit)
@@ -33,7 +33,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultSuperInit)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitSuperInit)
@@ -50,7 +50,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitSuperInit)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+            OperandRef(lyric_common::SymbolPath({"Bar"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedSuperInit)
@@ -67,7 +67,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedSuperInit)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+            OperandRef(lyric_common::SymbolPath({"Bar"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitThisInit)
@@ -85,7 +85,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitThisInit)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedThisInit)
@@ -103,7 +103,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedThisInit)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
@@ -118,7 +118,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitializedMember)
@@ -132,7 +132,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultIniti
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
@@ -150,7 +150,7 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(100))));
+                     RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
@@ -165,7 +165,7 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellInt(100))));
+                     OperandInt(100))));
 }
 
 TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
@@ -190,7 +190,7 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
         bar.Add(100)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(200))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(200))));
 }
 
 TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
@@ -228,7 +228,7 @@ TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+                 tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokePrivateMethodFromInheritedClass)
@@ -249,7 +249,7 @@ TEST_F(CompileDefclass, EvaluateInvokePrivateMethodFromInheritedClass)
         bar.Index()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
@@ -270,7 +270,7 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     MatchesDataCellType(lyric_runtime::DataCellType::Invalid))));
+                     MatchesDataCellType(lyric_runtime::OperandType::Invalid))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
@@ -291,7 +291,7 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
         foo.Index()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(2))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseStub)
@@ -310,7 +310,7 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseStub)
         foo.Index()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(2))));
 }
 
 TEST_F(CompileDefclass, CompileDefineStubOverridingMethodFails)
@@ -386,7 +386,7 @@ TEST_F(CompileDefclass, EvaluateDefGenericClass)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellInt(100))));
+                     OperandInt(100))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
@@ -407,7 +407,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(RunModule(DataCellInt(142))));
+                 tempo_test::ContainsResult(RunModule(OperandInt(142))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
@@ -428,7 +428,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(RunModule(DataCellInt(142))));
+                 tempo_test::ContainsResult(RunModule(OperandInt(142))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceOfSealedClass)
@@ -442,7 +442,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceOfSealedClass)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, CompileDefineSubclassOfFinalClassFails)
@@ -471,7 +471,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceOfFinalClass)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileDefclass, EvaluateDerefGlobalMember)
@@ -485,7 +485,7 @@ TEST_F(CompileDefclass, EvaluateDerefGlobalMember)
         Foo.GlobalValue
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefclass, EvaluateInvokeGlobalMethod)
@@ -499,7 +499,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGlobalMethod)
         Foo.GetValue()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithImpl)
@@ -515,5 +515,5 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithImpl)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+                     OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }

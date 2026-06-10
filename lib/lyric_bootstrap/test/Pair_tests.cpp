@@ -17,7 +17,7 @@ TEST_F(PairTests, TestEvaluateNewPair)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Pair")))));
+                     RunModule(OperandRef(lyric_bootstrap::preludeSymbol("Pair")))));
 }
 
 TEST_F(PairTests, TestEvaluatePairFirst)
@@ -27,7 +27,7 @@ TEST_F(PairTests, TestEvaluatePairFirst)
         pair.First()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(PairTests, TestEvaluatePairSecond)
@@ -37,5 +37,5 @@ TEST_F(PairTests, TestEvaluatePairSecond)
         pair.Second()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(2))));
 }

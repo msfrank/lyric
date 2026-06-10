@@ -9,9 +9,9 @@ namespace lyric_runtime {
     public:
         ProtocolRef(
             const ExistentialTable *etable,
-            const DataCell &descriptor,
             const lyric_common::SymbolUrl &protocolUrl,
-            const DataCell &type,
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
             lyric_object::PortType port,
             lyric_object::CommunicationType comm);
         ~ProtocolRef() override;
@@ -21,11 +21,11 @@ namespace lyric_runtime {
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
-        DataCell protocolIsAcceptor() const;
-        DataCell protocolIsConnector() const;
-        DataCell protocolCanSend() const;
-        DataCell protocolCanReceive() const;
-        DataCell protocolType() const;
+        Operand protocolIsAcceptor() const;
+        Operand protocolIsConnector() const;
+        Operand protocolCanSend() const;
+        Operand protocolCanReceive() const;
+        Operand protocolType() const;
 
         bool equals(const AbstractRef *other) const override;
         std::string toString() const override;
@@ -39,8 +39,8 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        bool getField(const DataCell &field, DataCell &value) const override;
-        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
+        bool getField(const Operand &field, Operand &value) const override;
+        bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const override;
         bool utf8Value(std::string &utf8) const override;
@@ -48,17 +48,17 @@ namespace lyric_runtime {
         tempo_utils::StatusCode statusCode() override;
         std::string statusMessage() override;
         bool iteratorValid() override;
-        bool iteratorNext(DataCell &next) override;
+        bool iteratorNext(Operand &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
-        bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
+        bool resolveFuture(Operand &result) override;
+        bool applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state) override;
 
     private:
         const ExistentialTable *m_etable;
-        DataCell m_descriptor;
         lyric_common::SymbolUrl m_url;
-        DataCell m_type;
+        DescriptorEntry *m_descriptor;
+        TypeEntry *m_type;
         lyric_object::PortType m_port;
         lyric_object::CommunicationType m_comm;
         bool m_reachable;

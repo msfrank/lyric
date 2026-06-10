@@ -15,7 +15,7 @@ public:
     std::string toString() const override;
 
     bool iteratorValid() override;
-    bool iteratorNext(lyric_runtime::DataCell &cell) override;
+    bool iteratorNext(lyric_runtime::Operand &cell) override;
 
 protected:
     void setMembersReachable() override;

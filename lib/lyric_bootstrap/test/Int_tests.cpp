@@ -12,7 +12,7 @@ TEST_F(IntTests, EvaluateDecimalInt) {
         10
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(10))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(10))));
 }
 
 TEST_F(IntTests, EvaluateOctalInt)
@@ -21,7 +21,7 @@ TEST_F(IntTests, EvaluateOctalInt)
         0o10
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(8))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(8))));
 }
 
 TEST_F(IntTests, EvaluateHexInt)
@@ -30,7 +30,7 @@ TEST_F(IntTests, EvaluateHexInt)
         0x10
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(16))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(16))));
 }
 
 TEST_F(IntTests, EvaluateAddition)
@@ -39,7 +39,7 @@ TEST_F(IntTests, EvaluateAddition)
         1 + 2
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 
@@ -49,7 +49,7 @@ TEST_F(IntTests, EvaluateSubtraction)
         2 - 1
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(IntTests, EvaluateMultiplication)
@@ -58,7 +58,7 @@ TEST_F(IntTests, EvaluateMultiplication)
         2 * 3
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(6))));
 }
 
 TEST_F(IntTests, EvaluateDivision)
@@ -67,7 +67,7 @@ TEST_F(IntTests, EvaluateDivision)
         20 / 5
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(4))));
 }
 
 TEST_F(IntTests, EvaluateNegation)
@@ -76,7 +76,7 @@ TEST_F(IntTests, EvaluateNegation)
         -(5)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(-5))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(-5))));
 }
 
 //TEST_F(IntTests, EvaluateDirectAddition)
@@ -85,7 +85,7 @@ TEST_F(IntTests, EvaluateNegation)
 //        IntInstance.add(1, 2)
 //    )");
 //
-//    ASSERT_THAT (result, IsDataCellBool(3LL));
+//    ASSERT_THAT (result, IsOperandBool(3LL));
 //}
 //
 //TEST_F(IntTests, EvaluateDirectSubtraction)
@@ -94,7 +94,7 @@ TEST_F(IntTests, EvaluateNegation)
 //        IntInstance.subtract(2, 1)
 //    )");
 //
-//    ASSERT_THAT (result, IsDataCellBool(1LL));
+//    ASSERT_THAT (result, IsOperandBool(1LL));
 //}
 //
 //TEST_F(IntTests, EvaluateDirectMultiplication)
@@ -103,7 +103,7 @@ TEST_F(IntTests, EvaluateNegation)
 //        IntInstance.multiply(2, 3)
 //    )");
 //
-//    ASSERT_THAT (result, IsDataCellBool(6LL));
+//    ASSERT_THAT (result, IsOperandBool(6LL));
 //}
 //
 //TEST_F(IntTests, EvaluateDirectDivision)
@@ -112,7 +112,7 @@ TEST_F(IntTests, EvaluateNegation)
 //        IntInstance.divide(20, 5)
 //    )");
 //
-//    ASSERT_THAT (result, IsDataCellBool(4LL));
+//    ASSERT_THAT (result, IsOperandBool(4LL));
 //}
 //
 //TEST_F(IntTests, EvaluateDirectNegation)
@@ -121,7 +121,7 @@ TEST_F(IntTests, EvaluateNegation)
 //        IntInstance.negate(5)
 //    )");
 //
-//    ASSERT_THAT (result, IsDataCellBool(-5LL));
+//    ASSERT_THAT (result, IsOperandBool(-5LL));
 //}
 
 TEST_F(IntTests, EvaluateIsEq)
@@ -130,7 +130,7 @@ TEST_F(IntTests, EvaluateIsEq)
         5 == 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(IntTests, EvaluateIsLt)
@@ -139,7 +139,7 @@ TEST_F(IntTests, EvaluateIsLt)
         5 < 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(IntTests, EvaluateIsGt)
@@ -148,7 +148,7 @@ TEST_F(IntTests, EvaluateIsGt)
         5 > 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(IntTests, EvaluateIsLe)
@@ -157,7 +157,7 @@ TEST_F(IntTests, EvaluateIsLe)
         5 <= 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(IntTests, EvaluateIsGe)
@@ -166,5 +166,5 @@ TEST_F(IntTests, EvaluateIsGe)
         5 >= 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }

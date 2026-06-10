@@ -15,7 +15,7 @@ TEST_F(CompileDataDeref, EvaluateName)
         foo
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDataDeref, EvaluateCall)
@@ -25,7 +25,7 @@ TEST_F(CompileDataDeref, EvaluateCall)
         Foo()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(CompileDataDeref, EvaluateThis)
@@ -39,7 +39,7 @@ TEST_F(CompileDataDeref, EvaluateThis)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellRef(lyric_common::SymbolPath::fromString("Foo")))));
+        RunModule(OperandRef(lyric_common::SymbolPath::fromString("Foo")))));
 }
 
 TEST_F(CompileDataDeref, EvaluateHiddenMemberFromInstanceOfSameClass)
@@ -60,5 +60,5 @@ TEST_F(CompileDataDeref, EvaluateHiddenMemberFromInstanceOfSameClass)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(2))));
+        RunModule(OperandInt(2))));
 }

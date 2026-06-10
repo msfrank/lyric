@@ -17,7 +17,7 @@ TEST_F(CompileCast, EvaluateUpcastWithSubtype)
         any
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileCast, EvaluateUpcastWithEqualType)
@@ -28,7 +28,7 @@ TEST_F(CompileCast, EvaluateUpcastWithEqualType)
         any
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileCast, EvaluateUpcastWithSuperTypeFails)
@@ -65,7 +65,7 @@ TEST_F(CompileCast, EvaluateImplCastWithImplementedConcept)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellRef(
+        OperandRef(
             lyric_bootstrap::preludeSymbol("IntInstance")))));
 }
 
@@ -77,7 +77,7 @@ TEST_F(CompileCast, EvaluateImplCastWithMultipleImplementedConcepts)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellRef(
+        OperandRef(
             lyric_bootstrap::preludeSymbol("IntInstance")))));
 }
 

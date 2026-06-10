@@ -13,5 +13,5 @@ TEST_F(UndefTests, EvaluateUndef)
         undef
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellUndef())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandUndef())));
 }

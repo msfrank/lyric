@@ -7,20 +7,20 @@
 
 lyric_runtime::NamespaceRef::NamespaceRef(
     const ExistentialTable *etable,
-    const DataCell &descriptor,
     const lyric_common::SymbolUrl &namespaceUrl,
-    const DataCell &type)
+    DescriptorEntry *descriptorEntry,
+    TypeEntry *typeEntry)
     : m_etable(etable),
-      m_descriptor(descriptor),
       m_url(namespaceUrl),
-      m_type(type),
+      m_descriptor(descriptorEntry),
+      m_type(typeEntry),
       m_reachable(false)
 {
-    TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
-    TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
+    TU_NOTNULL (m_etable);
+    TU_NOTNULL (m_descriptor);
+    TU_NOTNULL (m_type);
+    TU_ASSERT (m_descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
     TU_ASSERT (m_url.isValid());
-    TU_ASSERT (m_type.type == DataCellType::Type);
 }
 
 lyric_runtime::NamespaceRef::~NamespaceRef()
@@ -31,7 +31,7 @@ lyric_runtime::NamespaceRef::~NamespaceRef()
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::NamespaceRef::getDescriptorEntry() const
 {
-    return m_etable->getDescriptor().data.descriptor;
+    return m_etable->getDescriptorEntry();
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -52,10 +52,10 @@ lyric_runtime::NamespaceRef::getExtensionResolver() const
     return m_etable;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::NamespaceRef::namespaceType() const
 {
-    return m_type;
+    return Operand::fromType(m_type);
 }
 
 lyric_common::SymbolUrl
@@ -138,13 +138,13 @@ lyric_runtime::NamespaceRef::statusMessage()
 }
 
 bool
-lyric_runtime::NamespaceRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::NamespaceRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::NamespaceRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::NamespaceRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -156,7 +156,7 @@ lyric_runtime::NamespaceRef::iteratorValid()
 }
 
 bool
-lyric_runtime::NamespaceRef::iteratorNext(DataCell &next)
+lyric_runtime::NamespaceRef::iteratorNext(Operand &next)
 {
     return false;
 }
@@ -174,13 +174,13 @@ lyric_runtime::NamespaceRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::NamespaceRef::resolveFuture(DataCell &result)
+lyric_runtime::NamespaceRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::NamespaceRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
+lyric_runtime::NamespaceRef::applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state)
 {
     return false;
 }

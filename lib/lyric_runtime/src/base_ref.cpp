@@ -14,7 +14,7 @@ lyric_runtime::BaseRef::BaseRef(const VirtualTable *vtable)
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::BaseRef::getDescriptorEntry() const
 {
-    return m_vtable->getDescriptor().data.descriptor;
+    return m_vtable->getDescriptorEntry();
 }
 
 const lyric_runtime::VirtualTable *
@@ -48,13 +48,13 @@ lyric_runtime::BaseRef::getSymbolUrl() const
 }
 
 bool
-lyric_runtime::BaseRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::BaseRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::BaseRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::BaseRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -96,7 +96,7 @@ lyric_runtime::BaseRef::iteratorValid()
 }
 
 bool
-lyric_runtime::BaseRef::iteratorNext(DataCell &cell)
+lyric_runtime::BaseRef::iteratorNext(Operand &cell)
 {
     return false;
 }
@@ -114,13 +114,13 @@ lyric_runtime::BaseRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::BaseRef::resolveFuture(DataCell &result)
+lyric_runtime::BaseRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::BaseRef::applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state)
+lyric_runtime::BaseRef::applyClosure(Task *task, std::vector<Operand> &args, lyric_runtime::InterpreterState *state)
 {
     return false;
 }

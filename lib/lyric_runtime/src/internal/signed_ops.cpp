@@ -5,7 +5,7 @@
 #include <lyric_runtime/interpreter_result.h>
 
 tempo_utils::Status
-lyric_runtime::internal::i64_add(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i64_add(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int64 l, r;
     if (!to_i64(lhs, l))
@@ -20,12 +20,12 @@ lyric_runtime::internal::i64_add(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int64>(check));
+    result = Operand::fromI64(static_cast<tu_int64>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i64_sub(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i64_sub(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int64 l, r;
     if (!to_i64(lhs, l))
@@ -40,12 +40,12 @@ lyric_runtime::internal::i64_sub(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int64>(check));
+    result = Operand::fromI64(static_cast<tu_int64>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i64_mul(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i64_mul(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int64 l, r;
     if (!to_i64(lhs, l))
@@ -60,12 +60,12 @@ lyric_runtime::internal::i64_mul(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int64>(check));
+    result = Operand::fromI64(static_cast<tu_int64>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i64_div(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i64_div(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int64 l, r;
     if (!to_i64(lhs, l))
@@ -80,12 +80,12 @@ lyric_runtime::internal::i64_div(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int64>(check));
+    result = Operand::fromI64(static_cast<tu_int64>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i64_cmp(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i64_cmp(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int64 l, r;
     if (!to_i64(lhs, l))
@@ -101,24 +101,24 @@ lyric_runtime::internal::i64_cmp(const DataCell &lhs, const DataCell &rhs, DataC
     } else {
         cmp = 1;
     }
-    result = DataCell(cmp);
+    result = Operand::fromI64(cmp);
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i64_neg(const DataCell &element, DataCell &result)
+lyric_runtime::internal::i64_neg(const Operand &element, Operand &result)
 {
     tu_int64 e;
     if (!to_i64(element, e))
         return InterpreterStatus::forCondition(InterpreterCondition::kInvalidDataStackV1,
             "cannot convert element to i64");
 
-    result = DataCell(-e);
+    result = Operand::fromI64(-e);
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_add(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i32_add(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int32 l, r;
     if (!to_i32(lhs, l))
@@ -133,12 +133,12 @@ lyric_runtime::internal::i32_add(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int32>(check));
+    result = Operand::fromI32(static_cast<tu_int32>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_sub(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i32_sub(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int32 l, r;
     if (!to_i32(lhs, l))
@@ -153,12 +153,12 @@ lyric_runtime::internal::i32_sub(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int32>(check));
+    result = Operand::fromI32(static_cast<tu_int32>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_mul(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i32_mul(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int32 l, r;
     if (!to_i32(lhs, l))
@@ -173,12 +173,12 @@ lyric_runtime::internal::i32_mul(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int32>(check));
+    result = Operand::fromI32(static_cast<tu_int32>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_div(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i32_div(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int32 l, r;
     if (!to_i32(lhs, l))
@@ -193,12 +193,12 @@ lyric_runtime::internal::i32_div(const DataCell &lhs, const DataCell &rhs, DataC
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             static_cast<const char *>(check));
     }
-    result = DataCell(static_cast<tu_int32>(check));
+    result = Operand::fromI32(static_cast<tu_int32>(check));
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_cmp(const DataCell &lhs, const DataCell &rhs, DataCell &result)
+lyric_runtime::internal::i32_cmp(const Operand &lhs, const Operand &rhs, Operand &result)
 {
     tu_int32 l, r;
     if (!to_i32(lhs, l))
@@ -214,18 +214,18 @@ lyric_runtime::internal::i32_cmp(const DataCell &lhs, const DataCell &rhs, DataC
     } else {
         cmp = 1;
     }
-    result = DataCell(cmp);
+    result = Operand::fromI32(cmp);
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::internal::i32_neg(const DataCell &element, DataCell &result)
+lyric_runtime::internal::i32_neg(const Operand &element, Operand &result)
 {
     tu_int32 e;
     if (!to_i32(element, e))
         return InterpreterStatus::forCondition(InterpreterCondition::kInvalidDataStackV1,
             "cannot convert element to i32");
 
-    result = DataCell(-e);
+    result = Operand::fromI32(-e);
     return {};
 }

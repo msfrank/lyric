@@ -203,7 +203,7 @@ lyric_runtime::internal::resolve_link(
  * @param status If the link could not be resolved then status is set
  * @return The resolved descriptor, or an invalid data cell if the descriptor could not be resolved.
  */
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::internal::resolve_descriptor(
     const BytecodeSegment *sp,
     lyric_object::LinkageSection section,
@@ -242,7 +242,7 @@ lyric_runtime::internal::resolve_descriptor(
                 InterpreterCondition::kRuntimeInvariant, "missing type");
             return {};
         }
-        return DataCell::forType(typeEntry);
+        return Operand::fromType(typeEntry);
     }
 
     auto *descriptorEntry = segment->lookupDescriptor(section, valueIndex);
@@ -252,10 +252,10 @@ lyric_runtime::internal::resolve_descriptor(
         return {};
     }
 
-    return DataCell::forDescriptor(descriptorEntry);
+    return Operand::fromDescriptor(descriptorEntry);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::internal::resolve_symbol(
     const BytecodeSegment *sp,
     tu_uint32 address,
@@ -294,7 +294,7 @@ lyric_runtime::internal::resolve_symbol(
         return {};
     }
 
-    return DataCell::forDescriptor(descriptorEntry);
+    return Operand::fromDescriptor(descriptorEntry);
 }
 
 std::string_view
@@ -325,7 +325,7 @@ lyric_runtime::internal::resolve_string(
  * @param status
  * @return
  */
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::internal::resolve_receiver(
     const BytecodeSegment *sp,
     tu_uint32 address,

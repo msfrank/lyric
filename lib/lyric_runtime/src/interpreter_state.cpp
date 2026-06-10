@@ -2,12 +2,15 @@
 #include <lyric_object/symbol_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
+#include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/gc_heap.h>
 #include <lyric_runtime/interpreter_state.h>
+#include <lyric_runtime/namespace_ref.h>
+#include <lyric_runtime/protocol_ref.h>
+#include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/status_ref.h>
+#include <lyric_runtime/string_ref.h>
 #include <tempo_utils/log_stream.h>
-
-#include "lyric_runtime/string_ref.h"
 
 /**
  * Default no-args constructor which creates an invalid InterpreterState instance. This is only useful
@@ -184,7 +187,7 @@ allocate_type_manager(
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (preludeSegment != nullptr);
 
-    std::vector<lyric_runtime::DataCell> intrinsiccache(kNumIntrinsics);
+    std::vector<lyric_runtime::Operand> intrinsiccache(kNumIntrinsics);
 
     // perform the bootstrapping process
     for (int i = 0; i < kNumIntrinsics; i++) {
@@ -210,7 +213,7 @@ allocate_type_manager(
             return lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant,
                 "missing type for prelude existential {}", existential.getSymbolPath().toString());
-        intrinsiccache[i] = lyric_runtime::DataCell::forType(typeEntry);
+        intrinsiccache[i] = lyric_runtime::Operand::fromType(typeEntry);
     }
 
     typeManagerPtr = std::make_unique<lyric_runtime::TypeManager>(
@@ -242,9 +245,14 @@ resolve_bootstrap_virtual_table(
     tempo_utils::Status &status)
 {
     auto symbol = preludeObject.findSymbol(symbolPath);
-    auto descriptor = segmentManager->resolveDescriptor(preludeSegment,
-        symbol.getLinkageSection(), symbol.getLinkageIndex(), status);
-    switch (descriptor.data.descriptor->getLinkageSection()) {
+    auto descriptor = segmentManager->resolveDescriptor(
+        preludeSegment, symbol.getLinkageSection(), symbol.getLinkageIndex(), status);
+
+    lyric_runtime::DescriptorEntry *descriptorEntry;
+    if (!descriptor.getDescriptor(descriptorEntry))
+        return nullptr;
+
+    switch (descriptorEntry->getLinkageSection()) {
         case lyric_object::LinkageSection::Class:
             return segmentManager->resolveClassVirtualTable(descriptor, status);
         case lyric_object::LinkageSection::Enum:
@@ -354,7 +362,7 @@ lyric_runtime::InterpreterState::getMainLocation() const
     return m_mainLocation;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::InterpreterState::getMainArgument(int index) const
 {
     if (0 <= index && index < m_mainArguments.size())
@@ -577,8 +585,7 @@ lyric_runtime::InterpreterState::load(
     // store internal copy of main arguments list
     m_mainArguments.resize(mainArguments.size());
     for (int i = 0; i < mainArguments.size(); ++i) {
-        auto arg = m_heapManager->allocateString(mainArguments.at(i));
-        arg.data.str->setPermanent();
+        auto arg = m_heapManager->allocateString(mainArguments.at(i), /* isPermanent= */ true);
         m_mainArguments[i] = std::move(arg);
     }
 
@@ -605,10 +612,54 @@ lyric_runtime::InterpreterState::halt(tempo_utils::StatusCode statusCode)
 }
 
 lyric_runtime::RefHandle
-lyric_runtime::InterpreterState::createHandle(const DataCell &ref)
+lyric_runtime::InterpreterState::createHandle(const Operand &operand)
 {
-    if (ref.type != DataCellType::Ref)
-        return {};
-    void *handle = m_heap->createHandle(ref.data.ref);
+    AbstractRef *ref = nullptr;
+
+    switch (operand.getType()) {
+        case OperandType::Bytes: {
+            BytesRef *bytes;
+            TU_ASSERT (operand.getBytes(bytes));
+            ref = bytes;
+            break;
+        }
+        case OperandType::String: {
+            StringRef *str;
+            TU_ASSERT (operand.getString(str));
+            ref = str;
+            break;
+        }
+        case OperandType::Status: {
+            StatusRef *status;
+            TU_ASSERT (operand.getStatus(status));
+            ref = status;
+            break;
+        }
+        case OperandType::Namespace: {
+            NamespaceRef *ns;
+            TU_ASSERT (operand.getNamespace(ns));
+            ref = ns;
+            break;
+        }
+        case OperandType::Protocol: {
+            ProtocolRef *protocol;
+            TU_ASSERT (operand.getProtocol(protocol));
+            ref = protocol;
+        }
+        case OperandType::Rest: {
+            RestRef *rest;
+            TU_ASSERT (operand.getRest(rest));
+            ref = rest;
+        }
+        case OperandType::Ref: {
+            BaseRef *base;
+            TU_ASSERT (operand.getRef(base));
+            ref = base;
+            break;
+        }
+        default:
+            return {};
+    }
+    void *handle = m_heap->createHandle(ref);
     return RefHandle(shared_from_this(), handle);
 }

@@ -3,7 +3,6 @@
 #include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/get_enum_virtual_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -11,14 +10,14 @@
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::internal::get_enum_virtual_table(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::Descriptor ||
-        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Enum) {
+    DescriptorEntry *enumDescriptor;
+    if (!descriptor.getDescriptor(enumDescriptor, lyric_object::LinkageSection::Enum)) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid enum descriptor");
         return nullptr;
@@ -27,32 +26,29 @@ lyric_runtime::internal::get_enum_virtual_table(
     if (segmentManagerData->vtablecache.contains(descriptor))
         return segmentManagerData->vtablecache[descriptor];
 
-    auto *entry = descriptor.data.descriptor;
-    auto *enumSegment = entry->getSegment();
+    auto *enumSegment = enumDescriptor->getSegment();
     auto enumObject = enumSegment->getObject();
-    auto enumIndex = entry->getDescriptorIndex();
-    auto enumDescriptor = enumObject.getEnum(enumIndex);
-    auto enumType = DataCell::forType(
-        enumSegment->lookupType(
-            enumDescriptor.getEnumType().getDescriptorOffset()));
+    auto enumIndex = enumDescriptor->getDescriptorIndex();
+    auto enumWalker = enumObject.getEnum(enumIndex);
+    auto *enumType = enumSegment->lookupType(enumWalker.getEnumType().getDescriptorOffset());
 
     const VirtualTable *parentTable = nullptr;
     tu_uint32 layoutBase = 0;
-    absl::flat_hash_map<DataCell,VirtualMember> members;
-    absl::flat_hash_map<DataCell,VirtualMethod> methods;
-    absl::flat_hash_map<DataCell,ImplTable> impls;
+    absl::flat_hash_map<OperandIdentity,VirtualMember> members;
+    absl::flat_hash_map<OperandIdentity,VirtualMethod> methods;
+    absl::flat_hash_map<OperandIdentity,ImplTable> impls;
 
     // if enum has a superenum, then resolve its virtual table
 
-    if (enumDescriptor.hasSuperEnum()) {
+    if (enumWalker.hasSuperEnum()) {
         tu_uint32 superEnumAddress;
 
-        switch (enumDescriptor.superEnumAddressType()) {
+        switch (enumWalker.superEnumAddressType()) {
             case lyric_object::AddressType::Far:
-                superEnumAddress = enumDescriptor.getFarSuperEnum().getLinkAddress();
+                superEnumAddress = enumWalker.getFarSuperEnum().getLinkAddress();
                 break;
             case lyric_object::AddressType::Near:
-                superEnumAddress = enumDescriptor.getNearSuperEnum().getDescriptorOffset();
+                superEnumAddress = enumWalker.getNearSuperEnum().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
@@ -77,8 +73,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
     // resolve each member for the enum
 
-    for (tu_uint8 i = 0; i < enumDescriptor.numMembers(); i++) {
-        auto member = enumDescriptor.getMember(i);
+    for (tu_uint8 i = 0; i < enumWalker.numMembers(); i++) {
+        auto member = enumWalker.getMember(i);
         if (!member.isValid()) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid enum member linkage");
@@ -93,16 +89,23 @@ lyric_runtime::internal::get_enum_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *fieldSegment = enumField.data.descriptor->getSegment();
-        auto fieldIndex = enumField.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *fieldDescriptor;
+        if (!enumField.getDescriptor(fieldDescriptor, lyric_object::LinkageSection::Field)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid enum field descriptor");
+            return nullptr;
+        }
+
+        auto *fieldSegment = fieldDescriptor->getSegment();
+        auto fieldIndex = fieldDescriptor->getDescriptorIndex();
 
         members.try_emplace(enumField, fieldSegment, fieldIndex, layoutBase + i);
     }
 
     // resolve each method for the enum
 
-    for (tu_uint8 i = 0; i < enumDescriptor.numMethods(); i++) {
-        auto method = enumDescriptor.getMethod(i);
+    for (tu_uint8 i = 0; i < enumWalker.numMethods(); i++) {
+        auto method = enumWalker.getMethod(i);
 
         tu_uint32 callAddress = method.getDescriptorOffset();
         if (!method.isValid() || callAddress == INVALID_ADDRESS_U32) {
@@ -117,8 +120,15 @@ lyric_runtime::internal::get_enum_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *callSegment = enumCall.data.descriptor->getSegment();
-        auto callIndex = enumCall.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *callDescriptor;
+        if (!enumCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid enum call descriptor");
+            return nullptr;
+        }
+
+        auto *callSegment = callDescriptor->getSegment();
+        auto callIndex = callDescriptor->getDescriptorIndex();
         auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
@@ -126,7 +136,7 @@ lyric_runtime::internal::get_enum_virtual_table(
         methods.try_emplace(enumCall, callSegment, callIndex, procOffset, returnsValue);
 
         // check for existence of a base symbol
-        DataCell baseSymbol;
+        Operand baseSymbol;
         switch (method.baseSymbolAddressType()) {
             case lyric_object::AddressType::Far: {
                 auto farSymbol = method.getFarBaseSymbol();
@@ -154,11 +164,11 @@ lyric_runtime::internal::get_enum_virtual_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < enumDescriptor.numImpls(); i++) {
-        auto impl = enumDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < enumWalker.numImpls(); i++) {
+        auto impl = enumWalker.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
-        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        absl::flat_hash_map<OperandIdentity,VirtualMethod> extensions;
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
@@ -204,8 +214,15 @@ lyric_runtime::internal::get_enum_virtual_table(
             if (status.notOk())
                 return nullptr;
 
-            auto *callSegment = implCall.data.descriptor->getSegment();
-            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            DescriptorEntry *callDescriptor;
+            if (!implCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid extension call descriptor");
+                return nullptr;
+            }
+
+            auto *callSegment = callDescriptor->getSegment();
+            auto callIndex = callDescriptor->getDescriptorIndex();
             auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
@@ -230,10 +247,17 @@ lyric_runtime::internal::get_enum_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        impls.try_emplace(implConcept, enumSegment, implConcept, enumType, extensions);
+        DescriptorEntry *conceptDescriptor;
+        if (!implConcept.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl concept descriptor");
+            return nullptr;
+        }
+
+        impls.try_emplace(implConcept, enumSegment, conceptDescriptor, enumType, extensions);
     }
 
-    auto initializer = enumDescriptor.getInitializer();
+    auto initializer = enumWalker.getInitializer();
 
     // validate initializer descriptor
     if (initializer.getMode() != lyric_object::CallMode::Constructor || !initializer.isBound()) {
@@ -249,8 +273,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
-    if (enumDescriptor.hasAllocator()) {
-        auto *trap = enumSegment->getTrap(enumDescriptor.getAllocator());
+    if (enumWalker.hasAllocator()) {
+        auto *trap = enumSegment->getTrap(enumWalker.getAllocator());
         if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid enum allocator");
@@ -259,7 +283,7 @@ lyric_runtime::internal::get_enum_virtual_table(
         allocator = trap->func;
     }
 
-    auto *vtable = new VirtualTable(enumSegment, descriptor, enumType, parentTable,
+    auto *vtable = new VirtualTable(enumSegment, enumDescriptor, enumType, parentTable,
         allocator, init, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 

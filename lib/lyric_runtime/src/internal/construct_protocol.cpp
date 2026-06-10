@@ -19,7 +19,7 @@ lyric_runtime::internal::construct_protocol(
     auto existing = segmentManager->loadProtocol(address, currentCoro, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    if (existing.type != DataCellType::Invalid) {
+    if (existing.isValid()) {
         TU_LOG_V << "loaded protocol " << existing;
         return currentCoro->pushData(existing);
     }

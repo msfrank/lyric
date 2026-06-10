@@ -14,12 +14,11 @@ rest_size(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
-    auto *instance = receiver.data.rest;
-    currentCoro->pushData(instance->restLength());
-    return {};
+    lyric_runtime::RestRef *rest;
+    TU_ASSERT(receiver.getRest(rest));
+
+    return currentCoro->pushData(rest->restLength());
 }
 
 tempo_utils::Status
@@ -31,15 +30,16 @@ rest_get(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
-    TU_ASSERT (frame.numArguments() == 1);
-    const auto &index = frame.getArgument(0);
-    TU_ASSERT(index.type == lyric_runtime::DataCellType::Int64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
-    auto *instance = receiver.data.rest;
-    currentCoro->pushData(instance->restAt(index.data.i64));
-    return {};
+    lyric_runtime::RestRef *rest;
+    TU_ASSERT(receiver.getRest(rest));
+
+    tu_int64 offset;
+    TU_ASSERT (frame.numArguments() == 1);
+    const auto &arg0 = frame.getArgument(0);
+    TU_ASSERT(arg0.getI64(offset));
+
+    return currentCoro->pushData(rest->restAt(offset));
 }
 
 tempo_utils::Status
@@ -51,23 +51,18 @@ rest_iterate(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
-    lyric_runtime::DataCell cell;
-    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
-    TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Rest);
-    auto *instance = receiver.data.rest;
+    lyric_runtime::RestRef *rest;
+    TU_ASSERT(receiver.getRest(rest));
+
+    lyric_runtime::Operand cell;
+    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
 
     lyric_runtime::InterpreterStatus status;
     vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 
-    auto ref = state->heapManager()->allocateRef<RestIterator>(vtable, instance);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto ref = state->heapManager()->allocateRef<RestIterator>(vtable, rest);
+    return currentCoro->pushData(ref);
 }

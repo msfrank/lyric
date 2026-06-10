@@ -25,7 +25,7 @@ ClosureRef::~ClosureRef()
 bool
 ClosureRef::applyClosure(
     lyric_runtime::Task *task,
-    std::vector<lyric_runtime::DataCell> &args,
+    std::vector<lyric_runtime::Operand> &args,
     lyric_runtime::InterpreterState *state)
 {
     auto *currentCoro = task->stackfulCoroutine();
@@ -154,16 +154,16 @@ ClosureRef::setIP(lyric_object::BytecodeIterator ip)
     m_IP = ip;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 ClosureRef::lexicalAt(int index) const
 {
     if (0 <= index && std::cmp_less(index, m_lexicals.size()))
         return m_lexicals[index];
-    return lyric_runtime::DataCell();
+    return lyric_runtime::Operand();
 }
 
 void
-ClosureRef::lexicalAppend(const lyric_runtime::DataCell &value)
+ClosureRef::lexicalAppend(const lyric_runtime::Operand &value)
 {
     m_lexicals.push_back(value);
 }
@@ -178,10 +178,7 @@ void
 ClosureRef::setMembersReachable()
 {
     for (auto &cell : m_lexicals) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->setReachable();
-        }
+        cell.setReachable();
     }
 }
 
@@ -189,10 +186,7 @@ void
 ClosureRef::clearMembersReachable()
 {
     for (auto &cell : m_lexicals) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->clearReachable();
-        }
+        cell.clearReachable();
     }
 }
 
@@ -220,22 +214,24 @@ closure_ctor(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT (receiver.getRef(ref));
+    auto *closure = static_cast<ClosureRef *>(ref);
+
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Descriptor);
-    TU_ASSERT(arg0.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
+    lyric_runtime::DescriptorEntry *callDescriptor;
+    TU_ASSERT(arg0.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call));
 
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
-    instance->setSegmentIndex(arg0.data.descriptor->getSegmentIndex());
-    instance->setCallIndex(arg0.data.descriptor->getDescriptorIndex());
+    closure->setSegmentIndex(callDescriptor->getSegmentIndex());
+    closure->setCallIndex(callDescriptor->getDescriptorIndex());
 
     // fetch the proc offset for the call descriptor
-    auto *segment = state->segmentManager()->getSegment(arg0.data.descriptor->getSegmentIndex());
+    auto *segment = state->segmentManager()->getSegment(callDescriptor->getSegmentIndex());
     TU_ASSERT (segment != nullptr);
     auto object = segment->getObject();
-    auto descriptor = object.getCall(arg0.data.descriptor->getDescriptorIndex());
+    auto descriptor = object.getCall(callDescriptor->getDescriptorIndex());
     auto procOffset = descriptor.getProcOffset();
 
     // parse the proc
@@ -244,10 +240,10 @@ closure_ctor(
     TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_info(bytecode, procOffset, procInfo));
 
     // set the proc offset
-    instance->setProcOffset(procOffset);
+    closure->setProcOffset(procOffset);
 
     // set returnsValue flag
-    instance->setReturnsValue(!descriptor.isNoReturn());
+    closure->setReturnsValue(!descriptor.isNoReturn());
 
     std::vector<lyric_object::ProcLexical> lexicals;
     TU_RETURN_IF_NOT_OK (lyric_object::parse_lexicals_table(procInfo, lexicals));
@@ -267,10 +263,10 @@ closure_ctor(
                 continue;
             switch (lexical.lexical_target) {
                 case lyric_object::LEXICAL_ARGUMENT:
-                    instance->lexicalAppend(ancestor.getArgument(lexical.target_offset));
+                    closure->lexicalAppend(ancestor.getArgument(lexical.target_offset));
                     break;
                 case lyric_object::LEXICAL_LOCAL:
-                    instance->lexicalAppend(ancestor.getLocal(lexical.target_offset));
+                    closure->lexicalAppend(ancestor.getLocal(lexical.target_offset));
                     break;
                 default:
                     return lyric_runtime::InterpreterStatus::forCondition(
@@ -286,7 +282,7 @@ closure_ctor(
 
     // push the lambda onto the call stack
     lyric_object::BytecodeIterator ip(procInfo.code);
-    instance->setIP(ip);
+    closure->setIP(ip);
 
     return {};
 }
@@ -307,14 +303,15 @@ closure_apply(
     currentCoro->resizeDataStack(frame.getStackGuard());
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT (receiver.getRef(ref));
+    auto *closure = static_cast<ClosureRef *>(ref);
 
-    auto *segment = state->segmentManager()->getSegment(instance->getSegmentIndex());
+    auto *segment = state->segmentManager()->getSegment(closure->getSegmentIndex());
     TU_ASSERT (segment != nullptr);
-    auto address = instance->getCallIndex();
-    auto procOffset = instance->getProcOffset();
-    auto returnsValue = instance->returnsValue();
+    auto address = closure->getCallIndex();
+    auto procOffset = closure->getProcOffset();
+    auto returnsValue = closure->returnsValue();
 
     // proc offset must be within the segment bytecode
     auto bytecode = segment->getBytecode();
@@ -340,7 +337,7 @@ closure_apply(
     auto numRest = frame.numRest();
 
     // copy the args (including rest args) from the enclosing frame
-    std::vector<lyric_runtime::DataCell> args(frame.numArguments() + frame.numRest());
+    std::vector<lyric_runtime::Operand> args(frame.numArguments() + frame.numRest());
     for (int i = 0; i < frame.numArguments(); i++) {
         args[i] = frame.getArgument(i);
     }
@@ -354,17 +351,17 @@ closure_apply(
         activationInfo.num_arguments, numRest, activationInfo.num_locals, activationInfo.num_lexicals,
         args, receiver);
 
-    if (instance->numLexicals() != activationInfo.num_lexicals)
+    if (closure->numLexicals() != activationInfo.num_lexicals)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments");
 
     // import each lexical from the instance into the stack
     for (tu_uint16 i = 0; i < activationInfo.num_lexicals; i++) {
-        trampoline.setLexical(i, instance->lexicalAt(i));
+        trampoline.setLexical(i, closure->lexicalAt(i));
     }
 
     // push the lambda onto the call stack
-    auto ip = instance->getIP();
+    auto ip = closure->getIP();
     currentCoro->pushCall(trampoline, ip, segment);
     TU_LOG_VV << "moved ip to " << ip;
 

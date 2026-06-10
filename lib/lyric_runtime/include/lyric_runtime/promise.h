@@ -3,8 +3,7 @@
 
 #include <memory>
 
-#include "data_cell.h"
-#include "system_scheduler.h"
+#include "operand.h"
 
 namespace lyric_runtime {
 
@@ -57,8 +56,8 @@ namespace lyric_runtime {
 
         static std::shared_ptr<Promise> create(AcceptCallback accept = {});
         static std::shared_ptr<Promise> create(std::unique_ptr<PromiseOperations> ops);
-        static std::shared_ptr<Promise> completed(const DataCell &result);
-        static std::shared_ptr<Promise> rejected(const DataCell &result);
+        static std::shared_ptr<Promise> completed(const Operand &result);
+        static std::shared_ptr<Promise> rejected(const Operand &result);
 
         enum class State {
             Initial,    /**< The initial state of a promise before it is attached to a waiter. */
@@ -71,7 +70,7 @@ namespace lyric_runtime {
         };
 
         State getState() const;
-        DataCell getResult() const;
+        Operand getResult() const;
 
         tempo_utils::Status pending(Waiter *waiter);
         tempo_utils::Status target(std::shared_ptr<AsyncHandle> async, Waiter *waiter);
@@ -83,8 +82,8 @@ namespace lyric_runtime {
 
         void setReachable();
 
-        tempo_utils::Status complete(const DataCell &result);
-        tempo_utils::Status reject(const DataCell &result);
+        tempo_utils::Status complete(const Operand &result);
+        tempo_utils::Status reject(const Operand &result);
 
     private:
         std::unique_ptr<PromiseOperations> m_ops;
@@ -93,7 +92,7 @@ namespace lyric_runtime {
         State m_state;
         Waiter *m_waiter;
         std::shared_ptr<AsyncHandle> m_async;
-        DataCell m_result;
+        Operand m_result;
 
         tempo_utils::Status notify();
     };

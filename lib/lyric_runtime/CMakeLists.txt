@@ -21,11 +21,9 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/call_cell.h
     include/lyric_runtime/chain_loader.h
     include/lyric_runtime/connection.h
-    include/lyric_runtime/data_cell.h
     include/lyric_runtime/operand_stack.h
     include/lyric_runtime/descriptor_entry.h
     include/lyric_runtime/gc_heap.h
-    include/lyric_runtime/hash_data_cell.h
     include/lyric_runtime/heap_manager.h
     include/lyric_runtime/interpreter_result.h
     include/lyric_runtime/interpreter_state.h
@@ -63,7 +61,6 @@ target_sources(lyric_runtime PRIVATE
     src/call_cell.cpp
     src/chain_loader.cpp
     src/connection.cpp
-    src/data_cell.cpp
     src/operand_stack.cpp
     src/descriptor_entry.cpp
     src/gc_heap.cpp
@@ -93,6 +90,14 @@ target_sources(lyric_runtime PRIVATE
     src/type_manager.cpp
     src/virtual_table.cpp
 
+    include/lyric_runtime/internal/activation_ops.h
+    src/internal/activation_ops.cpp
+    include/lyric_runtime/internal/bitwise_ops.h
+    src/internal/bitwise_ops.cpp
+    include/lyric_runtime/internal/call_ops.h
+    src/internal/call_ops.cpp
+    include/lyric_runtime/internal/compare_ops.h
+    src/internal/compare_ops.cpp
     include/lyric_runtime/internal/construct_enum.h
     src/internal/construct_enum.cpp
     include/lyric_runtime/internal/construct_instance.h
@@ -117,14 +122,15 @@ target_sources(lyric_runtime PRIVATE
     src/internal/get_instance_virtual_table.cpp
     include/lyric_runtime/internal/get_struct_virtual_table.h
     src/internal/get_struct_virtual_table.cpp
-    include/lyric_runtime/internal/signed_ops.h
-    src/internal/signed_ops.cpp
+    include/lyric_runtime/internal/operand_helpers.h
     include/lyric_runtime/internal/load_utils.h
     src/internal/load_utils.cpp
     include/lyric_runtime/internal/raise_exception.h
     src/internal/raise_exception.cpp
     include/lyric_runtime/internal/resolve_link.h
     src/internal/resolve_link.cpp
+    include/lyric_runtime/internal/signed_ops.h
+    src/internal/signed_ops.cpp
     )
 
 # set the library version

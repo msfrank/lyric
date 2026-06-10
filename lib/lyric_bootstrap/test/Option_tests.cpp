@@ -14,5 +14,5 @@ TEST_F(OptionTests, TestNewEmptyOptionUsingUnionType)
         opt
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellNil())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandNil())));
 }

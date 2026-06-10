@@ -21,17 +21,17 @@ namespace lyric_test {
             lyric_runtime::BytecodeInterpreter *interp,
             lyric_runtime::InterpreterState *state) override;
         tempo_utils::Status onInterrupt(
-            const lyric_runtime::DataCell &cell,
+            const lyric_runtime::Operand &cell,
             lyric_runtime::BytecodeInterpreter *interp,
             lyric_runtime::InterpreterState *state) override;
-        tempo_utils::Result<lyric_runtime::DataCell> onError(
+        tempo_utils::Result<lyric_runtime::Operand> onError(
             const lyric_object::OpCell &op,
             const tempo_utils::Status &status,
             lyric_runtime::BytecodeInterpreter *interp,
             lyric_runtime::InterpreterState *state) override;
-        tempo_utils::Result<lyric_runtime::DataCell> onHalt(
+        tempo_utils::Result<lyric_runtime::Operand> onHalt(
             const lyric_object::OpCell &op,
-            const lyric_runtime::DataCell &cell,
+            const lyric_runtime::Operand &cell,
             lyric_runtime::BytecodeInterpreter *interp,
             lyric_runtime::InterpreterState *state) override;
 

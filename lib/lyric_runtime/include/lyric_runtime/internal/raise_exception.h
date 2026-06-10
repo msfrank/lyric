@@ -12,7 +12,7 @@ namespace lyric_runtime::internal {
 
     tempo_utils::Status raise_exception(
              const lyric_object::OpCell &op,
-             const DataCell &exc,
+             const Operand &exc,
              StackfulCoroutine *currentCoro,
              SegmentManager *segmentManager,
              SubroutineManager *subroutineManager,

@@ -29,7 +29,7 @@ TEST_F(StatusTests, TestEvaluateStatusCode)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(static_cast<tu_int64>(tempo_utils::StatusCode::kCancelled)))));
+            RunModule(OperandInt(static_cast<tu_int64>(tempo_utils::StatusCode::kCancelled)))));
 }
 
 TEST_F(StatusTests, TestEvaluateStatusMessage)
@@ -41,7 +41,7 @@ TEST_F(StatusTests, TestEvaluateStatusMessage)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("operation was cancelled"))));
+            RunModule(OperandString("operation was cancelled"))));
 }
 
 TEST_F(StatusTests, TestEvaluateNewOk)
@@ -65,7 +65,7 @@ TEST_F(StatusTests, TestEvaluateOkCode)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(static_cast<tu_int64>(tempo_utils::StatusCode::kOk)))));
+            RunModule(OperandInt(static_cast<tu_int64>(tempo_utils::StatusCode::kOk)))));
 }
 
 TEST_F(StatusTests, TestEvaluateOkMessage)
@@ -77,5 +77,5 @@ TEST_F(StatusTests, TestEvaluateOkMessage)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("Ok"))));
+            RunModule(OperandString("Ok"))));
 }

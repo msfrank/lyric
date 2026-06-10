@@ -3,7 +3,6 @@
 #include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/get_class_virtual_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -11,14 +10,14 @@
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::internal::get_class_virtual_table(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::Descriptor ||
-        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Class) {
+    DescriptorEntry *classDescriptor;
+    if (!descriptor.getDescriptor(classDescriptor, lyric_object::LinkageSection::Class)) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid class descriptor");
         return nullptr;
@@ -27,32 +26,29 @@ lyric_runtime::internal::get_class_virtual_table(
     if (segmentManagerData->vtablecache.contains(descriptor))
         return segmentManagerData->vtablecache[descriptor];
 
-    auto *entry = descriptor.data.descriptor;
-    auto *classSegment = entry->getSegment();
+    auto *classSegment = classDescriptor->getSegment();
     auto classObject = classSegment->getObject();
-    auto classIndex = entry->getDescriptorIndex();
-    auto classDescriptor = classObject.getClass(classIndex);
-    auto classType = DataCell::forType(
-        classSegment->lookupType(
-            classDescriptor.getClassType().getDescriptorOffset()));
+    auto classIndex = classDescriptor->getDescriptorIndex();
+    auto classWalker = classObject.getClass(classIndex);
+    auto *classType = classSegment->lookupType(classWalker.getClassType().getDescriptorOffset());
 
     const VirtualTable *parentTable = nullptr;
     tu_uint32 layoutBase = 0;
-    absl::flat_hash_map<DataCell,VirtualMember> members;
-    absl::flat_hash_map<DataCell,VirtualMethod> methods;
-    absl::flat_hash_map<DataCell,ImplTable> impls;
+    absl::flat_hash_map<OperandIdentity,VirtualMember> members;
+    absl::flat_hash_map<OperandIdentity,VirtualMethod> methods;
+    absl::flat_hash_map<OperandIdentity,ImplTable> impls;
 
     // if class has a superclass, then resolve its virtual table
 
-    if (classDescriptor.hasSuperClass()) {
+    if (classWalker.hasSuperClass()) {
         tu_uint32 superClassAddress;
 
-        switch (classDescriptor.superClassAddressType()) {
+        switch (classWalker.superClassAddressType()) {
             case lyric_object::AddressType::Far:
-                superClassAddress = classDescriptor.getFarSuperClass().getLinkAddress();
+                superClassAddress = classWalker.getFarSuperClass().getLinkAddress();
                 break;
             case lyric_object::AddressType::Near:
-                superClassAddress = classDescriptor.getNearSuperClass().getDescriptorOffset();
+                superClassAddress = classWalker.getNearSuperClass().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
@@ -74,8 +70,8 @@ lyric_runtime::internal::get_class_virtual_table(
 
     // resolve each member for the class
 
-    for (tu_uint8 i = 0; i < classDescriptor.numMembers(); i++) {
-        auto member = classDescriptor.getMember(i);
+    for (tu_uint8 i = 0; i < classWalker.numMembers(); i++) {
+        auto member = classWalker.getMember(i);
         if (!member.isValid()) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid class member linkage");
@@ -90,16 +86,23 @@ lyric_runtime::internal::get_class_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *fieldSegment = classField.data.descriptor->getSegment();
-        auto fieldIndex = classField.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *fieldDescriptor;
+        if (!classField.getDescriptor(fieldDescriptor, lyric_object::LinkageSection::Field)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid class field descriptor");
+            return nullptr;
+        }
+
+        auto *fieldSegment = fieldDescriptor->getSegment();
+        auto fieldIndex = fieldDescriptor->getDescriptorIndex();
 
         members.try_emplace(classField, fieldSegment, fieldIndex, layoutBase + i);
     }
 
     // resolve each method for the class
 
-    for (tu_uint8 i = 0; i < classDescriptor.numMethods(); i++) {
-        auto method = classDescriptor.getMethod(i);
+    for (tu_uint8 i = 0; i < classWalker.numMethods(); i++) {
+        auto method = classWalker.getMethod(i);
 
         tu_uint32 callAddress = method.getDescriptorOffset();
         if (!method.isValid() || callAddress == INVALID_ADDRESS_U32) {
@@ -114,8 +117,15 @@ lyric_runtime::internal::get_class_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *callSegment = classCall.data.descriptor->getSegment();
-        auto callIndex = classCall.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *callDescriptor;
+        if (!classCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid class call descriptor");
+            return nullptr;
+        }
+
+        auto *callSegment = callDescriptor->getSegment();
+        auto callIndex = callDescriptor->getDescriptorIndex();
         auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
@@ -123,7 +133,7 @@ lyric_runtime::internal::get_class_virtual_table(
         methods.try_emplace(classCall, callSegment, callIndex, procOffset, returnsValue);
 
         // check for existence of a base symbol
-        DataCell baseSymbol;
+        Operand baseSymbol;
         switch (method.baseSymbolAddressType()) {
             case lyric_object::AddressType::Far: {
                 auto farSymbol = method.getFarBaseSymbol();
@@ -151,11 +161,11 @@ lyric_runtime::internal::get_class_virtual_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < classDescriptor.numImpls(); i++) {
-        auto impl = classDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < classWalker.numImpls(); i++) {
+        auto impl = classWalker.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
-        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        absl::flat_hash_map<OperandIdentity,VirtualMethod> extensions;
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
@@ -201,8 +211,15 @@ lyric_runtime::internal::get_class_virtual_table(
             if (status.notOk())
                 return nullptr;
 
-            auto *callSegment = implCall.data.descriptor->getSegment();
-            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            DescriptorEntry *callDescriptor;
+            if (!implCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid extension call descriptor");
+                return nullptr;
+            }
+
+            auto *callSegment = callDescriptor->getSegment();
+            auto callIndex = callDescriptor->getDescriptorIndex();
             auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
@@ -227,13 +244,20 @@ lyric_runtime::internal::get_class_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        impls.try_emplace(implConcept, classSegment, implConcept, classType, extensions);
+        DescriptorEntry *conceptDescriptor;
+        if (!implConcept.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl concept descriptor");
+            return nullptr;
+        }
+
+        impls.try_emplace(implConcept, classSegment, conceptDescriptor, classType, extensions);
     }
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
-    if (classDescriptor.hasAllocator()) {
-        auto *trap = classSegment->getTrap(classDescriptor.getAllocator());
+    if (classWalker.hasAllocator()) {
+        auto *trap = classSegment->getTrap(classWalker.getAllocator());
         if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid class allocator");
@@ -242,7 +266,7 @@ lyric_runtime::internal::get_class_virtual_table(
         allocator = trap->func;
     }
 
-    auto *vtable = new VirtualTable(classSegment, descriptor, classType, parentTable,
+    auto *vtable = new VirtualTable(classSegment, classDescriptor, classType, parentTable,
         allocator, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 

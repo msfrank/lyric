@@ -20,7 +20,7 @@ lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManag
 tempo_utils::Status
 lyric_runtime::process_arguments(
     const lyric_object::ProcInfo &procInfo,
-    const std::vector<DataCell> &args,
+    const std::vector<Operand> &args,
     tu_uint16 &numRest)
 {
 
@@ -107,7 +107,7 @@ lyric_runtime::SubroutineManager::callProc(
     tu_uint32 callIndex,
     BytecodeSegment *segment,
     tu_uint32 procOffset,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     bool returnsValue,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
@@ -156,7 +156,7 @@ call_static(
     lyric_runtime::BytecodeSegment *segment,
     tu_uint32 callIndex,
     lyric_object::CallWalker call,
-    std::vector<lyric_runtime::DataCell> &args,
+    std::vector<lyric_runtime::Operand> &args,
     tempo_utils::Status &status)
 {
     // validate call descriptor
@@ -221,7 +221,7 @@ call_static(
 bool
 lyric_runtime::SubroutineManager::callStatic(
     tu_uint32 address,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -268,17 +268,27 @@ lyric_runtime::SubroutineManager::callStatic(
 
 bool
 lyric_runtime::SubroutineManager::callStatic(
-    const DataCell &descriptor,
-    std::vector<DataCell> &args,
+    const Operand &descriptor,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
-    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
     TU_ASSERT (currentCoro != nullptr);
 
-    auto *segment = descriptor.data.descriptor->getSegment();
-    auto callIndex = descriptor.data.descriptor->getDescriptorIndex();
+    DescriptorEntry *callDescriptor;
+    if (!descriptor.getDescriptor(callDescriptor)) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid descriptor");
+        return false;
+    }
+    if (callDescriptor->getLinkageSection() != lyric_object::LinkageSection::Call) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid descriptor");
+        return false;
+    }
+
+    auto *segment = callDescriptor->getSegment();
+    auto callIndex = callDescriptor->getDescriptorIndex();
     auto object = segment->getObject();
     auto call = object.getCall(callIndex);
     if (!call.isValid()) {
@@ -303,9 +313,9 @@ lyric_runtime::SubroutineManager::callStatic(
  */
 bool
 lyric_runtime::SubroutineManager::callVirtual(
-    const DataCell &receiver,
+    const Operand &receiver,
     tu_uint32 callAddress,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -315,22 +325,37 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // get method resolver for receiver
     const AbstractMethodResolver *resolver;
-    switch (receiver.type) {
-        case DataCellType::Bytes:
-            resolver = receiver.data.bytes->getMethodResolver();
+    switch (receiver.getType()) {
+        case OperandType::Bytes: {
+            BytesRef *bytes;
+            TU_ASSERT (receiver.getBytes(bytes));
+            resolver = bytes->getMethodResolver();
             break;
-        case DataCellType::Ref:
-            resolver = receiver.data.ref->getMethodResolver();
+        }
+        case OperandType::Ref: {
+            BaseRef *ref;
+            TU_ASSERT (receiver.getRef(ref));
+            resolver = ref->getMethodResolver();
             break;
-        case DataCellType::Rest:
-            resolver = receiver.data.rest->getMethodResolver();
+        }
+        case OperandType::Rest: {
+            RestRef *rest;
+            TU_ASSERT (receiver.getRest(rest));
+            resolver = rest->getMethodResolver();
             break;
-        case DataCellType::Status:
-            resolver = receiver.data.status->getMethodResolver();
+        }
+        case OperandType::Status: {
+            StatusRef *status_;
+            TU_ASSERT (receiver.getStatus(status_));
+            resolver = status_->getMethodResolver();
             break;
-        case DataCellType::String:
-            resolver = receiver.data.str->getMethodResolver();
+        }
+        case OperandType::String: {
+            StringRef *string;
+            TU_ASSERT (receiver.getString(string));
+            resolver = string->getMethodResolver();
             break;
+        }
         default:
             resolver = nullptr;
             break;
@@ -408,9 +433,9 @@ lyric_runtime::SubroutineManager::callVirtual(
  */
 bool
 lyric_runtime::SubroutineManager::callStub(
-    const DataCell &receiver,
+    const Operand &receiver,
     tu_uint32 actionAddress,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -420,22 +445,37 @@ lyric_runtime::SubroutineManager::callStub(
 
     // get method resolver for receiver
     const AbstractMethodResolver *resolver;
-    switch (receiver.type) {
-        case DataCellType::Bytes:
-            resolver = receiver.data.bytes->getMethodResolver();
+    switch (receiver.getType()) {
+        case OperandType::Bytes: {
+            BytesRef *bytes;
+            TU_ASSERT (receiver.getBytes(bytes));
+            resolver = bytes->getMethodResolver();
             break;
-        case DataCellType::Ref:
-            resolver = receiver.data.ref->getMethodResolver();
+        }
+        case OperandType::Ref: {
+            BaseRef *ref;
+            TU_ASSERT (receiver.getRef(ref));
+            resolver = ref->getMethodResolver();
             break;
-        case DataCellType::Rest:
-            resolver = receiver.data.rest->getMethodResolver();
+        }
+        case OperandType::Rest: {
+            RestRef *rest;
+            TU_ASSERT (receiver.getRest(rest));
+            resolver = rest->getMethodResolver();
             break;
-        case DataCellType::Status:
-            resolver = receiver.data.status->getMethodResolver();
+        }
+        case OperandType::Status: {
+            StatusRef *status_;
+            TU_ASSERT (receiver.getStatus(status_));
+            resolver = status_->getMethodResolver();
             break;
-        case DataCellType::String:
-            resolver = receiver.data.str->getMethodResolver();
+        }
+        case OperandType::String: {
+            StringRef *string;
+            TU_ASSERT (receiver.getString(string));
+            resolver = string->getMethodResolver();
             break;
+        }
         default:
             resolver = nullptr;
             break;
@@ -502,10 +542,10 @@ lyric_runtime::SubroutineManager::callStub(
 
 bool
 lyric_runtime::SubroutineManager::callConcept(
-    const DataCell &receiver,
-    const DataCell &conceptDescriptor,
+    const Operand &receiver,
+    const Operand &conceptDescriptor,
     tu_uint32 actionAddress,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status) {
     TU_ASSERT (currentCoro != nullptr);
@@ -514,22 +554,37 @@ lyric_runtime::SubroutineManager::callConcept(
 
     // get extension resolver for receiver
     const AbstractExtensionResolver *resolver;
-    switch (receiver.type) {
-        case DataCellType::Bytes:
-            resolver = receiver.data.bytes->getExtensionResolver();
+    switch (receiver.getType()) {
+        case OperandType::Bytes: {
+            BytesRef *bytes;
+            TU_ASSERT (receiver.getBytes(bytes));
+            resolver = bytes->getExtensionResolver();
             break;
-        case DataCellType::Ref:
-            resolver = receiver.data.ref->getExtensionResolver();
+        }
+        case OperandType::Ref: {
+            BaseRef *ref;
+            TU_ASSERT (receiver.getRef(ref));
+            resolver = ref->getExtensionResolver();
             break;
-        case DataCellType::Rest:
-            resolver = receiver.data.rest->getExtensionResolver();
+        }
+        case OperandType::Rest: {
+            RestRef *rest;
+            TU_ASSERT (receiver.getRest(rest));
+            resolver = rest->getExtensionResolver();
             break;
-        case DataCellType::Status:
-            resolver = receiver.data.status->getExtensionResolver();
+        }
+        case OperandType::Status: {
+            StatusRef *status_;
+            TU_ASSERT (receiver.getStatus(status_));
+            resolver = status_->getExtensionResolver();
             break;
-        case DataCellType::String:
-            resolver = receiver.data.str->getExtensionResolver();
+        }
+        case OperandType::String: {
+            StringRef *string;
+            TU_ASSERT (receiver.getString(string));
+            resolver = string->getExtensionResolver();
             break;
+        }
         default:
             resolver = nullptr;
             break;
@@ -596,10 +651,10 @@ lyric_runtime::SubroutineManager::callConcept(
 
 bool
 lyric_runtime::SubroutineManager::callExistential(
-    const DataCell &receiver,
-    const DataCell &existentialDescriptor,
+    const Operand &receiver,
+    const Operand &existentialDescriptor,
     tu_uint32 methodAddress,
-    std::vector<DataCell> &args,
+    std::vector<Operand> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -716,7 +771,7 @@ lyric_runtime::SubroutineManager::initStatic(
     auto procOffset = initializer.getProcOffset();
     auto returnsValue = !initializer.isNoReturn();
 
-    std::vector<DataCell> args;
+    std::vector<Operand> args;
     return callProc(callIndex, segment, procOffset, args, returnsValue, currentCoro, status);
 }
 
@@ -748,7 +803,7 @@ lyric_runtime::SubroutineManager::returnToCaller(
     if (currentCoro->dataStackSize() > frame.getStackGuard()) {
         // preserve the top most item as the return value if call returns a value
         if (frame.returnsValue()) {
-            DataCell returnValue;
+            Operand returnValue;
             status = currentCoro->popData(returnValue);
             if (status.notOk())
                 return false;

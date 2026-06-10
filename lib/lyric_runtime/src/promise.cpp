@@ -79,7 +79,7 @@ lyric_runtime::Promise::create(AcceptCallback accept)
  * @return The new promise.
  */
 std::shared_ptr<lyric_runtime::Promise>
-lyric_runtime::Promise::completed(const DataCell &result)
+lyric_runtime::Promise::completed(const Operand &result)
 {
     auto promise = create();
     promise->complete(result);
@@ -94,7 +94,7 @@ lyric_runtime::Promise::completed(const DataCell &result)
  * @return The new promise.
  */
 std::shared_ptr<lyric_runtime::Promise>
-lyric_runtime::Promise::rejected(const DataCell &result)
+lyric_runtime::Promise::rejected(const Operand &result)
 {
     auto promise = create();
     promise->reject(result);
@@ -107,7 +107,7 @@ lyric_runtime::Promise::getState() const
     return m_state;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::Promise::getResult() const
 {
     return m_result;
@@ -229,7 +229,7 @@ lyric_runtime::Promise::notify()
 }
 
 tempo_utils::Status
-lyric_runtime::Promise::complete(const DataCell &result)
+lyric_runtime::Promise::complete(const Operand &result)
 {
     if (!result.isValid())
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
@@ -253,9 +253,9 @@ lyric_runtime::Promise::complete(const DataCell &result)
 }
 
 tempo_utils::Status
-lyric_runtime::Promise::reject(const DataCell &result)
+lyric_runtime::Promise::reject(const Operand &result)
 {
-    if (result.type != DataCellType::Status)
+    if (result.getType() != OperandType::Status)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "invalid promise result");
     switch (m_state) {

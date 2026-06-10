@@ -13,7 +13,7 @@ TEST_F(BoolTests, EvaluateLogicalAnd)
         true and false
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(BoolTests, EvaluateLogicalOr)
@@ -22,7 +22,7 @@ TEST_F(BoolTests, EvaluateLogicalOr)
         true or false
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(BoolTests, EvaluateLogicalNot)
@@ -31,5 +31,5 @@ TEST_F(BoolTests, EvaluateLogicalNot)
         not false
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }

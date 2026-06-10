@@ -38,15 +38,15 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     m_numLinks = m_object.numLinks();
     m_links = m_numLinks > 0 ? new LinkEntry[m_numLinks] : nullptr;
     m_numStatics = m_object.numStatics();
-    m_statics = m_numStatics > 0 ? new DataCell[m_numStatics] : nullptr;
+    m_statics = m_numStatics > 0 ? new Operand[m_numStatics] : nullptr;
     m_numInstances = m_object.numInstances();
-    m_instances = m_numInstances > 0 ? new DataCell[m_numInstances] : nullptr;
+    m_instances = m_numInstances > 0 ? new Operand[m_numInstances] : nullptr;
     m_numEnums = m_object.numEnums();
-    m_enums = m_numEnums > 0 ? new DataCell[m_numEnums] : nullptr;
+    m_enums = m_numEnums > 0 ? new Operand[m_numEnums] : nullptr;
     m_numProtocols = m_object.numProtocols();
-    m_protocols = m_numProtocols > 0 ? new DataCell[m_numProtocols] : nullptr;
+    m_protocols = m_numProtocols > 0 ? new Operand[m_numProtocols] : nullptr;
     m_numNamespaces = m_object.numNamespaces();
-    m_namespaces = m_numNamespaces > 0 ? new DataCell[m_numNamespaces] : nullptr;
+    m_namespaces = m_numNamespaces > 0 ? new Operand[m_numNamespaces] : nullptr;
 
     if (m_object.hasPlugin()) {
         TU_NOTNULL (m_plugin);
@@ -205,7 +205,7 @@ lyric_runtime::BytecodeSegment::setLink(uint32_t index, const LinkEntry &entry)
     return true;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytecodeSegment::getStatic(uint32_t index) const
 {
     if (m_numStatics <= index)
@@ -214,7 +214,7 @@ lyric_runtime::BytecodeSegment::getStatic(uint32_t index) const
 }
 
 bool
-lyric_runtime::BytecodeSegment::setStatic(uint32_t index, const DataCell &value)
+lyric_runtime::BytecodeSegment::setStatic(uint32_t index, const Operand &value)
 {
     if (m_numStatics <= index)
         return false;
@@ -222,7 +222,7 @@ lyric_runtime::BytecodeSegment::setStatic(uint32_t index, const DataCell &value)
     return true;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytecodeSegment::getInstance(uint32_t index) const
 {
     if (m_numInstances <= index)
@@ -231,7 +231,7 @@ lyric_runtime::BytecodeSegment::getInstance(uint32_t index) const
 }
 
 bool
-lyric_runtime::BytecodeSegment::setInstance(uint32_t index, const DataCell &value)
+lyric_runtime::BytecodeSegment::setInstance(uint32_t index, const Operand &value)
 {
     if (m_numInstances <= index)
         return false;
@@ -239,7 +239,7 @@ lyric_runtime::BytecodeSegment::setInstance(uint32_t index, const DataCell &valu
     return true;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytecodeSegment::getEnum(uint32_t index) const
 {
     if (m_numEnums <= index)
@@ -248,7 +248,7 @@ lyric_runtime::BytecodeSegment::getEnum(uint32_t index) const
 }
 
 bool
-lyric_runtime::BytecodeSegment::setEnum(uint32_t index, const DataCell &value)
+lyric_runtime::BytecodeSegment::setEnum(uint32_t index, const Operand &value)
 {
     if (m_numEnums <= index)
         return false;
@@ -256,7 +256,7 @@ lyric_runtime::BytecodeSegment::setEnum(uint32_t index, const DataCell &value)
     return true;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytecodeSegment::getProtocol(uint32_t index) const
 {
     if (m_numProtocols <= index)
@@ -265,7 +265,7 @@ lyric_runtime::BytecodeSegment::getProtocol(uint32_t index) const
 }
 
 bool
-lyric_runtime::BytecodeSegment::setProtocol(uint32_t index, const DataCell &value)
+lyric_runtime::BytecodeSegment::setProtocol(uint32_t index, const Operand &value)
 {
     if (m_numProtocols <= index)
         return false;
@@ -273,7 +273,7 @@ lyric_runtime::BytecodeSegment::setProtocol(uint32_t index, const DataCell &valu
     return true;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::BytecodeSegment::getNamespace(uint32_t index) const
 {
     if (m_numNamespaces <= index)
@@ -282,7 +282,7 @@ lyric_runtime::BytecodeSegment::getNamespace(uint32_t index) const
 }
 
 bool
-lyric_runtime::BytecodeSegment::setNamespace(uint32_t index, const DataCell &value)
+lyric_runtime::BytecodeSegment::setNamespace(uint32_t index, const Operand &value)
 {
     if (m_numNamespaces <= index)
         return false;

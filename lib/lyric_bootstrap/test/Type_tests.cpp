@@ -26,7 +26,7 @@ TEST_F(TypeTests, TestCompareType)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellInt(-1))));
+        OperandInt(-1))));
 }
 
 TEST_F(TypeTests, TestIsSupertypeOf)
@@ -37,7 +37,7 @@ TEST_F(TypeTests, TestIsSupertypeOf)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellBool(true))));
+        OperandBool(true))));
 }
 
 TEST_F(TypeTests, TestIsSubtypeOf)
@@ -48,5 +48,5 @@ TEST_F(TypeTests, TestIsSubtypeOf)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellBool(true))));
+        OperandBool(true))));
 }

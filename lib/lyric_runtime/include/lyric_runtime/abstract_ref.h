@@ -57,7 +57,7 @@ namespace lyric_runtime {
          * @param value Out param where the field value will be stored.
          * @return true if the field value was retrieved, otherwise false.
          */
-        virtual bool getField(const DataCell &field, DataCell &value) const = 0;
+        virtual bool getField(const Operand &field, Operand &value) const = 0;
 
         /**
          * Sets the value of the field specified by `field` to `value`. If `prev` is not nullptr then the
@@ -70,7 +70,7 @@ namespace lyric_runtime {
          * @param prev Pointer to a data cell where the previous value will be stored.
          * @return true if the field value was updated, otherwise false.
          */
-        virtual bool setField(const DataCell &field, const DataCell &value, DataCell *prev) = 0;
+        virtual bool setField(const Operand &field, const Operand &value, Operand *prev) = 0;
 
         /**
          * Returns whether the value of the ref equals the value of other.
@@ -126,7 +126,7 @@ namespace lyric_runtime {
          *
          * @return true if `next` was assigned, otherwise false.
          */
-        virtual bool iteratorNext(DataCell &next) = 0;
+        virtual bool iteratorNext(Operand &next) = 0;
 
         /**
          * Assigns the specified `promise` to the ref. If the ref type does not support the futures protocol
@@ -153,7 +153,7 @@ namespace lyric_runtime {
          * @param result
          * @return true if a result is available, otherwise false.
          */
-        virtual bool resolveFuture(DataCell &result) = 0;
+        virtual bool resolveFuture(Operand &result) = 0;
 
         /**
          * Modify the specified `task` such that the closure contained in the ref is immediately invoked when
@@ -163,7 +163,7 @@ namespace lyric_runtime {
          * @param task
          * @return true if the closure call frame has been pushed onto the task call stack, otherwise false.
          */
-        virtual bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) = 0;
+        virtual bool applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state) = 0;
 
         /**
          * Returns the status code. If the ref is not a subtype of Status then the method must return kOk.

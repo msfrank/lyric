@@ -15,9 +15,7 @@ status_alloc(
     auto *heapManager = state->heapManager();
 
     auto status = heapManager->allocateStatus(vtable);
-    currentCoro->pushData(status);
-
-    return {};
+    return currentCoro->pushData(status);
 }
 
 tempo_utils::Status
@@ -30,19 +28,19 @@ status_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
-    auto *instance = receiver.data.status;
+    lyric_runtime::StatusRef *status;
+    TU_ASSERT(receiver.getStatus(status));
 
-    TU_ASSERT (frame.numArguments() > 0);
-
+    tu_int64 code;
+    lyric_runtime::StringRef *message;
+    TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT (arg0.type == lyric_runtime::DataCellType::Int64);
-    auto statusCode = static_cast<tempo_utils::StatusCode>(arg0.data.i64);
-    instance->setStatusCode(statusCode);
-
+    TU_ASSERT (arg0.getI64(code));
+    auto statusCode = static_cast<tempo_utils::StatusCode>(code);
+    status->setStatusCode(statusCode);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT (arg1.type == lyric_runtime::DataCellType::String);
-    instance->setMessage(arg1);
+    TU_ASSERT (arg1.getString(message));
+    status->setMessage(arg1);
 
     return {};
 }
@@ -57,11 +55,10 @@ status_get_code(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
-    auto *instance = receiver.data.status;
-    currentCoro->pushData(instance->getStatusCode());
+    lyric_runtime::StatusRef *status;
+    TU_ASSERT(receiver.getStatus(status));
 
-    return {};
+    return currentCoro->pushData(status->getStatusCode());
 }
 
 tempo_utils::Status
@@ -74,9 +71,8 @@ status_get_message(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Status);
-    auto *instance = receiver.data.status;
-    currentCoro->pushData(instance->getMessage());
+    lyric_runtime::StatusRef *status;
+    TU_ASSERT(receiver.getStatus(status));
 
-    return {};
+    return currentCoro->pushData(status->getMessage());
 }

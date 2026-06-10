@@ -1,15 +1,17 @@
 
 #include <bit>
 
+#include <absl/strings/substitute.h>
 #include <boost/endian.hpp>
 
+#include <lyric_runtime/bytes_ref.h>
+#include <lyric_runtime/namespace_ref.h>
 #include <lyric_runtime/operand.h>
-
-#include "lyric_runtime/bytes_ref.h"
-#include "lyric_runtime/namespace_ref.h"
-#include "lyric_runtime/protocol_ref.h"
-#include "lyric_runtime/status_ref.h"
-#include "lyric_runtime/string_ref.h"
+#include <lyric_runtime/protocol_ref.h>
+#include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/status_ref.h>
+#include <lyric_runtime/string_ref.h>
+#include <tempo_utils/unicode.h>
 
 /*
  * TODO:
@@ -178,6 +180,136 @@ lyric_runtime::Operand::isValid() const
     return get_info_byte(m_bytes) != 0;
 }
 
+template<class ValueType>
+bool values_equal(const lyric_runtime::Operand &lhs, const lyric_runtime::Operand &rhs)
+{
+    ValueType l, r;
+    if (!operand_to_value(lhs, l))
+        return false;
+    if (!operand_to_value(rhs, r))
+        return false;
+    return l == r;
+}
+
+template<class RefType>
+bool refs_equal(const lyric_runtime::Operand &lhs, const lyric_runtime::Operand &rhs)
+{
+    RefType *l, *r;
+    if (!operand_to_pointer(lhs, l))
+        return false;
+    if (!operand_to_pointer(rhs, r))
+        return false;
+    return l->equals(r);
+}
+
+template<class PointerType>
+bool pointers_same(const lyric_runtime::Operand &lhs, const lyric_runtime::Operand &rhs)
+{
+    PointerType *l, *r;
+    if (!operand_to_pointer(lhs, l))
+        return false;
+    if (!operand_to_pointer(rhs, r))
+        return false;
+    return l == r;
+}
+
+bool
+lyric_runtime::Operand::isEqualTo(const Operand &other) const
+{
+    if (getType() != other.getType())
+        return false;
+
+    switch (getType()) {
+        case OperandType::Nil:
+        case OperandType::Undef:
+                return true;
+
+        case OperandType::Bool:        return values_equal<bool>(*this, other);
+        case OperandType::Int8:        return values_equal<tu_int8>(*this, other);
+        case OperandType::Int16:       return values_equal<tu_int16>(*this, other);
+        case OperandType::Int32:       return values_equal<tu_int32>(*this, other);
+        case OperandType::Int64:       return values_equal<tu_int64>(*this, other);
+        case OperandType::UInt8:       return values_equal<tu_uint8>(*this, other);
+        case OperandType::UInt16:      return values_equal<tu_uint16>(*this, other);
+        case OperandType::UInt32:      return values_equal<tu_uint32>(*this, other);
+        case OperandType::UInt64:      return values_equal<tu_uint64>(*this, other);
+        case OperandType::Float32:     return values_equal<float>(*this, other);
+        case OperandType::Float64:     return values_equal<double>(*this, other);
+        case OperandType::Char32:      return values_equal<char32_t>(*this, other);
+
+        case OperandType::Bytes:       return refs_equal<BytesRef>(*this, other);
+        case OperandType::String:      return refs_equal<StringRef>(*this, other);
+        case OperandType::Status:      return refs_equal<StatusRef>(*this, other);
+        case OperandType::Namespace:   return refs_equal<NamespaceRef>(*this, other);
+        case OperandType::Protocol:    return refs_equal<ProtocolRef>(*this, other);
+        case OperandType::Rest:        return refs_equal<RestRef>(*this, other);
+        case OperandType::Ref:         return refs_equal<BaseRef>(*this, other);
+
+        case OperandType::Descriptor: {
+            DescriptorEntry *l, *r;
+            if (!getDescriptor(l))
+                return false;
+            if (!other.getDescriptor(r))
+                return false;
+            return l->getSegmentIndex() == r->getSegmentIndex()
+                && l->getDescriptorIndex() == r->getDescriptorIndex()
+                && l->getLinkageSection() == r->getLinkageSection();
+        }
+
+        case OperandType::Type: {
+            TypeEntry *l, *r;
+            if (!getType(l))
+                return false;
+            if (!other.getType(r))
+                return false;
+            return l->getSegmentIndex() == r->getSegmentIndex()
+                && l->getDescriptorIndex() == r->getDescriptorIndex();
+        }
+
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::isSameAs(const Operand &other) const
+{
+    if (getType() != other.getType())
+        return false;
+
+    switch (getType()) {
+        case OperandType::Nil:
+        case OperandType::Undef:
+                return true;
+
+        case OperandType::Bool:        return values_equal<bool>(*this, other);
+        case OperandType::Int8:        return values_equal<tu_int8>(*this, other);
+        case OperandType::Int16:       return values_equal<tu_int16>(*this, other);
+        case OperandType::Int32:       return values_equal<tu_int32>(*this, other);
+        case OperandType::Int64:       return values_equal<tu_int64>(*this, other);
+        case OperandType::UInt8:       return values_equal<tu_uint8>(*this, other);
+        case OperandType::UInt16:      return values_equal<tu_uint16>(*this, other);
+        case OperandType::UInt32:      return values_equal<tu_uint32>(*this, other);
+        case OperandType::UInt64:      return values_equal<tu_uint64>(*this, other);
+        case OperandType::Float32:     return values_equal<float>(*this, other);
+        case OperandType::Float64:     return values_equal<double>(*this, other);
+        case OperandType::Char32:      return values_equal<char32_t>(*this, other);
+
+        case OperandType::Bytes:       return pointers_same<BytesRef>(*this, other);
+        case OperandType::String:      return pointers_same<StringRef>(*this, other);
+        case OperandType::Status:      return pointers_same<StatusRef>(*this, other);
+        case OperandType::Namespace:   return pointers_same<NamespaceRef>(*this, other);
+        case OperandType::Protocol:    return pointers_same<ProtocolRef>(*this, other);
+        case OperandType::Rest:        return pointers_same<RestRef>(*this, other);
+        case OperandType::Ref:         return pointers_same<BaseRef>(*this, other);
+        case OperandType::Descriptor:  return pointers_same<DescriptorEntry>(*this, other);
+        case OperandType::Type:        return pointers_same<TypeEntry>(*this, other);
+
+        default:
+            return false;
+    }
+}
+
 lyric_runtime::OverlayType
 lyric_runtime::Operand::getOverlay() const
 {
@@ -231,7 +363,7 @@ lyric_runtime::Operand::getBytes() const
     }
 }
 
-lyric_runtime::DataCellType
+lyric_runtime::OperandType
 lyric_runtime::Operand::getType() const
 {
     tu_uint8 info = get_info_byte(m_bytes);
@@ -240,45 +372,45 @@ lyric_runtime::Operand::getType() const
             tu_uint8 tag = info & kTagMask;
             switch (tag) {
                 case kSingleWordI32Tag:
-                    return DataCellType::Int32;
+                    return OperandType::Int32;
                 case kSingleWordU32Tag:
-                    return DataCellType::UInt32;
+                    return OperandType::UInt32;
                 case kSingleWordShortTag: {
                     const tu_uint8 shorttag = info;
                     switch (shorttag) {
                         case kShortI8Tag:
-                            return DataCellType::Int8;
+                            return OperandType::Int8;
                         case kShortU8Tag:
-                            return DataCellType::UInt8;
+                            return OperandType::UInt8;
                         case kShortI16Tag:
-                            return DataCellType::Int16;
+                            return OperandType::Int16;
                         case kShortU16Tag:
-                            return DataCellType::UInt16;
+                            return OperandType::UInt16;
                         case kShortC21Tag:
-                            return DataCellType::Char32;
+                            return OperandType::Char32;
                         case kShortEnumTag: {
                             tu_uint8 enumtag = m_bytes[6];
                             switch (enumtag) {
                                 case kUndefEnum:
-                                    return DataCellType::Undef;
+                                    return OperandType::Undef;
                                 case kNilEnum:
-                                    return DataCellType::Nil;
+                                    return OperandType::Nil;
                                 case kTrueEnum:
                                 case kFalseEnum:
-                                    return DataCellType::Bool;
+                                    return OperandType::Bool;
                                 case kF64ZeroEnum:
                                 case kF64NZeroEnum:
-                                    return DataCellType::Float64;
+                                    return OperandType::Float64;
                                 default:
-                                    return DataCellType::Invalid;
+                                    return OperandType::Invalid;
                             }
                         }
                         default:
-                            return DataCellType::Invalid;
+                            return OperandType::Invalid;
                     }
                 }
                 default:
-                    return DataCellType::Invalid;
+                    return OperandType::Invalid;
             }
         }
 
@@ -287,18 +419,18 @@ lyric_runtime::Operand::getType() const
             switch (tag) {
                 case kDoubleWordSelf1Tag:
                 case kDoubleWordSelf2Tag:
-                    return DataCellType::Float64;
+                    return OperandType::Float64;
                 case kDoubleWordNum32Tag: {
                     tu_uint8 num32tag = info;
                     switch (num32tag) {
                         case kNum32SignedTag:
-                            return DataCellType::Int32;
+                            return OperandType::Int32;
                         case kNum32UnsignedTag:
-                            return DataCellType::UInt32;
+                            return OperandType::UInt32;
                         case kNum32FloatTag:
-                            return DataCellType::Float32;
+                            return OperandType::Float32;
                         default:
-                            return DataCellType::Invalid;
+                            return OperandType::Invalid;
                     }
 
                 }
@@ -306,49 +438,49 @@ lyric_runtime::Operand::getType() const
                     tu_uint8 num64tag = info & 0x0f;
                     switch (num64tag) {
                         case kNum64SignedTag:
-                            return DataCellType::Int64;
+                            return OperandType::Int64;
                         case kNum64UnsignedTag:
-                            return DataCellType::UInt64;
+                            return OperandType::UInt64;
                         default:
-                            return DataCellType::Invalid;
+                            return OperandType::Invalid;
                     }
                 }
                 default:
-                    return DataCellType::Invalid;
+                    return OperandType::Invalid;
             }
         }
 
         case OverlayType::Pointer: {
             tu_uint8 tag = info & kTagMask;
             if (tag != kDoubleWordPointerTag)
-                return DataCellType::Invalid;
+                return OperandType::Invalid;
             tu_uint8 pointertag = m_bytes[0] & kPointerMask;
             switch (pointertag) {
                 case kPointerRefTag:
-                    return DataCellType::Ref;
+                    return OperandType::Ref;
                 case kPointerBytesTag:
-                    return DataCellType::Bytes;
+                    return OperandType::Bytes;
                 case kPointerNamespaceTag:
-                    return DataCellType::Namespace;
+                    return OperandType::Namespace;
                 case kPointerProtocolTag:
-                    return DataCellType::Protocol;
+                    return OperandType::Protocol;
                 case kPointerRestTag:
-                    return DataCellType::Rest;
+                    return OperandType::Rest;
                 case kPointerStatusTag:
-                    return DataCellType::Status;
+                    return OperandType::Status;
                 case kPointerStringTag:
-                    return DataCellType::String;
+                    return OperandType::String;
                 case kPointerDescTag:
-                    return DataCellType::Descriptor;
+                    return OperandType::Descriptor;
                 case kPointerTypeTag:
-                    return DataCellType::Type;
+                    return OperandType::Type;
                 default:
-                    return DataCellType::Invalid;
+                    return OperandType::Invalid;
             }
         }
 
         default:
-            return DataCellType::Invalid;
+            return OperandType::Invalid;
     }
 }
 
@@ -376,7 +508,82 @@ lyric_runtime::Operand::isNil() const
 }
 
 bool
-lyric_runtime::Operand::getBool(bool &b)
+lyric_runtime::Operand::isIntegral() const
+{
+    switch (getType()) {
+        case OperandType::UInt8:
+        case OperandType::UInt16:
+        case OperandType::UInt32:
+        case OperandType::UInt64:
+        case OperandType::Int8:
+        case OperandType::Int16:
+        case OperandType::Int32:
+        case OperandType::Int64:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::isRational() const
+{
+    switch (getType()) {
+        case OperandType::Float32:
+        case OperandType::Float64:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::isSigned() const
+{
+    switch (getType()) {
+        case OperandType::Int8:
+        case OperandType::Int16:
+        case OperandType::Int32:
+        case OperandType::Int64:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::isUnsigned() const
+{
+    switch (getType()) {
+        case OperandType::UInt8:
+        case OperandType::UInt16:
+        case OperandType::UInt32:
+        case OperandType::UInt64:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::isReference() const
+{
+    switch (getType()) {
+        case OperandType::Bytes:
+        case OperandType::Namespace:
+        case OperandType::Protocol:
+        case OperandType::Ref:
+        case OperandType::Rest:
+        case OperandType::Status:
+        case OperandType::String:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::Operand::getBool(bool &b) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -393,7 +600,7 @@ lyric_runtime::Operand::getBool(bool &b)
 }
 
 bool
-lyric_runtime::Operand::getI8(tu_int8 &i8)
+lyric_runtime::Operand::getI8(tu_int8 &i8) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -405,7 +612,7 @@ lyric_runtime::Operand::getI8(tu_int8 &i8)
 }
 
 bool
-lyric_runtime::Operand::getU8(tu_uint8 &u8)
+lyric_runtime::Operand::getU8(tu_uint8 &u8) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -417,7 +624,7 @@ lyric_runtime::Operand::getU8(tu_uint8 &u8)
 }
 
 bool
-lyric_runtime::Operand::getI16(tu_int16 &i16)
+lyric_runtime::Operand::getI16(tu_int16 &i16) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -429,7 +636,7 @@ lyric_runtime::Operand::getI16(tu_int16 &i16)
 }
 
 bool
-lyric_runtime::Operand::getU16(tu_uint16 &u16)
+lyric_runtime::Operand::getU16(tu_uint16 &u16) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -441,7 +648,7 @@ lyric_runtime::Operand::getU16(tu_uint16 &u16)
 }
 
 bool
-lyric_runtime::Operand::getI32(tu_int32 &i32)
+lyric_runtime::Operand::getI32(tu_int32 &i32) const
 {
     switch (getOverlay()) {
         case OverlayType::SmallValue: {
@@ -470,7 +677,7 @@ lyric_runtime::Operand::getI32(tu_int32 &i32)
 }
 
 bool
-lyric_runtime::Operand::getU32(tu_uint32 &u32)
+lyric_runtime::Operand::getU32(tu_uint32 &u32) const
 {
     switch (getOverlay()) {
         case OverlayType::SmallValue: {
@@ -496,7 +703,7 @@ lyric_runtime::Operand::getU32(tu_uint32 &u32)
 }
 
 bool
-lyric_runtime::Operand::getI64(tu_int64 &i64)
+lyric_runtime::Operand::getI64(tu_int64 &i64) const
 {
     tu_uint8 info = get_info_byte(m_bytes);
     if ((info & kNum64Mask) != kNum64SignedTag)
@@ -512,7 +719,7 @@ lyric_runtime::Operand::getI64(tu_int64 &i64)
 }
 
 bool
-lyric_runtime::Operand::getU64(tu_uint64 &u64)
+lyric_runtime::Operand::getU64(tu_uint64 &u64) const
 {
     if (getOverlay() != OverlayType::LargeValue)
         return false;
@@ -527,7 +734,7 @@ lyric_runtime::Operand::getU64(tu_uint64 &u64)
 }
 
 bool
-lyric_runtime::Operand::getC32(char32_t &c32)
+lyric_runtime::Operand::getC32(char32_t &c32) const
 {
     if (getOverlay() != OverlayType::SmallValue)
         return false;
@@ -542,7 +749,7 @@ lyric_runtime::Operand::getC32(char32_t &c32)
 }
 
 bool
-lyric_runtime::Operand::getF32(float &f32)
+lyric_runtime::Operand::getF32(float &f32) const
 {
     if (getOverlay() != OverlayType::LargeValue)
         return false;
@@ -555,7 +762,7 @@ lyric_runtime::Operand::getF32(float &f32)
 }
 
 bool
-lyric_runtime::Operand::getF64(double &f64)
+lyric_runtime::Operand::getF64(double &f64) const
 {
     if (getOverlay() == OverlayType::SmallValue) [[unlikely]] {
         switch (get_enum_byte(m_bytes)) {
@@ -591,7 +798,7 @@ lyric_runtime::Operand::getF64(double &f64)
 }
 
 void *
-lyric_runtime::Operand::getPointer(tu_uint8 pointertag)
+lyric_runtime::Operand::getPointer(tu_uint8 pointertag) const
 {
     TU_ASSERT ((pointertag & ~kPointerMask) == 0);
     if (getOverlay() != OverlayType::Pointer)
@@ -611,17 +818,17 @@ lyric_runtime::Operand::getPointer(tu_uint8 pointertag)
 }
 
 bool
-lyric_runtime::Operand::getRef(AbstractRef *&ref)
+lyric_runtime::Operand::getRef(BaseRef *&ref) const
 {
     auto *ptr = getPointer(kPointerRefTag);
     if (ptr == nullptr)
         return false;
-    ref = (AbstractRef *) ptr;
+    ref = (BaseRef *) ptr;
     return true;
 }
 
 bool
-lyric_runtime::Operand::getBytes(BytesRef *&bytes)
+lyric_runtime::Operand::getBytes(BytesRef *&bytes) const
 {
     auto *ptr = getPointer(kPointerBytesTag);
     if (ptr == nullptr)
@@ -631,7 +838,7 @@ lyric_runtime::Operand::getBytes(BytesRef *&bytes)
 }
 
 bool
-lyric_runtime::Operand::getNamespace(NamespaceRef *&ns)
+lyric_runtime::Operand::getNamespace(NamespaceRef *&ns) const
 {
     auto *ptr = getPointer(kPointerNamespaceTag);
     if (ptr == nullptr)
@@ -641,7 +848,7 @@ lyric_runtime::Operand::getNamespace(NamespaceRef *&ns)
 }
 
 bool
-lyric_runtime::Operand::getProtocol(ProtocolRef *&protocol)
+lyric_runtime::Operand::getProtocol(ProtocolRef *&protocol) const
 {
     auto *ptr = getPointer(kPointerProtocolTag);
     if (ptr == nullptr)
@@ -651,7 +858,7 @@ lyric_runtime::Operand::getProtocol(ProtocolRef *&protocol)
 }
 
 bool
-lyric_runtime::Operand::getRest(RestRef *&rest)
+lyric_runtime::Operand::getRest(RestRef *&rest) const
 {
     auto *ptr = getPointer(kPointerRestTag);
     if (ptr == nullptr)
@@ -661,7 +868,7 @@ lyric_runtime::Operand::getRest(RestRef *&rest)
 }
 
 bool
-lyric_runtime::Operand::getStatus(StatusRef *&status)
+lyric_runtime::Operand::getStatus(StatusRef *&status) const
 {
     auto *ptr = getPointer(kPointerStatusTag);
     if (ptr == nullptr)
@@ -671,7 +878,7 @@ lyric_runtime::Operand::getStatus(StatusRef *&status)
 }
 
 bool
-lyric_runtime::Operand::getString(StringRef *&string)
+lyric_runtime::Operand::getString(StringRef *&string) const
 {
     auto *ptr = getPointer(kPointerStringTag);
     if (ptr == nullptr)
@@ -681,7 +888,7 @@ lyric_runtime::Operand::getString(StringRef *&string)
 }
 
 bool
-lyric_runtime::Operand::getDescriptor(DescriptorEntry *&descriptor)
+lyric_runtime::Operand::getDescriptor(DescriptorEntry *&descriptor) const
 {
     auto *ptr = getPointer(kPointerDescTag);
     if (ptr == nullptr)
@@ -691,7 +898,20 @@ lyric_runtime::Operand::getDescriptor(DescriptorEntry *&descriptor)
 }
 
 bool
-lyric_runtime::Operand::getType(TypeEntry *&type)
+lyric_runtime::Operand::getDescriptor(DescriptorEntry *&descriptor, lyric_object::LinkageSection section) const
+{
+    TU_ASSERT (section != lyric_object::LinkageSection::Invalid);
+    auto *ptr = getPointer(kPointerDescTag);
+    if (ptr == nullptr)
+        return false;
+    descriptor = (DescriptorEntry *) ptr;
+    if (descriptor->getLinkageSection() != section)
+        return false;
+    return true;
+}
+
+bool
+lyric_runtime::Operand::getType(TypeEntry *&type) const
 {
     auto *ptr = getPointer(kPointerTypeTag);
     if (ptr == nullptr)
@@ -874,7 +1094,7 @@ lyric_runtime::Operand::fromPointer(void *ptr, tu_uint8 pointertag)
 }
 
 lyric_runtime::Operand
-lyric_runtime::Operand::fromRef(AbstractRef *ref)
+lyric_runtime::Operand::fromRef(BaseRef *ref)
 {
     return fromPointer(ref, kPointerRefTag);
 }
@@ -1028,4 +1248,521 @@ lyric_runtime::Operand::parseSize(const tu_uint8 &infoByte)
         default:
             return 0;
     }
+}
+
+inline lyric_runtime::AbstractRef *get_ref(const lyric_runtime::Operand &operand)
+{
+    switch (operand.getType()) {
+        case lyric_runtime::OperandType::Bytes: {
+            lyric_runtime::BytesRef *bytes;
+            TU_ASSERT (operand.getBytes(bytes));
+            return bytes;
+        }
+        case lyric_runtime::OperandType::String: {
+            lyric_runtime::StringRef *str;
+            TU_ASSERT (operand.getString(str));
+            return str;
+        }
+        case lyric_runtime::OperandType::Status: {
+            lyric_runtime::StatusRef *status;
+            TU_ASSERT (operand.getStatus(status));
+            return status;
+        }
+        case lyric_runtime::OperandType::Namespace: {
+            lyric_runtime::NamespaceRef *ns;
+            TU_ASSERT (operand.getNamespace(ns));
+            return ns;
+        }
+        case lyric_runtime::OperandType::Protocol: {
+            lyric_runtime::ProtocolRef *protocol;
+            TU_ASSERT (operand.getProtocol(protocol));
+            return protocol;
+        }
+        case lyric_runtime::OperandType::Rest: {
+            lyric_runtime::RestRef *rest;
+            TU_ASSERT (operand.getRest(rest));
+            return rest;
+        }
+        case lyric_runtime::OperandType::Ref: {
+            lyric_runtime::BaseRef *ref;
+            TU_ASSERT (operand.getRef(ref));
+            ref->setReachable();
+            return ref;
+        }
+        default:
+            return nullptr;
+    }
+}
+
+void
+lyric_runtime::Operand::hashEquality(absl::HashState state) const
+{
+    switch (getOverlay()) {
+        case OverlayType::Pointer:
+            break;
+        case OverlayType::SmallValue:
+            absl::HashState::combine_contiguous(std::move(state), m_bytes.data() + 4, 4);
+            return;
+        case OverlayType::LargeValue:
+        case OverlayType::Invalid:
+            absl::HashState::combine_contiguous(std::move(state), m_bytes.data(), 8);
+            return;
+    }
+
+    switch (getType()) {
+        case OperandType::Bytes:
+        case OperandType::String:
+        case OperandType::Status:
+        case OperandType::Namespace:
+        case OperandType::Protocol:
+        case OperandType::Rest:
+        case OperandType::Ref: {
+            AbstractRef *ref = get_ref(*this);
+            TU_NOTNULL (ref);
+            ref->hashValue(std::move(state));
+            return;
+        }
+
+        case OperandType::Descriptor: {
+            DescriptorEntry *descriptor;
+            TU_ASSERT (getDescriptor(descriptor));
+            absl::HashState::combine(std::move(state),
+                descriptor->getSegmentIndex(),
+                descriptor->getLinkageSection(),
+                descriptor->getDescriptorIndex());
+            return;
+        }
+        case OperandType::Type: {
+            TypeEntry *type;
+            TU_ASSERT (getType(type));
+            absl::HashState::combine(std::move(state),
+                type->getSegmentIndex(),
+                type->getDescriptorIndex());
+            return;
+        }
+
+        default:
+            break;
+    }
+
+    TU_UNREACHABLE();
+}
+
+void
+lyric_runtime::Operand::hashIdentity(absl::HashState state) const
+{
+    switch (getOverlay()) {
+        case OverlayType::SmallValue:
+            absl::HashState::combine_contiguous(std::move(state), m_bytes.data() + 4, 4);
+            break;
+        case OverlayType::LargeValue:
+        case OverlayType::Pointer:
+            absl::HashState::combine_contiguous(std::move(state), m_bytes.data(), 8);
+            break;
+        case OverlayType::Invalid:
+            break;
+    }
+}
+
+std::string
+lyric_runtime::Operand::toString() const
+{
+    switch (getType()) {
+        case OperandType::Nil:
+            return "nil";
+        case OperandType::Undef:
+            return "undef";
+        case OperandType::Bool: {
+            bool b;
+            TU_ASSERT (getBool(b));
+            return b ? "true" : "false";
+        }
+        case OperandType::Int8: {
+            tu_int8 i8;
+            TU_ASSERT (getI8(i8));
+            return absl::StrCat(i8);
+            break;
+        }
+        case OperandType::Int16: {
+            tu_int16 i16;
+            TU_ASSERT (getI16(i16));
+            return absl::StrCat(i16);
+        }
+        case OperandType::Int32: {
+            tu_int32 i32;
+            TU_ASSERT (getI32(i32));
+            return absl::StrCat(i32);
+        }
+        case OperandType::Int64: {
+            tu_int64 i64;
+            TU_ASSERT (getI64(i64));
+            return absl::StrCat(i64);
+        }
+        case OperandType::UInt8: {
+            tu_uint8 u8;
+            TU_ASSERT (getU8(u8));
+            return absl::StrCat(u8);
+        }
+        case OperandType::UInt16: {
+            tu_uint16 u16;
+            TU_ASSERT (getU16(u16));
+            return absl::StrCat(u16);
+        }
+        case OperandType::UInt32: {
+            tu_uint32 u32;
+            TU_ASSERT (getU32(u32));
+            return absl::StrCat(u32);
+        }
+        case OperandType::UInt64: {
+            tu_uint64 u64;
+            TU_ASSERT (getU64(u64));
+            return absl::StrCat(u64);
+        }
+        case OperandType::Float32: {
+            float f32;
+            TU_ASSERT (getF32(f32));
+            return absl::StrCat(f32);
+        }
+        case OperandType::Float64: {
+            double f64;
+            TU_ASSERT (getF64(f64));
+            return absl::StrCat(f64);
+        }
+        case OperandType::Char32: {
+            char32_t chr;
+            TU_ASSERT (getC32(chr));
+            return tempo_utils::convert_to_utf8(chr);
+        }
+        case OperandType::Bytes: {
+            BytesRef *bytes;
+            TU_ASSERT (getBytes(bytes));
+            return bytes->toString();
+        }
+        case OperandType::String: {
+            StringRef *str;
+            TU_ASSERT (getString(str));
+            return str->toString();
+        }
+        case OperandType::Status: {
+            StatusRef *status;
+            TU_ASSERT (getStatus(status));
+            return status->toString();
+        }
+        case OperandType::Namespace: {
+            NamespaceRef *ns;
+            TU_ASSERT (getNamespace(ns));
+            return ns->toString();
+        }
+        case OperandType::Protocol: {
+            ProtocolRef *protocol;
+            TU_ASSERT (getProtocol(protocol));
+            return protocol->toString();
+        }
+        case OperandType::Rest: {
+            RestRef *rest;
+            TU_ASSERT (getRest(rest));
+            return rest->toString();
+        }
+        case OperandType::Ref: {
+            BaseRef *ref;
+            TU_ASSERT (getRef(ref));
+            return ref->toString();
+        }
+        case OperandType::Descriptor: {
+            DescriptorEntry *descriptor;
+            TU_ASSERT (getDescriptor(descriptor));
+            return absl::Substitute("descriptor(object=$0, section=$1, offset=$2)",
+                descriptor->getSegmentIndex(),
+                lyric_object::linkage_section_to_name(descriptor->getLinkageSection()),
+                descriptor->getDescriptorIndex());
+        }
+        case OperandType::Type: {
+            TypeEntry *type;
+            TU_ASSERT (getType(type));
+            return absl::Substitute("type(object=$0, type=$1, offset=$2)",
+                type->getSegmentIndex(),
+                type->getTypeDef().toString(),
+                type->getDescriptorIndex());
+        }
+
+        case OperandType::Invalid:
+        default:
+            return "???";
+    }
+}
+
+void
+lyric_runtime::Operand::setReachable() const
+{
+    auto *ref = get_ref(*this);
+    if (ref != nullptr) {
+        ref->setReachable();
+    }
+}
+
+void
+lyric_runtime::Operand::clearReachable() const
+{
+    auto *ref = get_ref(*this);
+    if (ref != nullptr) {
+        ref->clearReachable();
+    }
+}
+
+bool
+lyric_runtime::Operand::isReachable() const
+{
+    auto *ref = get_ref(*this);
+    if (ref == nullptr)
+        return false;
+    return ref->isReachable();
+}
+
+tempo_utils::LogMessage&&
+lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const Operand &operand)
+{
+    auto s = operand.toString();
+
+    switch (operand.getType()) {
+        case OperandType::Nil:
+            std::forward<tempo_utils::LogMessage>(message) << "Operand(nil)";
+            break;
+        case OperandType::Undef:
+            std::forward<tempo_utils::LogMessage>(message) << "Operand(undef)";
+            break;
+        case OperandType::Bool:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(bool=", s, ")");
+            break;
+        case OperandType::Int8:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(i8=", s, ")");
+            break;
+        case OperandType::Int16:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(i16=", s, ")");
+            break;
+        case OperandType::Int32:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(i32=", s, ")");
+            break;
+        case OperandType::Int64:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(i64=", s, ")");
+            break;
+        case OperandType::UInt8:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(u8=", s, ")");
+            break;
+        case OperandType::UInt16:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(u16=", s, ")");
+            break;
+        case OperandType::UInt32:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(u32=", s, ")");
+            break;
+        case OperandType::UInt64:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(u64=", s, ")");
+            break;
+        case OperandType::Float32:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(f32=", s, ")");
+            break;
+        case OperandType::Float64:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(f64=", s, ")");
+            break;
+        case OperandType::Char32:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(c32=", s, ")");
+            break;
+        case OperandType::Bytes:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::String:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Status:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Namespace:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Protocol:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Rest:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Ref:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Descriptor:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Type:
+            std::forward<tempo_utils::LogMessage>(message) << absl::StrCat("Operand(", s, ")");
+            break;
+        case OperandType::Invalid:
+        default:
+            std::forward<tempo_utils::LogMessage>(message) << "Operand(" << s << ")";
+            break;
+
+    }
+    return std::move(message);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, bool &v)
+{
+    return op.getBool(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_int8 &v)
+{
+    return op.getI8(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_int16 &v)
+{
+    return op.getI16(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_int32 &v)
+{
+    return op.getI32(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_int64 &v)
+{
+    return op.getI64(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_uint8 &v)
+{
+    return op.getU8(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_uint16 &v)
+{
+    return op.getU16(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_uint32 &v)
+{
+    return op.getU32(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, tu_uint64 &v)
+{
+    return op.getU64(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, float &v)
+{
+    return op.getF32(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, double &v)
+{
+    return op.getF64(v);
+}
+
+bool lyric_runtime::operand_to_value(const Operand &op, char32_t &v)
+{
+    return op.getC32(v);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, BaseRef *&r)
+{
+    return op.getRef(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, BytesRef *&r)
+{
+    return op.getBytes(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, NamespaceRef *&r)
+{
+    return op.getNamespace(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, ProtocolRef *&r)
+{
+    return op.getProtocol(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, RestRef *&r)
+{
+    return op.getRest(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, StatusRef *&r)
+{
+    return op.getStatus(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, StringRef *&r)
+{
+    return op.getString(r);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, DescriptorEntry *&e)
+{
+    return op.getDescriptor(e);
+}
+
+bool lyric_runtime::operand_to_pointer(const Operand &op, TypeEntry *&e)
+{
+    return op.getType(e);
+}
+
+void lyric_runtime::value_to_operand(bool v, Operand &op)
+{
+    op = Operand::fromBool(v);
+}
+
+void lyric_runtime::value_to_operand(tu_int8 v, Operand &op)
+{
+    op = Operand::fromI8(v);
+}
+
+void lyric_runtime::value_to_operand(tu_int16 v, Operand &op)
+{
+    op = Operand::fromI16(v);
+}
+
+void lyric_runtime::value_to_operand(tu_int32 v, Operand &op)
+{
+    op = Operand::fromI32(v);
+}
+
+void lyric_runtime::value_to_operand(tu_int64 v, Operand &op)
+{
+    op = Operand::fromI64(v);
+}
+
+void lyric_runtime::value_to_operand(tu_uint8 v, Operand &op)
+{
+    op = Operand::fromU8(v);
+}
+
+void lyric_runtime::value_to_operand(tu_uint16 v, Operand &op)
+{
+    op = Operand::fromU16(v);
+}
+
+void lyric_runtime::value_to_operand(tu_uint32 v, Operand &op)
+{
+    op = Operand::fromU32(v);
+}
+
+void lyric_runtime::value_to_operand(tu_uint64 v, Operand &op)
+{
+    op = Operand::fromU64(v);
+}
+
+void lyric_runtime::value_to_operand(float v, Operand &op)
+{
+    op = Operand::fromF32(v);
+}
+
+void lyric_runtime::value_to_operand(double v, Operand &op)
+{
+    op = Operand::fromF64(v);
+}
+
+void lyric_runtime::value_to_operand(char32_t v, Operand &op)
+{
+    op = Operand::fromC32(v);
 }

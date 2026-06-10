@@ -55,7 +55,7 @@ TEST_F(CompileDefenum, EvaluateEnumCase)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_common::SymbolPath({"Direction", "North"})))));
+                     RunModule(OperandRef(lyric_common::SymbolPath({"Direction", "North"})))));
 }
 
 TEST_F(CompileDefenum, EvaluateEnumCaseVal)
@@ -74,7 +74,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseVal)
         Direction.North.Index
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileDefenum, EvaluateEnumCaseDef)
@@ -102,7 +102,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDef)
         Direction.East.IndexOf()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
@@ -126,7 +126,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            MatchesDataCellType(lyric_runtime::DataCellType::Invalid))));
+            MatchesDataCellType(lyric_runtime::OperandType::Invalid))));
 }
 
 TEST_F(CompileDefenum, EvaluateDerefGlobalMember)
@@ -145,7 +145,7 @@ TEST_F(CompileDefenum, EvaluateDerefGlobalMember)
         Direction.GlobalValue
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefenum, EvaluateInvokeGlobalMethod)
@@ -164,5 +164,5 @@ TEST_F(CompileDefenum, EvaluateInvokeGlobalMethod)
         Direction.GetValue()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }

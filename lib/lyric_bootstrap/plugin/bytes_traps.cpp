@@ -14,15 +14,16 @@ bytes_at(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
-    TU_ASSERT (frame.numArguments() == 1);
-    const auto &index = frame.getArgument(0);
-    TU_ASSERT(index.type == lyric_runtime::DataCellType::Int64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
-    auto *instance = receiver.data.bytes;
-    currentCoro->pushData(instance->byteAt(index.data.i64));
-    return {};
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
+
+    tu_int64 index;
+    TU_ASSERT (frame.numArguments() == 1);
+    const auto &arg0 = frame.getArgument(0);
+    TU_ASSERT (arg0.getI64(index));
+
+    return currentCoro->pushData(bytes->byteAt(index));
 }
 
 tempo_utils::Status
@@ -35,16 +36,14 @@ bytes_compare(
 
     auto &frame = currentCoro->currentCallOrThrow();
 
+    lyric_runtime::BytesRef *lhs, *rhs;
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Bytes);
+    TU_ASSERT (arg0.getBytes(lhs));
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Bytes);
+    TU_ASSERT (arg1.getBytes(rhs));
 
-    auto *lhs = arg0.data.bytes;
-    auto *rhs = arg1.data.bytes;
-    currentCoro->pushData(lhs->bytesCompare(rhs));
-    return {};
+    return currentCoro->pushData(lhs->bytesCompare(rhs));
 }
 
 tempo_utils::Status
@@ -56,12 +55,11 @@ bytes_length(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
-    auto *instance = receiver.data.bytes;
-    currentCoro->pushData(instance->bytesLength());
-    return {};
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
+
+    return currentCoro->pushData(bytes->bytesLength());
 }
 
 tempo_utils::Status
@@ -75,12 +73,12 @@ bytes_to_string(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
-    auto *instance = receiver.data.bytes;
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
+
     std::string utf8;
-    instance->utf8Value(utf8);
+    bytes->utf8Value(utf8);
     return heapManager->loadStringOntoStack(utf8);
 }
 
@@ -94,15 +92,16 @@ bytes_append(
     auto *heapManager = state->heapManager();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
 
+    lyric_runtime::BytesRef *other;
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Bytes);
+    TU_ASSERT(arg0.getBytes(other));
 
-    auto rope = receiver.data.bytes->getBytesData().append(arg0.data.bytes->getBytesData());;
+    auto rope = bytes->getBytesData().append(other->getBytesData());;
     return heapManager->loadBytesOntoStack(rope);
 }
 
@@ -116,15 +115,16 @@ bytes_prepend(
     auto *heapManager = state->heapManager();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
 
+    lyric_runtime::BytesRef *other;
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Bytes);
+    TU_ASSERT(arg0.getBytes(other));
 
-    auto rope = receiver.data.bytes->getBytesData().prepend(arg0.data.bytes->getBytesData());;
+    auto rope = bytes->getBytesData().prepend(other->getBytesData());;
     return heapManager->loadBytesOntoStack(rope);
 }
 
@@ -138,18 +138,19 @@ bytes_insert(
     auto *heapManager = state->heapManager();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
 
+    tu_int64 offset;
+    lyric_runtime::BytesRef *other;
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
+    TU_ASSERT(arg0.getI64(offset));
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Bytes);
+    TU_ASSERT(arg1.getBytes(other));
 
-    auto offset = static_cast<tu_int32>(arg0.data.i64);
-    auto rope = receiver.data.bytes->getBytesData().insert(offset, arg1.data.bytes->getBytesData());;
+    auto rope = bytes->getBytesData().insert(offset, other->getBytesData());;
     return heapManager->loadBytesOntoStack(rope);
 }
 
@@ -163,19 +164,18 @@ bytes_remove(
     auto *heapManager = state->heapManager();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
 
+    tu_int64 offset, count;
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
+    TU_ASSERT(arg0.getI64(offset));
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
+    TU_ASSERT(arg1.getI64(count));
 
-    auto offset = static_cast<tu_int32>(arg0.data.i64);
-    auto count = static_cast<tu_int32>(arg1.data.i64);
-    auto rope = receiver.data.bytes->getBytesData().remove(offset, count);;
+    auto rope = bytes->getBytesData().remove(offset, count);;
     return heapManager->loadBytesOntoStack(rope);
 }
 
@@ -189,18 +189,17 @@ bytes_subspan(
     auto *heapManager = state->heapManager();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Bytes);
+    lyric_runtime::BytesRef *bytes;
+    TU_ASSERT (receiver.getBytes(bytes));
 
+    tu_int64 offset, count;
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
+    TU_ASSERT(arg0.getI64(offset));
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
+    TU_ASSERT(arg1.getI64(count));
 
-    auto offset = static_cast<tu_int32>(arg0.data.i64);
-    auto count = static_cast<tu_int32>(arg1.data.i64);
-    auto rope = receiver.data.bytes->getBytesData().subspan(offset, count);;
+    auto rope = bytes->getBytesData().subspan(offset, count);;
     return heapManager->loadBytesOntoStack(rope);
 }

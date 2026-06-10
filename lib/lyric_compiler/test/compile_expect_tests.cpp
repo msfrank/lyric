@@ -27,7 +27,7 @@ TEST_F(CompileExpect, EvaluateExpectYieldsResult)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(15))));
+            OperandInt(15))));
 }
 
 TEST_F(CompileExpect, EvaluateExpectReturnsError)
@@ -65,7 +65,7 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandMember)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(1))));
+            OperandInt(1))));
 }
 
 TEST_F(CompileExpect, EvaluateExpectWithStatusOperandYieldsResult)
@@ -113,7 +113,7 @@ TEST_F(CompileExpect, EvaluateExpectWithPlaceholderOperandYieldsResult)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }
 
 TEST_F(CompileExpect, EvaluateExpectWithPlaceholderOperandReturnsError)

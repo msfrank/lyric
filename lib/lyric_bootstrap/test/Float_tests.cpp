@@ -13,7 +13,7 @@ TEST_F(FloatTests, EvaluateDecimalFixedFloat) {
         1.5
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(1.5))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(1.5))));
 }
 
 TEST_F(FloatTests, EvaluateDecimalScientificFloat)
@@ -22,7 +22,7 @@ TEST_F(FloatTests, EvaluateDecimalScientificFloat)
         1.5e2
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(150.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(150.0))));
 }
 
 TEST_F(FloatTests, EvaluateHexFloat)
@@ -31,7 +31,7 @@ TEST_F(FloatTests, EvaluateHexFloat)
         0x10.8
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(16.5))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(16.5))));
 }
 
 TEST_F(FloatTests, EvaluateAddition)
@@ -40,7 +40,7 @@ TEST_F(FloatTests, EvaluateAddition)
         1.5 + 2.5
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(4.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(4.0))));
 }
 
 TEST_F(FloatTests, EvaluateSubtraction)
@@ -49,7 +49,7 @@ TEST_F(FloatTests, EvaluateSubtraction)
         2.5 - 1.0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(1.5))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(1.5))));
 }
 
 TEST_F(FloatTests, EvaluateMultiplication)
@@ -58,7 +58,7 @@ TEST_F(FloatTests, EvaluateMultiplication)
         2.0 * 3.0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(6.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(6.0))));
 }
 
 TEST_F(FloatTests, EvaluateDivision)
@@ -67,7 +67,7 @@ TEST_F(FloatTests, EvaluateDivision)
         20.0 / 8.0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(2.5))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(2.5))));
 }
 
 TEST_F(FloatTests, EvaluateNegation)
@@ -76,7 +76,7 @@ TEST_F(FloatTests, EvaluateNegation)
         -5.0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(-5.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(-5.0))));
 }
 
 TEST_F(FloatTests, EvaluateIsEq)
@@ -85,7 +85,7 @@ TEST_F(FloatTests, EvaluateIsEq)
         5.2 == 2.2
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(FloatTests, EvaluateIsLt)
@@ -94,7 +94,7 @@ TEST_F(FloatTests, EvaluateIsLt)
         5.7 < 2.1
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(FloatTests, EvaluateIsGt)
@@ -103,7 +103,7 @@ TEST_F(FloatTests, EvaluateIsGt)
         5.4 > 0.3
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(FloatTests, EvaluateIsLe)
@@ -112,7 +112,7 @@ TEST_F(FloatTests, EvaluateIsLe)
         5.1 <= 1.8
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(FloatTests, EvaluateIsGe)
@@ -121,7 +121,7 @@ TEST_F(FloatTests, EvaluateIsGe)
         5.0 >= 3.5
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(FloatTests, EvaluateCeil)
@@ -130,7 +130,7 @@ TEST_F(FloatTests, EvaluateCeil)
         (5.5).Ceil()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(6.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(6.0))));
 }
 
 TEST_F(FloatTests, EvaluateFloor)
@@ -139,7 +139,7 @@ TEST_F(FloatTests, EvaluateFloor)
         (5.5).Floor()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(5.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(5.0))));
 }
 
 TEST_F(FloatTests, EvaluateTrunc)
@@ -148,5 +148,5 @@ TEST_F(FloatTests, EvaluateTrunc)
         (-5.5).Trunc()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(-5.0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandFloat(-5.0))));
 }

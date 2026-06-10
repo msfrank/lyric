@@ -14,18 +14,18 @@ public:
     bool hashValue(absl::HashState state) override;
     std::string toString() const override;
 
-    void setPair(const lyric_runtime::DataCell &first, const lyric_runtime::DataCell &second);
+    void setPair(const lyric_runtime::Operand &first, const lyric_runtime::Operand &second);
 
-    lyric_runtime::DataCell pairFirst() const;
-    lyric_runtime::DataCell pairSecond() const;
+    lyric_runtime::Operand pairFirst() const;
+    lyric_runtime::Operand pairSecond() const;
 
 protected:
     void setMembersReachable() override;
     void clearMembersReachable() override;
 
 private:
-    lyric_runtime::DataCell m_first;
-    lyric_runtime::DataCell m_second;
+    lyric_runtime::Operand m_first;
+    lyric_runtime::Operand m_second;
 };
 
 tempo_utils::Status pair_alloc(

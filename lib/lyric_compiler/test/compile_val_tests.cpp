@@ -14,5 +14,5 @@ TEST_F(CompileVal, EvaluateVal)
         foo
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }

@@ -43,30 +43,31 @@ lyric_test::matchers::StatusRefMatcher::StatusRefMatcher(const StatusRefMatcher 
 
 bool
 lyric_test::matchers::StatusRefMatcher::MatchAndExplain(
-    const lyric_runtime::DataCell &cell,
+    const lyric_runtime::Operand &cell,
     std::ostream* os) const
 {
     switch (m_type) {
         case MatcherType::INVALID:
             return false;
         case MatcherType::STATUS_MESSAGE: {
-            if (cell.type != lyric_runtime::DataCellType::Status)
+            lyric_runtime::StatusRef *status;
+            if (!cell.getStatus(status))
                 return false;
-            auto *status = cell.data.status;
             auto message = status->statusMessage();
             return m_message == message;
         }
         case MatcherType::STATUS_CODE: {
-            if (cell.type != lyric_runtime::DataCellType::Status)
+            lyric_runtime::StatusRef *status;
+            if (!cell.getStatus(status))
                 return false;
-            auto *status = cell.data.status;
             auto statusCode = status->statusCode();
             return m_code == statusCode;
         }
         case MatcherType::STATUS_SYMBOL: {
-            if (cell.type != lyric_runtime::DataCellType::Status)
+            lyric_runtime::StatusRef *status;
+            if (!cell.getStatus(status))
                 return false;
-            auto *vtable = cell.data.status->getVirtualTable();
+            auto *vtable = status->getVirtualTable();
             if (vtable == nullptr)
                 return false;
             auto sym = vtable->getSymbolUrl();
@@ -102,25 +103,25 @@ lyric_test::matchers::StatusRefMatcher::DescribeNegationTo(std::ostream* os) con
     *os << "status does not match";
 }
 
-testing::Matcher<lyric_runtime::DataCell>
+testing::Matcher<lyric_runtime::Operand>
 lyric_test::matchers::StatusRef(const lyric_common::SymbolUrl &symbolUrl)
 {
     return StatusRefMatcher(symbolUrl);
 }
 
-testing::Matcher<lyric_runtime::DataCell>
+testing::Matcher<lyric_runtime::Operand>
 lyric_test::matchers::StatusRef(const lyric_common::SymbolPath &symbolPath)
 {
     return StatusRefMatcher(lyric_common::SymbolUrl(symbolPath));
 }
 
-Matcher<lyric_runtime::DataCell>
+Matcher<lyric_runtime::Operand>
 lyric_test::matchers::MatchesStatusRefCode(tempo_utils::StatusCode statusCode)
 {
     return StatusRefMatcher(statusCode);
 }
 
-Matcher<lyric_runtime::DataCell>
+Matcher<lyric_runtime::Operand>
 lyric_test::matchers::MatchesStatusRefMessage(std::string_view message)
 {
     return StatusRefMatcher(message);

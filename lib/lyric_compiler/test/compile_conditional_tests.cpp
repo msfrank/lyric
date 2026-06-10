@@ -15,7 +15,7 @@ TEST_F(CompileConditional, EvaluateIf)
         x
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileConditional, EvaluateDo)
@@ -31,7 +31,7 @@ TEST_F(CompileConditional, EvaluateDo)
         y
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(2))));
 }
 
 TEST_F(CompileConditional, EvaluateWhenElse)
@@ -41,7 +41,7 @@ TEST_F(CompileConditional, EvaluateWhenElse)
         x == true then 1 else 0
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(0))));
 }
 
 TEST_F(CompileConditional, EvaluateCond)
@@ -56,7 +56,7 @@ TEST_F(CompileConditional, EvaluateCond)
         }
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileConditional, EvaluateCondElse)
@@ -71,5 +71,5 @@ TEST_F(CompileConditional, EvaluateCondElse)
         }
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(0))));
 }

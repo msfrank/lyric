@@ -12,11 +12,11 @@ public:
     explicit ObjectRef(const lyric_runtime::VirtualTable *vtable);
     ~ObjectRef() override;
 
-    bool getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCell &value) const override;
+    bool getField(const lyric_runtime::Operand &field, lyric_runtime::Operand &value) const override;
     bool setField(
-        const lyric_runtime::DataCell &field,
-        const lyric_runtime::DataCell &value,
-        lyric_runtime::DataCell *prev) override;
+        const lyric_runtime::Operand &field,
+        const lyric_runtime::Operand &value,
+        lyric_runtime::Operand *prev) override;
     std::string toString() const override;
 
 protected:
@@ -24,7 +24,7 @@ protected:
     void clearMembersReachable() override;
 
 private:
-    std::vector<lyric_runtime::DataCell> m_fields;
+    std::vector<lyric_runtime::Operand> m_fields;
 };
 
 tempo_utils::Status object_alloc(

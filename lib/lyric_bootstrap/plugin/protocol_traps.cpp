@@ -14,14 +14,13 @@ protocol_is_acceptor(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::ProtocolRef *protocol;
+    TU_ASSERT(receiver.getProtocol(protocol));
 
     TU_ASSERT (frame.numArguments() == 0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
-    auto *instance = receiver.data.protocol;
-    auto result = instance->protocolIsAcceptor();
-    currentCoro->pushData(result);
-    return {};
+    auto result = protocol->protocolIsAcceptor();
+    return currentCoro->pushData(result);
 }
 
 tempo_utils::Status
@@ -33,14 +32,13 @@ protocol_is_connector(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::ProtocolRef *protocol;
+    TU_ASSERT(receiver.getProtocol(protocol));
 
     TU_ASSERT (frame.numArguments() == 0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
-    auto *instance = receiver.data.protocol;
-    auto result = instance->protocolIsConnector();
-    currentCoro->pushData(result);
-    return {};
+    auto result = protocol->protocolIsConnector();
+    return currentCoro->pushData(result);
 }
 
 tempo_utils::Status
@@ -52,14 +50,13 @@ protocol_can_send(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::ProtocolRef *protocol;
+    TU_ASSERT(receiver.getProtocol(protocol));
 
     TU_ASSERT (frame.numArguments() == 0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
-    auto *instance = receiver.data.protocol;
-    auto result = instance->protocolCanSend();
-    currentCoro->pushData(result);
-    return {};
+    auto result = protocol->protocolCanSend();
+    return currentCoro->pushData(result);
 }
 
 tempo_utils::Status
@@ -71,12 +68,11 @@ protocol_can_receive(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::ProtocolRef *protocol;
+    TU_ASSERT(receiver.getProtocol(protocol));
 
     TU_ASSERT (frame.numArguments() == 0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Protocol);
-    auto *instance = receiver.data.protocol;
-    auto result = instance->protocolCanReceive();
-    currentCoro->pushData(result);
-    return {};
+    auto result = protocol->protocolCanReceive();
+    return currentCoro->pushData(result);
 }

@@ -7,7 +7,7 @@ namespace lyric_runtime {
 
     class RestRef final : public AbstractRef {
     public:
-        RestRef(const ExistentialTable *etable, std::vector<DataCell> &&restArgs);
+        RestRef(const ExistentialTable *etable, std::vector<Operand> &&restArgs);
         ~RestRef() override;
 
         const DescriptorEntry *getDescriptorEntry() const override;
@@ -15,8 +15,9 @@ namespace lyric_runtime {
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
-        DataCell restAt(int index) const;
-        DataCell restLength() const;
+        size_t numRest() const;
+        Operand restAt(int index) const;
+        Operand restLength() const;
 
         bool equals(const AbstractRef *other) const override;
         std::string toString() const override;
@@ -30,8 +31,8 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        bool getField(const DataCell &field, DataCell &value) const override;
-        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
+        bool getField(const Operand &field, Operand &value) const override;
+        bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const override;
         bool utf8Value(std::string &utf8) const override;
@@ -39,15 +40,15 @@ namespace lyric_runtime {
         tempo_utils::StatusCode statusCode() override;
         std::string statusMessage() override;
         bool iteratorValid() override;
-        bool iteratorNext(DataCell &next) override;
+        bool iteratorNext(Operand &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
-        bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
+        bool resolveFuture(Operand &result) override;
+        bool applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state) override;
 
     private:
         const ExistentialTable *m_etable;
-        std::vector<DataCell> m_restArgs;
+        std::vector<Operand> m_restArgs;
         bool m_reachable;
     };
 }

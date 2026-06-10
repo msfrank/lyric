@@ -19,7 +19,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceWithExplicitInit)
         Foo.Index
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInstanceValMember)
@@ -31,7 +31,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceValMember)
         Foo.Index
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInstanceVarMember)
@@ -43,7 +43,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceVarMember)
         Foo.Index
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInstanceMethod)
@@ -57,7 +57,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceMethod)
         Foo.Identity(42)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInstanceMethodWithNoReturnType)
@@ -73,7 +73,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceMethodWithNoReturnType)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            MatchesDataCellType(lyric_runtime::DataCellType::Invalid))));
+            MatchesDataCellType(lyric_runtime::OperandType::Invalid))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInstanceApplication)
@@ -98,7 +98,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
         max(1, 2, ord = IntReverseOrdering)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
@@ -125,7 +125,7 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
         max(1, 2)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileDefinstance, EvaluateDerefGlobalMemberOnAbstractInstance)
@@ -139,7 +139,7 @@ TEST_F(CompileDefinstance, EvaluateDerefGlobalMemberOnAbstractInstance)
         Foo.GlobalValue
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefinstance, EvaluateInvokeGlobalMethodOnAbstractInstance)
@@ -153,5 +153,5 @@ TEST_F(CompileDefinstance, EvaluateInvokeGlobalMethodOnAbstractInstance)
         Foo.GetValue()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }

@@ -14,7 +14,7 @@ TEST_F(MapTests, TestEvaluateMapContainsNoEntries)
         names.Contains("one")
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(MapTests, TestEvaluateMapContainsSingleEntry)
@@ -24,7 +24,7 @@ TEST_F(MapTests, TestEvaluateMapContainsSingleEntry)
         names.Contains("one")
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(MapTests, TestEvaluateMapContainsMultipleEntries)
@@ -38,7 +38,7 @@ TEST_F(MapTests, TestEvaluateMapContainsMultipleEntries)
         names.Contains("three")
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(MapTests, TestEvaluateMapGetSingleEntry)
@@ -48,7 +48,7 @@ TEST_F(MapTests, TestEvaluateMapGetSingleEntry)
         names.GetOrElse("one", 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(MapTests, TestEvaluateMapGetMultipleEntries)
@@ -62,7 +62,7 @@ TEST_F(MapTests, TestEvaluateMapGetMultipleEntries)
         names.GetOrElse("three", 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(MapTests, TestEvaluateMapSizeMultipleEntries)
@@ -76,7 +76,7 @@ TEST_F(MapTests, TestEvaluateMapSizeMultipleEntries)
         names.Size()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(MapTests, TestEvaluateMapUpdate)
@@ -90,7 +90,7 @@ TEST_F(MapTests, TestEvaluateMapUpdate)
         names.GetOrElse("three", 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(MapTests, TestEvaluateMapRemove)
@@ -105,7 +105,7 @@ TEST_F(MapTests, TestEvaluateMapRemove)
         names.Contains("three")
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(MapTests, TestEvaluateMapIterateImpl)
@@ -123,5 +123,5 @@ TEST_F(MapTests, TestEvaluateMapIterateImpl)
         count
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }

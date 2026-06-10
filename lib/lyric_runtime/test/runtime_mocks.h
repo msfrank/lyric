@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_runtime/abstract_transport.h>
+#include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/connection.h>
 
 class MockTransport : public lyric_runtime::AbstractTransport {
@@ -84,7 +85,6 @@ public:
     (override));
 };
 
-
 class MockRef : public lyric_runtime::AbstractRef {
 public:
 
@@ -99,14 +99,14 @@ public:
     MOCK_METHOD (const lyric_runtime::AbstractExtensionResolver *, getExtensionResolver, (), (const override));
 
     MOCK_METHOD (bool, getField, (
-        const lyric_runtime::DataCell &,
-        lyric_runtime::DataCell &),
+        const lyric_runtime::Operand &,
+        lyric_runtime::Operand &),
     (const override));
 
     MOCK_METHOD (bool, setField, (
-        const lyric_runtime::DataCell &,
-        const lyric_runtime::DataCell &,
-        lyric_runtime::DataCell *),
+        const lyric_runtime::Operand &,
+        const lyric_runtime::Operand &,
+        lyric_runtime::Operand *),
     (override));
 
     MOCK_METHOD (bool, equals, (const AbstractRef *), (const override));
@@ -121,17 +121,17 @@ public:
 
     MOCK_METHOD (bool, iteratorValid, (), (override));
 
-    MOCK_METHOD (bool, iteratorNext, (lyric_runtime::DataCell &), (override));
+    MOCK_METHOD (bool, iteratorNext, (lyric_runtime::Operand &), (override));
 
     MOCK_METHOD (bool, prepareFuture, (std::shared_ptr<lyric_runtime::Promise>), (override));
 
     MOCK_METHOD (bool, awaitFuture, (lyric_runtime::SystemScheduler *), (override));
 
-    MOCK_METHOD (bool, resolveFuture, (lyric_runtime::DataCell &), (override));
+    MOCK_METHOD (bool, resolveFuture, (lyric_runtime::Operand &), (override));
 
     MOCK_METHOD (bool, applyClosure, (
         lyric_runtime::Task *,
-        std::vector<lyric_runtime::DataCell> &,
+        std::vector<lyric_runtime::Operand> &,
         lyric_runtime::InterpreterState *state),
     (override));
 

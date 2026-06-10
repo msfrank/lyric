@@ -3,7 +3,6 @@
 #include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/get_struct_virtual_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -11,14 +10,14 @@
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::internal::get_struct_virtual_table(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::Descriptor ||
-        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Struct) {
+    DescriptorEntry *structDescriptor;
+    if (!descriptor.getDescriptor(structDescriptor, lyric_object::LinkageSection::Struct)) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid struct descriptor");
         return nullptr;
@@ -27,32 +26,29 @@ lyric_runtime::internal::get_struct_virtual_table(
     if (segmentManagerData->vtablecache.contains(descriptor))
         return segmentManagerData->vtablecache[descriptor];
 
-    auto *entry = descriptor.data.descriptor;
-    auto *structSegment = entry->getSegment();
+    auto *structSegment = structDescriptor->getSegment();
     auto structObject = structSegment->getObject();
-    auto structIndex = entry->getDescriptorIndex();
-    auto structDescriptor = structObject.getStruct(structIndex);
-    auto structType = DataCell::forType(
-        structSegment->lookupType(
-            structDescriptor.getStructType().getDescriptorOffset()));
+    auto structIndex = structDescriptor->getDescriptorIndex();
+    auto structWalker = structObject.getStruct(structIndex);
+    auto structType = structSegment->lookupType(structWalker.getStructType().getDescriptorOffset());
 
     const VirtualTable *parentTable = nullptr;
     tu_uint32 layoutBase = 0;
-    absl::flat_hash_map<DataCell,VirtualMember> members;
-    absl::flat_hash_map<DataCell,VirtualMethod> methods;
-    absl::flat_hash_map<DataCell,ImplTable> impls;
+    absl::flat_hash_map<OperandIdentity,VirtualMember> members;
+    absl::flat_hash_map<OperandIdentity,VirtualMethod> methods;
+    absl::flat_hash_map<OperandIdentity,ImplTable> impls;
 
     // if struct has a superstruct, then resolve its virtual table
 
-    if (structDescriptor.hasSuperStruct()) {
+    if (structWalker.hasSuperStruct()) {
         tu_uint32 superStructAddress;
 
-        switch (structDescriptor.superStructAddressType()) {
+        switch (structWalker.superStructAddressType()) {
             case lyric_object::AddressType::Far:
-                superStructAddress = structDescriptor.getFarSuperStruct().getLinkAddress();
+                superStructAddress = structWalker.getFarSuperStruct().getLinkAddress();
                 break;
             case lyric_object::AddressType::Near:
-                superStructAddress = structDescriptor.getNearSuperStruct().getDescriptorOffset();
+                superStructAddress = structWalker.getNearSuperStruct().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
@@ -74,8 +70,8 @@ lyric_runtime::internal::get_struct_virtual_table(
 
     // resolve each member for the struct
 
-    for (tu_uint8 i = 0; i < structDescriptor.numMembers(); i++) {
-        auto member = structDescriptor.getMember(i);
+    for (tu_uint8 i = 0; i < structWalker.numMembers(); i++) {
+        auto member = structWalker.getMember(i);
         if (!member.isValid()) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid struct member linkage");
@@ -90,16 +86,23 @@ lyric_runtime::internal::get_struct_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *fieldSegment = structField.data.descriptor->getSegment();
-        auto fieldIndex = structField.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *fieldDescriptor;
+        if (!structField.getDescriptor(fieldDescriptor, lyric_object::LinkageSection::Field)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid struct field descriptor");
+            return nullptr;
+        }
+
+        auto *fieldSegment = fieldDescriptor->getSegment();
+        auto fieldIndex = fieldDescriptor->getDescriptorIndex();
 
         members.try_emplace(structField, fieldSegment, fieldIndex, layoutBase + i);
     }
 
     // resolve each method for the struct
 
-    for (tu_uint8 i = 0; i < structDescriptor.numMethods(); i++) {
-        auto method = structDescriptor.getMethod(i);
+    for (tu_uint8 i = 0; i < structWalker.numMethods(); i++) {
+        auto method = structWalker.getMethod(i);
 
         tu_uint32 callAddress = method.getDescriptorOffset();
         if (!method.isValid() || callAddress == INVALID_ADDRESS_U32) {
@@ -114,8 +117,15 @@ lyric_runtime::internal::get_struct_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        auto *callSegment = structCall.data.descriptor->getSegment();
-        auto callIndex = structCall.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *callDescriptor;
+        if (!structCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid struct call descriptor");
+            return nullptr;
+        }
+
+        auto *callSegment = callDescriptor->getSegment();
+        auto callIndex = callDescriptor->getDescriptorIndex();
         auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
@@ -123,7 +133,7 @@ lyric_runtime::internal::get_struct_virtual_table(
         methods.try_emplace(structCall, callSegment, callIndex, procOffset, returnsValue);
 
         // check for existence of a base symbol
-        DataCell baseSymbol;
+        Operand baseSymbol;
         switch (method.baseSymbolAddressType()) {
             case lyric_object::AddressType::Far: {
                 auto farSymbol = method.getFarBaseSymbol();
@@ -151,11 +161,11 @@ lyric_runtime::internal::get_struct_virtual_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < structDescriptor.numImpls(); i++) {
-        auto impl = structDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < structWalker.numImpls(); i++) {
+        auto impl = structWalker.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
-        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        absl::flat_hash_map<OperandIdentity,VirtualMethod> extensions;
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
@@ -201,8 +211,15 @@ lyric_runtime::internal::get_struct_virtual_table(
             if (status.notOk())
                 return nullptr;
 
-            auto *callSegment = implCall.data.descriptor->getSegment();
-            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            DescriptorEntry *callDescriptor;
+            if (!implCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid extension call descriptor");
+                return nullptr;
+            }
+
+            auto *callSegment = callDescriptor->getSegment();
+            auto callIndex = callDescriptor->getDescriptorIndex();
             auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
@@ -227,13 +244,20 @@ lyric_runtime::internal::get_struct_virtual_table(
         if (status.notOk())
             return nullptr;
 
-        impls.try_emplace(implConcept, structSegment, implConcept, structType, extensions);
+        DescriptorEntry *conceptDescriptor;
+        if (!implConcept.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl concept descriptor");
+            return nullptr;
+        }
+
+        impls.try_emplace(implConcept, structSegment, conceptDescriptor, structType, extensions);
     }
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
-    if (structDescriptor.hasAllocator()) {
-        auto *trap = structSegment->getTrap(structDescriptor.getAllocator());
+    if (structWalker.hasAllocator()) {
+        auto *trap = structSegment->getTrap(structWalker.getAllocator());
         if (trap == nullptr) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid struct allocator");
@@ -242,7 +266,7 @@ lyric_runtime::internal::get_struct_virtual_table(
         allocator = trap->func;
     }
 
-    auto *vtable = new VirtualTable(structSegment, descriptor, structType, parentTable,
+    auto *vtable = new VirtualTable(structSegment, structDescriptor, structType, parentTable,
         allocator, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 

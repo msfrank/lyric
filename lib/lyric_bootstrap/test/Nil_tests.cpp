@@ -13,5 +13,5 @@ TEST_F(NilTests, EvaluateNil)
         nil
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellNil())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandNil())));
 }

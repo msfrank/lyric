@@ -29,9 +29,9 @@ namespace lyric_runtime {
         std::string statusMessage() override;
         std::string toString() const override;
 
-        DataCell byteAt(int index) const;
-        DataCell bytesCompare(BytesRef *other) const;
-        DataCell bytesLength() const;
+        Operand byteAt(int index) const;
+        Operand bytesCompare(BytesRef *other) const;
+        Operand bytesLength() const;
 
         std::vector<tu_uint8> getBytes() const;
         tempo_utils::Rope<tu_uint8> getBytesData() const;
@@ -46,14 +46,14 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        bool getField(const DataCell &field, DataCell &value) const override;
-        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
+        bool getField(const Operand &field, Operand &value) const override;
+        bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         bool iteratorValid() override;
-        bool iteratorNext(DataCell &next) override;
+        bool iteratorNext(Operand &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
-        bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
+        bool resolveFuture(Operand &result) override;
+        bool applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state) override;
 
     private:
         const ExistentialTable *m_etable;

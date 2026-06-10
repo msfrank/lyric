@@ -15,7 +15,7 @@ TEST_F(TupleTests, TestEvaluateTuple1)
         i
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(TupleTests, TestEvaluateTuple2)
@@ -26,7 +26,7 @@ TEST_F(TupleTests, TestEvaluateTuple2)
         i
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(TupleTests, TestEvaluateTuple3)
@@ -37,5 +37,5 @@ TEST_F(TupleTests, TestEvaluateTuple3)
         i
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }

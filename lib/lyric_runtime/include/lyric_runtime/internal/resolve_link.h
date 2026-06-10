@@ -19,14 +19,14 @@ namespace lyric_runtime::internal {
         SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 
-    DataCell resolve_descriptor(
+    Operand resolve_descriptor(
         const BytecodeSegment *sp,
         lyric_object::LinkageSection section,
         tu_uint32 address,
         SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 
-    DataCell resolve_symbol(
+    Operand resolve_symbol(
         const BytecodeSegment *sp,
         tu_uint32 address,
         SegmentManagerData *segmentManagerData,
@@ -37,7 +37,7 @@ namespace lyric_runtime::internal {
         tu_uint32 address,
         tempo_utils::Status &status);
 
-    DataCell resolve_receiver(
+    Operand resolve_receiver(
         const BytecodeSegment *sp,
         tu_uint32 address,
         SegmentManagerData *segmentManagerData,

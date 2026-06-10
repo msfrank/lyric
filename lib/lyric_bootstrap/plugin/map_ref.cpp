@@ -1,36 +1,86 @@
 #include <absl/strings/substitute.h>
 
+#include <lyric_runtime/operand.h>
+
 #include "map_key.h"
 #include "map_ref.h"
 #include "pair_ref.h"
 
-inline bool
-is_equal(const lyric_runtime::DataCell &lhs, const lyric_runtime::DataCell &rhs)
+template<class ValueType>
+bool is_equal_value(const lyric_runtime::Operand &lhs, const lyric_runtime::Operand &rhs)
 {
-    if (lhs.type != rhs.type)
+    ValueType l, r;
+    if (!lyric_runtime::operand_to_value(lhs, l))
         return false;
-    switch (lhs.type) {
-        case lyric_runtime::DataCellType::Ref: {
-            if (lhs.data.ref->getVirtualTable() != rhs.data.ref->getVirtualTable())
+    if (!lyric_runtime::operand_to_value(rhs, r))
+        return false;
+    return l == r;
+}
+
+inline bool
+is_equal(const lyric_runtime::Operand &lhs, const lyric_runtime::Operand &rhs)
+{
+    if (lhs.getType() != rhs.getType())
+        return false;
+    switch (lhs.getType()) {
+        case lyric_runtime::OperandType::Nil:
+        case lyric_runtime::OperandType::Undef:
+            return true;
+        case lyric_runtime::OperandType::Bool:
+            return is_equal_value<bool>(lhs, rhs);
+        case lyric_runtime::OperandType::Int8:
+            return is_equal_value<tu_int8>(lhs, rhs);
+        case lyric_runtime::OperandType::Int16:
+            return is_equal_value<tu_int16>(lhs, rhs);
+        case lyric_runtime::OperandType::Int32:
+            return is_equal_value<tu_int32>(lhs, rhs);
+        case lyric_runtime::OperandType::Int64:
+            return is_equal_value<tu_int64>(lhs, rhs);
+        case lyric_runtime::OperandType::UInt8:
+            return is_equal_value<tu_uint8>(lhs, rhs);
+        case lyric_runtime::OperandType::UInt16:
+            return is_equal_value<tu_uint16>(lhs, rhs);
+        case lyric_runtime::OperandType::UInt32:
+            return is_equal_value<tu_uint32>(lhs, rhs);
+        case lyric_runtime::OperandType::UInt64:
+            return is_equal_value<tu_uint64>(lhs, rhs);
+        case lyric_runtime::OperandType::Float32:
+            return is_equal_value<float>(lhs, rhs);
+        case lyric_runtime::OperandType::Float64:
+            return is_equal_value<double>(lhs, rhs);
+        case lyric_runtime::OperandType::Char32:
+            return is_equal_value<char32_t>(lhs, rhs);
+
+        case lyric_runtime::OperandType::Ref: {
+            lyric_runtime::BaseRef *l, *r;
+            TU_ASSERT (lhs.getRef(l));
+            TU_ASSERT (rhs.getRef(r));
+            if (l->getVirtualTable() != r->getVirtualTable())
                 return false;
-            return lhs.data.ref->equals(rhs.data.ref);
+            return l->equals(r);
         }
-        case lyric_runtime::DataCellType::String: {
-            return lhs.data.str->equals(rhs.data.str);
+        case lyric_runtime::OperandType::String: {
+            lyric_runtime::StringRef *l, *r;
+            TU_ASSERT (lhs.getString(l));
+            TU_ASSERT (rhs.getString(r));
+            return l->equals(r);
         }
-        case lyric_runtime::DataCellType::Bytes: {
-            return lhs.data.bytes->equals(rhs.data.bytes);
+        case lyric_runtime::OperandType::Bytes: {
+            lyric_runtime::BytesRef *l, *r;
+            TU_ASSERT (lhs.getBytes(l));
+            TU_ASSERT (rhs.getBytes(r));
+            return l->equals(r);
         }
         default:
-            return lhs == rhs;
+            return false;
     }
 }
 
 static IndexMapNode *
 mutable_insert(
     ValueMapNode *prev,
-    const lyric_runtime::DataCell &key,
-    const lyric_runtime::DataCell &value,
+    const lyric_runtime::Operand &key,
+    const lyric_runtime::Operand &value,
     tu_uint32 hash,
     tu_uint8 bits_remaining,
     tu_uint16 trie_level)
@@ -75,8 +125,8 @@ mutable_insert(
 static void
 construct(
     IndexMapNode *index,
-    const lyric_runtime::DataCell &key,
-    const lyric_runtime::DataCell &value,
+    const lyric_runtime::Operand &key,
+    const lyric_runtime::Operand &value,
     tu_uint32 hash,
     tu_uint8 bits_remaining,
     tu_uint16 trie_level)
@@ -127,8 +177,8 @@ construct(
 static IndexMapNode *
 update(
     const IndexMapNode *curr,
-    const lyric_runtime::DataCell &key,
-    const lyric_runtime::DataCell &value,
+    const lyric_runtime::Operand &key,
+    const lyric_runtime::Operand &value,
     tu_uint32 hash,
     tu_uint8 bits_remaining,
     tu_uint16 trie_level)
@@ -208,7 +258,7 @@ update(
 static IndexMapNode *
 remove(
     const IndexMapNode *curr,
-    const lyric_runtime::DataCell &key,
+    const lyric_runtime::Operand &key,
     tu_uint32 hash,
     tu_uint8 bits_remaining,
     tu_uint16 trie_level)
@@ -302,10 +352,10 @@ size(const MapNode *node, int count)
     return count;
 }
 
-static lyric_runtime::DataCell
+static lyric_runtime::Operand
 search(
     const IndexMapNode *node,
-    const lyric_runtime::DataCell &key,
+    const lyric_runtime::Operand &key,
     tu_uint32 hash,
     tu_uint8 bits_remaining,
     tu_uint16 trie_level)
@@ -327,7 +377,7 @@ search(
     if (child->type == MapNodeType::VALUE) {
         auto *curr = static_cast<ValueMapNode *>(child);
         // if key matches pair then return the value, otherwise key is not present in map
-        return is_equal(curr->key, key)? curr->value : lyric_runtime::DataCell();
+        return is_equal(curr->key, key)? curr->value : lyric_runtime::Operand();
     }
 
     // case 3: table value at index is an IndexMapNode, continue searching
@@ -411,14 +461,14 @@ MapRef::mapSize() const
 }
 
 bool
-MapRef::mapContains(const lyric_runtime::DataCell &key) const
+MapRef::mapContains(const lyric_runtime::Operand &key) const
 {
     auto result = mapGet(key);
     return result.isValid();
 }
 
-lyric_runtime::DataCell
-MapRef::mapGet(const lyric_runtime::DataCell &key) const
+lyric_runtime::Operand
+MapRef::mapGet(const lyric_runtime::Operand &key) const
 {
     // case 1: map is empty
     if (m_node == nullptr)
@@ -428,7 +478,7 @@ MapRef::mapGet(const lyric_runtime::DataCell &key) const
     if (m_node->type == MapNodeType::VALUE) {
         auto *curr = static_cast<ValueMapNode *>(m_node);
         // if key matches pair then return the value, otherwise key is not present in map
-        return is_equal(curr->key, key)? curr->value : lyric_runtime::DataCell();
+        return is_equal(curr->key, key)? curr->value : lyric_runtime::Operand();
     }
 
     // case 3: root node is an index, so perform search
@@ -437,7 +487,7 @@ MapRef::mapGet(const lyric_runtime::DataCell &key) const
 }
 
 MapNode *
-MapRef::mapUpdate(const lyric_runtime::DataCell &key, const lyric_runtime::DataCell &value) const
+MapRef::mapUpdate(const lyric_runtime::Operand &key, const lyric_runtime::Operand &value) const
 {
     // case 1: map is empty
     if (m_node == nullptr) {
@@ -481,7 +531,7 @@ MapRef::mapUpdate(const lyric_runtime::DataCell &key, const lyric_runtime::DataC
 }
 
 MapNode *
-MapRef::mapRemove(const lyric_runtime::DataCell &key) const
+MapRef::mapRemove(const lyric_runtime::Operand &key) const
 {
     // case 1: map is empty
     if (m_node == nullptr)
@@ -517,10 +567,8 @@ set_reachable(IndexMapNode *node)
             set_reachable(static_cast<IndexMapNode *>(child));
         } else {
             auto *value = static_cast<ValueMapNode *>(child);
-            if (value->key.type == lyric_runtime::DataCellType::Ref)
-                value->key.data.ref->setReachable();
-            if (value->value.type == lyric_runtime::DataCellType::Ref)
-                value->value.data.ref->setReachable();
+            value->key.setReachable();
+            value->value.setReachable();
         }
     }
 }
@@ -532,10 +580,8 @@ MapRef::setMembersReachable()
         return;
     if (m_node->type == MapNodeType::VALUE) {
         auto *value = static_cast<ValueMapNode *>(m_node);
-        if (value->key.type == lyric_runtime::DataCellType::Ref)
-            value->key.data.ref->setReachable();
-        if (value->value.type == lyric_runtime::DataCellType::Ref)
-            value->value.data.ref->setReachable();
+        value->key.setReachable();
+        value->value.setReachable();
     } else {
         set_reachable(static_cast<IndexMapNode *>(m_node));
     }
@@ -552,10 +598,8 @@ clear_reachable(IndexMapNode *index)
             clear_reachable(static_cast<IndexMapNode *>(child));
         } else {
             auto *value = static_cast<ValueMapNode *>(child);
-            if (value->key.type == lyric_runtime::DataCellType::Ref)
-                value->key.data.ref->clearReachable();
-            if (value->value.type == lyric_runtime::DataCellType::Ref)
-                value->value.data.ref->clearReachable();
+            value->key.clearReachable();
+            value->value.clearReachable();
         }
     }
 }
@@ -567,10 +611,8 @@ MapRef::clearMembersReachable()
         return;
     if (m_node->type == MapNodeType::VALUE) {
         auto *value = static_cast<ValueMapNode *>(m_node);
-        if (value->key.type == lyric_runtime::DataCellType::Ref)
-            value->key.data.ref->clearReachable();
-        if (value->value.type == lyric_runtime::DataCellType::Ref)
-            value->value.data.ref->clearReachable();
+        value->key.clearReachable();
+        value->value.clearReachable();
     } else {
         clear_reachable(static_cast<IndexMapNode *>(m_node));
     }
@@ -679,7 +721,7 @@ MapIterator::iteratorValid()
 }
 
 bool
-MapIterator::iteratorNext(lyric_runtime::DataCell &cell)
+MapIterator::iteratorNext(lyric_runtime::Operand &cell)
 {
     if (m_stack.empty())
         return false;
@@ -733,17 +775,19 @@ map_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
 
     if (frame.numRest() == 1) {
         auto *node = new ValueMapNode();
         node->type = MapNodeType::VALUE;
         node->refcount = 0;
-        auto pair = frame.getRest(0);
-        TU_ASSERT (pair.type == lyric_runtime::DataCellType::Ref);
-        node->key = static_cast<PairRef *>(pair.data.ref)->pairFirst();
-        node->value = static_cast<PairRef *>(pair.data.ref)->pairSecond();
+        auto arg = frame.getRest(0);
+        TU_ASSERT (arg.getRef(ref));
+        auto *pair = static_cast<PairRef *>(ref);
+        node->key = pair->pairFirst();
+        node->value = pair->pairSecond();
         node->hash = absl::HashOf(MapKey{node->key});
         map->setNode(node);
     } else {
@@ -752,10 +796,11 @@ map_ctor(
         node->table.fill(nullptr);
         node->refcount = 0;
         for (uint16_t i = 0; i < frame.numRest(); i++) {
-            auto pair = frame.getRest(i);
-            TU_ASSERT (pair.type == lyric_runtime::DataCellType::Ref);
-            auto key = static_cast<PairRef *>(pair.data.ref)->pairFirst();
-            auto value = static_cast<PairRef *>(pair.data.ref)->pairSecond();
+            auto arg = frame.getRest(i);
+            TU_ASSERT (arg.getRef(ref));
+            auto *pair = static_cast<PairRef *>(ref);
+            auto key = pair->pairFirst();
+            auto value = pair->pairSecond();
             uint32_t hash = absl::HashOf(MapKey{key});
             construct(node, key, value, hash, 32, 0);
         }
@@ -774,14 +819,14 @@ map_size(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-    TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
 
-    int64_t size = map->mapSize();
-    currentCoro->pushData(lyric_runtime::DataCell(size));
-    return {};
+    TU_ASSERT (frame.numArguments() == 0);
+    tu_int64 size = map->mapSize();
+    return currentCoro->pushData(lyric_runtime::Operand::fromI64(size));
 }
 
 tempo_utils::Status
@@ -793,14 +838,15 @@ map_contains(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
+
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
-    currentCoro->pushData(lyric_runtime::DataCell(map->mapContains(arg0)));
-    return {};
+    return currentCoro->pushData(lyric_runtime::Operand::fromBool(map->mapContains(arg0)));
 }
 
 tempo_utils::Status
@@ -812,12 +858,14 @@ map_get(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
+
     TU_ASSERT (frame.numArguments() == 2);
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto value = map->mapGet(arg0);
     if (!value.isValid()) {
@@ -836,22 +884,23 @@ map_update(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
+
     TU_ASSERT (frame.numArguments() == 2);
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapUpdate(arg0, arg1);
     TU_ASSERT (node != nullptr);
 
-    auto ref = state->heapManager()->allocateRef<MapRef>(map->getVirtualTable());
-    auto *instance = static_cast<MapRef *>(ref.data.ref);
-    instance->setNode(node);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto copy = state->heapManager()->allocateRef<MapRef>(map->getVirtualTable());
+    TU_ASSERT (copy.getRef(ref));
+    auto *mapcopy = static_cast<MapRef *>(ref);
+    mapcopy->setNode(node);
+    return currentCoro->pushData(copy);
 }
 
 tempo_utils::Status
@@ -863,26 +912,26 @@ map_remove(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
+
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapRemove(arg0);
-
     if (node != nullptr) {
         // key was removed, so allocate a new Map containing the changed structure
-        auto ref = state->heapManager()->allocateRef<MapRef>(map->getVirtualTable());
-        auto *instance = static_cast<MapRef *>(ref.data.ref);
-        instance->setNode(node);
-        currentCoro->pushData(ref);
+        auto copy = state->heapManager()->allocateRef<MapRef>(map->getVirtualTable());
+        TU_ASSERT (copy.getRef(ref));
+        auto *mapcopy = static_cast<MapRef *>(ref);
+        mapcopy->setNode(node);
+        return currentCoro->pushData(copy);
     } else {
         // key was not present in the map, so return the existing reference
-        currentCoro->pushData(lyric_runtime::DataCell::forRef(map));
+        return currentCoro->pushData(receiver);
     }
-
-    return {};
 }
 
 tempo_utils::Status
@@ -894,25 +943,21 @@ map_iterate(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
-    lyric_runtime::DataCell cell;
-    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
-    TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<MapRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *map = static_cast<MapRef *>(ref);
+
+    lyric_runtime::Operand cell;
+    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
 
     lyric_runtime::InterpreterStatus status;
     vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 
-    auto ref = state->heapManager()->allocateRef<MapIterator>(vtable, instance);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto iterator = state->heapManager()->allocateRef<MapIterator>(vtable, map);
+    return currentCoro->pushData(iterator);
 }
 
 tempo_utils::Status
@@ -925,9 +970,7 @@ map_iterator_alloc(
     auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<MapIterator>(vtable);
-    currentCoro->pushData(ref);
-
-    return {};
+    return currentCoro->pushData(ref);
 }
 
 tempo_utils::Status
@@ -939,15 +982,12 @@ map_iterator_valid(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
-
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
-
-    return {};
+    return currentCoro->pushData(lyric_runtime::Operand::fromBool(ref->iteratorValid()));
 }
 
 tempo_utils::Status
@@ -959,18 +999,15 @@ map_iterator_next(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
 
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-
-    lyric_runtime::DataCell next;
-    if (!instance->iteratorNext(next)) {
-        next = lyric_runtime::DataCell();
+    lyric_runtime::Operand next;
+    if (!ref->iteratorNext(next)) {
+        next = lyric_runtime::Operand();
     }
-    currentCoro->pushData(next);
-
-    return {};
+    return currentCoro->pushData(next);
 }

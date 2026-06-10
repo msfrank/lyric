@@ -144,7 +144,7 @@ lyric_test::matchers::CompileModule(const Matcher<tempo_tracing::TempoSpanset> &
     return TestComputationMatcher(matcher);
 }
 
-lyric_test::matchers::RunModuleMatcher::RunModuleMatcher(const Matcher<lyric_runtime::DataCell> &matcher)
+lyric_test::matchers::RunModuleMatcher::RunModuleMatcher(const Matcher<lyric_runtime::Operand> &matcher)
     : m_matcher(matcher)
 {
 }
@@ -173,7 +173,7 @@ lyric_test::matchers::RunModuleMatcher::DescribeNegationTo(std::ostream *os) con
 }
 
 Matcher<lyric_test::RunModule>
-lyric_test::matchers::RunModule(const Matcher<lyric_runtime::DataCell> &matcher)
+lyric_test::matchers::RunModule(const Matcher<lyric_runtime::Operand> &matcher)
 {
     return RunModuleMatcher(matcher);
 }

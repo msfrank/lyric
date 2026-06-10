@@ -7,24 +7,24 @@
 
 lyric_runtime::ProtocolRef::ProtocolRef(
     const ExistentialTable *etable,
-    const DataCell &descriptor,
     const lyric_common::SymbolUrl &protocolUrl,
-    const DataCell &type,
+    DescriptorEntry *descriptorEntry,
+    TypeEntry *typeEntry,
     lyric_object::PortType port,
     lyric_object::CommunicationType comm)
     : m_etable(etable),
-      m_descriptor(descriptor),
       m_url(protocolUrl),
-      m_type(type),
+      m_descriptor(descriptorEntry),
+      m_type(typeEntry),
       m_port(port),
       m_comm(comm),
       m_reachable(false)
 {
-    TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (m_descriptor.type == DataCellType::Descriptor);
-    TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
+    TU_NOTNULL (m_etable);
+    TU_NOTNULL (m_descriptor);
+    TU_NOTNULL (m_type);
+    TU_ASSERT (m_descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
     TU_ASSERT (m_url.isValid());
-    TU_ASSERT (m_type.type == DataCellType::Type);
     TU_ASSERT (m_port != lyric_object::PortType::Invalid);
     TU_ASSERT (m_comm != lyric_object::CommunicationType::Invalid);
 }
@@ -37,7 +37,7 @@ lyric_runtime::ProtocolRef::~ProtocolRef()
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::ProtocolRef::getDescriptorEntry() const
 {
-    return m_etable->getDescriptor().data.descriptor;
+    return m_etable->getDescriptorEntry();
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -58,46 +58,46 @@ lyric_runtime::ProtocolRef::getExtensionResolver() const
     return m_etable;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::ProtocolRef::protocolIsAcceptor() const
 {
-    return DataCell(m_port == lyric_object::PortType::Accept);
+    return Operand::fromBool(m_port == lyric_object::PortType::Accept);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::ProtocolRef::protocolIsConnector() const
 {
-    return DataCell(m_port == lyric_object::PortType::Connect);
+    return Operand::fromBool(m_port == lyric_object::PortType::Connect);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::ProtocolRef::protocolCanSend() const
 {
     switch (m_comm) {
         case lyric_object::CommunicationType::Send:
         case lyric_object::CommunicationType::SendAndReceive:
-            return DataCell(true);
+            return Operand::fromBool(true);
         default:
-            return DataCell(false);
+            return Operand::fromBool(false);
     }
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::ProtocolRef::protocolCanReceive() const
 {
     switch (m_comm) {
         case lyric_object::CommunicationType::Receive:
         case lyric_object::CommunicationType::SendAndReceive:
-            return DataCell(true);
+            return Operand::fromBool(true);
         default:
-            return DataCell(false);
+            return Operand::fromBool(false);
     }
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::ProtocolRef::protocolType() const
 {
-    return m_type;
+    return Operand::fromType(m_type);
 }
 
 lyric_common::SymbolUrl
@@ -180,13 +180,13 @@ lyric_runtime::ProtocolRef::statusMessage()
 }
 
 bool
-lyric_runtime::ProtocolRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::ProtocolRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::ProtocolRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::ProtocolRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -198,7 +198,7 @@ lyric_runtime::ProtocolRef::iteratorValid()
 }
 
 bool
-lyric_runtime::ProtocolRef::iteratorNext(DataCell &next)
+lyric_runtime::ProtocolRef::iteratorNext(Operand &next)
 {
     return false;
 }
@@ -216,13 +216,13 @@ lyric_runtime::ProtocolRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::ProtocolRef::resolveFuture(DataCell &result)
+lyric_runtime::ProtocolRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::ProtocolRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
+lyric_runtime::ProtocolRef::applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state)
 {
     return false;
 }

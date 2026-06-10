@@ -1,6 +1,5 @@
 
 #include <lyric_runtime/call_cell.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_test/test_inspector.h>
 #include <tempo_utils/log_console.h>
@@ -49,7 +48,7 @@ lyric_test::TestInspector::afterOp(
 
 tempo_utils::Status
 lyric_test::TestInspector::onInterrupt(
-    const lyric_runtime::DataCell &cell,
+    const lyric_runtime::Operand &cell,
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
@@ -57,7 +56,7 @@ lyric_test::TestInspector::onInterrupt(
         lyric_runtime::InterpreterCondition::kInterrupted, cell.toString());
 }
 
-tempo_utils::Result<lyric_runtime::DataCell>
+tempo_utils::Result<lyric_runtime::Operand>
 lyric_test::TestInspector::onError(
     const lyric_object::OpCell &op,
     const tempo_utils::Status &status,
@@ -67,10 +66,10 @@ lyric_test::TestInspector::onError(
     return status;
 }
 
-tempo_utils::Result<lyric_runtime::DataCell>
+tempo_utils::Result<lyric_runtime::Operand>
 lyric_test::TestInspector::onHalt(
     const lyric_object::OpCell &op,
-    const lyric_runtime::DataCell &cell,
+    const lyric_runtime::Operand &cell,
     lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {

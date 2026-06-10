@@ -21,7 +21,7 @@ TEST_F(CompileTry, EvaluateTryCatch)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(1))));
+        RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileTry, EvaluateTryCatchPredicate)
@@ -37,7 +37,7 @@ TEST_F(CompileTry, EvaluateTryCatchPredicate)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellString("something failed"))));
+        RunModule(OperandString("something failed"))));
 }
 
 TEST_F(CompileTry, EvaluateNestedTryCatchInner)
@@ -57,7 +57,7 @@ TEST_F(CompileTry, EvaluateNestedTryCatchInner)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellString("inner"))));
+        RunModule(OperandString("inner"))));
 }
 
 TEST_F(CompileTry, EvaluateNestedTryCatchOuter)
@@ -77,7 +77,7 @@ TEST_F(CompileTry, EvaluateNestedTryCatchOuter)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellString("outer"))));
+        RunModule(OperandString("outer"))));
 }
 
 
@@ -103,7 +103,7 @@ TEST_F(CompileTry, EvaluateRaiseNewExceptionInCatch)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(4))));
+        RunModule(OperandInt(4))));
 }
 
 TEST_F(CompileTry, EvaluateReraiseExceptionInCatch)
@@ -128,5 +128,5 @@ TEST_F(CompileTry, EvaluateReraiseExceptionInCatch)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(4))));
+        RunModule(OperandInt(4))));
 }

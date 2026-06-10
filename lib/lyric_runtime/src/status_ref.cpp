@@ -30,7 +30,7 @@ lyric_runtime::StatusRef::~StatusRef()
 }
 
 bool
-lyric_runtime::StatusRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::StatusRef::getField(const Operand &field, Operand &value) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -44,7 +44,7 @@ lyric_runtime::StatusRef::getField(const DataCell &field, DataCell &value) const
 }
 
 bool
-lyric_runtime::StatusRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::StatusRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -66,10 +66,10 @@ lyric_runtime::StatusRef::statusCode()
     return m_statusCode;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::StatusRef::getStatusCode() const
 {
-    return DataCell(static_cast<tu_int64>(m_statusCode));
+    return Operand::fromI64(static_cast<tu_int64>(m_statusCode));
 }
 
 void
@@ -108,17 +108,19 @@ lyric_runtime::StatusRef::statusMessage()
     return message;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::StatusRef::getMessage() const
 {
-    return DataCell::forString(m_message);
+    return Operand::fromString(m_message);
 }
 
 void
-lyric_runtime::StatusRef::setMessage(const DataCell &message)
+lyric_runtime::StatusRef::setMessage(const Operand &message)
 {
-    TU_ASSERT (message.type == DataCellType::String);
-    m_message = message.data.str;
+    StringRef *statusMessage;
+    if (!message.getString(statusMessage))
+        return;
+    m_message = statusMessage;
 }
 
 std::string
@@ -140,11 +142,8 @@ lyric_runtime::StatusRef::setMembersReachable()
     if (m_message != nullptr) {
         m_message->setReachable();
     }
-    for (auto &cell : m_fields) {
-        if (cell.type == DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->setReachable();
-        }
+    for (auto &operand : m_fields) {
+        operand.setReachable();
     }
 }
 
@@ -154,10 +153,7 @@ lyric_runtime::StatusRef::clearMembersReachable()
     if (m_message != nullptr) {
         m_message->clearReachable();
     }
-    for (auto &cell : m_fields) {
-        if (cell.type == DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->clearReachable();
-        }
+    for (auto &operand : m_fields) {
+        operand.clearReachable();
     }
 }

@@ -14,7 +14,7 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardProtocol)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        MatchesDataCellType(lyric_runtime::DataCellType::Protocol))));
+        MatchesDataCellType(lyric_runtime::OperandType::Protocol))));
 }
 
 TEST_F(DiscardProtocolTests, EvaluateDiscardCanSend)
@@ -24,7 +24,7 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardCanSend)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellBool(true))));
+        OperandBool(true))));
 }
 
 TEST_F(DiscardProtocolTests, EvaluateDiscardCanReceive)
@@ -34,7 +34,7 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardCanReceive)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellBool(false))));
+        OperandBool(false))));
 }
 
 TEST_F(DiscardProtocolTests, EvaluateDiscardProtocolType)
@@ -44,5 +44,5 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardProtocolType)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        DataCellBool(true))));
+        OperandBool(true))));
 }

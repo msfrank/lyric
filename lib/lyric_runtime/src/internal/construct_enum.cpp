@@ -19,7 +19,7 @@ lyric_runtime::internal::construct_enum(
     auto existing = segmentManager->loadEnum(address, currentCoro, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    if (existing.type != DataCellType::Invalid) {
+    if (existing.isValid()) {
         TU_LOG_V << "loaded enum " << existing;
         return currentCoro->pushData(existing);
     }
@@ -56,7 +56,7 @@ lyric_runtime::internal::construct_enum(
     TU_RETURN_IF_NOT_OK (allocator(interp, state, vtable));
 
     // get the ref
-    DataCell *top;
+    Operand *top;
     TU_RETURN_IF_NOT_OK (currentCoro->peekData(&top));
     auto ref = *top;
 

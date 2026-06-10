@@ -20,7 +20,7 @@ TEST_F(CompileLambda, EvaluatePureLambda)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
+                     RunModule(OperandRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
 TEST_F(CompileLambda, EvaluatePureLambdaFrom)
@@ -34,7 +34,7 @@ TEST_F(CompileLambda, EvaluatePureLambdaFrom)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
+                     RunModule(OperandRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
 TEST_F(CompileLambda, EvaluateInvokePureLambda)
@@ -46,7 +46,7 @@ TEST_F(CompileLambda, EvaluateInvokePureLambda)
         f.Apply(2)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
@@ -59,7 +59,7 @@ TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
         f.Apply(2)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileLambda, EvaluateLambdaClosure)
@@ -74,7 +74,7 @@ TEST_F(CompileLambda, EvaluateLambdaClosure)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
+                     RunModule(OperandRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
 TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
@@ -87,7 +87,7 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
         f.Apply(2)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
@@ -100,7 +100,7 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
         f.Apply(2)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(CompileLambda, CompileInvokeLambdaClosureOverPrivateVariableFails)

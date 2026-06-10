@@ -3,8 +3,6 @@
 
 #include "abstract_heap.h"
 #include "abstract_ref.h"
-#include "data_cell.h"
-#include "hash_data_cell.h"
 #include "virtual_table.h"
 
 namespace lyric_runtime {
@@ -22,19 +20,19 @@ namespace lyric_runtime {
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
-        bool getField(const DataCell &field, DataCell &value) const override;
-        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
+        bool getField(const Operand &field, Operand &value) const override;
+        bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) const override;
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         bool iteratorValid() override;
-        bool iteratorNext(DataCell &cell) override;
+        bool iteratorNext(Operand &cell) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
-        bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
+        bool resolveFuture(Operand &result) override;
+        bool applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state) override;
         tempo_utils::StatusCode statusCode() override;
         std::string statusMessage() override;
         bool isReachable() const override;
@@ -53,7 +51,7 @@ namespace lyric_runtime {
         virtual void clearMembersReachable();
 
     private:
-        absl::flat_hash_map<DataCell,DataCell> m_fields;
+        absl::flat_hash_map<OperandIdentity,Operand> m_fields;
         AbstractHeap *m_heap;
         uint32_t m_offset;
         bool m_reachable;

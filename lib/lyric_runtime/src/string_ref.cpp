@@ -50,7 +50,7 @@ lyric_runtime::StringRef::~StringRef()
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::StringRef::getDescriptorEntry() const
 {
-    return m_etable->getDescriptor().data.descriptor;
+    return m_etable->getDescriptorEntry();
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -203,11 +203,11 @@ lyric_runtime::StringRef::toString() const
     return absl::Substitute("<$0: StringRef \"$1\">", this, s);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::StringRef::stringAt(int index) const
 {
     if (m_rope.isEmpty())
-        return DataCell::undef();
+        return Operand::undef();
 
     try {
 
@@ -220,30 +220,30 @@ lyric_runtime::StringRef::stringAt(int index) const
             do {
                 utf8::utfchar32_t chr = utf8::next(it, end);
                 if (curr++ == index)
-                    return DataCell(chr);
+                    return Operand::fromC32(chr);
             } while (it != end);
         }
-        return DataCell::undef();
+        return Operand::undef();
 
     } catch (utf8::not_enough_room &ex) {
-        return DataCell::undef();
+        return Operand::undef();
     } catch (utf8::invalid_code_point &ex) {
-        return DataCell::undef();
+        return Operand::undef();
     }
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::StringRef::stringCompare(StringRef *other) const
 {
     TU_ASSERT (other != nullptr);
-    return DataCell(static_cast<tu_int64>(compare(other)));
+    return Operand::fromI64(static_cast<tu_int64>(compare(other)));
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::StringRef::stringLength() const
 {
     if (m_rope.isEmpty())
-        return DataCell(static_cast<int64_t>(0));
+        return Operand::fromI64(static_cast<int64_t>(0));
 
     try {
 
@@ -258,12 +258,12 @@ lyric_runtime::StringRef::stringLength() const
                 length++;
             } while (it != end);
         }
-        return DataCell(static_cast<tu_int64>(length));
+        return Operand::fromI64(static_cast<tu_int64>(length));
 
     } catch (utf8::not_enough_room &ex) {
-        return DataCell::undef();
+        return Operand::undef();
     } catch (utf8::invalid_code_point &ex) {
-        return DataCell::undef();
+        return Operand::undef();
     }
 }
 
@@ -313,13 +313,13 @@ lyric_runtime::StringRef::clearReachable()
 }
 
 bool
-lyric_runtime::StringRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::StringRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::StringRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::StringRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -331,7 +331,7 @@ lyric_runtime::StringRef::iteratorValid()
 }
 
 bool
-lyric_runtime::StringRef::iteratorNext(DataCell &next)
+lyric_runtime::StringRef::iteratorNext(Operand &next)
 {
     return false;
 }
@@ -349,13 +349,13 @@ lyric_runtime::StringRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::StringRef::resolveFuture(DataCell &result)
+lyric_runtime::StringRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::StringRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
+lyric_runtime::StringRef::applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state)
 {
     return false;
 }

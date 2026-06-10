@@ -8,7 +8,7 @@
 #include <lyric_runtime/type_manager.h>
 
 lyric_runtime::TypeManager::TypeManager(
-    std::vector<DataCell> &&intrinsiccache,
+    std::vector<Operand> &&intrinsiccache,
     SegmentManager *segmentManager)
     : m_intrinsiccache(std::move(intrinsiccache)),
       m_segmentManager(segmentManager)
@@ -16,35 +16,47 @@ lyric_runtime::TypeManager::TypeManager(
     TU_ASSERT (m_segmentManager != nullptr);
 }
 
-tempo_utils::Result<lyric_runtime::DataCell>
-lyric_runtime::TypeManager::typeOf(const DataCell &value)
+tempo_utils::Result<lyric_runtime::Operand>
+lyric_runtime::TypeManager::typeOf(const Operand &value)
 {
-    switch (value.type) {
-        case DataCellType::Nil:
+    switch (value.getType()) {
+        case OperandType::Nil:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Nil)];
-        case DataCellType::Undef:
+        case OperandType::Undef:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Undef)];
-        case DataCellType::Bool:
+        case OperandType::Bool:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Bool)];
-        case DataCellType::Int64:
+        case OperandType::Int64:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Int64)];
-        case DataCellType::Float64:
+        case OperandType::Float64:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Float64)];
-        case DataCellType::Char32:
+        case OperandType::Char32:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Char32)];
-        case DataCellType::String:
+        case OperandType::String:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::String)];
-        case DataCellType::Bytes:
+        case OperandType::Bytes:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Bytes)];
-        case DataCellType::Ref:
-            return value.data.ref->getVirtualTable()->getType();
-        case DataCellType::Status:
-            return value.data.status->getVirtualTable()->getType();
-        case DataCellType::Protocol:
-            return value.data.protocol->protocolType();
 
-        case DataCellType::Descriptor: {
-            auto section = value.data.descriptor->getLinkageSection();
+        case OperandType::Ref: {
+            BaseRef *ref;
+            TU_ASSERT (value.getRef(ref));
+            return ref->getVirtualTable()->getType();
+        }
+        case OperandType::Status: {
+            StatusRef *status;
+            TU_ASSERT (value.getStatus(status));
+            return status->getVirtualTable()->getType();
+        }
+        case OperandType::Protocol: {
+            ProtocolRef *protocol;
+            TU_ASSERT (value.getProtocol(protocol));
+            return protocol->protocolType();
+        }
+
+        case OperandType::Descriptor: {
+            DescriptorEntry *descriptorEntry;
+            TU_ASSERT (value.getDescriptor(descriptorEntry));
+            auto section = descriptorEntry->getLinkageSection();
             switch (section) {
                 case lyric_object::LinkageSection::Action:
                     return m_intrinsiccache[static_cast<int>(IntrinsicType::Action)];
@@ -74,7 +86,7 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             }
         }
 
-        case DataCellType::Type:
+        case OperandType::Type:
             return InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "type descriptor has no type");
         default:
@@ -85,21 +97,23 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
 
 inline lyric_runtime::InterpreterStatus
 resolve_type_to_descriptor(
-    const lyric_runtime::DataCell &type,
-    lyric_runtime::DataCell &descriptor,
+    const lyric_runtime::Operand &type,
+    lyric_runtime::Operand &descriptor,
     lyric_runtime::SegmentManager *segmentManager)
 {
-    TU_ASSERT (type.type == lyric_runtime::DataCellType::Type);
-    auto *entry = type.data.descriptor;
+    lyric_runtime::TypeEntry *typeEntry;
+    if (!type.getType(typeEntry))
+        return lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid descriptor");
 
     // load the type descriptor from the specified assembly
-    auto *segment = entry->getSegment();
+    auto *segment = typeEntry->getSegment();
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
 
     auto object = segment->getObject();
-    auto descriptorType = object.getType(entry->getDescriptorIndex());
+    auto descriptorType = object.getType(typeEntry->getDescriptorIndex());
     if (!descriptorType.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing type descriptor");
@@ -123,7 +137,7 @@ resolve_type_to_descriptor(
                 return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
             }
 
-            auto typeCell = lyric_runtime::DataCell::forType(segment->lookupType(concreteIndex));
+            auto typeCell = lyric_runtime::Operand::fromType(segment->lookupType(concreteIndex));
             return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
         }
 
@@ -135,31 +149,33 @@ resolve_type_to_descriptor(
     }
 
     // if the descriptor assignable type is not concrete, return invalid cell
-    descriptor = lyric_runtime::DataCell();
+    descriptor = lyric_runtime::Operand();
     return {};
 }
 
 inline lyric_runtime::InterpreterStatus
 resolve_super_type(
-    const lyric_runtime::DataCell &type,
-    lyric_runtime::DataCell &super,
+    const lyric_runtime::Operand &type,
+    lyric_runtime::Operand &super,
     lyric_runtime::SegmentManager *segmentManager)
 {
-    TU_ASSERT (type.type == lyric_runtime::DataCellType::Type);
-    auto *entry = type.data.descriptor;
+    lyric_runtime::TypeEntry *typeEntry;
+    if (!type.getType(typeEntry))
+        return lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid descriptor");
 
-    auto *segment = entry->getSegment();
+    auto *segment = typeEntry->getSegment();
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
     auto object = segment->getObject();
 
-    auto descriptorType = object.getType(entry->getDescriptorIndex());
+    auto descriptorType = object.getType(typeEntry->getDescriptorIndex());
     if (!descriptorType.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing type descriptor");
     if (!descriptorType.hasSuperType()) {
-        super = lyric_runtime::DataCell();
+        super = lyric_runtime::Operand();
         return {};
     }
     auto superType = descriptorType.getSuperType();
@@ -173,56 +189,38 @@ resolve_super_type(
 }
 
 tempo_utils::Result<lyric_runtime::TypeComparison>
-lyric_runtime::TypeManager::compareTypes(const DataCell &lhs, const DataCell &rhs)
+lyric_runtime::TypeManager::compareTypes(const Operand &lhs, const Operand &rhs)
 {
-    InterpreterStatus status;
-    DataCell ld;
-    DataCell rd;
-    DataCell superType;
+    Operand ld;
+    Operand rd;
+    Operand superType;
 
-    if (lhs.type != DataCellType::Type)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "type comparison has invalid lhs");
-    if (rhs.type != DataCellType::Type)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "type comparison has invalid rhs");
-
-    status = resolve_type_to_descriptor(lhs, ld, m_segmentManager);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (resolve_type_to_descriptor(lhs, ld, m_segmentManager));
     if (!ld.isValid())
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid lhs descriptor");
 
-    status = resolve_type_to_descriptor(rhs, rd, m_segmentManager);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (resolve_type_to_descriptor(rhs, rd, m_segmentManager));
     if (!rd.isValid())
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid rhs descriptor");
 
     // if lhs and rhs are equal, then the comparison result is equal
-    if (ld == rd)
+    if (ld.isSameAs(rd))
         return TypeComparison::EQUAL;
 
     // if an ancestor of lhs equals rhs, then the comparison result is extends
-    status = resolve_super_type(lhs, superType, m_segmentManager);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (resolve_super_type(lhs, superType, m_segmentManager));
 
     while (superType.isValid()) {
-        status = resolve_type_to_descriptor(superType, ld, m_segmentManager);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (resolve_type_to_descriptor(superType, ld, m_segmentManager));
         if (!ld.isValid())
             return InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "type comparison has invalid lhs");
-        if (ld == rd)
+        if (ld.isSameAs(rd))
             return TypeComparison::EXTENDS;
         auto curr = superType;
-        status = resolve_super_type(curr, superType, m_segmentManager);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (resolve_super_type(curr, superType, m_segmentManager));
     }
 
     // otherwise lhs is not a subtype of rhs

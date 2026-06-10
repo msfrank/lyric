@@ -131,7 +131,7 @@ lyric_runtime::SegmentManager::resolveString(
     return internal::resolve_string(sp, index, status);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::resolveDescriptor(
     const BytecodeSegment *sp,
     lyric_object::LinkageSection section,
@@ -141,7 +141,7 @@ lyric_runtime::SegmentManager::resolveDescriptor(
     return internal::resolve_descriptor(sp, section, address, &m_data, status);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::resolveSymbol(
     const BytecodeSegment *sp,
     tu_uint32 address,
@@ -150,7 +150,7 @@ lyric_runtime::SegmentManager::resolveSymbol(
     return internal::resolve_symbol(sp, address, &m_data, status);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::resolveReceiver(
     const BytecodeSegment *sp,
     tu_uint32 address,
@@ -161,7 +161,7 @@ lyric_runtime::SegmentManager::resolveReceiver(
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveClassVirtualTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_class_virtual_table(descriptor, &m_data, status);
@@ -169,7 +169,7 @@ lyric_runtime::SegmentManager::resolveClassVirtualTable(
 
 const lyric_runtime::ConceptTable *
 lyric_runtime::SegmentManager::resolveConceptTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_concept_table(descriptor, &m_data, status);
@@ -177,7 +177,7 @@ lyric_runtime::SegmentManager::resolveConceptTable(
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveEnumVirtualTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_enum_virtual_table(descriptor, &m_data, status);
@@ -185,7 +185,7 @@ lyric_runtime::SegmentManager::resolveEnumVirtualTable(
 
 const lyric_runtime::ExistentialTable *
 lyric_runtime::SegmentManager::resolveExistentialTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_existential_table(descriptor, &m_data, status);
@@ -193,7 +193,7 @@ lyric_runtime::SegmentManager::resolveExistentialTable(
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveInstanceVirtualTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_instance_virtual_table(descriptor, &m_data, status);
@@ -201,7 +201,7 @@ lyric_runtime::SegmentManager::resolveInstanceVirtualTable(
 
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveStructVirtualTable(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_struct_virtual_table(descriptor, &m_data, status);
@@ -226,7 +226,7 @@ lyric_runtime::SegmentManager::pushSymbolDescriptorOntoStack(
     return internal::push_symbol_descriptor_onto_stack(symbolUrl, sp, currentCoro, &m_data);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::loadStatic(
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -252,7 +252,7 @@ lyric_runtime::SegmentManager::loadStatic(
 bool
 lyric_runtime::SegmentManager::storeStatic(
     tu_uint32 address,
-    const DataCell &value,
+    const Operand &value,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -273,7 +273,7 @@ lyric_runtime::SegmentManager::storeStatic(
     return segment->setStatic(linkage->value, value);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::loadInstance(
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -299,7 +299,7 @@ lyric_runtime::SegmentManager::loadInstance(
 bool
 lyric_runtime::SegmentManager::storeInstance(
     tu_uint32 address,
-    const DataCell &value,
+    const Operand &value,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -320,7 +320,7 @@ lyric_runtime::SegmentManager::storeInstance(
     return segment->setInstance(linkage->value, value);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::loadEnum(
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -346,7 +346,7 @@ lyric_runtime::SegmentManager::loadEnum(
 bool
 lyric_runtime::SegmentManager::storeEnum(
     tu_uint32 address,
-    const DataCell &value,
+    const Operand &value,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -367,7 +367,7 @@ lyric_runtime::SegmentManager::storeEnum(
     return segment->setEnum(linkage->value, value);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::loadProtocol(
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -393,7 +393,7 @@ lyric_runtime::SegmentManager::loadProtocol(
 bool
 lyric_runtime::SegmentManager::storeProtocol(
     tu_uint32 address,
-    const DataCell &value,
+    const Operand &value,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -414,7 +414,7 @@ lyric_runtime::SegmentManager::storeProtocol(
     return segment->setProtocol(linkage->value, value);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::SegmentManager::loadNamespace(
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -440,7 +440,7 @@ lyric_runtime::SegmentManager::loadNamespace(
 bool
 lyric_runtime::SegmentManager::storeNamespace(
     tu_uint32 address,
-    const DataCell &value,
+    const Operand &value,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {

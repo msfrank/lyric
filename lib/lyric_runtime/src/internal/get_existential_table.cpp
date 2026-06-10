@@ -3,7 +3,6 @@
 #include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/get_existential_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -11,14 +10,14 @@
 
 const lyric_runtime::ExistentialTable *
 lyric_runtime::internal::get_existential_table(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::Descriptor ||
-        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Existential) {
+    DescriptorEntry *existentialDescriptor;
+    if (!descriptor.getDescriptor(existentialDescriptor, lyric_object::LinkageSection::Existential)) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid existential descriptor");
         return nullptr;
@@ -27,29 +26,26 @@ lyric_runtime::internal::get_existential_table(
     if (segmentManagerData->etablecache.contains(descriptor))
         return segmentManagerData->etablecache[descriptor];
 
-    auto *entry = descriptor.data.descriptor;
-    auto *existentialSegment = entry->getSegment();
+    auto *existentialSegment = existentialDescriptor->getSegment();
     auto existentialObject = existentialSegment->getObject();
-    auto existentialIndex = entry->getDescriptorIndex();
-    auto existentialDescriptor = existentialObject.getExistential(existentialIndex);
-    auto existentialType = DataCell::forType(
-        existentialSegment->lookupType(
-            existentialDescriptor.getExistentialType().getDescriptorOffset()));
+    auto existentialIndex = existentialDescriptor->getDescriptorIndex();
+    auto existentialWalker = existentialObject.getExistential(existentialIndex);
+    auto *existentialType = existentialSegment->lookupType(existentialWalker.getExistentialType().getDescriptorOffset());
 
     const ExistentialTable *parentTable = nullptr;
-    absl::flat_hash_map<DataCell,VirtualMethod> methods;
-    absl::flat_hash_map<DataCell,ImplTable> impls;
+    absl::flat_hash_map<OperandIdentity,VirtualMethod> methods;
+    absl::flat_hash_map<OperandIdentity,ImplTable> impls;
 
     // if existential has a superexistential, then resolve its virtual table
-    if (existentialDescriptor.hasSuperExistential()) {
+    if (existentialWalker.hasSuperExistential()) {
         tu_uint32 superExistentialAddress;
 
-        switch (existentialDescriptor.superExistentialAddressType()) {
+        switch (existentialWalker.superExistentialAddressType()) {
             case lyric_object::AddressType::Far:
-                superExistentialAddress = existentialDescriptor.getFarSuperExistential().getLinkAddress();
+                superExistentialAddress = existentialWalker.getFarSuperExistential().getLinkAddress();
                 break;
             case lyric_object::AddressType::Near:
-                superExistentialAddress = existentialDescriptor.getNearSuperExistential().getDescriptorOffset();
+                superExistentialAddress = existentialWalker.getNearSuperExistential().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
@@ -73,8 +69,8 @@ lyric_runtime::internal::get_existential_table(
 
     // resolve each method for the existential
 
-    for (tu_uint8 i = 0; i < existentialDescriptor.numMethods(); i++) {
-        auto method = existentialDescriptor.getMethod(i);
+    for (tu_uint8 i = 0; i < existentialWalker.numMethods(); i++) {
+        auto method = existentialWalker.getMethod(i);
 
         tu_uint32 callAddress;
 
@@ -97,8 +93,15 @@ lyric_runtime::internal::get_existential_table(
         if (status.notOk())
             return nullptr;
 
-        auto *callSegment = existentialCall.data.descriptor->getSegment();
-        auto callIndex = existentialCall.data.descriptor->getDescriptorIndex();
+        DescriptorEntry *callDescriptor;
+        if (!existentialCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid existential call descriptor");
+            return nullptr;
+        }
+
+        auto *callSegment = callDescriptor->getSegment();
+        auto callIndex = callDescriptor->getDescriptorIndex();
         auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
@@ -108,11 +111,11 @@ lyric_runtime::internal::get_existential_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < existentialDescriptor.numImpls(); i++) {
-        auto impl = existentialDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < existentialWalker.numImpls(); i++) {
+        auto impl = existentialWalker.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
-        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        absl::flat_hash_map<OperandIdentity,VirtualMethod> extensions;
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
@@ -158,8 +161,15 @@ lyric_runtime::internal::get_existential_table(
             if (status.notOk())
                 return nullptr;
 
-            auto *callSegment = implCall.data.descriptor->getSegment();
-            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            DescriptorEntry *callDescriptor;
+            if (!implCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid extension call descriptor");
+                return nullptr;
+            }
+
+            auto *callSegment = callDescriptor->getSegment();
+            auto callIndex = callDescriptor->getDescriptorIndex();
             auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
@@ -184,10 +194,17 @@ lyric_runtime::internal::get_existential_table(
         if (status.notOk())
             return nullptr;
 
-        impls.try_emplace(implConcept, existentialSegment, implConcept, existentialType, extensions);
+        DescriptorEntry *conceptDescriptor;
+        if (!implConcept.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl concept descriptor");
+            return nullptr;
+        }
+
+        impls.try_emplace(implConcept, existentialSegment, conceptDescriptor, existentialType, extensions);
     }
 
-    auto *etable = new ExistentialTable(existentialSegment, descriptor, existentialType, parentTable, methods, impls);
+    auto *etable = new ExistentialTable(existentialSegment, existentialDescriptor, existentialType, parentTable, methods, impls);
     segmentManagerData->etablecache[descriptor] = etable;
 
     return etable;

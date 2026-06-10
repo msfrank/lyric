@@ -30,25 +30,35 @@ protected:
     }
 };
 
+class BaseRefImpl : public lyric_runtime::BaseRef {
+public:
+    BaseRefImpl(): BaseRef(nullptr) {};
+    ~BaseRefImpl() override = default;
+    std::string toString() const override { return {}; }
 
-TEST_F (PointerOperand, RoundtripAbstractRef)
+protected:
+    void setMembersReachable() override {};
+    void clearMembersReachable() override {};
+};
+
+TEST_F (PointerOperand, RoundtripBaseRef)
 {
-    MockRef ref;
-    lyric_runtime::AbstractRef *in = &ref;
+    BaseRefImpl ref;
+    lyric_runtime::BaseRef *in = &ref;
     auto value = lyric_runtime::Operand::fromRef(in);
-    ASSERT_EQ (lyric_runtime::DataCellType::Ref, value.getType());
+    ASSERT_EQ (lyric_runtime::OperandType::Ref, value.getType());
     ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
-    lyric_runtime::AbstractRef *out;
+    lyric_runtime::BaseRef *out;
     ASSERT_TRUE (value.getRef(out));
     ASSERT_EQ (in, out);
 }
 
-TEST_F (PointerOperand, ConversionFromAbstractRefFailsWhenNullPointer)
+TEST_F (PointerOperand, ConversionFromBaseRefFailsWhenNullPointer)
 {
-    lyric_runtime::AbstractRef *in = nullptr;
+    lyric_runtime::BaseRef *in = nullptr;
     auto value = lyric_runtime::Operand::fromRef(in);
     ASSERT_FALSE (value.isValid());
-    ASSERT_EQ (lyric_runtime::DataCellType::Invalid, value.getType());
+    ASSERT_EQ (lyric_runtime::OperandType::Invalid, value.getType());
 }
 
 TEST_F (PointerOperand, RoundtripBytes)
@@ -57,9 +67,10 @@ TEST_F (PointerOperand, RoundtripBytes)
     auto bytes = tempo_utils::MemoryBytes::copy("hello, world!");
     auto cell = heapManager->allocateBytes(bytes->getSpan());
 
-    lyric_runtime::BytesRef *in = cell.data.bytes;
+    lyric_runtime::BytesRef *in;
+    ASSERT_TRUE (cell.getBytes(in));
     auto value = lyric_runtime::Operand::fromBytes(in);
-    ASSERT_EQ (lyric_runtime::DataCellType::Bytes, value.getType());
+    ASSERT_EQ (lyric_runtime::OperandType::Bytes, value.getType());
     ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::BytesRef *out;
     ASSERT_TRUE (value.getBytes(out));
@@ -71,9 +82,10 @@ TEST_F (PointerOperand, RoundtripStatus)
     auto *heapManager = state->heapManager();
     auto cell = heapManager->allocateStatus(tempo_utils::StatusCode::kInternal, "failed");
 
-    lyric_runtime::StatusRef *in = cell.data.status;
+    lyric_runtime::StatusRef *in;
+    ASSERT_TRUE (cell.getStatus(in));
     auto value = lyric_runtime::Operand::fromStatus(in);
-    ASSERT_EQ (lyric_runtime::DataCellType::Status, value.getType());
+    ASSERT_EQ (lyric_runtime::OperandType::Status, value.getType());
     ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::StatusRef *out;
     ASSERT_TRUE (value.getStatus(out));
@@ -83,11 +95,12 @@ TEST_F (PointerOperand, RoundtripStatus)
 TEST_F (PointerOperand, RoundtripString)
 {
     auto *heapManager = state->heapManager();
-    auto cell = heapManager->allocateString("hello, world!");
+    auto cell = heapManager->allocateString("hello, world!", false);
 
-    lyric_runtime::StringRef *in = cell.data.str;
+    lyric_runtime::StringRef *in;
+    ASSERT_TRUE (cell.getString(in));
     auto value = lyric_runtime::Operand::fromString(in);
-    ASSERT_EQ (lyric_runtime::DataCellType::String, value.getType());
+    ASSERT_EQ (lyric_runtime::OperandType::String, value.getType());
     ASSERT_EQ (lyric_runtime::OverlayType::Pointer, value.getOverlay());
     lyric_runtime::StringRef *out;
     ASSERT_TRUE (value.getString(out));

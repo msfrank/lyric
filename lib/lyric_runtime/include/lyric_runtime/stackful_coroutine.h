@@ -5,7 +5,6 @@
 
 #include "bytecode_segment.h"
 #include "call_cell.h"
-#include "data_cell.h"
 
 namespace lyric_runtime {
 
@@ -37,19 +36,19 @@ namespace lyric_runtime {
         std::vector<CallCell>::const_reverse_iterator callsBegin() const;
         std::vector<CallCell>::const_reverse_iterator callsEnd() const;
 
-        tempo_utils::Status pushData(const DataCell &value);
-        tempo_utils::Status popData(DataCell &value);
-        tempo_utils::Status popData(int count, std::vector<DataCell> &values);
-        tempo_utils::Status peekData(const DataCell **valueptr, int offset = -1) const;
-        tempo_utils::Status peekData(DataCell **valueptr, int offset = -1);
+        tempo_utils::Status pushData(const Operand &value);
+        tempo_utils::Status popData(Operand &value);
+        tempo_utils::Status popData(int count, std::vector<Operand> &values);
+        tempo_utils::Status peekData(const Operand **valueptr, int offset = -1) const;
+        tempo_utils::Status peekData(Operand **valueptr, int offset = -1);
         tempo_utils::Status dropData(int offset = -1);
         tempo_utils::Status extendDataStack(int count);
         tempo_utils::Status resizeDataStack(int count);
 
         bool dataStackEmpty() const;
         int dataStackSize() const;
-        std::vector<DataCell>::const_reverse_iterator dataBegin() const;
-        std::vector<DataCell>::const_reverse_iterator dataEnd() const;
+        std::vector<Operand>::const_reverse_iterator dataBegin() const;
+        std::vector<Operand>::const_reverse_iterator dataEnd() const;
 
         void pushGuard(int stackGuard = -1);
         int popGuard();
@@ -63,7 +62,7 @@ namespace lyric_runtime {
         lyric_object::BytecodeIterator m_IP;        // instruction pointer
         BytecodeSegment *m_SP;                      // current segment pointer
         std::vector<CallCell> m_callStack;          // call frame stack
-        std::vector<DataCell> m_dataStack;          // data cell stack
+        std::vector<Operand> m_dataStack;          // data cell stack
         std::vector<int> m_guardStack;              // subinterpreter guard stack
     };
 }

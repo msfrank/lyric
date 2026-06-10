@@ -69,11 +69,17 @@ SeqRef::setNode(SeqNode *node)
     m_node->refcount++;
 }
 
-lyric_runtime::DataCell
-SeqRef::seqGet(const lyric_runtime::DataCell &index) const
+size_t
+SeqRef::numElements() const
 {
-    TU_ASSERT (index.type == lyric_runtime::DataCellType::Int64);
-    int i = index.data.i64;
+    return m_node != nullptr? m_node->count : 0;
+}
+
+lyric_runtime::Operand
+SeqRef::seqGet(const lyric_runtime::Operand &index) const
+{
+    tu_int64 i;
+    TU_ASSERT (index.getI64(i));
 
     // special case: empty seq returns invalid cell
     if (m_node == nullptr)
@@ -108,12 +114,10 @@ SeqRef::seqGet(const lyric_runtime::DataCell &index) const
     return {};
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 SeqRef::seqSize() const
 {
-    if (m_node != nullptr)
-        return lyric_runtime::DataCell((int64_t) m_node->count);
-    return lyric_runtime::DataCell((int64_t) 0);
+    return lyric_runtime::Operand::fromI64(numElements());
 }
 
 static SeqNode *
@@ -136,7 +140,7 @@ slice(SeqNode *node, int start, int length)
         sliced->type = SeqNodeType::LEAF;
         sliced->refcount = 0;
         sliced->count = length;
-        sliced->values = new lyric_runtime::DataCell[sliced->count];
+        sliced->values = new lyric_runtime::Operand[sliced->count];
         for (int i = 0; i < length; i++) {
             sliced->values[i] = leaf->values[start + 1];
         }
@@ -175,15 +179,14 @@ slice(SeqNode *node, int start, int length)
 }
 
 SeqNode *
-SeqRef::seqSlice(const lyric_runtime::DataCell &start, const lyric_runtime::DataCell &length) const
+SeqRef::seqSlice(const lyric_runtime::Operand &start, const lyric_runtime::Operand &length) const
 {
     if (m_node == nullptr)
         return nullptr;
 
-    TU_ASSERT (start.type == lyric_runtime::DataCellType::Int64);
-    int s = start.data.i64;
-    TU_ASSERT (length.type == lyric_runtime::DataCellType::Int64);
-    int l = length.data.i64;
+    tu_int64 s, l;
+    TU_ASSERT (start.getI64(s));
+    TU_ASSERT (length.getI64(l));
 
     if (s < 0) {                            // negative start indicates reverse slice starting from end of seq
         if (m_node->count <= l) {
@@ -209,8 +212,7 @@ set_reachable(SeqNode *node)
         auto *leaf = static_cast<const LeafSeqNode *>(node);
         for (int i = 0; i < leaf->count; i++) {
             auto &cell = leaf->values[i];
-            if (cell.type == lyric_runtime::DataCellType::Ref)
-                cell.data.ref->setReachable();
+            cell.setReachable();
         }
     } else {
         auto *concat = static_cast<const ConcatSeqNode *>(node);
@@ -235,8 +237,7 @@ clear_reachable(SeqNode *node)
         auto *leaf = static_cast<const LeafSeqNode *>(node);
         for (int i = 0; i < leaf->count; i++) {
             auto &cell = leaf->values[i];
-            if (cell.type == lyric_runtime::DataCellType::Ref)
-                cell.data.ref->clearReachable();
+            cell.clearReachable();
         }
     } else {
         auto *concat = static_cast<const ConcatSeqNode *>(node);
@@ -268,9 +269,7 @@ SeqIterator::SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq)
       m_seq(seq)
 {
     TU_ASSERT (m_seq != nullptr);
-    auto size = m_seq->seqSize();
-    TU_ASSERT (size.type == lyric_runtime::DataCellType::Int64);
-    m_size = size.data.i64;
+    m_size = m_seq->numElements();
 }
 
 std::string
@@ -286,15 +285,14 @@ SeqIterator::iteratorValid()
 }
 
 bool
-SeqIterator::iteratorNext(lyric_runtime::DataCell &cell)
+SeqIterator::iteratorNext(lyric_runtime::Operand &cell)
 {
     if (m_curr < m_size) {
-        cell = m_seq->seqGet(lyric_runtime::DataCell(static_cast<int64_t>(m_curr++)));
+        cell = m_seq->seqGet(lyric_runtime::Operand::fromI64(static_cast<int64_t>(m_curr++)));
         return true;
-    } else {
-        cell = lyric_runtime::DataCell();
-        return false;
     }
+    cell = lyric_runtime::Operand();
+    return false;
 }
 
 void
@@ -319,9 +317,7 @@ seq_alloc(
     auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
-    currentCoro->pushData(ref);
-
-    return {};
+    return currentCoro->pushData(ref);
 }
 
 tempo_utils::Status
@@ -334,15 +330,16 @@ seq_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
     if (frame.numRest() > 0) {
         auto *node = new LeafSeqNode();
         node->type = SeqNodeType::LEAF;
         node->refcount = 0;
         node->count = frame.numRest();
-        node->values = new lyric_runtime::DataCell[node->count];
+        node->values = new lyric_runtime::Operand[node->count];
         for (uint16_t i = 0; i < frame.numRest(); i++) {
             node->values[i] = frame.getRest(i);
         }
@@ -361,13 +358,13 @@ seq_size(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-    TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
-    currentCoro->pushData(seq->seqSize());
-    return {};
+    TU_ASSERT (frame.numArguments() == 0);
+    return currentCoro->pushData(seq->seqSize());
 }
 
 tempo_utils::Status
@@ -379,14 +376,14 @@ seq_get(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto value = seq->seqGet(arg0);
     if (!value.isValid()) {
@@ -405,13 +402,14 @@ seq_append(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
     TU_ASSERT(arg0.isValid());
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *left = seq->getNode();
     TU_ASSERT (left != nullptr);
@@ -422,7 +420,7 @@ seq_append(
     right->type = SeqNodeType::LEAF;
     right->refcount = 1;
     right->count = frame.numRest() + 1;
-    right->values = new lyric_runtime::DataCell[right->count];
+    right->values = new lyric_runtime::Operand[right->count];
     right->values[0] = arg0;
     for (uint16_t i = 0; i < frame.numRest(); i++) {
         right->values[i+1] = frame.getRest(i);
@@ -439,12 +437,11 @@ seq_append(
     node->count = left->count + right->count;
     node->height = lheight + 1;
 
-    auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
-    auto *instance = static_cast<SeqRef *>(ref.data.ref);
-    instance->setNode(node);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto copy = state->heapManager()->allocateRef<SeqRef>(vtable);
+    TU_ASSERT (copy.getRef(ref));
+    auto *seqcopy = static_cast<SeqRef *>(ref);
+    seqcopy->setNode(node);
+    return currentCoro->pushData(copy);
 }
 
 tempo_utils::Status
@@ -456,14 +453,15 @@ seq_extend(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Ref);
-    auto *other = static_cast<SeqRef *>(arg0.data.ref);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
+    TU_ASSERT(arg0.getRef(ref));
+    auto *other = static_cast<SeqRef *>(ref);
 
     auto *left = seq->getNode();
     TU_ASSERT (left != nullptr);
@@ -486,12 +484,11 @@ seq_extend(
     node->count = left->count + right->count;
     node->height = std::max(lheight, rheight) + 1;
 
-    auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
-    auto *instance = static_cast<SeqRef *>(ref.data.ref);
-    instance->setNode(node);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto copy = state->heapManager()->allocateRef<SeqRef>(vtable);
+    TU_ASSERT (copy.getRef(ref));
+    auto *seqcopy = static_cast<SeqRef *>(ref);
+    seqcopy->setNode(node);
+    return currentCoro->pushData(copy);
 }
 
 tempo_utils::Status
@@ -503,29 +500,27 @@ seq_slice(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::Int64);
     const auto &arg1 = frame.getArgument(1);
-    TU_ASSERT(arg1.type == lyric_runtime::DataCellType::Int64);
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *node = seq->seqSlice(arg0, arg1);
     if (node != nullptr) {
         vtable = seq->getVirtualTable();
         node->refcount++;
-        auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
-        auto *instance = static_cast<SeqRef *>(ref.data.ref);
-        instance->setNode(node);
-        currentCoro->pushData(ref);
+        auto copy = state->heapManager()->allocateRef<SeqRef>(vtable);
+        TU_ASSERT (copy.getRef(ref));
+        auto *seqcopy = static_cast<SeqRef *>(ref);
+        seqcopy->setNode(node);
+        return currentCoro->pushData(copy);
     } else {
-        currentCoro->pushData(lyric_runtime::DataCell::forRef(seq));
+        return currentCoro->pushData(receiver);
     }
-
-    return {};
 }
 
 tempo_utils::Status
@@ -537,25 +532,21 @@ seq_iterate(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-
-    lyric_runtime::DataCell cell;
-    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
-    TU_ASSERT(cell.type == lyric_runtime::DataCellType::Descriptor);
-    TU_ASSERT(cell.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Class);
-
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<SeqRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *seq = static_cast<SeqRef *>(ref);
+
+    lyric_runtime::Operand cell;
+    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
 
     lyric_runtime::InterpreterStatus status;
     vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 
-    auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable, instance);
-    currentCoro->pushData(ref);
-
-    return {};
+    auto iterator = state->heapManager()->allocateRef<SeqIterator>(vtable, seq);
+    return currentCoro->pushData(iterator);
 }
 
 tempo_utils::Status
@@ -568,9 +559,7 @@ seq_iterator_alloc(
     auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable);
-    currentCoro->pushData(ref);
-
-    return {};
+    return currentCoro->pushData(ref);
 }
 
 tempo_utils::Status
@@ -582,15 +571,12 @@ seq_iterator_valid(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
-
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
-
-    return {};
+    return currentCoro->pushData(lyric_runtime::Operand::fromBool(ref->iteratorValid()));
 }
 
 tempo_utils::Status
@@ -602,18 +588,15 @@ seq_iterator_next(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
 
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-
-    lyric_runtime::DataCell next;
-    if (!instance->iteratorNext(next)) {
-        next = lyric_runtime::DataCell();
+    lyric_runtime::Operand next;
+    if (!ref->iteratorNext(next)) {
+        next = lyric_runtime::Operand();
     }
-    currentCoro->pushData(next);
-
-    return {};
+    return currentCoro->pushData(next);
 }

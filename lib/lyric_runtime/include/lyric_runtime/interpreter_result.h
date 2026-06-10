@@ -6,8 +6,6 @@
 #include <tempo_utils/result.h>
 #include <tempo_utils/status.h>
 
-#include "data_cell.h"
-
 namespace lyric_runtime {
 
     constexpr const char *kLyricRuntimeInterpreterStatusNs = "dev.zuri.ns:lyric-runtime-interpreter-status-1";

@@ -3,7 +3,6 @@
 #include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/get_concept_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -11,14 +10,14 @@
 
 const lyric_runtime::ConceptTable *
 lyric_runtime::internal::get_concept_table(
-    const DataCell &descriptor,
+    const Operand &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::Descriptor ||
-        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Concept) {
+    DescriptorEntry *conceptDescriptor;
+    if (!descriptor.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid concept descriptor");
         return nullptr;
@@ -27,29 +26,26 @@ lyric_runtime::internal::get_concept_table(
     if (segmentManagerData->ctablecache.contains(descriptor))
         return segmentManagerData->ctablecache[descriptor];
 
-    auto *entry = descriptor.data.descriptor;
-    auto *conceptSegment = entry->getSegment();
+    auto *conceptSegment = conceptDescriptor->getSegment();
     auto conceptObject = conceptSegment->getObject();
-    auto conceptIndex = entry->getDescriptorIndex();
-    auto conceptDescriptor = conceptObject.getConcept(conceptIndex);
-    auto conceptType = DataCell::forType(
-        conceptSegment->lookupType(
-            conceptDescriptor.getConceptType().getDescriptorOffset()));
+    auto conceptIndex = conceptDescriptor->getDescriptorIndex();
+    auto conceptWalker = conceptObject.getConcept(conceptIndex);
+    auto *conceptType = conceptSegment->lookupType(conceptWalker.getConceptType().getDescriptorOffset());
 
     const ConceptTable *parentTable = nullptr;
-    absl::flat_hash_map<DataCell,ImplTable> impls;
+    absl::flat_hash_map<OperandIdentity,ImplTable> impls;
 
     // if concept has a superconcept, then resolve its virtual table
 
-    if (conceptDescriptor.hasSuperConcept()) {
+    if (conceptWalker.hasSuperConcept()) {
         tu_uint32 superConceptAddress;
 
-        switch (conceptDescriptor.superConceptAddressType()) {
+        switch (conceptWalker.superConceptAddressType()) {
             case lyric_object::AddressType::Far:
-                superConceptAddress = conceptDescriptor.getFarSuperConcept().getLinkAddress();
+                superConceptAddress = conceptWalker.getFarSuperConcept().getLinkAddress();
                 break;
             case lyric_object::AddressType::Near:
-                superConceptAddress = conceptDescriptor.getNearSuperConcept().getDescriptorOffset();
+                superConceptAddress = conceptWalker.getNearSuperConcept().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
@@ -75,11 +71,11 @@ lyric_runtime::internal::get_concept_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < conceptDescriptor.numImpls(); i++) {
-        auto impl = conceptDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < conceptWalker.numImpls(); i++) {
+        auto impl = conceptWalker.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
-        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        absl::flat_hash_map<OperandIdentity,VirtualMethod> extensions;
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
@@ -125,8 +121,15 @@ lyric_runtime::internal::get_concept_table(
             if (status.notOk())
                 return nullptr;
 
-            auto *callSegment = implCall.data.descriptor->getSegment();
-            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            DescriptorEntry *callDescriptor;
+            if (!implCall.getDescriptor(callDescriptor, lyric_object::LinkageSection::Call)) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid extension call descriptor");
+                return nullptr;
+            }
+
+            auto *callSegment = callDescriptor->getSegment();
+            auto callIndex = callDescriptor->getDescriptorIndex();
             auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
@@ -150,10 +153,17 @@ lyric_runtime::internal::get_concept_table(
         if (status.notOk())
             return nullptr;
 
-        impls.try_emplace(implConcept, conceptSegment, implConcept, conceptType, extensions);
+        DescriptorEntry *implConceptDescriptor;
+        if (!implConcept.getDescriptor(conceptDescriptor, lyric_object::LinkageSection::Concept)) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl concept descriptor");
+            return nullptr;
+        }
+
+        impls.try_emplace(implConcept, conceptSegment, implConceptDescriptor, conceptType, extensions);
     }
 
-    auto *ctable = new ConceptTable(conceptSegment, descriptor, conceptType, parentTable, impls);
+    auto *ctable = new ConceptTable(conceptSegment, conceptDescriptor, conceptType, parentTable, impls);
     segmentManagerData->ctablecache[descriptor] = ctable;
 
     return ctable;

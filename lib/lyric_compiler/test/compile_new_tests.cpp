@@ -17,7 +17,7 @@ TEST_F(CompileNew, EvaluateNewClassUsingDefaultConstructor)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+            RunModule(OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileNew, EvaluateNewStructUsingDefaultConstructor)
@@ -30,7 +30,7 @@ TEST_F(CompileNew, EvaluateNewStructUsingDefaultConstructor)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+            RunModule(OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileNew, EvaluateNewClassUsingNamedConstructor)
@@ -47,7 +47,7 @@ TEST_F(CompileNew, EvaluateNewClassUsingNamedConstructor)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+            RunModule(OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST_F(CompileNew, EvaluateNewStructUsingNamedConstructor)
@@ -64,5 +64,5 @@ TEST_F(CompileNew, EvaluateNewStructUsingNamedConstructor)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+            RunModule(OperandRef(lyric_common::SymbolPath({"Foo"})))));
 }

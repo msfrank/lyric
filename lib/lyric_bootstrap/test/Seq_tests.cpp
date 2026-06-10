@@ -17,7 +17,7 @@ TEST_F(SeqTests, TestEvaluateNewSeq)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Seq")))));
+                     RunModule(OperandRef(lyric_bootstrap::preludeSymbol("Seq")))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqSize)
@@ -27,7 +27,7 @@ TEST_F(SeqTests, TestEvaluateSeqSize)
         seq.Size()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqGet)
@@ -37,7 +37,7 @@ TEST_F(SeqTests, TestEvaluateSeqGet)
         seq.GetOrElse(0, 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(1))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqAppend)
@@ -48,7 +48,7 @@ TEST_F(SeqTests, TestEvaluateSeqAppend)
         seq2.GetOrElse(5, 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(6))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqExtend)
@@ -60,7 +60,7 @@ TEST_F(SeqTests, TestEvaluateSeqExtend)
         seq3.GetOrElse(5, 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(6))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqSlice)
@@ -71,7 +71,7 @@ TEST_F(SeqTests, TestEvaluateSeqSlice)
         seq2.GetOrElse(1, 0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(4))));
 }
 
 TEST_F(SeqTests, TestEvaluateSeqIterateImpl)
@@ -85,5 +85,5 @@ TEST_F(SeqTests, TestEvaluateSeqIterateImpl)
         count
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(6))));
 }

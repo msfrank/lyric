@@ -45,7 +45,7 @@ TEST_F(CompileDefconcept, EvaluateDefconceptImplementation)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(5))));
+                     RunModule(OperandInt(5))));
 }
 
 TEST_F(CompileDefconcept, EvaluateDefconceptAction)
@@ -69,7 +69,7 @@ TEST_F(CompileDefconcept, EvaluateDefconceptAction)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(5))));
+                     RunModule(OperandInt(5))));
 }
 
 TEST_F(CompileDefconcept, EvaluateImplementationOfSealedConcept)
@@ -93,7 +93,7 @@ TEST_F(CompileDefconcept, EvaluateImplementationOfSealedConcept)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(5))));
+                     RunModule(OperandInt(5))));
 }
 
 TEST_F(CompileDefconcept, EvaluateImplementationOfFinalConcept)
@@ -117,7 +117,7 @@ TEST_F(CompileDefconcept, EvaluateImplementationOfFinalConcept)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(5))));
+                     RunModule(OperandInt(5))));
 }
 
 TEST_F(CompileDefconcept, EvaluateDerefGlobalMember)
@@ -131,7 +131,7 @@ TEST_F(CompileDefconcept, EvaluateDerefGlobalMember)
         Foo.GlobalValue
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileDefconcept, EvaluateInvokeGlobalMethod)
@@ -145,5 +145,5 @@ TEST_F(CompileDefconcept, EvaluateInvokeGlobalMethod)
         Foo.GetValue()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }

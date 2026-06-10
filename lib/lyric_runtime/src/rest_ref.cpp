@@ -5,7 +5,7 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::RestRef::RestRef(const ExistentialTable *etable, std::vector<DataCell> &&restArgs)
+lyric_runtime::RestRef::RestRef(const ExistentialTable *etable, std::vector<Operand> &&restArgs)
     : m_etable(etable),
       m_restArgs(std::move(restArgs)),
       m_reachable(false)
@@ -21,7 +21,7 @@ lyric_runtime::RestRef::~RestRef()
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::RestRef::getDescriptorEntry() const
 {
-    return m_etable->getDescriptor().data.descriptor;
+    return m_etable->getDescriptorEntry();
 }
 
 const lyric_runtime::AbstractMemberResolver *
@@ -48,25 +48,39 @@ lyric_runtime::RestRef::getSymbolUrl() const
     return m_etable->getSymbolUrl();
 }
 
-lyric_runtime::DataCell
+size_t
+lyric_runtime::RestRef::numRest() const
+{
+    return m_restArgs.size();
+}
+
+lyric_runtime::Operand
 lyric_runtime::RestRef::restAt(int index) const
 {
     if (0 <= index && index < m_restArgs.size())
         return m_restArgs.at(index);
-    return DataCell::undef();
+    return Operand::undef();
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::RestRef::restLength() const
 {
-    return DataCell(static_cast<tu_int64>(m_restArgs.size()));
+    return Operand::fromI64(m_restArgs.size());
 }
 
 bool
 lyric_runtime::RestRef::equals(const AbstractRef *other) const
 {
-    auto *other_ = static_cast<const RestRef *>(other);
-    return m_restArgs == other_->m_restArgs;
+    auto *otherrest = static_cast<const RestRef *>(other);
+    if (m_restArgs.size() != otherrest->m_restArgs.size())
+        return false;
+    for (int i = 0; i < m_restArgs.size(); ++i) {
+        const auto &l = m_restArgs.at(i);
+        const auto &r = otherrest->m_restArgs.at(i);
+        if (!l.isEqualTo(r))
+            return false;
+    }
+    return true;
 }
 
 std::string
@@ -119,7 +133,9 @@ lyric_runtime::RestRef::utf8Value(std::string &utf8) const
 bool
 lyric_runtime::RestRef::hashValue(absl::HashState state)
 {
-    absl::HashState::combine(std::move(state), m_restArgs);
+    for (auto &arg : m_restArgs) {
+        state = absl::HashState::combine(std::move(state), OperandEquality(arg));
+    }
     return true;
 }
 
@@ -136,13 +152,13 @@ lyric_runtime::RestRef::statusMessage()
 }
 
 bool
-lyric_runtime::RestRef::getField(const DataCell &field, DataCell &value) const
+lyric_runtime::RestRef::getField(const Operand &field, Operand &value) const
 {
     return false;
 }
 
 bool
-lyric_runtime::RestRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
+lyric_runtime::RestRef::setField(const Operand &field, const Operand &value, Operand *prev)
 {
     return false;
 }
@@ -154,7 +170,7 @@ lyric_runtime::RestRef::iteratorValid()
 }
 
 bool
-lyric_runtime::RestRef::iteratorNext(DataCell &next)
+lyric_runtime::RestRef::iteratorNext(Operand &next)
 {
     return false;
 }
@@ -172,13 +188,13 @@ lyric_runtime::RestRef::awaitFuture(SystemScheduler *systemScheduler)
 }
 
 bool
-lyric_runtime::RestRef::resolveFuture(DataCell &result)
+lyric_runtime::RestRef::resolveFuture(Operand &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::RestRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
+lyric_runtime::RestRef::applyClosure(Task *task, std::vector<Operand> &args, InterpreterState *state)
 {
     return false;
 }

@@ -13,18 +13,18 @@ namespace lyric_runtime {
         StatusRef(const VirtualTable *vtable, tempo_utils::StatusCode statusCode, StringRef *message);
         ~StatusRef() override;
 
-        bool getField(const DataCell &field, DataCell &value) const override;
-        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
+        bool getField(const Operand &field, Operand &value) const override;
+        bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         std::string toString() const override;
 
         tempo_utils::StatusCode statusCode() override;
         std::string statusMessage() override;
 
-        DataCell getStatusCode() const;
+        Operand getStatusCode() const;
         void setStatusCode(tempo_utils::StatusCode statusCode);
 
-        DataCell getMessage() const;
-        void setMessage(const DataCell &message);
+        Operand getMessage() const;
+        void setMessage(const Operand &message);
 
     protected:
         void setMembersReachable() override;
@@ -33,7 +33,7 @@ namespace lyric_runtime {
     private:
         tempo_utils::StatusCode m_statusCode;
         StringRef *m_message;
-        std::vector<DataCell> m_fields;
+        std::vector<Operand> m_fields;
     };
 }
 

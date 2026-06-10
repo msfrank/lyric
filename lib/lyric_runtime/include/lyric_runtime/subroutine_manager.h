@@ -15,50 +15,50 @@ namespace lyric_runtime {
             tu_uint32 callIndex,
             BytecodeSegment *segment,
             tu_uint32 procOffset,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             bool returnsValue,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callStatic(
             tu_uint32 address,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callStatic(
-            const DataCell &descriptor,
-            std::vector<DataCell> &args,
+            const Operand &descriptor,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callVirtual(
-            const DataCell &receiver,
+            const Operand &receiver,
             tu_uint32 callAddress,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callStub(
-            const DataCell &receiver,
+            const Operand &receiver,
             tu_uint32 actionAddress,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callConcept(
-            const DataCell &receiver,
-            const DataCell &descriptor,
+            const Operand &receiver,
+            const Operand &descriptor,
             tu_uint32 address,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callExistential(
-            const DataCell &receiver,
-            const DataCell &existentialDescriptor,
+            const Operand &receiver,
+            const Operand &existentialDescriptor,
             tu_uint32 methodAddress,
-            std::vector<DataCell> &args,
+            std::vector<Operand> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
@@ -77,7 +77,7 @@ namespace lyric_runtime {
 
     tempo_utils::Status process_arguments(
         const lyric_object::ProcInfo &procInfo,
-        const std::vector<DataCell> &args,
+        const std::vector<Operand> &args,
         tu_uint16 &numRest);
 
     tempo_utils::Status import_lexicals_into_frame(

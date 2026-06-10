@@ -4,8 +4,8 @@
 #include <lyric_object/lyric_object.h>
 
 #include "abstract_plugin.h"
-#include "data_cell.h"
 #include "descriptor_entry.h"
+#include "operand.h"
 #include "runtime_types.h"
 #include "type_entry.h"
 
@@ -44,20 +44,20 @@ namespace lyric_runtime {
         const LinkEntry *getLink(tu_uint32 index) const;
         bool setLink(tu_uint32 index, const LinkEntry &entry);
 
-        DataCell getStatic(tu_uint32 index) const;
-        bool setStatic(tu_uint32 index, const DataCell &value);
+        Operand getStatic(tu_uint32 index) const;
+        bool setStatic(tu_uint32 index, const Operand &value);
 
-        DataCell getInstance(tu_uint32 index) const;
-        bool setInstance(tu_uint32 index, const DataCell &value);
+        Operand getInstance(tu_uint32 index) const;
+        bool setInstance(tu_uint32 index, const Operand &value);
 
-        DataCell getEnum(tu_uint32 index) const;
-        bool setEnum(tu_uint32 index, const DataCell &value);
+        Operand getEnum(tu_uint32 index) const;
+        bool setEnum(tu_uint32 index, const Operand &value);
 
-        DataCell getProtocol(tu_uint32 index) const;
-        bool setProtocol(tu_uint32 index, const DataCell &value);
+        Operand getProtocol(tu_uint32 index) const;
+        bool setProtocol(tu_uint32 index, const Operand &value);
 
-        DataCell getNamespace(tu_uint32 index) const;
-        bool setNamespace(tu_uint32 index, const DataCell &value);
+        Operand getNamespace(tu_uint32 index) const;
+        bool setNamespace(tu_uint32 index, const Operand &value);
 
         const NativeTrap *getTrap(tu_uint32 address) const;
 
@@ -79,19 +79,19 @@ namespace lyric_runtime {
         LinkEntry *m_links;
         tu_uint32 m_numLinks;
 
-        DataCell *m_statics;
+        Operand *m_statics;
         tu_uint32 m_numStatics;
 
-        DataCell *m_instances;
+        Operand *m_instances;
         tu_uint32 m_numInstances;
 
-        DataCell *m_enums;
+        Operand *m_enums;
         tu_uint32 m_numEnums;
 
-        DataCell *m_protocols;
+        Operand *m_protocols;
         tu_uint32 m_numProtocols;
 
-        DataCell *m_namespaces;
+        Operand *m_namespaces;
         tu_uint32 m_numNamespaces;
 
         const NativeTrap* *m_traps;

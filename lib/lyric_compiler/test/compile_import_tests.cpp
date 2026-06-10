@@ -41,7 +41,7 @@ TEST_F(CompileImport, EvaluateImportSingleRelativeLocation)
     ASSERT_THAT (execResult, tempo_test::IsResult());
     auto interpreterExit = execResult.getResult();
 
-    ASSERT_THAT (interpreterExit.mainReturn, DataCellInt(42));
+    ASSERT_THAT (interpreterExit.mainReturn, OperandInt(42));
 }
 
 TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
@@ -101,5 +101,5 @@ TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
     ASSERT_THAT (execResult, tempo_test::IsResult());
     auto interpreterExit = execResult.getResult();
 
-    ASSERT_THAT (interpreterExit.mainReturn, DataCellInt(6));
+    ASSERT_THAT (interpreterExit.mainReturn, OperandInt(6));
 }

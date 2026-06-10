@@ -39,7 +39,7 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(3))));
+            OperandInt(3))));
 }
 
 TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
@@ -79,5 +79,5 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(3))));
+            OperandInt(3))));
 }

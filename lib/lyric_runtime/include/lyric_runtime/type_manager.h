@@ -3,7 +3,6 @@
 
 #include <tempo_utils/result.h>
 
-#include "data_cell.h"
 #include "runtime_types.h"
 #include "segment_manager.h"
 
@@ -11,14 +10,14 @@ namespace lyric_runtime {
 
     class TypeManager {
     public:
-        TypeManager(std::vector<DataCell> &&intrinsiccache, SegmentManager *segmentManager);
+        TypeManager(std::vector<Operand> &&intrinsiccache, SegmentManager *segmentManager);
         virtual ~TypeManager() = default;
 
-        tempo_utils::Result<DataCell> typeOf(const DataCell &value);
-        tempo_utils::Result<TypeComparison> compareTypes(const DataCell &lhs,const DataCell &rhs);
+        tempo_utils::Result<Operand> typeOf(const Operand &value);
+        tempo_utils::Result<TypeComparison> compareTypes(const Operand &lhs,const Operand &rhs);
 
     private:
-        std::vector<DataCell> m_intrinsiccache;
+        std::vector<Operand> m_intrinsiccache;
         SegmentManager *m_segmentManager;
     };
 }

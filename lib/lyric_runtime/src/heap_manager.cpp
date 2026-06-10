@@ -22,20 +22,26 @@ lyric_runtime::HeapManager::HeapManager(
     TU_ASSERT (m_heap != nullptr);
 }
 
-lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateString(std::string_view string)
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateString(std::string_view string, bool isPermanent)
 {
     auto *instance = new StringRef(m_preludeTables.StringTable, string.data(), string.size());
+    if (isPermanent) {
+        instance->setPermanent();
+    }
     m_heap->insertInstance(instance);
-    return DataCell::forString(instance);
+    return Operand::fromString(instance);
 }
 
-lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateString(tempo_utils::Rope<char> rope)
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateString(tempo_utils::Rope<char> rope, bool isPermanent)
 {
     auto *instance = new StringRef(m_preludeTables.StringTable, rope);
+    if (isPermanent) {
+        instance->setPermanent();
+    }
     m_heap->insertInstance(instance);
-    return DataCell::forString(instance);
+    return Operand::fromString(instance);
 }
 
 tempo_utils::Status
@@ -52,10 +58,10 @@ lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
 
     auto *instance = new StringRef(m_preludeTables.StringTable, literal);
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forString(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromString(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
-    return status;
+    return {};
 }
 
 tempo_utils::Status
@@ -66,8 +72,8 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
 
     auto *instance = new StringRef(m_preludeTables.StringTable, string.data(), string.size());
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forString(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromString(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
     return {};
 }
@@ -80,26 +86,26 @@ lyric_runtime::HeapManager::loadStringOntoStack(tempo_utils::Rope<char> rope)
 
     auto *instance = new StringRef(m_preludeTables.StringTable, rope);
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forString(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromString(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
     return {};
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
 {
     auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
-    return DataCell::forBytes(instance);
+    return Operand::fromBytes(instance);
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::HeapManager::allocateBytes(tempo_utils::Rope<tu_uint8> rope)
 {
     auto *instance = new BytesRef(m_preludeTables.BytesTable, rope);
     m_heap->insertInstance(instance);
-    return DataCell::forBytes(instance);
+    return Operand::fromBytes(instance);
 }
 
 tempo_utils::Status
@@ -116,8 +122,8 @@ lyric_runtime::HeapManager::loadLiteralBytesOntoStack(tu_uint32 address)
 
     auto *instance = new BytesRef(m_preludeTables.BytesTable, literal);
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forBytes(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromBytes(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
     return status;
 }
@@ -130,8 +136,8 @@ lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
 
     auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forBytes(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromBytes(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
     return {};
 }
@@ -144,8 +150,8 @@ lyric_runtime::HeapManager::loadBytesOntoStack(tempo_utils::Rope<tu_uint8> rope)
 
     auto *instance = new BytesRef(m_preludeTables.BytesTable, rope);
     m_heap->insertInstance(instance);
-    auto cell = DataCell::forBytes(instance);
-    currentCoro->pushData(cell);
+    auto operand = Operand::fromBytes(instance);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
 
     return {};
 }
@@ -191,50 +197,45 @@ status_code_to_vtable(tempo_utils::StatusCode statusCode, const lyric_runtime::P
     }
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::HeapManager::allocateStatus(const VirtualTable *vtable)
 {
     auto *instance = new StatusRef(vtable);
     m_heap->insertInstance(instance);
-    return DataCell::forStatus(instance);
+    return Operand::fromStatus(instance);
 }
 
-lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateStatus(tempo_utils::StatusCode statusCode, std::string_view message)
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateStatus(tempo_utils::StatusCode statusCode, std::string_view statusMessage)
 {
+    auto *messageRef = new StringRef(m_preludeTables.StringTable, statusMessage.data(), statusMessage.size());
+    m_heap->insertInstance(messageRef);
     const VirtualTable *vtable = status_code_to_vtable(statusCode, m_preludeTables);
-    auto str = allocateString(message);
-    auto *instance = new StatusRef(vtable, statusCode, str.data.str);
-    m_heap->insertInstance(instance);
-    return DataCell::forStatus(instance);
+    auto *statusRef = new StatusRef(vtable, statusCode, messageRef);
+    m_heap->insertInstance(statusRef);
+    return Operand::fromStatus(statusRef);
 }
 
 tempo_utils::Status
-lyric_runtime::HeapManager::loadStatusOntoStack(tempo_utils::StatusCode statusCode, std::string_view message)
+lyric_runtime::HeapManager::loadStatusOntoStack(tempo_utils::StatusCode statusCode, std::string_view statusMessage)
 {
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
-
-    const VirtualTable *vtable = status_code_to_vtable(statusCode, m_preludeTables);
-    auto str = allocateString(message);
-    auto *instance = new StatusRef(vtable, statusCode, str.data.str);
-    m_heap->insertInstance(instance);
-    auto cell = DataCell::forStatus(instance);
-    currentCoro->pushData(cell);
-
+    auto operand = allocateStatus(statusCode, statusMessage);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
     return {};
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 lyric_runtime::HeapManager::allocateRest(const CallCell &frame)
 {
-    std::vector<DataCell> restArgs;
+    std::vector<Operand> restArgs;
     for (int i = 0; i < frame.numRest(); i++) {
         restArgs.push_back(frame.getRest(i));
     }
     auto *instance = new RestRef(m_preludeTables.RestTable, std::move(restArgs));
     m_heap->insertInstance(instance);
-    return DataCell::forRest(instance);
+    return Operand::fromRest(instance);
 }
 
 tempo_utils::Status
@@ -242,70 +243,68 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
 {
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
-
-    auto cell = allocateRest(frame);
-    currentCoro->pushData(cell);
-
+    auto operand = allocateRest(frame);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
     return {};
 }
 
-lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateProtocol(const DataCell &descriptor)
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateProtocol(const Operand &descriptor)
 {
-    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
-    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
-    auto *segment = descriptor.data.descriptor->getSegment();
+    DescriptorEntry *protocolDescriptor;
+    if (!descriptor.getDescriptor(protocolDescriptor))
+        return {};
+    if (protocolDescriptor->getLinkageSection() != lyric_object::LinkageSection::Protocol)
+        return {};
+    auto *segment = protocolDescriptor->getSegment();
     auto object = segment->getObject();
-    auto walker = object.getProtocol(descriptor.data.descriptor->getDescriptorIndex());
+    auto walker = object.getProtocol(protocolDescriptor->getDescriptorIndex());
     lyric_common::SymbolUrl url(segment->getObjectLocation(), walker.getSymbolPath());
     auto port = walker.getPort();
     auto comm = walker.getCommunication();
     auto *protocolType = segment->lookupType(walker.getProtocolType().getDescriptorOffset());
-    auto type = DataCell::forType(protocolType);
 
-    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor, url, type, port, comm);
+    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, url, protocolDescriptor, protocolType, port, comm);
     m_heap->insertInstance(instance);
-    return DataCell::forProtocol(instance);
+    return Operand::fromProtocol(instance);
 }
 
 tempo_utils::Status
-lyric_runtime::HeapManager::loadProtocolOntoStack(const DataCell &descriptor)
+lyric_runtime::HeapManager::loadProtocolOntoStack(const Operand &descriptor)
 {
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
-
-    auto cell = allocateProtocol(descriptor);
-    currentCoro->pushData(cell);
-
+    auto operand = allocateProtocol(descriptor);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
     return {};
 }
 
-lyric_runtime::DataCell
-lyric_runtime::HeapManager::allocateNamespace(const DataCell &descriptor)
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateNamespace(const Operand &descriptor)
 {
-    TU_ASSERT (descriptor.type == DataCellType::Descriptor);
-    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
-    auto *segment = descriptor.data.descriptor->getSegment();
+    DescriptorEntry *namespaceDescriptor;
+    if (!descriptor.getDescriptor(namespaceDescriptor))
+        return {};
+    if (namespaceDescriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace)
+        return {};
+    auto *segment = namespaceDescriptor->getSegment();
     auto object = segment->getObject();
-    auto walker = object.getNamespace(descriptor.data.descriptor->getDescriptorIndex());
+    auto walker = object.getNamespace(namespaceDescriptor->getDescriptorIndex());
     lyric_common::SymbolUrl url(segment->getObjectLocation(), walker.getSymbolPath());
     auto *namespaceType = segment->lookupType(walker.getNamespaceType().getDescriptorOffset());
-    auto type = DataCell::forType(namespaceType);
 
-    auto *instance = new NamespaceRef(m_preludeTables.NamespaceTable, descriptor, url, type);
+    auto *instance = new NamespaceRef(m_preludeTables.NamespaceTable, url, namespaceDescriptor, namespaceType);
     m_heap->insertInstance(instance);
-    return DataCell::forNamespace(instance);
+    return Operand::fromNamespace(instance);
 }
 
 tempo_utils::Status
-lyric_runtime::HeapManager::loadNamespaceOntoStack(const DataCell &descriptor)
+lyric_runtime::HeapManager::loadNamespaceOntoStack(const Operand &descriptor)
 {
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
-
-    auto cell = allocateNamespace(descriptor);
-    currentCoro->pushData(cell);
-
+    auto operand = allocateNamespace(descriptor);
+    TU_RETURN_IF_NOT_OK (currentCoro->pushData(operand));
     return {};
 }
 
@@ -318,13 +317,9 @@ set_reachable_for_task(lyric_runtime::Task *task)
     auto *coro = task->stackfulCoroutine();
 
     // walk the data stack and mark all reachable instances
-    for (auto iterator = coro->dataBegin(); iterator != coro->dataEnd(); iterator++) {
-        if (iterator->type == lyric_runtime::DataCellType::Ref) {
-            auto *instance = iterator->data.ref;
-            if (instance) {
-                instance->setReachable();
-            }
-        }
+    for (auto it = coro->dataBegin(); it != coro->dataEnd(); it++) {
+        const auto &operand = *it;
+        operand.setReachable();
     }
 }
 

@@ -53,7 +53,7 @@ namespace lyric_test {
         class RunModuleMatcher {
 
         public:
-            explicit RunModuleMatcher(const Matcher<lyric_runtime::DataCell> &matcher);
+            explicit RunModuleMatcher(const Matcher<lyric_runtime::Operand> &matcher);
             bool MatchAndExplain(const RunModule &runModule, std::ostream *os) const;
             void DescribeTo(std::ostream *os) const;
             void DescribeNegationTo(std::ostream *os) const;
@@ -62,12 +62,12 @@ namespace lyric_test {
             using is_gtest_matcher = void;
 
         private:
-            Matcher<lyric_runtime::DataCell> m_matcher;
+            Matcher<lyric_runtime::Operand> m_matcher;
         };
 
         Matcher<lyric_test::RunModule> RunModule(lyric_build::TaskState state);
         Matcher<lyric_test::RunModule> RunModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
-        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::DataCell> &matcher);
+        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::Operand> &matcher);
     }
 }
 

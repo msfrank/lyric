@@ -78,7 +78,7 @@ void on_timer(uv_timer_t *timer)
 
 void on_accept(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
 {
-    promise->complete(lyric_runtime::DataCell(true));
+    promise->complete(lyric_runtime::Operand::fromBool(true));
     uv_stop(state->mainLoop());
 }
 
@@ -104,7 +104,7 @@ TEST_F (SystemScheduler, RegisterAsync)
     ASSERT_FALSE (async->isPending());
     ASSERT_EQ (lyric_runtime::Promise::State::Completed, promise->getState());
     auto result = promise->getResult();
-    ASSERT_THAT (result, DataCellBool(true));
+    ASSERT_THAT (result, OperandBool(true));
 }
 
 TEST_F (SystemScheduler, RegisterTimer)
@@ -125,7 +125,7 @@ TEST_F (SystemScheduler, RegisterTimer)
 
     ASSERT_EQ (lyric_runtime::Promise::State::Completed, promise->getState());
     auto result = promise->getResult();
-    ASSERT_THAT (result, DataCellBool(true));
+    ASSERT_THAT (result, OperandBool(true));
 }
 
 class AllOfOps : public lyric_runtime::PromiseOperations {
@@ -159,7 +159,7 @@ public:
         lyric_runtime::InterpreterState *state) override
     {
         TU_LOG_INFO << "all deps completed";
-        promise->complete(lyric_runtime::DataCell(true));
+        promise->complete(lyric_runtime::Operand::fromBool(true));
         auto *loop = state->mainLoop();
         uv_stop(loop);
     }
@@ -167,7 +167,7 @@ public:
 
 void on_allof_accept(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
 {
-    promise->complete(lyric_runtime::DataCell(true));
+    promise->complete(lyric_runtime::Operand::fromBool(true));
 }
 
 TEST_F (SystemScheduler, RegisterAllOfTarget)
@@ -199,7 +199,7 @@ TEST_F (SystemScheduler, RegisterAllOfTarget)
     ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
 
     auto result = target->getResult();
-    ASSERT_THAT (result, DataCellBool(true));
+    ASSERT_THAT (result, OperandBool(true));
 }
 
 class AnyOfOps : public lyric_runtime::PromiseOperations {
@@ -233,7 +233,7 @@ public:
         lyric_runtime::InterpreterState *state) override
     {
         TU_LOG_INFO << "any deps completed";
-        promise->complete(lyric_runtime::DataCell(true));
+        promise->complete(lyric_runtime::Operand::fromBool(true));
         auto *loop = state->mainLoop();
         uv_stop(loop);
     }
@@ -241,7 +241,7 @@ public:
 
 void on_anyof_accept(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
 {
-    promise->complete(lyric_runtime::DataCell(true));
+    promise->complete(lyric_runtime::Operand::fromBool(true));
 }
 
 TEST_F (SystemScheduler, RegisterAnyOfTarget)
@@ -273,7 +273,7 @@ TEST_F (SystemScheduler, RegisterAnyOfTarget)
     ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
 
     auto result = target->getResult();
-    ASSERT_THAT (result, DataCellBool(true));
+    ASSERT_THAT (result, OperandBool(true));
 }
 
 class FirstCompletedOps : public lyric_runtime::PromiseOperations {
@@ -290,7 +290,7 @@ public:
             numdeps++;
             switch (promise->getState()) {
                 case lyric_runtime::Promise::State::Completed: {
-                    if (promise->getResult() == lyric_runtime::DataCell(true)) {
+                    if (promise->getResult() == lyric_runtime::Operand::fromBool(true)) {
                         numcompleted++;
                         break;
                     }
@@ -315,7 +315,7 @@ public:
         lyric_runtime::InterpreterState *state) override
     {
         TU_LOG_INFO << "first dep completed";
-        promise->complete(lyric_runtime::DataCell(true));
+        promise->complete(lyric_runtime::Operand::fromBool(true));
         auto *loop = state->mainLoop();
         uv_stop(loop);
     }
@@ -323,12 +323,12 @@ public:
 
 void on_first_completed_true(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
 {
-    promise->complete(lyric_runtime::DataCell(true));
+    promise->complete(lyric_runtime::Operand::fromBool(true));
 }
 
 void on_first_completed_false(lyric_runtime::Promise *promise, const lyric_runtime::Waiter *, lyric_runtime::InterpreterState *state)
 {
-    promise->complete(lyric_runtime::DataCell(false));
+    promise->complete(lyric_runtime::Operand::fromBool(false));
 }
 
 TEST_F (SystemScheduler, RegisterFirstCompletedTarget)
@@ -360,5 +360,5 @@ TEST_F (SystemScheduler, RegisterFirstCompletedTarget)
     ASSERT_EQ (lyric_runtime::Promise::State::Completed, target->getState());
 
     auto result = target->getResult();
-    ASSERT_THAT (result, DataCellBool(true));
+    ASSERT_THAT (result, OperandBool(true));
 }

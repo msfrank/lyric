@@ -4,7 +4,7 @@
 tempo_utils::Status
 lyric_runtime::internal::raise_exception(
     const lyric_object::OpCell &op,
-    const DataCell &exc,
+    const Operand &exc,
     StackfulCoroutine *currentCoro,
     SegmentManager *segmentManager,
     SubroutineManager *subroutineManager,
@@ -19,7 +19,7 @@ lyric_runtime::internal::raise_exception(
     int exception_local = -1;
 
     // get the runtime type of the exception
-    DataCell excType;
+    Operand excType;
     TU_ASSIGN_OR_RETURN (excType, typeManager->typeOf(exc));
 
     // get the initial frame and the initial segment index
@@ -58,7 +58,7 @@ lyric_runtime::internal::raise_exception(
                 for (int j = 0; exception_match < 0 && j < check.num_exceptions; j++) {
                     const auto &exception = exceptions.at(check.first_exception + j);
                     auto *typeEntry = segment->lookupType(exception.exception_type);
-                    auto catchType = DataCell::forType(typeEntry);
+                    auto catchType = Operand::fromType(typeEntry);
                     TypeComparison cmp;
                     TU_ASSIGN_OR_RETURN (cmp, typeManager->compareTypes(excType, catchType));
                     switch (cmp) {

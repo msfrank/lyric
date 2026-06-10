@@ -4,7 +4,6 @@
 #include <tempo_utils/hdr_histogram.h>
 
 #include "abstract_inspector.h"
-#include "data_cell.h"
 #include "interpreter_state.h"
 #include "interpreter_result.h"
 #include "ref_handle.h"
@@ -18,7 +17,7 @@ namespace lyric_runtime {
      */
     struct InterpreterExit {
         tempo_utils::StatusCode statusCode;         /**< Status code returned by the program. */
-        DataCell mainReturn;                        /**< The return value of the main task. */
+        Operand mainReturn;                        /**< The return value of the main task. */
         tu_uint64 interpreterStartEpochMillis;      /**< Timestamp when the interpreter started, in milliseconds since the epoch. */
         tu_uint64 instructionCount;                 /**< Total count of instructions executed by the interpreter. */
     };
@@ -38,7 +37,7 @@ namespace lyric_runtime {
         AbstractInspector *interpreterInspector() const;
 
         tempo_utils::Result<InterpreterExit> run();
-        tempo_utils::Result<DataCell> runSubinterpreter();
+        tempo_utils::Result<Operand> runSubinterpreter();
         tempo_utils::Status interrupt();
 
         tu_uint16 getSliceCounter() const;
@@ -55,9 +54,9 @@ namespace lyric_runtime {
         tu_uint64 m_instructionCounter;
         int m_recursionDepth;
 
-        tempo_utils::Status onInterrupt(const DataCell &cell);
-        tempo_utils::Result<DataCell> onError(const lyric_object::OpCell &op, const tempo_utils::Status &status);
-        tempo_utils::Result<DataCell> onHalt(const lyric_object::OpCell &op);
+        tempo_utils::Status onInterrupt(const Operand &cell);
+        tempo_utils::Result<Operand> onError(const lyric_object::OpCell &op, const tempo_utils::Status &status);
+        tempo_utils::Result<Operand> onHalt(const lyric_object::OpCell &op);
     };
 
     class RecursionLocker {

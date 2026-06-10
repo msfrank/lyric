@@ -5,7 +5,6 @@
 
 #include "abstract_heap.h"
 #include "abstract_loader.h"
-#include "data_cell.h"
 #include "heap_manager.h"
 #include "port_multiplexer.h"
 #include "ref_handle.h"
@@ -50,7 +49,7 @@ namespace lyric_runtime {
         tempo_utils::StatusCode getStatusCode() const;
         bool isActive() const;
 
-        DataCell getMainArgument(int index) const;
+        Operand getMainArgument(int index) const;
         int numMainArguments() const;
 
         // subsystems
@@ -71,7 +70,7 @@ namespace lyric_runtime {
 
         // heap management
 
-        RefHandle createHandle(const DataCell &ref);
+        RefHandle createHandle(const Operand &ref);
 
         static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
             std::shared_ptr<AbstractLoader> systemLoader,
@@ -96,7 +95,7 @@ namespace lyric_runtime {
 
         // set in load method
         lyric_common::ModuleLocation m_mainLocation;
-        std::vector<DataCell> m_mainArguments;
+        std::vector<Operand> m_mainArguments;
         tu_uint64 m_loadEpochMillis;
         tempo_utils::StatusCode m_statusCode;
         bool m_active;

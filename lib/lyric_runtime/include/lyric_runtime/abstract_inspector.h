@@ -5,7 +5,7 @@
 #include <tempo_utils/status.h>
 #include <tempo_utils/result.h>
 
-#include "data_cell.h"
+#include "operand.h"
 
 namespace lyric_runtime {
 
@@ -28,19 +28,19 @@ namespace lyric_runtime {
             InterpreterState *state) = 0;
 
         virtual tempo_utils::Status onInterrupt(
-            const DataCell &cell,
+            const Operand &cell,
             BytecodeInterpreter *interp,
             InterpreterState *state) = 0;
 
-        virtual tempo_utils::Result<DataCell> onError(
+        virtual tempo_utils::Result<Operand> onError(
             const lyric_object::OpCell &op,
             const tempo_utils::Status &status,
             BytecodeInterpreter *interp,
             InterpreterState *state) = 0;
 
-        virtual tempo_utils::Result<DataCell> onHalt(
+        virtual tempo_utils::Result<Operand> onHalt(
             const lyric_object::OpCell &op,
-            const DataCell &cell,
+            const Operand &cell,
             BytecodeInterpreter *interp,
             InterpreterState *state) = 0;
     };

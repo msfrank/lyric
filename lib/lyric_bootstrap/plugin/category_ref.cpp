@@ -17,7 +17,7 @@ CategoryRef::~CategoryRef()
 }
 
 bool
-CategoryRef::getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCell &value) const
+CategoryRef::getField(const lyric_runtime::Operand &field, lyric_runtime::Operand &value) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -32,9 +32,9 @@ CategoryRef::getField(const lyric_runtime::DataCell &field, lyric_runtime::DataC
 
 bool
 CategoryRef::setField(
-    const lyric_runtime::DataCell &field,
-    const lyric_runtime::DataCell &value,
-    lyric_runtime::DataCell *prev)
+    const lyric_runtime::Operand &field,
+    const lyric_runtime::Operand &value,
+    lyric_runtime::Operand *prev)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -63,10 +63,7 @@ void
 CategoryRef::setMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->setReachable();
-        }
+        cell.setReachable();
     }
 }
 
@@ -74,10 +71,7 @@ void
 CategoryRef::clearMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->clearReachable();
-        }
+        cell.clearReachable();
     }
 }
 

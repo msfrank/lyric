@@ -19,7 +19,7 @@ lyric_runtime::internal::construct_instance(
     auto existing = segmentManager->loadInstance(address, currentCoro, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    if (existing.type != DataCellType::Invalid) {
+    if (existing.isValid()) {
         TU_LOG_V << "loaded instance " << existing;
         return currentCoro->pushData(existing);
     }
@@ -56,7 +56,7 @@ lyric_runtime::internal::construct_instance(
     TU_RETURN_IF_NOT_OK (allocator(interp, state, vtable));
 
     // get the ref
-    DataCell *top;
+    Operand *top;
     TU_RETURN_IF_NOT_OK (currentCoro->peekData(&top));
     auto ref = *top;
 

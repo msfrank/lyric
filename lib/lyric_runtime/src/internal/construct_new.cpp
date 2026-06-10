@@ -17,7 +17,7 @@ lyric_runtime::internal::construct_new(
     TU_ASSERT (state != nullptr);
 
     // pop constructor args off the stack
-    std::vector<DataCell> args;
+    std::vector<Operand> args;
     TU_RETURN_IF_NOT_OK (currentCoro->popData(placement, args));
 
     auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
@@ -50,7 +50,11 @@ lyric_runtime::internal::construct_new(
     auto receiver = segmentManager->resolveReceiver(sp, address, status);
     if (!receiver.isValid())
         return status;
-    auto section = receiver.data.descriptor->getLinkageSection();
+    DescriptorEntry *receiverDescriptor;
+    if (!receiver.getDescriptor(receiverDescriptor))
+        return InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
+            "invalid receiver descriptor");
+    auto section = receiverDescriptor->getLinkageSection();
 
     // resolve the vtable for the receiver
     const VirtualTable *vtable;
@@ -99,14 +103,18 @@ lyric_runtime::internal::construct_new(
     TU_RETURN_IF_NOT_OK (allocator(interp, state, vtable));
 
     // get the ref
-    DataCell *top;
+    Operand *top;
     TU_RETURN_IF_NOT_OK (currentCoro->peekData(&top));
     auto ref = *top;
 
     // load the required activation frame data
-    auto *ctorSegment = constructor.data.descriptor->getSegment();
+    DescriptorEntry *constructorDescriptor;
+    if (!constructor.getDescriptor(constructorDescriptor))
+        return InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid constructor descriptor");
+    auto *ctorSegment = constructorDescriptor->getSegment();
     auto ctorObject = ctorSegment->getObject();
-    auto ctorIndex = constructor.data.descriptor->getDescriptorIndex();
+    auto ctorIndex = constructorDescriptor->getDescriptorIndex();
     auto ctor = ctorObject.getCall(ctorIndex);
     const auto procOffset = ctor.getProcOffset();
 

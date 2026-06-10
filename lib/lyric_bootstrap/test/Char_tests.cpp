@@ -16,7 +16,7 @@ TEST_F(CharTests, EvaluateCharLiteral)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<char32_t>('H')))));
+                     RunModule(OperandChar(static_cast<char32_t>('H')))));
 }
 
 TEST_F(CharTests, EvaluateUnicode2ByteEscape)
@@ -27,7 +27,7 @@ TEST_F(CharTests, EvaluateUnicode2ByteEscape)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<char32_t>(u'Ω')))));
+                     RunModule(OperandChar(static_cast<char32_t>(u'Ω')))));
 }
 
 TEST_F(CharTests, EvaluateUnicode4ByteEscape)
@@ -38,7 +38,7 @@ TEST_F(CharTests, EvaluateUnicode4ByteEscape)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<char32_t>(0x1f71f)))));
+                     RunModule(OperandChar(static_cast<char32_t>(0x1f71f)))));
 }
 
 TEST_F(CharTests, EvaluateIsEq)
@@ -47,7 +47,7 @@ TEST_F(CharTests, EvaluateIsEq)
         'H' == 'H'
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(CharTests, EvaluateIsLt)
@@ -56,7 +56,7 @@ TEST_F(CharTests, EvaluateIsLt)
         'b' < 'a'
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(CharTests, EvaluateIsGt)
@@ -65,7 +65,7 @@ TEST_F(CharTests, EvaluateIsGt)
         'c' > 'b'
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(CharTests, EvaluateIsLe)
@@ -74,7 +74,7 @@ TEST_F(CharTests, EvaluateIsLe)
         'h' <= 'e'
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(CharTests, EvaluateIsGe)
@@ -83,5 +83,5 @@ TEST_F(CharTests, EvaluateIsGe)
         'h' >= 'e'
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }

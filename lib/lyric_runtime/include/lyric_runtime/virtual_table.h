@@ -3,9 +3,8 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include "data_cell.h"
-#include "hash_data_cell.h"
 #include "native_interface.h"
+#include "operand.h"
 #include "runtime_types.h"
 
 namespace lyric_runtime {
@@ -52,21 +51,21 @@ namespace lyric_runtime {
     class AbstractMemberResolver {
     public:
         virtual ~AbstractMemberResolver() = default;
-        virtual const VirtualMember *getMember(const DataCell &descriptor) const = 0;
+        virtual const VirtualMember *getMember(const Operand &descriptor) const = 0;
     };
 
     class AbstractMethodResolver {
     public:
         virtual ~AbstractMethodResolver() = default;
-        virtual const VirtualMethod *getMethod(const DataCell &descriptor) const = 0;
+        virtual const VirtualMethod *getMethod(const Operand &descriptor) const = 0;
     };
 
     class AbstractExtensionResolver {
     public:
         virtual ~AbstractExtensionResolver() = default;
         virtual const VirtualMethod *getExtension(
-            const DataCell &conceptDescriptor,
-            const DataCell &callDescriptor) const = 0;
+            const Operand &conceptDescriptor,
+            const Operand &callDescriptor) const = 0;
     };
 
     class ImplTable : public AbstractMethodResolver {
@@ -74,25 +73,28 @@ namespace lyric_runtime {
     public:
         ImplTable(
             BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods);
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
+            absl::flat_hash_map<OperandIdentity,VirtualMethod> &methods);
 
         BytecodeSegment *getSegment() const;
-        DataCell getDescriptor() const;
-        DataCell getType() const;
+        DescriptorEntry *getDescriptorEntry() const;
+        TypeEntry *getTypeEntry() const;
+
+        Operand getDescriptor() const;
+        Operand getType() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const;
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
-        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
+        const VirtualMethod *getMethod(const Operand &descriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
-        const DataCell m_descriptor;
-        const DataCell m_type;
-        const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
+        DescriptorEntry *m_descriptor;
+        TypeEntry *m_type;
+        const absl::flat_hash_map<OperandIdentity,VirtualMethod> m_methods;
     };
 
     class ExistentialTable : public AbstractMethodResolver, public AbstractExtensionResolver{
@@ -100,33 +102,36 @@ namespace lyric_runtime {
     public:
         ExistentialTable(
             BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
             const ExistentialTable *parentTable,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods,
-            absl::flat_hash_map<DataCell,ImplTable> &impls);
+            absl::flat_hash_map<OperandIdentity,VirtualMethod> &methods,
+            absl::flat_hash_map<OperandIdentity,ImplTable> &impls);
 
         BytecodeSegment *getSegment() const;
-        DataCell getDescriptor() const;
-        DataCell getType() const;
+        DescriptorEntry *getDescriptorEntry() const;
+        TypeEntry *getTypeEntry() const;
         const ExistentialTable *getParent() const;
+
+        Operand getDescriptor() const;
+        Operand getType() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const;
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
-        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
+        const VirtualMethod *getMethod(const Operand &descriptor) const override;
         const VirtualMethod *getExtension(
-            const DataCell &conceptDescriptor,
-            const DataCell &callDescriptor) const override;
+            const Operand &conceptDescriptor,
+            const Operand &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
-        const DataCell m_descriptor;
-        const DataCell m_type;
+        DescriptorEntry *m_descriptor;
+        TypeEntry *m_type;
         const ExistentialTable *m_parent;
-        const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
-        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
+        const absl::flat_hash_map<OperandIdentity,VirtualMethod> m_methods;
+        const absl::flat_hash_map<OperandIdentity,ImplTable> m_impls;
     };
 
     class ConceptTable : public AbstractExtensionResolver {
@@ -134,30 +139,33 @@ namespace lyric_runtime {
     public:
         ConceptTable(
             BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
             const ConceptTable *parentTable,
-            absl::flat_hash_map<DataCell,ImplTable> &impls);
+            absl::flat_hash_map<OperandIdentity,ImplTable> &impls);
 
         BytecodeSegment *getSegment() const;
-        DataCell getDescriptor() const;
-        DataCell getType() const;
+        DescriptorEntry *getDescriptorEntry() const;
+        TypeEntry *getTypeEntry() const;
         const ConceptTable *getParent() const;
+
+        Operand getDescriptor() const;
+        Operand getType() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const;
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
         const VirtualMethod *getExtension(
-            const DataCell &conceptDescriptor,
-            const DataCell &callDescriptor) const override;
+            const Operand &conceptDescriptor,
+            const Operand &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
-        const DataCell m_descriptor;
-        const DataCell m_type;
+        DescriptorEntry *m_descriptor;
+        TypeEntry *m_type;
         const ConceptTable *m_parent;
-        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
+        const absl::flat_hash_map<OperandIdentity,ImplTable> m_impls;
     };
 
     class VirtualTable : public AbstractMemberResolver, public AbstractMethodResolver, public AbstractExtensionResolver {
@@ -165,28 +173,31 @@ namespace lyric_runtime {
     public:
         VirtualTable(
             BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
             const VirtualTable *parentTable,
             NativeFunc allocator,
-            absl::flat_hash_map<DataCell,VirtualMember> &members,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods,
-            absl::flat_hash_map<DataCell,ImplTable> &impls);
+            absl::flat_hash_map<OperandIdentity,VirtualMember> &members,
+            absl::flat_hash_map<OperandIdentity,VirtualMethod> &methods,
+            absl::flat_hash_map<OperandIdentity,ImplTable> &impls);
         VirtualTable(
             BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
+            DescriptorEntry *descriptorEntry,
+            TypeEntry *typeEntry,
             const VirtualTable *parentTable,
             NativeFunc allocator,
             const VirtualMethod &initializer,
-            absl::flat_hash_map<DataCell,VirtualMember> &members,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods,
-            absl::flat_hash_map<DataCell,ImplTable> &impls);
+            absl::flat_hash_map<OperandIdentity,VirtualMember> &members,
+            absl::flat_hash_map<OperandIdentity,VirtualMethod> &methods,
+            absl::flat_hash_map<OperandIdentity,ImplTable> &impls);
 
         BytecodeSegment *getSegment() const;
-        DataCell getDescriptor() const;
-        DataCell getType() const;
+        DescriptorEntry *getDescriptorEntry() const;
+        TypeEntry *getTypeEntry() const;
         const VirtualTable *getParent() const;
+
+        Operand getDescriptor() const;
+        Operand getType() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const;
         lyric_object::LinkageSection getLinkageSection() const;
@@ -199,22 +210,22 @@ namespace lyric_runtime {
         bool hasInitializer() const;
         const VirtualMethod *getInitializer() const;
 
-        const VirtualMember *getMember(const DataCell &descriptor) const override;
-        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
+        const VirtualMember *getMember(const Operand &descriptor) const override;
+        const VirtualMethod *getMethod(const Operand &descriptor) const override;
         const VirtualMethod *getExtension(
-            const DataCell &conceptDescriptor,
-            const DataCell &callDescriptor) const override;
+            const Operand &conceptDescriptor,
+            const Operand &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
-        const DataCell m_descriptor;
-        const DataCell m_type;
+        DescriptorEntry *m_descriptor;
+        TypeEntry *m_type;
         const VirtualTable *m_parent;
         const NativeFunc m_allocator;
         VirtualMethod m_initializer;
-        const absl::flat_hash_map<DataCell,VirtualMember> m_members;
-        const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
-        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
+        const absl::flat_hash_map<OperandIdentity,VirtualMember> m_members;
+        const absl::flat_hash_map<OperandIdentity,VirtualMethod> m_methods;
+        const absl::flat_hash_map<OperandIdentity,ImplTable> m_impls;
     };
 }
 

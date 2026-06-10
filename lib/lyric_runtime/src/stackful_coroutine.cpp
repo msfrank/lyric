@@ -171,14 +171,14 @@ lyric_runtime::StackfulCoroutine::callsEnd() const
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::pushData(const DataCell &value)
+lyric_runtime::StackfulCoroutine::pushData(const Operand &value)
 {
     m_dataStack.push_back(value);
     return {};
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::popData(DataCell &value)
+lyric_runtime::StackfulCoroutine::popData(Operand &value)
 {
     if (m_dataStack.empty())
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
@@ -189,7 +189,7 @@ lyric_runtime::StackfulCoroutine::popData(DataCell &value)
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::popData(int count, std::vector<DataCell> &values)
+lyric_runtime::StackfulCoroutine::popData(int count, std::vector<Operand> &values)
 {
     if (count < 0)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
@@ -206,7 +206,7 @@ lyric_runtime::StackfulCoroutine::popData(int count, std::vector<DataCell> &valu
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::peekData(const DataCell **valueptr, int offset) const
+lyric_runtime::StackfulCoroutine::peekData(const Operand **valueptr, int offset) const
 {
     offset = calculate_stack_index(m_dataStack, offset);
     if (offset < 0)
@@ -218,7 +218,7 @@ lyric_runtime::StackfulCoroutine::peekData(const DataCell **valueptr, int offset
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::peekData(DataCell **valueptr, int offset)
+lyric_runtime::StackfulCoroutine::peekData(Operand **valueptr, int offset)
 {
     offset = calculate_stack_index(m_dataStack, offset);
     if (offset < 0)
@@ -271,13 +271,13 @@ lyric_runtime::StackfulCoroutine::dataStackSize() const
     return m_dataStack.size();
 }
 
-std::vector<lyric_runtime::DataCell>::const_reverse_iterator
+std::vector<lyric_runtime::Operand>::const_reverse_iterator
 lyric_runtime::StackfulCoroutine::dataBegin() const
 {
     return m_dataStack.crbegin();
 }
 
-std::vector<lyric_runtime::DataCell>::const_reverse_iterator
+std::vector<lyric_runtime::Operand>::const_reverse_iterator
 lyric_runtime::StackfulCoroutine::dataEnd() const
 {
     return m_dataStack.crend();

@@ -18,14 +18,14 @@ struct MapNode {
 };
 
 struct ValueMapNode : public MapNode {
-    lyric_runtime::DataCell key;
-    lyric_runtime::DataCell value;
+    lyric_runtime::Operand key;
+    lyric_runtime::Operand value;
     tu_uint32 hash;
 };
 
 struct ChainMapNode : public MapNode {
-    lyric_runtime::DataCell key;
-    lyric_runtime::DataCell value;
+    lyric_runtime::Operand key;
+    lyric_runtime::Operand value;
     ChainMapNode *next;
 };
 
@@ -62,10 +62,10 @@ public:
     void setNode(MapNode *node);
 
     int mapSize() const;
-    bool mapContains(const lyric_runtime::DataCell &key) const;
-    lyric_runtime::DataCell mapGet(const lyric_runtime::DataCell &key) const;
-    MapNode *mapUpdate(const lyric_runtime::DataCell &key, const lyric_runtime::DataCell &value) const;
-    MapNode *mapRemove(const lyric_runtime::DataCell &key) const;
+    bool mapContains(const lyric_runtime::Operand &key) const;
+    lyric_runtime::Operand mapGet(const lyric_runtime::Operand &key) const;
+    MapNode *mapUpdate(const lyric_runtime::Operand &key, const lyric_runtime::Operand &value) const;
+    MapNode *mapRemove(const lyric_runtime::Operand &key) const;
 
 protected:
     void setMembersReachable() override;
@@ -86,7 +86,7 @@ public:
     std::string toString() const override;
 
     bool iteratorValid() override;
-    bool iteratorNext(lyric_runtime::DataCell &cell) override;
+    bool iteratorNext(lyric_runtime::Operand &cell) override;
 
 protected:
     void setMembersReachable() override;

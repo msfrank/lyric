@@ -41,34 +41,34 @@ namespace lyric_runtime {
             std::shared_ptr<AbstractHeap> heap);
         virtual ~HeapManager() = default;
 
-        virtual DataCell allocateString(std::string_view string);
-        virtual DataCell allocateString(tempo_utils::Rope<char> rope);
+        virtual Operand allocateString(std::string_view string, bool isPermanent);
+        virtual Operand allocateString(tempo_utils::Rope<char> rope, bool isPermanent);
         virtual tempo_utils::Status loadLiteralStringOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadStringOntoStack(std::string_view string);
         virtual tempo_utils::Status loadStringOntoStack(tempo_utils::Rope<char> rope);
 
-        virtual DataCell allocateBytes(std::span<const tu_uint8> bytes);
-        virtual DataCell allocateBytes(tempo_utils::Rope<tu_uint8> rope);
+        virtual Operand allocateBytes(std::span<const tu_uint8> bytes);
+        virtual Operand allocateBytes(tempo_utils::Rope<tu_uint8> rope);
         virtual tempo_utils::Status loadLiteralBytesOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadBytesOntoStack(std::span<const tu_uint8> bytes);
         virtual tempo_utils::Status loadBytesOntoStack(tempo_utils::Rope<tu_uint8> rope);
 
-        virtual DataCell allocateStatus(const VirtualTable *vtable);
-        virtual DataCell allocateStatus(
+        virtual Operand allocateStatus(const VirtualTable *vtable);
+        virtual Operand allocateStatus(
             tempo_utils::StatusCode statusCode,
             std::string_view message);
         virtual tempo_utils::Status loadStatusOntoStack(
             tempo_utils::StatusCode statusCode,
             std::string_view message);
 
-        virtual DataCell allocateRest(const CallCell &frame);
+        virtual Operand allocateRest(const CallCell &frame);
         virtual tempo_utils::Status loadRestOntoStack(const CallCell &frame);
 
-        virtual DataCell allocateProtocol(const DataCell &descriptor);
-        virtual tempo_utils::Status loadProtocolOntoStack(const DataCell &descriptor);
+        virtual Operand allocateProtocol(const Operand &descriptor);
+        virtual tempo_utils::Status loadProtocolOntoStack(const Operand &descriptor);
 
-        virtual DataCell allocateNamespace(const DataCell &descriptor);
-        virtual tempo_utils::Status loadNamespaceOntoStack(const DataCell &descriptor);
+        virtual Operand allocateNamespace(const Operand &descriptor);
+        virtual tempo_utils::Status loadNamespaceOntoStack(const Operand &descriptor);
 
         virtual tempo_utils::Status collectGarbage();
 
@@ -87,11 +87,11 @@ namespace lyric_runtime {
          * @return
          */
         template <class RefType>
-        DataCell allocateRef(const VirtualTable *vtable)
+        Operand allocateRef(const VirtualTable *vtable)
         {
             auto *instance = new RefType(vtable);
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
 
         /**
@@ -104,11 +104,11 @@ namespace lyric_runtime {
          * @return
          */
         template <class RefType, class Arg0>
-        DataCell allocateRef(const VirtualTable *vtable, Arg0&& arg0)
+        Operand allocateRef(const VirtualTable *vtable, Arg0&& arg0)
         {
             auto *instance = new RefType(vtable, std::forward<Arg0>(arg0));
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
 
         /**
@@ -123,14 +123,14 @@ namespace lyric_runtime {
          * \return
          */
         template <class RefType, class Arg0, class Arg1>
-        DataCell allocateRef(
+        Operand allocateRef(
             const VirtualTable *vtable,
             Arg0&& arg0,
             Arg1&& arg1)
         {
             auto *instance = new RefType(vtable, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1));
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
 
         /**
@@ -147,7 +147,7 @@ namespace lyric_runtime {
          * \return
          */
         template <class RefType, class Arg0, class Arg1, class Arg2>
-        DataCell allocateRef(
+        Operand allocateRef(
             const VirtualTable *vtable,
             Arg0&& arg0,
             Arg1&& arg1,
@@ -158,7 +158,7 @@ namespace lyric_runtime {
                 std::forward<Arg1>(arg1),
                 std::forward<Arg2>(arg2));
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
 
         /**
@@ -177,7 +177,7 @@ namespace lyric_runtime {
          * \return
          */
         template <class RefType, class Arg0, class Arg1, class Arg2, class Arg3>
-        DataCell allocateRef(
+        Operand allocateRef(
             const VirtualTable *vtable,
             Arg0&& arg0,
             Arg1&& arg1,
@@ -190,7 +190,7 @@ namespace lyric_runtime {
                 std::forward<Arg2>(arg2),
                 std::forward<Arg3>(arg3));
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
 
         /**
@@ -211,7 +211,7 @@ namespace lyric_runtime {
          * \return
          */
         template <class RefType, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4>
-        DataCell allocateRef(
+        Operand allocateRef(
             const VirtualTable *vtable,
             Arg0&& arg0,
             Arg1&& arg1,
@@ -226,7 +226,7 @@ namespace lyric_runtime {
                 std::forward<Arg3>(arg3),
                 std::forward<Arg4>(arg4));
             m_heap->insertInstance(instance);
-            return DataCell::forRef(instance);
+            return Operand::fromRef(instance);
         }
     };
 }

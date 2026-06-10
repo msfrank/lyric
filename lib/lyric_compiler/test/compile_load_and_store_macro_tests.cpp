@@ -20,7 +20,7 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInEntry)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(10))));
+            OperandInt(10))));
 }
 
 TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInDef)
@@ -39,7 +39,7 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInDef)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(15))));
+            OperandInt(15))));
 }
 
 TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
@@ -69,5 +69,5 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(15))));
+            OperandInt(15))));
 }

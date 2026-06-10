@@ -2,7 +2,7 @@
 #define LYRIC_TEST_MATCHERS_H
 
 #include "computation_matchers.h"
-#include "data_cell_matchers.h"
+#include "operand_matchers.h"
 #include "status_ref_matchers.h"
 #include "ref_handle_matchers.h"
 #include "test_run_matchers.h"

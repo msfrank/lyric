@@ -31,7 +31,7 @@ TEST_F(CompileNamespace, EvaluateDereferenceNamespacedGlobal)
         foo.qux
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileNamespace, EvaluateInvokeNamespacedFunction)
@@ -43,5 +43,5 @@ TEST_F(CompileNamespace, EvaluateInvokeNamespacedFunction)
         foo.bar()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(42))));
 }

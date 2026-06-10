@@ -16,7 +16,7 @@ TEST_F(StringTests, TestEvaluateNewString)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("Hello, world!"))));
+                     RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(StringTests, TestEvaluateNewEmptyString)
@@ -28,7 +28,7 @@ TEST_F(StringTests, TestEvaluateNewEmptyString)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString(""))));
+                     RunModule(OperandString(""))));
 }
 
 TEST_F(StringTests, TestEvaluateStringSize)
@@ -38,7 +38,7 @@ TEST_F(StringTests, TestEvaluateStringSize)
         string.Length()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(13))));
 }
 
 TEST_F(StringTests, TestEvaluateStringAt)
@@ -48,7 +48,7 @@ TEST_F(StringTests, TestEvaluateStringAt)
         string.At(0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<char32_t>('H')))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandChar(static_cast<char32_t>('H')))));
 }
 
 TEST_F(StringTests, TestEvaluateStringAppend)
@@ -61,7 +61,7 @@ TEST_F(StringTests, TestEvaluateStringAppend)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("Hello, world!"))));
+                     RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(StringTests, TestEvaluateStringPrepend)
@@ -74,7 +74,7 @@ TEST_F(StringTests, TestEvaluateStringPrepend)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("Hello, world!"))));
+                     RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(StringTests, TestEvaluateStringInsert)
@@ -87,7 +87,7 @@ TEST_F(StringTests, TestEvaluateStringInsert)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("Hello, world!"))));
+                     RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(StringTests, TestEvaluateStringRemove)
@@ -99,7 +99,7 @@ TEST_F(StringTests, TestEvaluateStringRemove)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("Helloworld!"))));
+                     RunModule(OperandString("Helloworld!"))));
 }
 
 TEST_F(StringTests, TestEvaluateStringSubstring)
@@ -111,7 +111,7 @@ TEST_F(StringTests, TestEvaluateStringSubstring)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellString("world"))));
+                     RunModule(OperandString("world"))));
 }
 
 TEST_F(StringTests, TestEvaluateStringAtInvalidIndex)
@@ -121,7 +121,7 @@ TEST_F(StringTests, TestEvaluateStringAtInvalidIndex)
         string.At(100)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellUndef())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandUndef())));
 }
 
 TEST_F(StringTests, TestEvaluateStringEqual)
@@ -130,7 +130,7 @@ TEST_F(StringTests, TestEvaluateStringEqual)
         "hello" == "hello"
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(StringTests, TestEvaluateStringLessThan)
@@ -139,7 +139,7 @@ TEST_F(StringTests, TestEvaluateStringLessThan)
         "hello" < "goodbye"
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(StringTests, TestEvaluateStringGreaterThan)
@@ -148,7 +148,7 @@ TEST_F(StringTests, TestEvaluateStringGreaterThan)
         "hello" > "goodbye"
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(StringTests, TestEvaluateStringLessOrEqual)
@@ -157,7 +157,7 @@ TEST_F(StringTests, TestEvaluateStringLessOrEqual)
         "hello" <= "goodbye"
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(StringTests, TestEvaluateStringGreaterOrEqual)
@@ -166,5 +166,5 @@ TEST_F(StringTests, TestEvaluateStringGreaterOrEqual)
         "hello" >= "goodbye"
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }

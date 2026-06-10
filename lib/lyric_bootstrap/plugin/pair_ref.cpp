@@ -29,7 +29,7 @@ PairRef::toString() const
 }
 
 void
-PairRef::setPair(const lyric_runtime::DataCell &first, const lyric_runtime::DataCell &second)
+PairRef::setPair(const lyric_runtime::Operand &first, const lyric_runtime::Operand &second)
 {
     TU_ASSERT (first.isValid());
     TU_ASSERT (second.isValid());
@@ -39,13 +39,13 @@ PairRef::setPair(const lyric_runtime::DataCell &first, const lyric_runtime::Data
     m_second = second;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 PairRef::pairFirst() const
 {
     return m_first;
 }
 
-lyric_runtime::DataCell
+lyric_runtime::Operand
 PairRef::pairSecond() const
 {
     return m_second;
@@ -54,19 +54,15 @@ PairRef::pairSecond() const
 void
 PairRef::setMembersReachable()
 {
-    if (m_first.type == lyric_runtime::DataCellType::Ref)
-        m_first.data.ref->setReachable();
-    if (m_second.type == lyric_runtime::DataCellType::Ref)
-        m_second.data.ref->setReachable();
+    m_first.setReachable();
+    m_second.setReachable();
 }
 
 void
 PairRef::clearMembersReachable()
 {
-    if (m_first.type == lyric_runtime::DataCellType::Ref)
-        m_first.data.ref->clearReachable();
-    if (m_second.type == lyric_runtime::DataCellType::Ref)
-        m_second.data.ref->clearReachable();
+    m_first.clearReachable();
+    m_second.clearReachable();
 }
 
 tempo_utils::Status
@@ -77,11 +73,8 @@ pair_alloc(
 {
     TU_ASSERT(vtable != nullptr);
     auto *currentCoro = state->currentCoro();
-
     auto ref = state->heapManager()->allocateRef<PairRef>(vtable);
-    currentCoro->pushData(ref);
-
-    return {};
+    return currentCoro->pushData(ref);
 }
 
 tempo_utils::Status
@@ -94,8 +87,9 @@ pair_ctor(
 
     auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *pair = static_cast<PairRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *pair = static_cast<PairRef *>(ref);
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
@@ -114,13 +108,13 @@ pair_first(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-    TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *pair = static_cast<PairRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *pair = static_cast<PairRef *>(ref);
 
-    currentCoro->pushData(pair->pairFirst());
-    return {};
+    TU_ASSERT (frame.numArguments() == 0);
+    return currentCoro->pushData(pair->pairFirst());
 }
 
 tempo_utils::Status
@@ -132,11 +126,11 @@ pair_second(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
-    TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *pair = static_cast<PairRef *>(receiver.data.ref);
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
+    auto *pair = static_cast<PairRef *>(ref);
 
-    currentCoro->pushData(pair->pairSecond());
-    return {};
+    TU_ASSERT (frame.numArguments() == 0);
+    return currentCoro->pushData(pair->pairSecond());
 }

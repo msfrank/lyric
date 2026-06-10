@@ -18,7 +18,7 @@ TEST_F(CompileAssignment, EvaluateTypedVal)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(100))));
+        RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileAssignment, EvaluateTypedValFromDefaultInitializer)
@@ -37,7 +37,7 @@ TEST_F(CompileAssignment, EvaluateTypedValFromDefaultInitializer)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("Hello, world!"))));
+            RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(CompileAssignment, EvaluateUntypedVal)
@@ -48,7 +48,7 @@ TEST_F(CompileAssignment, EvaluateUntypedVal)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(100))));
+        RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileAssignment, EvaluateUntypedValFromExpression)
@@ -62,7 +62,7 @@ TEST_F(CompileAssignment, EvaluateUntypedValFromExpression)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
-        RunModule(DataCellInt(42))));
+        RunModule(OperandInt(42))));
 }
 
 TEST_F(CompileAssignment, CompileValAssignmentFails)
@@ -87,7 +87,7 @@ TEST_F(CompileAssignment, EvaluateVarAssignment)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(1))));
+                     RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
@@ -100,7 +100,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(110))));
+                     RunModule(OperandInt(110))));
 }
 
 TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
@@ -113,7 +113,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(90))));
+                     RunModule(OperandInt(90))));
 }
 
 TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
@@ -126,7 +126,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(500))));
+                     RunModule(OperandInt(500))));
 }
 
 TEST_F(CompileAssignment, EvaluateVarInplaceDivide)
@@ -139,7 +139,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceDivide)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(2))));
+                     RunModule(OperandInt(2))));
 }
 
 TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
@@ -159,7 +159,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(11))));
+            OperandInt(11))));
 }
 
 TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
@@ -179,7 +179,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(9))));
+            OperandInt(9))));
 }
 
 TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
@@ -199,7 +199,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(20))));
+            OperandInt(20))));
 }
 
 TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
@@ -220,7 +220,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }
 
 TEST_F(CompileAssignment, EvaluateThisInplaceAdd)
@@ -240,7 +240,7 @@ TEST_F(CompileAssignment, EvaluateThisInplaceAdd)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(11))));
+            OperandInt(11))));
 }
 
 TEST_F(CompileAssignment, EvaluateThisInplaceSubtract)
@@ -260,7 +260,7 @@ TEST_F(CompileAssignment, EvaluateThisInplaceSubtract)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(9))));
+            OperandInt(9))));
 }
 
 TEST_F(CompileAssignment, EvaluateThisInplaceMultiply)
@@ -280,7 +280,7 @@ TEST_F(CompileAssignment, EvaluateThisInplaceMultiply)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(20))));
+            OperandInt(20))));
 }
 
 TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
@@ -301,7 +301,7 @@ TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }
 
 TEST_F(CompileAssignment, EvaluateGlobalVal)
@@ -313,7 +313,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVal)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(100))));
+            RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileAssignment, EvaluateGlobalValFromDefaultInitializer)
@@ -332,7 +332,7 @@ TEST_F(CompileAssignment, EvaluateGlobalValFromDefaultInitializer)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("Hello, world!"))));
+            RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(CompileAssignment, CompileGlobalValAssignmentFails)
@@ -356,7 +356,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVar)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(100))));
+            RunModule(OperandInt(100))));
 }
 
 TEST_F(CompileAssignment, EvaluateGlobalVarFromDefaultInitializer)
@@ -375,7 +375,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVarFromDefaultInitializer)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("Hello, world!"))));
+            RunModule(OperandString("Hello, world!"))));
 }
 
 TEST_F(CompileAssignment, EvaluateGlobalVarAssignment)
@@ -388,7 +388,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVarAssignment)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellInt(1))));
+            RunModule(OperandInt(1))));
 }
 
 TEST_F(CompileAssignment, EvaluateGlobalVarAssignmentFromDefaultInitializer)
@@ -408,5 +408,5 @@ TEST_F(CompileAssignment, EvaluateGlobalVarAssignmentFromDefaultInitializer)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(
-            RunModule(DataCellString("Wassup world!"))));
+            RunModule(OperandString("Wassup world!"))));
 }

@@ -17,7 +17,7 @@ TEST_F(CompileAlias, EvaluateGlobalAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileAlias, EvaluateFunctionAlias)
@@ -32,7 +32,7 @@ TEST_F(CompileAlias, EvaluateFunctionAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(15))));
+            OperandInt(15))));
 }
 
 TEST_F(CompileAlias, EvaluateClassAlias)
@@ -48,7 +48,7 @@ TEST_F(CompileAlias, EvaluateClassAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileAlias, EvaluateStructAlias)
@@ -64,7 +64,7 @@ TEST_F(CompileAlias, EvaluateStructAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileAlias, EvaluateUnionAlias)
@@ -77,7 +77,7 @@ TEST_F(CompileAlias, EvaluateUnionAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileAlias, EvaluateParameterizedAlias)
@@ -96,7 +96,7 @@ TEST_F(CompileAlias, EvaluateParameterizedAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(42))));
+            OperandInt(42))));
 }
 
 TEST_F(CompileAlias, EvaluatePartiallyParameterizedAlias)
@@ -117,5 +117,5 @@ TEST_F(CompileAlias, EvaluatePartiallyParameterizedAlias)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellBool(true))));
+            OperandBool(true))));
 }

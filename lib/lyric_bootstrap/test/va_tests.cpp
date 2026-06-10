@@ -18,7 +18,7 @@ TEST_F(VaTests, EvaluateVaSize)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(3))));
+                     RunModule(OperandInt(3))));
 }
 
 TEST_F(VaTests, EvaluateVaLoad)
@@ -32,5 +32,5 @@ TEST_F(VaTests, EvaluateVaLoad)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellInt(2))));
+                     RunModule(OperandInt(2))));
 }

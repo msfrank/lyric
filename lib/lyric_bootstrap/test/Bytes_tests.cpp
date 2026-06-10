@@ -16,7 +16,7 @@ TEST_F(BytesTests, TestEvaluateBytesFromString)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(MatchesDataCellType(lyric_runtime::DataCellType::Bytes))));
+                     RunModule(MatchesDataCellType(lyric_runtime::OperandType::Bytes))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesLength)
@@ -27,7 +27,7 @@ TEST_F(BytesTests, TestEvaluateBytesLength)
         bytes.Length()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(13))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesAt)
@@ -38,7 +38,7 @@ TEST_F(BytesTests, TestEvaluateBytesAt)
         bytes.At(0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(72))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(72))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesAppend)
@@ -51,7 +51,7 @@ TEST_F(BytesTests, TestEvaluateBytesAppend)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellBytes("Hello, world!"))));
+                     RunModule(OperandBytes("Hello, world!"))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesPrepend)
@@ -64,7 +64,7 @@ TEST_F(BytesTests, TestEvaluateBytesPrepend)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellBytes("Hello, world!"))));
+                     RunModule(OperandBytes("Hello, world!"))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesInsert)
@@ -77,7 +77,7 @@ TEST_F(BytesTests, TestEvaluateBytesInsert)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellBytes("Hello, world!"))));
+                     RunModule(OperandBytes("Hello, world!"))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesRemove)
@@ -89,7 +89,7 @@ TEST_F(BytesTests, TestEvaluateBytesRemove)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellBytes("Helloworld!"))));
+                     RunModule(OperandBytes("Helloworld!"))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesSubspan)
@@ -101,7 +101,7 @@ TEST_F(BytesTests, TestEvaluateBytesSubspan)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellBytes("world"))));
+                     RunModule(OperandBytes("world"))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesAtInvalidIndex)
@@ -112,7 +112,7 @@ TEST_F(BytesTests, TestEvaluateBytesAtInvalidIndex)
         bytes.At(100)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellUndef())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandUndef())));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesEqual)
@@ -121,7 +121,7 @@ TEST_F(BytesTests, TestEvaluateBytesEqual)
         "hello".ToBytes() == "hello".ToBytes()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesLessThan)
@@ -130,7 +130,7 @@ TEST_F(BytesTests, TestEvaluateBytesLessThan)
         "hello".ToBytes() < "goodbye".ToBytes()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesGreaterThan)
@@ -139,7 +139,7 @@ TEST_F(BytesTests, TestEvaluateBytesGreaterThan)
         "hello".ToBytes() > "goodbye".ToBytes()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesLessOrEqual)
@@ -148,7 +148,7 @@ TEST_F(BytesTests, TestEvaluateBytesLessOrEqual)
         "hello".ToBytes() <= "goodbye".ToBytes()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(false))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesGreaterOrEqual)
@@ -157,5 +157,5 @@ TEST_F(BytesTests, TestEvaluateBytesGreaterOrEqual)
         "hello".ToBytes() >= "goodbye".ToBytes()
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandBool(true))));
 }

@@ -18,9 +18,7 @@ RestIterator::RestIterator(const lyric_runtime::VirtualTable *vtable, lyric_runt
       m_rest(rest)
 {
     TU_ASSERT (m_rest != nullptr);
-    auto size = m_rest->restLength();
-    TU_ASSERT (size.type == lyric_runtime::DataCellType::Int64);
-    m_size = size.data.i64;
+    m_size = rest->numRest();
 }
 
 std::string
@@ -36,13 +34,13 @@ RestIterator::iteratorValid()
 }
 
 bool
-RestIterator::iteratorNext(lyric_runtime::DataCell &cell)
+RestIterator::iteratorNext(lyric_runtime::Operand &cell)
 {
     if (m_curr < m_size) {
         cell = m_rest->restAt(m_curr++);
         return true;
     } else {
-        cell = lyric_runtime::DataCell();
+        cell = lyric_runtime::Operand();
         return false;
     }
 }
@@ -83,15 +81,12 @@ rest_iterator_valid(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
-
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
-
-    return {};
+    return currentCoro->pushData(lyric_runtime::Operand::fromBool(ref->iteratorValid()));
 }
 
 tempo_utils::Status
@@ -103,16 +98,15 @@ rest_iterator_next(
     auto *currentCoro = state->currentCoro();
 
     auto &frame = currentCoro->currentCallOrThrow();
+    auto receiver = frame.getReceiver();
+    lyric_runtime::BaseRef *ref;
+    TU_ASSERT(receiver.getRef(ref));
 
     TU_ASSERT(frame.numArguments() == 0);
 
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::Ref);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
-
-    lyric_runtime::DataCell next;
-    if (!instance->iteratorNext(next)) {
-        next = lyric_runtime::DataCell();
+    lyric_runtime::Operand next;
+    if (!ref->iteratorNext(next)) {
+        next = lyric_runtime::Operand();
     }
     currentCoro->pushData(next);
 

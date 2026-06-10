@@ -18,7 +18,7 @@ struct SeqNode {
 };
 
 struct LeafSeqNode : public SeqNode {
-    lyric_runtime::DataCell *values;
+    lyric_runtime::Operand *values;
 };
 
 struct ConcatSeqNode : public SeqNode {
@@ -38,9 +38,10 @@ public:
     SeqNode *getNode() const;
     void setNode(SeqNode *node);
 
-    lyric_runtime::DataCell seqSize() const;
-    lyric_runtime::DataCell seqGet(const lyric_runtime::DataCell &index) const;
-    SeqNode *seqSlice(const lyric_runtime::DataCell &start, const lyric_runtime::DataCell &length) const;
+    size_t numElements() const;
+    lyric_runtime::Operand seqSize() const;
+    lyric_runtime::Operand seqGet(const lyric_runtime::Operand &index) const;
+    SeqNode *seqSlice(const lyric_runtime::Operand &start, const lyric_runtime::Operand &length) const;
 
 protected:
     void setMembersReachable() override;
@@ -59,15 +60,15 @@ public:
     std::string toString() const override;
 
     bool iteratorValid() override;
-    bool iteratorNext(lyric_runtime::DataCell &cell) override;
+    bool iteratorNext(lyric_runtime::Operand &cell) override;
 
 protected:
     void setMembersReachable() override;
     void clearMembersReachable() override;
 
 private:
-    int m_curr;
-    int m_size;
+    size_t m_curr;
+    size_t m_size;
     SeqRef *m_seq;
 };
 

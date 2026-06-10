@@ -18,7 +18,7 @@ TEST_F(CompileDef, EvaluateDefUnaryFunction)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(15))));
+            OperandInt(15))));
 }
 
 TEST_F(CompileDef, EvaluateDefBinaryFunction)
@@ -32,7 +32,7 @@ TEST_F(CompileDef, EvaluateDefBinaryFunction)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(1))));
+            OperandInt(1))));
 }
 
 TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
@@ -46,7 +46,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(1))));
+            OperandInt(1))));
 }
 
 TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
@@ -60,7 +60,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }
 
 TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
@@ -74,7 +74,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(4))));
+            OperandInt(4))));
 }
 
 TEST_F(CompileDef, EvaluateDefFunctionWithNoReturnType)
@@ -88,7 +88,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNoReturnType)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            MatchesDataCellType(lyric_runtime::DataCellType::Invalid))));
+            MatchesDataCellType(lyric_runtime::OperandType::Invalid))));
 }
 
 TEST_F(CompileDef, EvaluateDefGenericFunction)
@@ -103,7 +103,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunction)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(10))));
+            OperandInt(10))));
 }
 
 TEST_F(CompileDef, EvaluateDefGenericFunctionWithUpperBound)
@@ -117,7 +117,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunctionWithUpperBound)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }
 
 TEST_F(CompileDef, EvaluateDefGenericFunctionWithCtxParameter)
@@ -131,7 +131,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunctionWithCtxParameter)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(10))));
+            OperandInt(10))));
 }
 
 TEST_F(CompileDef, EvaluateDefGenericFunctionWithCallsiteArgument)
@@ -146,5 +146,5 @@ TEST_F(CompileDef, EvaluateDefGenericFunctionWithCallsiteArgument)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellInt(5))));
+            OperandInt(5))));
 }

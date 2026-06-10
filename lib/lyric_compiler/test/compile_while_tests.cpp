@@ -19,7 +19,7 @@ TEST_F(CompileWhile, EvaluateWhile)
         sum
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(15))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(15))));
 }
 
 TEST_F(CompileWhile, EvaluateContinueFromWhile)
@@ -35,7 +35,7 @@ TEST_F(CompileWhile, EvaluateContinueFromWhile)
         sum
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(6))));
 }
 
 TEST_F(CompileWhile, EvaluateBreakFromWhile)
@@ -51,5 +51,5 @@ TEST_F(CompileWhile, EvaluateBreakFromWhile)
         count
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandInt(3))));
 }

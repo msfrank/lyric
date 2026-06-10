@@ -17,7 +17,7 @@ RecordRef::~RecordRef()
 }
 
 bool
-RecordRef::getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCell &value) const
+RecordRef::getField(const lyric_runtime::Operand &field, lyric_runtime::Operand &value) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -32,9 +32,9 @@ RecordRef::getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCel
 
 bool
 RecordRef::setField(
-    const lyric_runtime::DataCell &field,
-    const lyric_runtime::DataCell &value,
-    lyric_runtime::DataCell *prev)
+    const lyric_runtime::Operand &field,
+    const lyric_runtime::Operand &value,
+    lyric_runtime::Operand *prev)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -63,10 +63,7 @@ void
 RecordRef::setMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->setReachable();
-        }
+        cell.setReachable();
     }
 }
 
@@ -74,10 +71,7 @@ void
 RecordRef::clearMembersReachable()
 {
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::Ref) {
-            TU_ASSERT (cell.data.ref != nullptr);
-            cell.data.ref->clearReachable();
-        }
+        cell.clearReachable();
     }
 }
 
