@@ -317,8 +317,9 @@ set_reachable_for_task(lyric_runtime::Task *task)
     auto *coro = task->stackfulCoroutine();
 
     // walk the data stack and mark all reachable instances
-    for (auto it = coro->dataBegin(); it != coro->dataEnd(); it++) {
-        const auto &operand = *it;
+    auto iterator = coro->iterateData();
+    lyric_runtime::Operand operand;
+    while (iterator.getNext(operand)) {
         operand.setReachable();
     }
 }

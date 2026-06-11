@@ -8,10 +8,12 @@
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_runtime/static_loader.h>
 #include <lyric_schema/ast_schema.h>
+#include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_tracing/trace_recorder.h>
 
 #include "compiler_mocks.h"
+#include "lyric_assembler/fundamental_cache.h"
 
 class CompilerScanDriver : public ::testing::Test {
 protected:
@@ -203,4 +205,70 @@ TEST_F(CompilerScanDriver, HandleRootAndMultipleChildren)
     lyric_rewriter::RewriterOptions options;
     lyric_rewriter::LyricRewriter rewriter(options);
     ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder), tempo_test::IsOk());
+}
+
+TEST_F(CompilerScanDriver, PushAndPopResult)
+{
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
+
+    lyric_compiler::CompilerScanDriver driver(objectRoot, objectState.get());
+
+    ASSERT_THAT (driver.pushResult(BoolType), tempo_test::IsOk());
+    ASSERT_EQ (1, driver.numResults());
+    auto topResult = driver.peekResult();
+    ASSERT_EQ (BoolType, topResult);
+    ASSERT_THAT (driver.popResult(), tempo_test::IsOk());
+    ASSERT_EQ (0, driver.numResults());
+}
+
+TEST_F(CompilerScanDriver, PeekResult)
+{
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto UndefType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Undef);
+    auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
+
+    lyric_compiler::CompilerScanDriver driver(objectRoot, objectState.get());
+
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(BoolType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_EQ (5, driver.numResults());
+
+    auto peekResult = driver.peekResult(3);
+    ASSERT_THAT (peekResult, tempo_test::IsResult());
+    auto result = peekResult.getResult();
+    ASSERT_EQ (BoolType, result);
+    ASSERT_EQ (5, driver.numResults());
+}
+
+TEST_F(CompilerScanDriver, DropResult)
+{
+    auto *fundamentalCache = objectState->fundamentalCache();
+    auto UndefType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Undef);
+    auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
+
+    lyric_compiler::CompilerScanDriver driver(objectRoot, objectState.get());
+
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(BoolType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_THAT (driver.pushResult(UndefType), tempo_test::IsOk());
+    ASSERT_EQ (5, driver.numResults());
+
+    ASSERT_THAT (driver.dropResult(3), tempo_test::IsOk());
+    ASSERT_EQ (4, driver.numResults());
+
+    ASSERT_EQ (UndefType, driver.peekResult());
+    ASSERT_THAT (driver.popResult(), tempo_test::IsOk());
+    ASSERT_EQ (UndefType, driver.peekResult());
+    ASSERT_THAT (driver.popResult(), tempo_test::IsOk());
+    ASSERT_EQ (UndefType, driver.peekResult());
+    ASSERT_THAT (driver.popResult(), tempo_test::IsOk());
+    ASSERT_EQ (UndefType, driver.peekResult());
+    ASSERT_THAT (driver.popResult(), tempo_test::IsOk());
+    ASSERT_EQ (0, driver.numResults());
 }

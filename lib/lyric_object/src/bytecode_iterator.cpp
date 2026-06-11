@@ -28,8 +28,6 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_DUP,                 lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_PICK,                lyric_object::OpInfoType::OFFSET_U16 },
     { lyric_object::Opcode::OP_DROP,                lyric_object::OpInfoType::OFFSET_U16 },
-    { lyric_object::Opcode::OP_RPICK,               lyric_object::OpInfoType::OFFSET_U16 },
-    { lyric_object::Opcode::OP_RDROP,               lyric_object::OpInfoType::OFFSET_U16 },
     { lyric_object::Opcode::OP_I64_ADD,             lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_I64_SUB,             lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_I64_MUL,             lyric_object::OpInfoType::NO_OPERANDS },

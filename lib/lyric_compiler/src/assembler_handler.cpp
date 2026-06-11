@@ -78,10 +78,16 @@ public:
                 auto peek = driver->peekResult();
                 return driver->pushResult(peek);
             }
-            case lyric_object::Opcode::OP_PICK:
-            case lyric_object::Opcode::OP_DROP:
-            case lyric_object::Opcode::OP_RPICK:
-            case lyric_object::Opcode::OP_RDROP:
+            case lyric_object::Opcode::OP_PICK: {
+                lyric_common::TypeDef pick;
+                TU_RETURN_IF_NOT_OK (m_fragment->pickValue(stackOffset));
+                TU_ASSIGN_OR_RETURN (pick, driver->peekResult(stackOffset));
+                return driver->pushResult(pick);
+            }
+            case lyric_object::Opcode::OP_DROP: {
+                TU_RETURN_IF_NOT_OK (m_fragment->dropValue(stackOffset));
+                return driver->dropResult(stackOffset);
+            }
 
             // integer math
             case lyric_object::Opcode::OP_I64_ADD:

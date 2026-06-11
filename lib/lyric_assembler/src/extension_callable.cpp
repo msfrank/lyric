@@ -146,7 +146,7 @@ lyric_assembler::ExtensionCallable::invoke(
         }
 
         case InvokeType::OFFSET: {
-            TU_RETURN_IF_NOT_OK (fragment->rpickValue(m_offset));
+            TU_RETURN_IF_NOT_OK (fragment->pickValue(m_offset));
             TU_RETURN_IF_NOT_OK (fragment->callVirtual(
                 m_callSymbol, placementSize, lyric_object::CALL_RECEIVER_FOLLOWS));
             return reifier.reifyResult(m_callSymbol->getReturnType());

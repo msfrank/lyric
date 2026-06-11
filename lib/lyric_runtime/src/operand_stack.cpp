@@ -9,6 +9,12 @@ lyric_runtime::OperandStack::OperandStack(size_t stackSize)
 {
 }
 
+bool
+lyric_runtime::OperandStack::isEmpty() const
+{
+    return m_depth == 0;
+}
+
 tempo_utils::Status
 lyric_runtime::OperandStack::pushOperand(const Operand &value)
 {
@@ -47,10 +53,10 @@ tempo_utils::Status
 lyric_runtime::OperandStack::popOperands(int count, std::vector<Operand> &values)
 {
     std::vector<Operand> vs(count);
-    for (int i = 0; i < count; ++i) {
+    for (int i = count; i > 0; --i) {
         Operand v;
         TU_RETURN_IF_NOT_OK (popOperand(v));
-        vs[count - i] = std::move(v);
+        vs[i - 1] = std::move(v);
     }
     values = std::move(vs);
     return {};
@@ -114,6 +120,30 @@ lyric_runtime::OperandStack::dropOperand(tu_int16 offset)
     return {};
 }
 
+tempo_utils::Status
+lyric_runtime::OperandStack::dropOperands(int count)
+{
+    for (int i = 0; i < count; ++i) {
+        if (m_last == 0)
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "no values left on stack");
+        const auto &info = m_stack.at(m_last - 1);
+        auto size = Operand::parseSize(info);
+        if (m_last < size)
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "invalid stack value");
+        m_last -= size;
+        --m_depth;
+    }
+    return {};
+}
+
+lyric_runtime::OperandStackIterator
+lyric_runtime::OperandStack::iterateOperands() const
+{
+    return OperandStackIterator(m_stack.data(), m_last);
+}
+
 size_t
 lyric_runtime::OperandStack::getDepth() const
 {
@@ -136,4 +166,49 @@ float
 lyric_runtime::OperandStack::getUtilization() const
 {
     return static_cast<float>(m_last) / static_cast<float>(m_stack.size());
+}
+
+lyric_runtime::OperandStackIterator::OperandStackIterator()
+    : m_stack(nullptr),
+      m_curr(0)
+{
+}
+
+lyric_runtime::OperandStackIterator::OperandStackIterator(const tu_uint8 *stack, size_t last)
+    : m_stack(stack),
+      m_curr(last)
+{
+    TU_NOTNULL (m_stack);
+}
+
+lyric_runtime::OperandStackIterator::OperandStackIterator(const OperandStackIterator &other)
+    : m_stack(other.m_stack),
+      m_curr(other.m_curr)
+{
+}
+
+bool
+lyric_runtime::OperandStackIterator::hasNext() const
+{
+    if (m_stack == nullptr)
+        return false;
+    return m_curr > 0;
+}
+
+bool
+lyric_runtime::OperandStackIterator::getNext(Operand &value)
+{
+    if (m_stack == nullptr)
+        return false;
+    if (m_curr == 0)
+        return false;
+
+    const auto &info = m_stack[m_curr - 1];
+    auto size = Operand::parseSize(info);
+    if (m_curr < size)
+        return false;
+    std::span bytes(m_stack + (m_curr - size), size);
+    value = Operand::parse(bytes);
+    m_curr -= size;
+    return true;
 }

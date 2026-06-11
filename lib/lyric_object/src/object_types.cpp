@@ -24,8 +24,6 @@ static const char *OP_POP_name                 = "OP_POP";
 static const char *OP_DUP_name                 = "OP_DUP";
 static const char *OP_PICK_name                = "OP_PICK";
 static const char *OP_DROP_name                = "OP_DROP";
-static const char *OP_RPICK_name               = "OP_RPICK";
-static const char *OP_RDROP_name               = "OP_RDROP";
 static const char *OP_I64_ADD_name             = "OP_I64_ADD";
 static const char *OP_I64_SUB_name             = "OP_I64_SUB";
 static const char *OP_I64_MUL_name             = "OP_I64_MUL";
@@ -120,10 +118,6 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_PICK_name;
         case Opcode::OP_DROP:
             return OP_DROP_name;
-        case Opcode::OP_RPICK:
-            return OP_RPICK_name;
-        case Opcode::OP_RDROP:
-            return OP_RDROP_name;
         case Opcode::OP_I64_ADD:
             return OP_I64_ADD_name;
         case Opcode::OP_I64_SUB:

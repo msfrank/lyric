@@ -290,8 +290,17 @@ lyric_common::TypeDef
 lyric_compiler::CompilerScanDriver::peekResult()
 {
     if (!m_results.empty())
-        return m_results.top();
+        return m_results.back();
     return {};
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_compiler::CompilerScanDriver::peekResult(tu_uint16 offset)
+{
+    if (m_results.size() <= offset)
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "not enough values on results stack to peek {}", offset);
+    return m_results.at(m_results.size() - offset - 1);
 }
 
 tempo_utils::Status
@@ -300,7 +309,7 @@ lyric_compiler::CompilerScanDriver::pushResult(const lyric_common::TypeDef &resu
     if (!result.isValid())
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "cannot push invalid result onto stack");
-    m_results.push(result);
+    m_results.push_back(result);
     TU_LOG_VV << "push result " << result.toString() << " (" << (int) m_results.size() << " total)";
     return {};
 }
@@ -311,8 +320,22 @@ lyric_compiler::CompilerScanDriver::popResult()
     if (m_results.empty())
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "results stack is empty");
-    m_results.pop();
+    m_results.pop_back();
     TU_LOG_VV << "pop result (" << (int) m_results.size() << " total)";
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::CompilerScanDriver::dropResult(tu_uint16 offset)
+{
+    if (m_results.size() <= offset)
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "not enough values on results stack to drop {}", offset);
+    auto numResults = m_results.size();
+    for (size_t i = numResults - offset - 1; i < numResults - 1; i++) {
+        m_results[i] = std::move(m_results[i + 1]);
+    }
+    m_results.resize(numResults - 1);
     return {};
 }
 

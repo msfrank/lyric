@@ -135,7 +135,10 @@ lyric_test::TestInspector::printDataStack(lyric_runtime::InterpreterState *state
         auto frameDescription = frame_to_description(*currCall, state);
         TU_CONSOLE_OUT << "Frame #" << currFrameNr << ": " << frameDescription;
 
-        for (auto iterator = currentCoro->dataBegin(); iterator != currentCoro->dataEnd(); iterator++) {
+        auto iterator = currentCoro->iterateData();
+        lyric_runtime::Operand operand;
+
+        while (iterator.getNext(operand)) {
             if (valueNr < lowerGuard)
                 break;
             if (valueNr < currGuard) {
@@ -147,7 +150,7 @@ lyric_test::TestInspector::printDataStack(lyric_runtime::InterpreterState *state
                     TU_CONSOLE_OUT << "Frame #" << currFrameNr << ": " << frameDescription;
                 }
             }
-            TU_CONSOLE_OUT << absl::Dec(valueNr, absl::kSpacePad3) << "| " << iterator->toString();
+            TU_CONSOLE_OUT << absl::Dec(valueNr, absl::kSpacePad3) << "| " << operand.toString();
             valueNr--;
         }
 
@@ -187,13 +190,16 @@ lyric_test::TestInspector::printDataStackForFrame(lyric_runtime::InterpreterStat
     auto frameDescription = frame_to_description(*currCall, state);
     TU_CONSOLE_OUT << "Frame #" << frameNr << ": " << frameDescription;
 
+    auto iterator = currentCoro->iterateData();
+    lyric_runtime::Operand operand;
+
     int cellNr = currentCoro->dataStackSize() - 1;
-    for (auto iterator = currentCoro->dataBegin(); iterator != currentCoro->dataEnd(); iterator++) {
+    while (iterator.getNext(operand)) {
         if (cellNr > upperGuard)
             continue;
         if (cellNr <= lowerGuard)
             break;
-        TU_CONSOLE_OUT << absl::Dec(cellNr--, absl::kSpacePad3) << "| " << iterator->toString();
+        TU_CONSOLE_OUT << absl::Dec(cellNr--, absl::kSpacePad3) << "| " << operand.toString();
     }
 
     TU_CONSOLE_OUT << "---------------------------------";

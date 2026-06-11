@@ -278,18 +278,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // duplicate top value on the stack and push it onto the top of the stack
             case lyric_object::Opcode::OP_DUP: {
-                Operand *value;
-                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
+                Operand value;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekData(value));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(value));
                 break;
             }
 
             // duplicate the picked value on the stack and push onto the top of the stack
             case lyric_object::Opcode::OP_PICK: {
                 auto offset = op.operands.offset_u16.offset;
-                Operand *value;
-                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value, offset));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
+                Operand value;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekData(value, offset));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(value));
                 break;
             }
 
@@ -297,22 +297,6 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_DROP: {
                 auto offset = op.operands.offset_u16.offset;
                 ON_ERROR_IF_NOT_OK (currentCoro->dropData(offset));
-                break;
-            }
-
-            // duplicate the picked value on the stack and push onto the top of the stack
-            case lyric_object::Opcode::OP_RPICK: {
-                auto offset = op.operands.offset_u16.offset;
-                Operand *value;
-                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value, -1 - offset));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
-                break;
-            }
-
-            // remove the value at the specified offset from the stack
-            case lyric_object::Opcode::OP_RDROP: {
-                auto offset = op.operands.offset_u16.offset;
-                ON_ERROR_IF_NOT_OK (currentCoro->dropData(-1 - offset));
                 break;
             }
 

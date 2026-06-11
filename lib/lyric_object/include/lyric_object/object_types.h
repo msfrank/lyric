@@ -232,8 +232,6 @@ namespace lyric_object {
         OP_DUP,
         OP_PICK,
         OP_DROP,
-        OP_RPICK,
-        OP_RDROP,
 
         // integer math
         OP_I64_ADD,

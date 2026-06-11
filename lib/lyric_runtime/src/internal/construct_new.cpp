@@ -103,9 +103,9 @@ lyric_runtime::internal::construct_new(
     TU_RETURN_IF_NOT_OK (allocator(interp, state, vtable));
 
     // get the ref
-    Operand *top;
-    TU_RETURN_IF_NOT_OK (currentCoro->peekData(&top));
-    auto ref = *top;
+    Operand top;
+    TU_RETURN_IF_NOT_OK (currentCoro->peekData(top));
+    auto ref = top;
 
     // load the required activation frame data
     DescriptorEntry *constructorDescriptor;

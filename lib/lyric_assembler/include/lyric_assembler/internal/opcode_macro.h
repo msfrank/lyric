@@ -79,16 +79,6 @@ namespace lyric_assembler::internal {
         DropMacro() : StackOffsetOpcodeMacro(lyric_object::Opcode::OP_DROP) {};
     };
 
-    class RPickMacro : public StackOffsetOpcodeMacro {
-    public:
-        RPickMacro() : StackOffsetOpcodeMacro(lyric_object::Opcode::OP_RPICK) {};
-    };
-
-    class RDropMacro : public StackOffsetOpcodeMacro {
-    public:
-        RDropMacro() : StackOffsetOpcodeMacro(lyric_object::Opcode::OP_RDROP) {};
-    };
-
     // integer math macros
 
     class I64AddMacro : public NoOperandOpcodeMacro {

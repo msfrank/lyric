@@ -677,8 +677,6 @@ lyric_assembler::StackOperationInstruction::apply(
             return bytecodeBuilder.writeOpcode(m_opcode);
         case lyric_object::Opcode::OP_PICK:
         case lyric_object::Opcode::OP_DROP:
-        case lyric_object::Opcode::OP_RPICK:
-        case lyric_object::Opcode::OP_RDROP:
             TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));
             return bytecodeBuilder.writeU16(m_offset);
         default:

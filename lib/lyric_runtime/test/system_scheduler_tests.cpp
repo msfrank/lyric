@@ -290,7 +290,7 @@ public:
             numdeps++;
             switch (promise->getState()) {
                 case lyric_runtime::Promise::State::Completed: {
-                    if (promise->getResult() == lyric_runtime::Operand::fromBool(true)) {
+                    if (promise->getResult().isEqualTo(lyric_runtime::Operand::fromBool(true))) {
                         numcompleted++;
                         break;
                     }

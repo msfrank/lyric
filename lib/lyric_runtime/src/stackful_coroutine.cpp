@@ -173,115 +173,68 @@ lyric_runtime::StackfulCoroutine::callsEnd() const
 tempo_utils::Status
 lyric_runtime::StackfulCoroutine::pushData(const Operand &value)
 {
-    m_dataStack.push_back(value);
-    return {};
+    return m_operandStack.pushOperand(value);
 }
 
 tempo_utils::Status
 lyric_runtime::StackfulCoroutine::popData(Operand &value)
 {
-    if (m_dataStack.empty())
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "data stack is empty");
-    value = std::move(m_dataStack.back());
-    m_dataStack.pop_back();
-    return {};
+    return m_operandStack.popOperand(value);
 }
 
 tempo_utils::Status
 lyric_runtime::StackfulCoroutine::popData(int count, std::vector<Operand> &values)
 {
-    if (count < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "pop data request count cannot be negative");
-    if (std::cmp_greater(count, m_dataStack.size()))
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "not enough values on data stack");
-    values.resize(count);
-    for (int di = 0, si = m_dataStack.size() - count; di < count; di++, si++) {
-        values[di] = std::move(m_dataStack[si]);
-    }
-    m_dataStack.resize(m_dataStack.size() - count);
-    return {};
+    return m_operandStack.popOperands(count, values);
 }
 
 tempo_utils::Status
-lyric_runtime::StackfulCoroutine::peekData(const Operand **valueptr, int offset) const
+lyric_runtime::StackfulCoroutine::peekData(Operand &value, int offset) const
 {
-    offset = calculate_stack_index(m_dataStack, offset);
-    if (offset < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "invalid data stack offset");
-    const auto &value = m_dataStack.at(offset);
-    *valueptr = &value;
-    return {};
-}
-
-tempo_utils::Status
-lyric_runtime::StackfulCoroutine::peekData(Operand **valueptr, int offset)
-{
-    offset = calculate_stack_index(m_dataStack, offset);
-    if (offset < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "invalid data stack offset");
-    *valueptr = &m_dataStack[offset];
-    return {};
+    return m_operandStack.peekOperand(value, offset);
 }
 
 tempo_utils::Status
 lyric_runtime::StackfulCoroutine::dropData(int offset)
 {
-    offset = calculate_stack_index(m_dataStack, offset);
-    if (offset < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "invalid data stack offset");
-    m_dataStack.erase(m_dataStack.cbegin() + offset);
-    return {};
-}
-
-tempo_utils::Status
-lyric_runtime::StackfulCoroutine::extendDataStack(int count)
-{
-    if (count < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "cannot extend data stack using negative count");
-    m_dataStack.resize(m_dataStack.size() + count);
-    return {};
+    return m_operandStack.dropOperand(offset);
 }
 
 tempo_utils::Status
 lyric_runtime::StackfulCoroutine::resizeDataStack(int size)
 {
-    if (size < 0)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "cannot resize data stack using negative size");
-    m_dataStack.resize(size);
-    return {};
+    return m_operandStack.dropOperands(m_operandStack.getDepth() - size);
 }
 
 bool
 lyric_runtime::StackfulCoroutine::dataStackEmpty() const
 {
-    return m_dataStack.empty();
+    return m_operandStack.isEmpty();
 }
 
 int
 lyric_runtime::StackfulCoroutine::dataStackSize() const
 {
-    return m_dataStack.size();
+    return m_operandStack.getDepth();
 }
 
-std::vector<lyric_runtime::Operand>::const_reverse_iterator
-lyric_runtime::StackfulCoroutine::dataBegin() const
+lyric_runtime::OperandStackIterator
+lyric_runtime::StackfulCoroutine::iterateData() const
 {
-    return m_dataStack.crbegin();
+    return m_operandStack.iterateOperands();
 }
 
-std::vector<lyric_runtime::Operand>::const_reverse_iterator
-lyric_runtime::StackfulCoroutine::dataEnd() const
-{
-    return m_dataStack.crend();
-}
+// std::vector<lyric_runtime::Operand>::const_reverse_iterator
+// lyric_runtime::StackfulCoroutine::dataBegin() const
+// {
+//     return m_dataStack.crbegin();
+// }
+//
+// std::vector<lyric_runtime::Operand>::const_reverse_iterator
+// lyric_runtime::StackfulCoroutine::dataEnd() const
+// {
+//     return m_dataStack.crend();
+// }
 
 void
 lyric_runtime::StackfulCoroutine::pushGuard(int stackGuard)
@@ -333,6 +286,5 @@ lyric_runtime::StackfulCoroutine::reset()
     m_IP = {};
     m_SP = nullptr;
     m_callStack.clear();
-    m_dataStack.clear();
     m_guardStack.clear();
 }

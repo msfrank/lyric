@@ -538,12 +538,12 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_DROP:
                 TU_RETURN_IF_NOT_OK (data.fragment->dropValue(op.operands.offset_u16.offset));
                 break;
-            case lyric_object::Opcode::OP_RPICK:
-                TU_RETURN_IF_NOT_OK (data.fragment->rpickValue(op.operands.offset_u16.offset));
-                break;
-            case lyric_object::Opcode::OP_RDROP:
-                TU_RETURN_IF_NOT_OK (data.fragment->rdropValue(op.operands.offset_u16.offset));
-                break;
+            // case lyric_object::Opcode::OP_RPICK:
+            //     TU_RETURN_IF_NOT_OK (data.fragment->rpickValue(op.operands.offset_u16.offset));
+            //     break;
+            // case lyric_object::Opcode::OP_RDROP:
+            //     TU_RETURN_IF_NOT_OK (data.fragment->rdropValue(op.operands.offset_u16.offset));
+            //     break;
             case lyric_object::Opcode::OP_I64_ADD:
                 TU_RETURN_IF_NOT_OK (data.fragment->intAdd());
                 break;

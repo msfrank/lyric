@@ -55,9 +55,6 @@ lyric_build::internal::make_build_macros()
     macroRegistry->registerMacroName("Drop", []() {
         return std::make_shared<lyric_assembler::internal::DropMacro>();
     });
-    macroRegistry->registerMacroName("RPick", []() {
-        return std::make_shared<lyric_assembler::internal::RPickMacro>();
-    });
     macroRegistry->registerMacroName("I64Add", []() {
         return std::make_shared<lyric_assembler::internal::I64AddMacro>();
     });

@@ -447,24 +447,6 @@ lyric_assembler::CodeFragment::dropValue(tu_uint16 dropOffset)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::rpickValue(tu_uint16 pickOffset)
-{
-    Statement statement;
-    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_RPICK, pickOffset);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::rdropValue(tu_uint16 dropOffset)
-{
-    Statement statement;
-    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_RDROP, dropOffset);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
 lyric_assembler::CodeFragment::intAdd()
 {
     Statement statement;

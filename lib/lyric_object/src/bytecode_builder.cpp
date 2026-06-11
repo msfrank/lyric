@@ -570,28 +570,6 @@ lyric_object::BytecodeBuilder::dropValue(uint16_t dropOffset)
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::rpickValue(uint16_t pickOffset)
-{
-    tempo_utils::Status status;
-    status = writeOpcode(Opcode::OP_RPICK);
-    if (!status.isOk())
-        return status;
-    writeU16(pickOffset);
-    return {};
-}
-
-tempo_utils::Status
-lyric_object::BytecodeBuilder::rdropValue(uint16_t dropOffset)
-{
-    tempo_utils::Status status;
-    status = writeOpcode(Opcode::OP_RDROP);
-    if (!status.isOk())
-        return status;
-    writeU16(dropOffset);
-    return {};
-}
-
-tempo_utils::Status
 lyric_object::BytecodeBuilder::callStatic(
     tu_uint32 address,
     uint16_t placementSize,

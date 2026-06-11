@@ -84,8 +84,6 @@ namespace lyric_object {
         tempo_utils::Status dupValue();
         tempo_utils::Status pickValue(tu_uint16 pickOffset);
         tempo_utils::Status dropValue(tu_uint16 dropOffset);
-        tempo_utils::Status rpickValue(tu_uint16 pickOffset);
-        tempo_utils::Status rdropValue(tu_uint16 dropOffset);
 
         tempo_utils::Status callStatic(
             tu_uint32 address,

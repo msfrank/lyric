@@ -45,15 +45,17 @@ namespace lyric_compiler {
         tu_uint32 numGroupings() const;
 
         lyric_common::TypeDef peekResult();
+        tempo_utils::Result<lyric_common::TypeDef> peekResult(tu_uint16 offset);
         tempo_utils::Status pushResult(const lyric_common::TypeDef &result);
         tempo_utils::Status popResult();
+        tempo_utils::Status dropResult(tu_uint16 offset);
         tu_uint32 numResults() const;
 
     private:
         lyric_assembler::ObjectRoot *m_root;
         lyric_assembler::ObjectState *m_state;
         lyric_typing::TypeSystem *m_typeSystem;
-        std::stack<lyric_common::TypeDef> m_results;
+        std::vector<lyric_common::TypeDef> m_results;
 
         struct GroupingData {
             std::unique_ptr<AbstractGrouping> grouping;
