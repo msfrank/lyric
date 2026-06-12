@@ -4,6 +4,24 @@
 #include <lyric_runtime/interpreter_result.h>
 
 template<class ValueType>
+tempo_utils::Status apply_compare(
+    const lyric_runtime::Operand &lhs,
+    const lyric_runtime::Operand &rhs,
+    lyric_runtime::Operand &result)
+{
+    ValueType l, r;
+    TU_RETURN_IF_NOT_OK (lyric_runtime::internal::get_binary_operands(lhs, rhs, l, r));
+    tu_int64 cmp;
+    if (l <= r) {
+        cmp = l == r? 0 : -1;
+    } else {
+        cmp = 1;
+    }
+    result = lyric_runtime::Operand::fromI64(cmp);
+    return {};
+}
+
+template<class ValueType>
 tempo_utils::Status apply_is_zero(
     const lyric_runtime::Operand &element,
     bool &result)
@@ -67,6 +85,29 @@ tempo_utils::Status apply_is_less_or_equal(
     TU_RETURN_IF_NOT_OK (lyric_runtime::internal::get_unary_operand(element, e));
     result = e <= 0;
     return {};
+}
+
+tempo_utils::Status
+lyric_runtime::internal::compare(const Operand &lhs, const Operand &rhs, Operand &result)
+{
+    switch (lhs.getType()) {
+        case OperandType::Bool:    return apply_compare<bool>(lhs, rhs, result);
+        case OperandType::UInt8:   return apply_compare<tu_uint8>(lhs, rhs, result);
+        case OperandType::UInt16:  return apply_compare<tu_uint16>(lhs, rhs, result);
+        case OperandType::UInt32:  return apply_compare<tu_uint32>(lhs, rhs, result);
+        case OperandType::UInt64:  return apply_compare<tu_uint64>(lhs, rhs, result);
+        case OperandType::Int8:    return apply_compare<tu_int8>(lhs, rhs, result);
+        case OperandType::Int16:   return apply_compare<tu_int16>(lhs, rhs, result);
+        case OperandType::Int32:   return apply_compare<tu_int32>(lhs, rhs, result);
+        case OperandType::Int64:   return apply_compare<tu_int64>(lhs, rhs, result);
+        case OperandType::Float32: return apply_compare<float>(lhs, rhs, result);
+        case OperandType::Float64: return apply_compare<double>(lhs, rhs, result);
+        case OperandType::Char32:  return apply_compare<char32_t>(lhs, rhs, result);
+
+        default:
+            return InterpreterStatus::forCondition(InterpreterCondition::kInvalidDataStackV1,
+                "invalid lhs value");
+    }
 }
 
 tempo_utils::Status

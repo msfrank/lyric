@@ -55,35 +55,20 @@ lyric_build::internal::make_build_macros()
     macroRegistry->registerMacroName("Drop", []() {
         return std::make_shared<lyric_assembler::internal::DropMacro>();
     });
-    macroRegistry->registerMacroName("I64Add", []() {
-        return std::make_shared<lyric_assembler::internal::I64AddMacro>();
+    macroRegistry->registerMacroName("Add", []() {
+        return std::make_shared<lyric_assembler::internal::AddMacro>();
     });
-    macroRegistry->registerMacroName("I64Sub", []() {
-        return std::make_shared<lyric_assembler::internal::I64SubMacro>();
+    macroRegistry->registerMacroName("Sub", []() {
+        return std::make_shared<lyric_assembler::internal::SubMacro>();
     });
-    macroRegistry->registerMacroName("I64Mul", []() {
-        return std::make_shared<lyric_assembler::internal::I64MulMacro>();
+    macroRegistry->registerMacroName("Mul", []() {
+        return std::make_shared<lyric_assembler::internal::MulMacro>();
     });
-    macroRegistry->registerMacroName("I64Div", []() {
-        return std::make_shared<lyric_assembler::internal::I64DivMacro>();
+    macroRegistry->registerMacroName("Div", []() {
+        return std::make_shared<lyric_assembler::internal::DivMacro>();
     });
-    macroRegistry->registerMacroName("I64Neg", []() {
-        return std::make_shared<lyric_assembler::internal::I64NegMacro>();
-    });
-    macroRegistry->registerMacroName("DblAdd", []() {
-        return std::make_shared<lyric_assembler::internal::DblAddMacro>();
-    });
-    macroRegistry->registerMacroName("DblSub", []() {
-        return std::make_shared<lyric_assembler::internal::DblSubMacro>();
-    });
-    macroRegistry->registerMacroName("DblMul", []() {
-        return std::make_shared<lyric_assembler::internal::DblMulMacro>();
-    });
-    macroRegistry->registerMacroName("DblDiv", []() {
-        return std::make_shared<lyric_assembler::internal::DblDivMacro>();
-    });
-    macroRegistry->registerMacroName("DblNeg", []() {
-        return std::make_shared<lyric_assembler::internal::DblNegMacro>();
+    macroRegistry->registerMacroName("Neg", []() {
+        return std::make_shared<lyric_assembler::internal::NegMacro>();
     });
     macroRegistry->registerMacroName("BoolCmp", []() {
         return std::make_shared<lyric_assembler::internal::BoolCmpMacro>();

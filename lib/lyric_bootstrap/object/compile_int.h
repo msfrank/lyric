@@ -16,4 +16,9 @@ CoreInstance *build_core_IntInstance(
     const CoreConcept *OrderedConcept,
     const CoreType *BoolType);
 
+// CoreExistential *build_core_Int64(BuilderState &state, const CoreExistential *IntrinsicExistential);
+// CoreExistential *build_core_Int32(BuilderState &state, const CoreExistential *IntrinsicExistential);
+// CoreExistential *build_core_Int16(BuilderState &state, const CoreExistential *IntrinsicExistential);
+// CoreExistential *build_core_Int8(BuilderState &state, const CoreExistential *IntrinsicExistential);
+
 #endif // LYRIC_BOOTSTRAP_COMPILE_INT_H

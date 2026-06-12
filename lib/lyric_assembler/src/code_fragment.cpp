@@ -447,91 +447,46 @@ lyric_assembler::CodeFragment::dropValue(tu_uint16 dropOffset)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::intAdd()
+lyric_assembler::CodeFragment::add()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_ADD);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_ADD);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::intSubtract()
+lyric_assembler::CodeFragment::subtract()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_SUB);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_SUB);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::intMultiply()
+lyric_assembler::CodeFragment::multiply()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_MUL);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_MUL);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::intDivide()
+lyric_assembler::CodeFragment::divide()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_DIV);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_DIV);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::intNegate()
+lyric_assembler::CodeFragment::negate()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_NEG);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatAdd()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_ADD);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatSubtract()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_SUB);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatMultiply()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_MUL);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatDivide()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_DIV);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatNegate()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_NEG);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_NEG);
     m_statements.push_back(std::move(statement));
     return {};
 }

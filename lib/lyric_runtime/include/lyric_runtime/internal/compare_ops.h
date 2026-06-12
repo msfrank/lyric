@@ -7,6 +7,7 @@
 
 namespace lyric_runtime::internal {
 
+    tempo_utils::Status compare(const Operand &lhs, const Operand &rhs, Operand &result);
     tempo_utils::Status is_zero(const Operand &element, bool &result);
     tempo_utils::Status is_not_zero(const Operand &element, bool &result);
     tempo_utils::Status is_greater_than(const Operand &element, bool &result);

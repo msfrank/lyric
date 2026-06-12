@@ -79,58 +79,31 @@ namespace lyric_assembler::internal {
         DropMacro() : StackOffsetOpcodeMacro(lyric_object::Opcode::OP_DROP) {};
     };
 
-    // integer math macros
+    // arithmetic macros
 
-    class I64AddMacro : public NoOperandOpcodeMacro {
+    class AddMacro : public NoOperandOpcodeMacro {
     public:
-        I64AddMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_ADD) {};
+        AddMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_ADD) {};
     };
 
-    class I64SubMacro : public NoOperandOpcodeMacro {
+    class SubMacro : public NoOperandOpcodeMacro {
     public:
-        I64SubMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_SUB) {};
+        SubMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_SUB) {};
     };
 
-    class I64MulMacro : public NoOperandOpcodeMacro {
+    class MulMacro : public NoOperandOpcodeMacro {
     public:
-        I64MulMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_MUL) {};
+        MulMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_MUL) {};
     };
 
-    class I64DivMacro : public NoOperandOpcodeMacro {
+    class DivMacro : public NoOperandOpcodeMacro {
     public:
-        I64DivMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_DIV) {};
+        DivMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DIV) {};
     };
 
-    class I64NegMacro : public NoOperandOpcodeMacro {
+    class NegMacro : public NoOperandOpcodeMacro {
     public:
-        I64NegMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_NEG) {};
-    };
-
-    // rational math macros
-
-    class DblAddMacro : public NoOperandOpcodeMacro {
-    public:
-        DblAddMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_ADD) {};
-    };
-
-    class DblSubMacro : public NoOperandOpcodeMacro {
-    public:
-        DblSubMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_SUB) {};
-    };
-
-    class DblMulMacro : public NoOperandOpcodeMacro {
-    public:
-        DblMulMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_MUL) {};
-    };
-
-    class DblDivMacro : public NoOperandOpcodeMacro {
-    public:
-        DblDivMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_DIV) {};
-    };
-
-    class DblNegMacro : public NoOperandOpcodeMacro {
-    public:
-        DblNegMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_NEG) {};
+        NegMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_NEG) {};
     };
 
     // comparison macros

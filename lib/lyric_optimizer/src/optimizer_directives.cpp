@@ -285,16 +285,16 @@ lyric_optimizer::Char::toString() const
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::IntAdd::getType() const
+lyric_optimizer::Add::getType() const
 {
     return DirectiveType::IntAdd;
 }
 
 bool
-lyric_optimizer::IntAdd::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::Add::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
     if (other && other->getType() == DirectiveType::IntAdd) {
-        auto directive = std::static_pointer_cast<IntAdd>(other);
+        auto directive = std::static_pointer_cast<Add>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
     }
@@ -302,7 +302,7 @@ lyric_optimizer::IntAdd::isEquivalentTo(std::shared_ptr<AbstractDirective> other
 }
 
 tempo_utils::Status
-lyric_optimizer::IntAdd::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::Add::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto rhs = stack.popOperand();
     if (!rhs)
@@ -318,7 +318,7 @@ lyric_optimizer::IntAdd::applyOperands(ActivationState &state, OperandStack &sta
 }
 
 tempo_utils::Status
-lyric_optimizer::IntAdd::buildCode(
+lyric_optimizer::Add::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
@@ -330,28 +330,28 @@ lyric_optimizer::IntAdd::buildCode(
             "missing rhs operand");
     TU_RETURN_IF_NOT_OK (m_lhs->buildCode(codeFragment, procHandle));
     TU_RETURN_IF_NOT_OK (m_rhs->buildCode(codeFragment, procHandle));
-    return codeFragment->intAdd();
+    return codeFragment->add();
 }
 
 std::string
-lyric_optimizer::IntAdd::toString() const
+lyric_optimizer::Add::toString() const
 {
     auto lhs = m_lhs ? m_lhs->toString() : "?";
     auto rhs = m_rhs ? m_rhs->toString() : "?";
-    return absl::StrCat("IntAdd(", lhs, ", ", rhs, ")");
+    return absl::StrCat("Add(", lhs, ", ", rhs, ")");
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::IntSub::getType() const
+lyric_optimizer::Sub::getType() const
 {
     return DirectiveType::IntSub;
 }
 
 bool
-lyric_optimizer::IntSub::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::Sub::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
     if (other && other->getType() == DirectiveType::IntSub) {
-        auto directive = std::static_pointer_cast<IntSub>(other);
+        auto directive = std::static_pointer_cast<Sub>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
     }
@@ -359,7 +359,7 @@ lyric_optimizer::IntSub::isEquivalentTo(std::shared_ptr<AbstractDirective> other
 }
 
 tempo_utils::Status
-lyric_optimizer::IntSub::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::Sub::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto rhs = stack.popOperand();
     if (!rhs)
@@ -375,7 +375,7 @@ lyric_optimizer::IntSub::applyOperands(ActivationState &state, OperandStack &sta
 }
 
 tempo_utils::Status
-lyric_optimizer::IntSub::buildCode(
+lyric_optimizer::Sub::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
@@ -387,28 +387,28 @@ lyric_optimizer::IntSub::buildCode(
             "missing rhs operand");
     TU_RETURN_IF_NOT_OK (m_lhs->buildCode(codeFragment, procHandle));
     TU_RETURN_IF_NOT_OK (m_rhs->buildCode(codeFragment, procHandle));
-    return codeFragment->intSubtract();
+    return codeFragment->subtract();
 }
 
 std::string
-lyric_optimizer::IntSub::toString() const
+lyric_optimizer::Sub::toString() const
 {
     auto lhs = m_lhs ? m_lhs->toString() : "?";
     auto rhs = m_rhs ? m_rhs->toString() : "?";
-    return absl::StrCat("IntSub(", lhs, ", ", rhs, ")");
+    return absl::StrCat("Sub(", lhs, ", ", rhs, ")");
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::IntMul::getType() const
+lyric_optimizer::Mul::getType() const
 {
     return DirectiveType::IntMul;
 }
 
 bool
-lyric_optimizer::IntMul::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::Mul::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
     if (other && other->getType() == DirectiveType::IntMul) {
-        auto directive = std::static_pointer_cast<IntMul>(other);
+        auto directive = std::static_pointer_cast<Mul>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
     }
@@ -416,7 +416,7 @@ lyric_optimizer::IntMul::isEquivalentTo(std::shared_ptr<AbstractDirective> other
 }
 
 tempo_utils::Status
-lyric_optimizer::IntMul::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::Mul::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto rhs = stack.popOperand();
     if (!rhs)
@@ -432,7 +432,7 @@ lyric_optimizer::IntMul::applyOperands(ActivationState &state, OperandStack &sta
 }
 
 tempo_utils::Status
-lyric_optimizer::IntMul::buildCode(
+lyric_optimizer::Mul::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
@@ -444,28 +444,28 @@ lyric_optimizer::IntMul::buildCode(
             "missing rhs operand");
     TU_RETURN_IF_NOT_OK (m_lhs->buildCode(codeFragment, procHandle));
     TU_RETURN_IF_NOT_OK (m_rhs->buildCode(codeFragment, procHandle));
-    return codeFragment->intMultiply();
+    return codeFragment->multiply();
 }
 
 std::string
-lyric_optimizer::IntMul::toString() const
+lyric_optimizer::Mul::toString() const
 {
     auto lhs = m_lhs ? m_lhs->toString() : "?";
     auto rhs = m_rhs ? m_rhs->toString() : "?";
-    return absl::StrCat("IntMul(", lhs, ", ", rhs, ")");
+    return absl::StrCat("Mul(", lhs, ", ", rhs, ")");
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::IntDiv::getType() const
+lyric_optimizer::Div::getType() const
 {
     return DirectiveType::IntDiv;
 }
 
 bool
-lyric_optimizer::IntDiv::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::Div::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
     if (other && other->getType() == DirectiveType::IntDiv) {
-        auto directive = std::static_pointer_cast<IntDiv>(other);
+        auto directive = std::static_pointer_cast<Div>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
     }
@@ -473,7 +473,7 @@ lyric_optimizer::IntDiv::isEquivalentTo(std::shared_ptr<AbstractDirective> other
 }
 
 tempo_utils::Status
-lyric_optimizer::IntDiv::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::Div::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto rhs = stack.popOperand();
     if (!rhs)
@@ -489,7 +489,7 @@ lyric_optimizer::IntDiv::applyOperands(ActivationState &state, OperandStack &sta
 }
 
 tempo_utils::Status
-lyric_optimizer::IntDiv::buildCode(
+lyric_optimizer::Div::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
@@ -501,35 +501,35 @@ lyric_optimizer::IntDiv::buildCode(
             "missing rhs operand");
     TU_RETURN_IF_NOT_OK (m_lhs->buildCode(codeFragment, procHandle));
     TU_RETURN_IF_NOT_OK (m_rhs->buildCode(codeFragment, procHandle));
-    return codeFragment->intDivide();
+    return codeFragment->divide();
 }
 
 std::string
-lyric_optimizer::IntDiv::toString() const
+lyric_optimizer::Div::toString() const
 {
     auto lhs = m_lhs ? m_lhs->toString() : "?";
     auto rhs = m_rhs ? m_rhs->toString() : "?";
-    return absl::StrCat("IntDiv(", lhs, ", ", rhs, ")");
+    return absl::StrCat("Div(", lhs, ", ", rhs, ")");
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::IntNeg::getType() const
+lyric_optimizer::Neg::getType() const
 {
     return DirectiveType::IntNeg;
 }
 
 bool
-lyric_optimizer::IntNeg::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::Neg::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
     if (other && other->getType() == DirectiveType::IntNeg) {
-        auto directive = std::static_pointer_cast<IntNeg>(other);
+        auto directive = std::static_pointer_cast<Neg>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs);
     }
     return false;
 }
 
 tempo_utils::Status
-lyric_optimizer::IntNeg::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::Neg::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto lhs = stack.popOperand();
     if (!lhs)
@@ -540,7 +540,7 @@ lyric_optimizer::IntNeg::applyOperands(ActivationState &state, OperandStack &sta
 }
 
 tempo_utils::Status
-lyric_optimizer::IntNeg::buildCode(
+lyric_optimizer::Neg::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
@@ -548,14 +548,14 @@ lyric_optimizer::IntNeg::buildCode(
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing lhs operand");
     TU_RETURN_IF_NOT_OK (m_lhs->buildCode(codeFragment, procHandle));
-    return codeFragment->intNegate();
+    return codeFragment->negate();
 }
 
 std::string
-lyric_optimizer::IntNeg::toString() const
+lyric_optimizer::Neg::toString() const
 {
     auto lhs = m_lhs ? m_lhs->toString() : "?";
-    return absl::StrCat("IntNeg(", lhs, ")");
+    return absl::StrCat("Neg(", lhs, ")");
 }
 
 lyric_optimizer::UseValue::UseValue(const Instance &instance)

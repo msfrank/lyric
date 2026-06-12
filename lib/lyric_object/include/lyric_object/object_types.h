@@ -233,19 +233,12 @@ namespace lyric_object {
         OP_PICK,
         OP_DROP,
 
-        // integer math
-        OP_I64_ADD,
-        OP_I64_SUB,
-        OP_I64_MUL,
-        OP_I64_DIV,
-        OP_I64_NEG,
-
-        // rational math
-        OP_DBL_ADD,
-        OP_DBL_SUB,
-        OP_DBL_MUL,
-        OP_DBL_DIV,
-        OP_DBL_NEG,
+        // arithmetic operations
+        OP_ADD,
+        OP_SUB,
+        OP_MUL,
+        OP_DIV,
+        OP_NEG,
 
         // intrinsic comparisons
         OP_BOOL_CMP,

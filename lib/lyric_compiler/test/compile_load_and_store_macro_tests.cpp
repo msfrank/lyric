@@ -57,7 +57,7 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
                 @{
                     LoadData(this.Value)
                     LoadData(x)
-                    I64Add()
+                    Add()
                     StoreData(this.Value)
                 }
                 this.Value

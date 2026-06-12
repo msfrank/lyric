@@ -47,12 +47,12 @@ private:
     std::shared_ptr<lyric_rewriter::MacroRegistry> m_macroRegistry;
 };
 
-TEST_F(OpcodeMacro, EvaluateI64AddMacro)
+TEST_F(OpcodeMacro, EvaluateAddMacro)
 {
-    registerMacro("I64Add", std::make_shared<lyric_assembler::internal::I64AddMacro>());
+    registerMacro("Add", std::make_shared<lyric_assembler::internal::AddMacro>());
     parseAndRewrite(R"(
         @{
-            I64Add()
+            Add()
         }
     )");
 
@@ -68,7 +68,7 @@ TEST_F(OpcodeMacro, EvaluateI64AddMacro)
 
     lyric_object::Opcode opcode;
     opNode.parseAttr(lyric_assembler::kLyricAssemblerOpcodeEnum, opcode);
-    ASSERT_EQ (lyric_object::Opcode::OP_I64_ADD, opcode);
+    ASSERT_EQ (lyric_object::Opcode::OP_ADD, opcode);
 }
 
 TEST_F(OpcodeMacro, EvaluatePickMacro)

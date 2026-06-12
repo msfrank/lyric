@@ -538,41 +538,20 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_DROP:
                 TU_RETURN_IF_NOT_OK (data.fragment->dropValue(op.operands.offset_u16.offset));
                 break;
-            // case lyric_object::Opcode::OP_RPICK:
-            //     TU_RETURN_IF_NOT_OK (data.fragment->rpickValue(op.operands.offset_u16.offset));
-            //     break;
-            // case lyric_object::Opcode::OP_RDROP:
-            //     TU_RETURN_IF_NOT_OK (data.fragment->rdropValue(op.operands.offset_u16.offset));
-            //     break;
-            case lyric_object::Opcode::OP_I64_ADD:
-                TU_RETURN_IF_NOT_OK (data.fragment->intAdd());
+            case lyric_object::Opcode::OP_ADD:
+                TU_RETURN_IF_NOT_OK (data.fragment->add());
                 break;
-            case lyric_object::Opcode::OP_I64_SUB:
-                TU_RETURN_IF_NOT_OK (data.fragment->intSubtract());
+            case lyric_object::Opcode::OP_SUB:
+                TU_RETURN_IF_NOT_OK (data.fragment->subtract());
                 break;
-            case lyric_object::Opcode::OP_I64_MUL:
-                TU_RETURN_IF_NOT_OK (data.fragment->intMultiply());
+            case lyric_object::Opcode::OP_MUL:
+                TU_RETURN_IF_NOT_OK (data.fragment->multiply());
                 break;
-            case lyric_object::Opcode::OP_I64_DIV:
-                TU_RETURN_IF_NOT_OK (data.fragment->intDivide());
+            case lyric_object::Opcode::OP_DIV:
+                TU_RETURN_IF_NOT_OK (data.fragment->divide());
                 break;
-            case lyric_object::Opcode::OP_I64_NEG:
-                TU_RETURN_IF_NOT_OK (data.fragment->intNegate());
-                break;
-            case lyric_object::Opcode::OP_DBL_ADD:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatAdd());
-                break;
-            case lyric_object::Opcode::OP_DBL_SUB:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatSubtract());
-                break;
-            case lyric_object::Opcode::OP_DBL_MUL:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatMultiply());
-                break;
-            case lyric_object::Opcode::OP_DBL_DIV:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatDivide());
-                break;
-            case lyric_object::Opcode::OP_DBL_NEG:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatNegate());
+            case lyric_object::Opcode::OP_NEG:
+                TU_RETURN_IF_NOT_OK (data.fragment->negate());
                 break;
             case lyric_object::Opcode::OP_BOOL_CMP:
                 TU_RETURN_IF_NOT_OK (data.fragment->boolCompare());

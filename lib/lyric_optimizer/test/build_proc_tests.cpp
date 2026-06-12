@@ -95,7 +95,7 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
     TU_ASSIGN_OR_RAISE (targetIfFalse, inputFragment->jumpIfFalse());
     inputFragment->immediateInt(1);
     inputFragment->immediateInt(2);
-    inputFragment->intAdd();
+    inputFragment->add();
     inputFragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, inputFragment->unconditionalJump());

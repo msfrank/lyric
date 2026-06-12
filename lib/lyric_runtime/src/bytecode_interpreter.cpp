@@ -1,6 +1,7 @@
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_interpreter.h>
+#include <lyric_runtime/internal/activation_ops.h>
 #include <lyric_runtime/internal/bitwise_ops.h>
 #include <lyric_runtime/internal/call_ops.h>
 #include <lyric_runtime/internal/compare_ops.h>
@@ -9,13 +10,10 @@
 #include <lyric_runtime/internal/construct_namespace.h>
 #include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/internal/construct_protocol.h>
-#include <lyric_runtime/internal/f64_ops.h>
-#include <lyric_runtime/internal/signed_ops.h>
+#include <lyric_runtime/internal/numeric_ops.h>
 #include <lyric_runtime/internal/raise_exception.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
-
-#include "lyric_runtime/internal/activation_ops.h"
 
 #define TIME_SLICE                      64
 #define FAST_POLL_ITERATIONS            4
@@ -300,100 +298,51 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // pop 2 integer values from the stack and add them, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_ADD: {
+            // pop 2 numeric values from the stack and add them, and push result onto the stack
+            case lyric_object::Opcode::OP_ADD: {
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::i64_add(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::add(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
-            // pop 2 integer values from the stack and subtract them, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_SUB: {
+            // pop 2 numeric values from the stack and subtract them, and push result onto the stack
+            case lyric_object::Opcode::OP_SUB: {
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::i64_sub(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::sub(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
-            // pop 2 integer values from the stack and multiply them, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_MUL: {
+            // pop 2 numeric values from the stack and multiply them, and push result onto the stack
+            case lyric_object::Opcode::OP_MUL: {
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::i64_mul(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::mul(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
-            // pop 2 integer values from the stack and divide them, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_DIV: {
+            // pop 2 numeric values from the stack and divide them, and push result onto the stack
+            case lyric_object::Opcode::OP_DIV: {
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::i64_div(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::div(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
-            // pop 1 integer value from the stack and negate it, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_NEG: {
+            // pop 1 numeric value from the stack and negate it, and push result onto the stack
+            case lyric_object::Opcode::OP_NEG: {
                 Operand element, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::i64_neg(element, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 float values from the stack and add them, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_ADD: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::f64_add(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 float values from the stack and subtract them, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_SUB: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::f64_sub(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 float values from the stack and multiply them, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_MUL: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::f64_mul(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 float values from the stack and divide them, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_DIV: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::f64_div(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 1 float value from the stack and negate it, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_NEG: {
-                Operand element, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::f64_neg(element, result));
+                ON_ERROR_IF_NOT_OK (internal::neg(element, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -428,7 +377,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::i64_cmp(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::compare(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -438,32 +387,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::f64_cmp(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::compare(lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 chr values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_CHR_CMP: {
-                Operand lhs, rhs;
-                char32_t l, r;
+                Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (!rhs.getC32(r))
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (!lhs.getC32(l))
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                tu_int64 result;
-                if (l < r) {
-                    result = -1;
-                } else if (l > r) {
-                    result = 1;
-                } else {
-                    result = 0;
-                }
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(Operand::fromI64(result)));
+                ON_ERROR_IF_NOT_OK (internal::compare(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 

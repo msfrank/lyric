@@ -358,11 +358,11 @@ lyric_assembler::IntOperationInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     switch (m_opcode) {
-        case lyric_object::Opcode::OP_I64_ADD:
-        case lyric_object::Opcode::OP_I64_SUB:
-        case lyric_object::Opcode::OP_I64_MUL:
-        case lyric_object::Opcode::OP_I64_DIV:
-        case lyric_object::Opcode::OP_I64_NEG:
+        case lyric_object::Opcode::OP_ADD:
+        case lyric_object::Opcode::OP_SUB:
+        case lyric_object::Opcode::OP_MUL:
+        case lyric_object::Opcode::OP_DIV:
+        case lyric_object::Opcode::OP_NEG:
         case lyric_object::Opcode::OP_I64_CMP:
             return bytecodeBuilder.writeOpcode(m_opcode);
         default:
@@ -412,11 +412,11 @@ lyric_assembler::FloatOperationInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     switch (m_opcode) {
-        case lyric_object::Opcode::OP_DBL_ADD:
-        case lyric_object::Opcode::OP_DBL_SUB:
-        case lyric_object::Opcode::OP_DBL_MUL:
-        case lyric_object::Opcode::OP_DBL_DIV:
-        case lyric_object::Opcode::OP_DBL_NEG:
+        case lyric_object::Opcode::OP_ADD:
+        case lyric_object::Opcode::OP_SUB:
+        case lyric_object::Opcode::OP_MUL:
+        case lyric_object::Opcode::OP_DIV:
+        case lyric_object::Opcode::OP_NEG:
         case lyric_object::Opcode::OP_DBL_CMP:
             return bytecodeBuilder.writeOpcode(m_opcode);
         default:

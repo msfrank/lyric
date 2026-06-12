@@ -113,7 +113,7 @@ namespace lyric_optimizer {
         char32_t m_chr;
     };
 
-    class IntAdd : public ExpressionDirective {
+    class Add : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
@@ -127,7 +127,7 @@ namespace lyric_optimizer {
         std::shared_ptr<AbstractDirective> m_rhs;
     };
 
-    class IntSub : public ExpressionDirective {
+    class Sub : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
@@ -141,7 +141,7 @@ namespace lyric_optimizer {
         std::shared_ptr<AbstractDirective> m_rhs;
     };
 
-    class IntMul : public ExpressionDirective {
+    class Mul : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
@@ -155,7 +155,7 @@ namespace lyric_optimizer {
         std::shared_ptr<AbstractDirective> m_rhs;
     };
 
-    class IntDiv : public ExpressionDirective {
+    class Div : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
@@ -169,7 +169,7 @@ namespace lyric_optimizer {
         std::shared_ptr<AbstractDirective> m_rhs;
     };
 
-    class IntNeg : public ExpressionDirective {
+    class Neg : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;

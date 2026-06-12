@@ -89,39 +89,22 @@ public:
                 return driver->dropResult(stackOffset);
             }
 
-            // integer math
-            case lyric_object::Opcode::OP_I64_ADD:
-                TU_RETURN_IF_NOT_OK (m_fragment->intAdd());
+            // arithmetic
+            case lyric_object::Opcode::OP_ADD:
+                TU_RETURN_IF_NOT_OK (m_fragment->add());
                 return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_I64_SUB:
-                TU_RETURN_IF_NOT_OK (m_fragment->intSubtract());
+            case lyric_object::Opcode::OP_SUB:
+                TU_RETURN_IF_NOT_OK (m_fragment->subtract());
                 return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_I64_MUL:
-                TU_RETURN_IF_NOT_OK (m_fragment->intMultiply());
+            case lyric_object::Opcode::OP_MUL:
+                TU_RETURN_IF_NOT_OK (m_fragment->multiply());
                 return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_I64_DIV:
-                TU_RETURN_IF_NOT_OK (m_fragment->intDivide());
+            case lyric_object::Opcode::OP_DIV:
+                TU_RETURN_IF_NOT_OK (m_fragment->divide());
                 return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_I64_NEG:
-                TU_RETURN_IF_NOT_OK (m_fragment->intNegate());
+            case lyric_object::Opcode::OP_NEG:
+                TU_RETURN_IF_NOT_OK (m_fragment->negate());
                 return updateResultStack(1, IntType);
-
-            // rational math
-            case lyric_object::Opcode::OP_DBL_ADD:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatAdd());
-                return updateResultStack(2, FloatType);
-            case lyric_object::Opcode::OP_DBL_SUB:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatSubtract());
-                return updateResultStack(2, FloatType);
-            case lyric_object::Opcode::OP_DBL_MUL:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatMultiply());
-                return updateResultStack(2, FloatType);
-            case lyric_object::Opcode::OP_DBL_DIV:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatDivide());
-                return updateResultStack(2, FloatType);
-            case lyric_object::Opcode::OP_DBL_NEG:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatNegate());
-                return updateResultStack(1, FloatType);
 
             // comparisons
             case lyric_object::Opcode::OP_BOOL_CMP:

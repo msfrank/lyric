@@ -59,7 +59,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_ADD));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_ADD));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Add", IntArithmeticImpl,
             {
@@ -72,7 +72,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_SUB));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_SUB));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Subtract", IntArithmeticImpl,
             {
@@ -85,7 +85,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_MUL));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_MUL));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Multiply", IntArithmeticImpl,
             {
@@ -98,7 +98,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_DIV));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DIV));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Divide", IntArithmeticImpl,
             {
@@ -110,7 +110,7 @@ build_core_IntInstance(
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_NEG));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NEG));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Negate", IntArithmeticImpl,
             {
@@ -250,3 +250,106 @@ build_core_IntInstance(
 
     return IntInstance;
 }
+
+// CoreExistential *
+// build_core_Int64(BuilderState &state, const CoreExistential *IntrinsicExistential)
+// {
+// }
+//
+// CoreExistential *
+// build_core_Int32(BuilderState &state, const CoreExistential *IntrinsicExistential)
+// {
+// }
+//
+// CoreExistential *
+// build_core_Int16(BuilderState &state, const CoreExistential *IntrinsicExistential)
+// {
+// }
+//
+// CoreExistential *
+// build_core_Int8(BuilderState &state,
+//     const CoreExistential *IntrinsicExistential,
+//     const CoreConcept *ArithmeticConcept,
+//     const CoreConcept *ComparisonConcept,
+//     const CoreConcept *EqualityConcept,
+//     const CoreConcept *OrderedConcept,
+//     const CoreType *BoolType)
+// {
+//     lyric_common::SymbolPath existentialPath({"I8"});
+//     auto *I8Existential = state.addExistential(
+//         existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
+//     auto *I8Type = I8Existential->existentialType;
+//
+//     auto *I8ArithmeticType = state.addConcreteType(nullptr,
+//         lyo1::TypeSection::Concept,
+//         ArithmeticConcept->concept_index,
+//         {I8Type});
+//     auto *IntArithmeticImpl = state.addImpl(existentialPath, I8ArithmeticType, ArithmeticConcept);
+//     {
+//         lyric_object::BytecodeBuilder code;
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_ADD32));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CONVERT_I8));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//         state.addImplExtension("Add", IntArithmeticImpl,
+//             {
+//                 make_list_param("lhs", I8Type),
+//                 make_list_param("rhs", I8Type),
+//             },
+//             code, I8Type, true);
+//     }
+//     {
+//         lyric_object::BytecodeBuilder code;
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_SUB));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//         state.addImplExtension("Subtract", IntArithmeticImpl,
+//             {
+//                 make_list_param("lhs", I8Type),
+//                 make_list_param("rhs", I8Type),
+//             },
+//             code, I8Type, true);
+//     }
+//     {
+//         lyric_object::BytecodeBuilder code;
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_MUL));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//         state.addImplExtension("Multiply", IntArithmeticImpl,
+//             {
+//                 make_list_param("lhs", I8Type),
+//                 make_list_param("rhs", I8Type),
+//             },
+//             code, I8Type, true);
+//     }
+//     {
+//         lyric_object::BytecodeBuilder code;
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_DIV));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//         state.addImplExtension("Divide", IntArithmeticImpl,
+//             {
+//                 make_list_param("lhs", I8Type),
+//                 make_list_param("rhs", I8Type),
+//             },
+//             code, I8Type, true);
+//     }
+//     {
+//         lyric_object::BytecodeBuilder code;
+//         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_NEG));
+//         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//         state.addImplExtension("Negate", IntArithmeticImpl,
+//             {
+//                 make_list_param("lhs", I8Type),
+//             },
+//             code, I8Type, true);
+//     }
+//
+//
+//     return I8Existential;
+// }

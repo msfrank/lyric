@@ -24,16 +24,11 @@ static const char *OP_POP_name                 = "OP_POP";
 static const char *OP_DUP_name                 = "OP_DUP";
 static const char *OP_PICK_name                = "OP_PICK";
 static const char *OP_DROP_name                = "OP_DROP";
-static const char *OP_I64_ADD_name             = "OP_I64_ADD";
-static const char *OP_I64_SUB_name             = "OP_I64_SUB";
-static const char *OP_I64_MUL_name             = "OP_I64_MUL";
-static const char *OP_I64_DIV_name             = "OP_I64_DIV";
-static const char *OP_I64_NEG_name             = "OP_I64_NEG";
-static const char *OP_DBL_ADD_name             = "OP_DBL_ADD";
-static const char *OP_DBL_SUB_name             = "OP_DBL_SUB";
-static const char *OP_DBL_MUL_name             = "OP_DBL_MUL";
-static const char *OP_DBL_DIV_name             = "OP_DBL_DIV";
-static const char *OP_DBL_NEG_name             = "OP_DBL_NEG";
+static const char *OP_ADD_name                 = "OP_ADD";
+static const char *OP_SUB_name                 = "OP_SUB";
+static const char *OP_MUL_name                 = "OP_MUL";
+static const char *OP_DIV_name                 = "OP_DIV";
+static const char *OP_NEG_name                 = "OP_NEG";
 static const char *OP_BOOL_CMP_name            = "OP_BOOL_CMP";
 static const char *OP_I64_CMP_name             = "OP_I64_CMP";
 static const char *OP_DBL_CMP_name             = "OP_DBL_CMP";
@@ -118,26 +113,16 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_PICK_name;
         case Opcode::OP_DROP:
             return OP_DROP_name;
-        case Opcode::OP_I64_ADD:
-            return OP_I64_ADD_name;
-        case Opcode::OP_I64_SUB:
-            return OP_I64_SUB_name;
-        case Opcode::OP_I64_MUL:
-            return OP_I64_MUL_name;
-        case Opcode::OP_I64_DIV:
-            return OP_I64_DIV_name;
-        case Opcode::OP_I64_NEG:
-            return OP_I64_NEG_name;
-        case Opcode::OP_DBL_ADD:
-            return OP_DBL_ADD_name;
-        case Opcode::OP_DBL_SUB:
-            return OP_DBL_SUB_name;
-        case Opcode::OP_DBL_MUL:
-            return OP_DBL_MUL_name;
-        case Opcode::OP_DBL_DIV:
-            return OP_DBL_DIV_name;
-        case Opcode::OP_DBL_NEG:
-            return OP_DBL_NEG_name;
+        case Opcode::OP_ADD:
+            return OP_ADD_name;
+        case Opcode::OP_SUB:
+            return OP_SUB_name;
+        case Opcode::OP_MUL:
+            return OP_MUL_name;
+        case Opcode::OP_DIV:
+            return OP_DIV_name;
+        case Opcode::OP_NEG:
+            return OP_NEG_name;
         case Opcode::OP_BOOL_CMP:
             return OP_BOOL_CMP_name;
         case Opcode::OP_I64_CMP:

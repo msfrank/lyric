@@ -244,16 +244,16 @@ translate_int_operation(std::shared_ptr<lyric_assembler::IntOperationInstruction
 {
     using namespace lyric_optimizer;
     switch (instruction->getOpcode()) {
-        case lyric_object::Opcode::OP_I64_ADD:
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<IntAdd>());
-        case lyric_object::Opcode::OP_I64_SUB:
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<IntSub>());
-        case lyric_object::Opcode::OP_I64_MUL:
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<IntMul>());
-        case lyric_object::Opcode::OP_I64_DIV:
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<IntDiv>());
-        case lyric_object::Opcode::OP_I64_NEG:
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<IntNeg>());
+        case lyric_object::Opcode::OP_ADD:
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<Add>());
+        case lyric_object::Opcode::OP_SUB:
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<Sub>());
+        case lyric_object::Opcode::OP_MUL:
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<Mul>());
+        case lyric_object::Opcode::OP_DIV:
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<Div>());
+        case lyric_object::Opcode::OP_NEG:
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<Neg>());
         default:
             return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
                 "invalid int operation");

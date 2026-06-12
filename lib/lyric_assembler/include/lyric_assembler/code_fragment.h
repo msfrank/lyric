@@ -64,19 +64,12 @@ namespace lyric_assembler {
         tempo_utils::Status pickValue(tu_uint16 pickOffset);
         tempo_utils::Status dropValue(tu_uint16 dropOffset);
 
-        // integer math
-        tempo_utils::Status intAdd();
-        tempo_utils::Status intSubtract();
-        tempo_utils::Status intMultiply();
-        tempo_utils::Status intDivide();
-        tempo_utils::Status intNegate();
-
-        // rational math
-        tempo_utils::Status floatAdd();
-        tempo_utils::Status floatSubtract();
-        tempo_utils::Status floatMultiply();
-        tempo_utils::Status floatDivide();
-        tempo_utils::Status floatNegate();
+        // arithmetic operations
+        tempo_utils::Status add();
+        tempo_utils::Status subtract();
+        tempo_utils::Status multiply();
+        tempo_utils::Status divide();
+        tempo_utils::Status negate();
 
         // comparisons
         tempo_utils::Status boolCompare();

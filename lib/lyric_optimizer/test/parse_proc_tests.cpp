@@ -72,7 +72,7 @@ TEST_F(ParseProcTests, ParseConditionalWithPhiFunction)
     TU_ASSIGN_OR_RAISE (targetIfFalse, fragment->jumpIfFalse());
     fragment->immediateInt(1);
     fragment->immediateInt(2);
-    fragment->intAdd();
+    fragment->add();
     fragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, fragment->unconditionalJump());

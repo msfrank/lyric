@@ -108,8 +108,6 @@ target_sources(lyric_runtime PRIVATE
     src/internal/construct_new.cpp
     include/lyric_runtime/internal/construct_protocol.h
     src/internal/construct_protocol.cpp
-    include/lyric_runtime/internal/f64_ops.h
-    src/internal/f64_ops.cpp
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
     include/lyric_runtime/internal/get_concept_table.h
@@ -129,8 +127,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/raise_exception.cpp
     include/lyric_runtime/internal/resolve_link.h
     src/internal/resolve_link.cpp
-    include/lyric_runtime/internal/signed_ops.h
-    src/internal/signed_ops.cpp
+    include/lyric_runtime/internal/numeric_ops.h
+    src/internal/numeric_ops.cpp
     )
 
 # set the library version
