@@ -108,6 +108,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/construct_new.cpp
     include/lyric_runtime/internal/construct_protocol.h
     src/internal/construct_protocol.cpp
+    include/lyric_runtime/internal/convert_ops.h
+    src/internal/convert_ops.cpp
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
     include/lyric_runtime/internal/get_concept_table.h

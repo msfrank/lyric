@@ -240,11 +240,8 @@ namespace lyric_object {
         OP_DIV,
         OP_NEG,
 
-        // intrinsic comparisons
-        OP_BOOL_CMP,
-        OP_I64_CMP,
-        OP_DBL_CMP,
-        OP_CHR_CMP,
+        // comparisons
+        OP_CMP,
         OP_TYPE_CMP,
 
         // logical operations
@@ -256,8 +253,9 @@ namespace lyric_object {
         OP_BITWISE_AND,
         OP_BITWISE_OR,
         OP_BITWISE_XOR,
-        OP_BITWISE_RIGHT_SHIFT,
-        OP_BITWISE_LEFT_SHIFT,
+        OP_BITWISE_NOT,
+        OP_BITWISE_SHR,
+        OP_BITWISE_SHL,
 
         // branching
         OP_IF_NIL,

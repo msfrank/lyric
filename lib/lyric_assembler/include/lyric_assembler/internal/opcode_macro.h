@@ -108,24 +108,9 @@ namespace lyric_assembler::internal {
 
     // comparison macros
 
-    class I64CmpMacro : public NoOperandOpcodeMacro {
+    class CmpMacro : public NoOperandOpcodeMacro {
     public:
-        I64CmpMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_I64_CMP) {};
-    };
-
-    class DblCmpMacro : public NoOperandOpcodeMacro {
-    public:
-        DblCmpMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_DBL_CMP) {};
-    };
-
-    class BoolCmpMacro : public NoOperandOpcodeMacro {
-    public:
-        BoolCmpMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BOOL_CMP) {};
-    };
-
-    class ChrCmpMacro : public NoOperandOpcodeMacro {
-    public:
-        ChrCmpMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_CHR_CMP) {};
+        CmpMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_CMP) {};
     };
 
     class TypeCmpMacro : public NoOperandOpcodeMacro {
@@ -167,14 +152,19 @@ namespace lyric_assembler::internal {
         BitwiseXorMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_XOR) {};
     };
 
-    class BitwiseLeftShiftMacro : public NoOperandOpcodeMacro {
+    class BitwiseNotMacro : public NoOperandOpcodeMacro {
     public:
-        BitwiseLeftShiftMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT) {};
+        BitwiseNotMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_NOT) {};
     };
 
-    class BitwiseRightShiftMacro : public NoOperandOpcodeMacro {
+    class BitwiseShlMacro : public NoOperandOpcodeMacro {
     public:
-        BitwiseRightShiftMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT) {};
+        BitwiseShlMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_SHL) {};
+    };
+
+    class BitwiseShrMacro : public NoOperandOpcodeMacro {
+    public:
+        BitwiseShrMacro() : NoOperandOpcodeMacro(lyric_object::Opcode::OP_BITWISE_SHR) {};
     };
 }
 

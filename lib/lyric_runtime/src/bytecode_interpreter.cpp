@@ -347,53 +347,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // pop 2 bool values from the stack and compare them, and push result onto the stack
-            case lyric_object::Opcode::OP_BOOL_CMP: {
-                Operand lhs, rhs;
-                bool l, r;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                if (!rhs.getBool(r))
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                if (!lhs.getBool(l))
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
-                //result.type = OperandType::Int64;
-                tu_int64 result;
-                if (!l && r) {
-                    result = -1;
-                } else if (l && !r) {
-                    result = 1;
-                } else {
-                    result = 0;
-                }
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(Operand::fromI64(result)));
-                break;
-            }
-
-            // pop 2 integer values from the stack and compare them, and push result onto the stack
-            case lyric_object::Opcode::OP_I64_CMP: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::compare(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 float values from the stack and compare them, and push result onto the stack
-            case lyric_object::Opcode::OP_DBL_CMP: {
-                Operand lhs, rhs, result;
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::compare(lhs, rhs, result));
-                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
-                break;
-            }
-
-            // pop 2 chr values from the stack and compare them, and push result onto the stack
-            case lyric_object::Opcode::OP_CHR_CMP: {
+            // pop 2 values from the stack and compare them, and push result onto the stack
+            case lyric_object::Opcode::OP_CMP: {
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
@@ -507,7 +462,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT: {
+            case lyric_object::Opcode::OP_BITWISE_NOT: {
+                Operand element, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_not(element, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
+            }
+
+            case lyric_object::Opcode::OP_BITWISE_SHR: {
                 Operand element, count, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(count));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
@@ -516,7 +479,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT: {
+            case lyric_object::Opcode::OP_BITWISE_SHL: {
                 Operand element, count, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(count));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));

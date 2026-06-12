@@ -553,17 +553,8 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_NEG:
                 TU_RETURN_IF_NOT_OK (data.fragment->negate());
                 break;
-            case lyric_object::Opcode::OP_BOOL_CMP:
-                TU_RETURN_IF_NOT_OK (data.fragment->boolCompare());
-                break;
-            case lyric_object::Opcode::OP_I64_CMP:
-                TU_RETURN_IF_NOT_OK (data.fragment->intCompare());
-                break;
-            case lyric_object::Opcode::OP_DBL_CMP:
-                TU_RETURN_IF_NOT_OK (data.fragment->floatCompare());
-                break;
-            case lyric_object::Opcode::OP_CHR_CMP:
-                TU_RETURN_IF_NOT_OK (data.fragment->charCompare());
+            case lyric_object::Opcode::OP_CMP:
+                TU_RETURN_IF_NOT_OK (data.fragment->compare());
                 break;
             case lyric_object::Opcode::OP_TYPE_CMP:
                 TU_RETURN_IF_NOT_OK (data.fragment->typeCompare());
@@ -586,11 +577,14 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_BITWISE_XOR:
                 TU_RETURN_IF_NOT_OK (data.fragment->bitwiseXor());
                 break;
-            case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT:
-                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseLeftShift());
+            case lyric_object::Opcode::OP_BITWISE_NOT:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseNot());
                 break;
-            case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT:
-                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseRightShift());
+            case lyric_object::Opcode::OP_BITWISE_SHL:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseShl());
+                break;
+            case lyric_object::Opcode::OP_BITWISE_SHR:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseShr());
                 break;
 
             case lyric_object::Opcode::OP_IF_NIL:

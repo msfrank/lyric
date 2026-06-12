@@ -72,10 +72,7 @@ namespace lyric_assembler {
         tempo_utils::Status negate();
 
         // comparisons
-        tempo_utils::Status boolCompare();
-        tempo_utils::Status intCompare();
-        tempo_utils::Status floatCompare();
-        tempo_utils::Status charCompare();
+        tempo_utils::Status compare();
         tempo_utils::Status typeCompare();
 
         // logical operations
@@ -87,8 +84,9 @@ namespace lyric_assembler {
         tempo_utils::Status bitwiseAnd();
         tempo_utils::Status bitwiseOr();
         tempo_utils::Status bitwiseXor();
-        tempo_utils::Status bitwiseLeftShift();
-        tempo_utils::Status bitwiseRightShift();
+        tempo_utils::Status bitwiseNot();
+        tempo_utils::Status bitwiseShl();
+        tempo_utils::Status bitwiseShr();
 
         // branching instructions
         tempo_utils::Result<JumpTarget> unconditionalJump();

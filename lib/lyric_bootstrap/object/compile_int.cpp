@@ -122,7 +122,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfZero(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -144,7 +144,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -166,7 +166,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -188,7 +188,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -210,7 +210,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -232,7 +232,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Compare", IntOrderedImpl,
             {

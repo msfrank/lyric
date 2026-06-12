@@ -98,10 +98,8 @@ scan_for_basic_blocks(
             case lyric_assembler::InstructionType::IntImmediate:
             case lyric_assembler::InstructionType::FloatImmediate:
             case lyric_assembler::InstructionType::CharImmediate:
-            case lyric_assembler::InstructionType::BoolOperation:
-            case lyric_assembler::InstructionType::IntOperation:
-            case lyric_assembler::InstructionType::FloatOperation:
-            case lyric_assembler::InstructionType::CharOperation:
+            case lyric_assembler::InstructionType::ArithmeticOperation:
+            case lyric_assembler::InstructionType::CompareOperation:
             case lyric_assembler::InstructionType::LogicalOperation:
             case lyric_assembler::InstructionType::BitwiseOperation:
             case lyric_assembler::InstructionType::TypeOperation:
@@ -240,7 +238,7 @@ apply_control_flow(
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_optimizer::AbstractDirective>>
-translate_int_operation(std::shared_ptr<lyric_assembler::IntOperationInstruction> instruction)
+translate_arithmetic_operation(std::shared_ptr<lyric_assembler::ArithmeticOperationInstruction> instruction)
 {
     using namespace lyric_optimizer;
     switch (instruction->getOpcode()) {
@@ -256,7 +254,7 @@ translate_int_operation(std::shared_ptr<lyric_assembler::IntOperationInstruction
             return std::static_pointer_cast<AbstractDirective>(std::make_shared<Neg>());
         default:
             return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-                "invalid int operation");
+                "invalid arithmetic operation");
     }
 }
 
@@ -301,8 +299,8 @@ translate_instruction(
             return std::static_pointer_cast<AbstractDirective>(
                 std::make_shared<Char>(charImmediate->charValue()));
         }
-        case InstructionType::IntOperation: {
-            return translate_int_operation(std::static_pointer_cast<IntOperationInstruction>(instruction));
+        case InstructionType::ArithmeticOperation: {
+            return translate_arithmetic_operation(std::static_pointer_cast<ArithmeticOperationInstruction>(instruction));
         }
         case InstructionType::LoadData: {
             auto loadData = std::static_pointer_cast<LoadDataInstruction>(instruction);

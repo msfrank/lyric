@@ -450,7 +450,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::add()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_ADD);
+    statement.instruction = std::make_shared<ArithmeticOperationInstruction>(lyric_object::Opcode::OP_ADD);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -459,7 +459,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::subtract()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_SUB);
+    statement.instruction = std::make_shared<ArithmeticOperationInstruction>(lyric_object::Opcode::OP_SUB);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -468,7 +468,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::multiply()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_MUL);
+    statement.instruction = std::make_shared<ArithmeticOperationInstruction>(lyric_object::Opcode::OP_MUL);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -477,7 +477,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::divide()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_DIV);
+    statement.instruction = std::make_shared<ArithmeticOperationInstruction>(lyric_object::Opcode::OP_DIV);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -486,43 +486,16 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::negate()
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_NEG);
+    statement.instruction = std::make_shared<ArithmeticOperationInstruction>(lyric_object::Opcode::OP_NEG);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::boolCompare()
+lyric_assembler::CodeFragment::compare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<BoolOperationInstruction>(lyric_object::Opcode::OP_BOOL_CMP);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::intCompare()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_CMP);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::floatCompare()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_CMP);
-    m_statements.push_back(std::move(statement));
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CodeFragment::charCompare()
-{
-    Statement statement;
-    statement.instruction = std::make_shared<CharOperationInstruction>(lyric_object::Opcode::OP_CHR_CMP);
+    statement.instruction = std::make_shared<CompareOperationInstruction>(lyric_object::Opcode::OP_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -591,19 +564,28 @@ lyric_assembler::CodeFragment::bitwiseXor()
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::bitwiseLeftShift()
+lyric_assembler::CodeFragment::bitwiseNot()
 {
     Statement statement;
-    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT);
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_NOT);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::bitwiseRightShift()
+lyric_assembler::CodeFragment::bitwiseShl()
 {
     Statement statement;
-    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT);
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_SHL);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseShr()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_SHR);
     m_statements.push_back(std::move(statement));
     return {};
 }

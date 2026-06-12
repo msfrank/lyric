@@ -90,38 +90,44 @@ public:
             }
 
             // arithmetic
-            case lyric_object::Opcode::OP_ADD:
+            case lyric_object::Opcode::OP_ADD: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->add());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_SUB:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_SUB: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->subtract());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_MUL:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_MUL: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->multiply());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_DIV:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_DIV: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->divide());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_NEG:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_NEG: {
+                lyric_common::TypeDef element;
+                TU_ASSIGN_OR_RETURN (element, driver->peekResult(0));
                 TU_RETURN_IF_NOT_OK (m_fragment->negate());
-                return updateResultStack(1, IntType);
+                return updateResultStack(1, element);
+            }
 
             // comparisons
-            case lyric_object::Opcode::OP_BOOL_CMP:
-                TU_RETURN_IF_NOT_OK (m_fragment->boolCompare());
-                return updateResultStack(2, BoolType);
-            case lyric_object::Opcode::OP_I64_CMP:
-                TU_RETURN_IF_NOT_OK (m_fragment->intCompare());
-                return updateResultStack(2, BoolType);
-            case lyric_object::Opcode::OP_DBL_CMP:
-                TU_RETURN_IF_NOT_OK (m_fragment->floatCompare());
-                return updateResultStack(2, BoolType);
-            case lyric_object::Opcode::OP_CHR_CMP:
-                TU_RETURN_IF_NOT_OK (m_fragment->charCompare());
-                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->compare());
+                return updateResultStack(2, IntType);
             case lyric_object::Opcode::OP_TYPE_CMP:
                 TU_RETURN_IF_NOT_OK (m_fragment->typeCompare());
-                return updateResultStack(2, BoolType);
+                return updateResultStack(2, IntType);
 
             // logical operations
             case lyric_object::Opcode::OP_LOGICAL_AND:
@@ -135,21 +141,42 @@ public:
                 return updateResultStack(1, BoolType);
 
             // bitwise operations
-            case lyric_object::Opcode::OP_BITWISE_AND:
+            case lyric_object::Opcode::OP_BITWISE_AND: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->bitwiseAnd());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_BITWISE_OR:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_BITWISE_OR: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->bitwiseOr());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_BITWISE_XOR:
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_BITWISE_XOR: {
+                lyric_common::TypeDef lhs;
+                TU_ASSIGN_OR_RETURN (lhs, driver->peekResult(1));
                 TU_RETURN_IF_NOT_OK (m_fragment->bitwiseXor());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT:
-                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseRightShift());
-                return updateResultStack(2, IntType);
-            case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT:
-                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseLeftShift());
-                return updateResultStack(2, IntType);
+                return updateResultStack(2, lhs);
+            }
+            case lyric_object::Opcode::OP_BITWISE_NOT: {
+                lyric_common::TypeDef element;
+                TU_ASSIGN_OR_RETURN (element, driver->peekResult(0));
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseNot());
+                return updateResultStack(1, element);
+            }
+            case lyric_object::Opcode::OP_BITWISE_SHR: {
+                lyric_common::TypeDef target;
+                TU_ASSIGN_OR_RETURN (target, driver->peekResult(1));
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseShr());
+                return updateResultStack(2, target);
+            }
+            case lyric_object::Opcode::OP_BITWISE_SHL: {
+                lyric_common::TypeDef target;
+                TU_ASSIGN_OR_RETURN (target, driver->peekResult(1));
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseShl());
+                return updateResultStack(2, target);
+            }
 
             default: {
                 if (name == nullptr)

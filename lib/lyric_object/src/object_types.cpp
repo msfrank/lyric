@@ -29,10 +29,7 @@ static const char *OP_SUB_name                 = "OP_SUB";
 static const char *OP_MUL_name                 = "OP_MUL";
 static const char *OP_DIV_name                 = "OP_DIV";
 static const char *OP_NEG_name                 = "OP_NEG";
-static const char *OP_BOOL_CMP_name            = "OP_BOOL_CMP";
-static const char *OP_I64_CMP_name             = "OP_I64_CMP";
-static const char *OP_DBL_CMP_name             = "OP_DBL_CMP";
-static const char *OP_CHR_CMP_name             = "OP_CHR_CMP";
+static const char *OP_CMP_name                 = "OP_CMP";
 static const char *OP_TYPE_CMP_name            = "OP_TYPE_CMP";
 static const char *OP_LOGICAL_AND_name         = "OP_LOGICAL_AND";
 static const char *OP_LOGICAL_OR_name          = "OP_LOGICAL_OR";
@@ -40,8 +37,9 @@ static const char *OP_LOGICAL_NOT_name         = "OP_LOGICAL_NOT";
 static const char *OP_BITWISE_AND_name         = "OP_BITWISE_AND";
 static const char *OP_BITWISE_OR_name          = "OP_BITWISE_OR";
 static const char *OP_BITWISE_XOR_name         = "OP_BITWISE_XOR";
-static const char *OP_BITWISE_RIGHT_SHIFT_name = "OP_BITWISE_RIGHT_SHIFT";
-static const char *OP_BITWISE_LEFT_SHIFT_name  = "OP_BITWISE_LEFT_SHIFT";
+static const char *OP_BITWISE_NOT_name         = "OP_BITWISE_NOT";
+static const char *OP_BITWISE_SHR_name         = "OP_BITWISE_SHR";
+static const char *OP_BITWISE_SHL_name         = "OP_BITWISE_SHL";
 static const char *OP_IF_NIL_name              = "OP_IF_NIL";
 static const char *OP_IF_NOTNIL_name           = "OP_IF_NOTNIL";
 static const char *OP_IF_TRUE_name             = "OP_IF_TRUE";
@@ -123,14 +121,8 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_DIV_name;
         case Opcode::OP_NEG:
             return OP_NEG_name;
-        case Opcode::OP_BOOL_CMP:
-            return OP_BOOL_CMP_name;
-        case Opcode::OP_I64_CMP:
-            return OP_I64_CMP_name;
-        case Opcode::OP_DBL_CMP:
-            return OP_DBL_CMP_name;
-        case Opcode::OP_CHR_CMP:
-            return OP_CHR_CMP_name;
+        case Opcode::OP_CMP:
+            return OP_CMP_name;
         case Opcode::OP_TYPE_CMP:
             return OP_TYPE_CMP_name;
         case Opcode::OP_LOGICAL_AND:
@@ -145,10 +137,12 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_BITWISE_OR_name;
         case Opcode::OP_BITWISE_XOR:
             return OP_BITWISE_XOR_name;
-        case Opcode::OP_BITWISE_RIGHT_SHIFT:
-            return OP_BITWISE_RIGHT_SHIFT_name;
-        case Opcode::OP_BITWISE_LEFT_SHIFT:
-            return OP_BITWISE_LEFT_SHIFT_name;
+        case Opcode::OP_BITWISE_NOT:
+            return OP_BITWISE_NOT_name;
+        case Opcode::OP_BITWISE_SHR:
+            return OP_BITWISE_SHR_name;
+        case Opcode::OP_BITWISE_SHL:
+            return OP_BITWISE_SHL_name;
         case Opcode::OP_IF_NIL:
             return OP_IF_NIL_name;
         case Opcode::OP_IF_NOTNIL:

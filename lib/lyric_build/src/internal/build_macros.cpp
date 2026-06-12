@@ -70,17 +70,8 @@ lyric_build::internal::make_build_macros()
     macroRegistry->registerMacroName("Neg", []() {
         return std::make_shared<lyric_assembler::internal::NegMacro>();
     });
-    macroRegistry->registerMacroName("BoolCmp", []() {
-        return std::make_shared<lyric_assembler::internal::BoolCmpMacro>();
-    });
-    macroRegistry->registerMacroName("ChrCmp", []() {
-        return std::make_shared<lyric_assembler::internal::ChrCmpMacro>();
-    });
-    macroRegistry->registerMacroName("I64Cmp", []() {
-        return std::make_shared<lyric_assembler::internal::I64CmpMacro>();
-    });
-    macroRegistry->registerMacroName("DblCmp", []() {
-        return std::make_shared<lyric_assembler::internal::DblCmpMacro>();
+    macroRegistry->registerMacroName("Cmp", []() {
+        return std::make_shared<lyric_assembler::internal::CmpMacro>();
     });
     macroRegistry->registerMacroName("TypeCmp", []() {
         return std::make_shared<lyric_assembler::internal::TypeCmpMacro>();
@@ -103,11 +94,14 @@ lyric_build::internal::make_build_macros()
     macroRegistry->registerMacroName("BitwiseXor", []() {
         return std::make_shared<lyric_assembler::internal::BitwiseXorMacro>();
     });
-    macroRegistry->registerMacroName("BitwiseLeftShift", []() {
-        return std::make_shared<lyric_assembler::internal::BitwiseLeftShiftMacro>();
+    macroRegistry->registerMacroName("BitwiseNot", []() {
+        return std::make_shared<lyric_assembler::internal::BitwiseNotMacro>();
     });
-    macroRegistry->registerMacroName("BitwiseRightShift", []() {
-        return std::make_shared<lyric_assembler::internal::BitwiseRightShiftMacro>();
+    macroRegistry->registerMacroName("BitwiseShl", []() {
+        return std::make_shared<lyric_assembler::internal::BitwiseShlMacro>();
+    });
+    macroRegistry->registerMacroName("BitwiseShr", []() {
+        return std::make_shared<lyric_assembler::internal::BitwiseShrMacro>();
     });
 
     // compiler macros
