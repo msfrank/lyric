@@ -8,9 +8,17 @@ static const char *OP_UNDEF_name               = "OP_UNDEF";
 static const char *OP_NIL_name                 = "OP_NIL";
 static const char *OP_TRUE_name                = "OP_TRUE";
 static const char *OP_FALSE_name               = "OP_FALSE";
+static const char *OP_I8_name                  = "OP_I8";
+static const char *OP_I16_name                 = "OP_I16";
+static const char *OP_I32_name                 = "OP_I32";
 static const char *OP_I64_name                 = "OP_I64";
-static const char *OP_DBL_name                 = "OP_DBL";
-static const char *OP_CHR_name                 = "OP_CHR";
+static const char *OP_U8_name                  = "OP_U8";
+static const char *OP_U16_name                 = "OP_U16";
+static const char *OP_U32_name                 = "OP_U32";
+static const char *OP_U64_name                 = "OP_U64";
+static const char *OP_F32_name                 = "OP_F32";
+static const char *OP_F64_name                 = "OP_F64";
+static const char *OP_C32_name                 = "OP_C32";
 static const char *OP_BYTES_name               = "OP_BYTES";
 static const char *OP_STRING_name              = "OP_STRING";
 static const char *OP_STATIC_name              = "OP_STATIC";
@@ -51,6 +59,16 @@ static const char *OP_IF_GE_name               = "OP_IF_GE";
 static const char *OP_IF_LT_name               = "OP_IF_LT";
 static const char *OP_IF_LE_name               = "OP_IF_LE";
 static const char *OP_JUMP_name                = "OP_JUMP";
+static const char *OP_TO_I8_name               = "OP_TO_I8";
+static const char *OP_TO_I16_name              = "OP_TO_I16";
+static const char *OP_TO_I32_name              = "OP_TO_I32";
+static const char *OP_TO_I64_name              = "OP_TO_I64";
+static const char *OP_TO_U8_name               = "OP_TO_U8";
+static const char *OP_TO_U16_name              = "OP_TO_U16";
+static const char *OP_TO_U32_name              = "OP_TO_U32";
+static const char *OP_TO_U64_name              = "OP_TO_U64";
+static const char *OP_TO_F32_name              = "OP_TO_F32";
+static const char *OP_TO_F64_name              = "OP_TO_F64";
 static const char *OP_IMPORT_name              = "OP_IMPORT";
 static const char *OP_CALL_STATIC_name         = "OP_CALL_STATIC";
 static const char *OP_CALL_VIRTUAL_name        = "OP_CALL_VIRTUAL";
@@ -79,12 +97,28 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_TRUE_name;
         case Opcode::OP_FALSE:
             return OP_FALSE_name;
+        case Opcode::OP_I8:
+            return OP_I8_name;
+        case Opcode::OP_I16:
+            return OP_I16_name;
+        case Opcode::OP_I32:
+            return OP_I32_name;
         case Opcode::OP_I64:
             return OP_I64_name;
-        case Opcode::OP_DBL:
-            return OP_DBL_name;
-        case Opcode::OP_CHR:
-            return OP_CHR_name;
+        case Opcode::OP_U8:
+            return OP_U8_name;
+        case Opcode::OP_U16:
+            return OP_U16_name;
+        case Opcode::OP_U32:
+            return OP_U32_name;
+        case Opcode::OP_U64:
+            return OP_U64_name;
+        case Opcode::OP_F32:
+            return OP_F32_name;
+        case Opcode::OP_F64:
+            return OP_F64_name;
+        case Opcode::OP_C32:
+            return OP_C32_name;
         case Opcode::OP_BYTES:
             return OP_BYTES_name;
         case Opcode::OP_STRING:
@@ -165,6 +199,26 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_IF_LE_name;
         case Opcode::OP_JUMP:
             return OP_JUMP_name;
+        case Opcode::OP_TO_I8:
+            return OP_TO_I8_name;
+        case Opcode::OP_TO_I16:
+            return OP_TO_I16_name;
+        case Opcode::OP_TO_I32:
+            return OP_TO_I32_name;
+        case Opcode::OP_TO_I64:
+            return OP_TO_I64_name;
+        case Opcode::OP_TO_U8:
+            return OP_TO_U8_name;
+        case Opcode::OP_TO_U16:
+            return OP_TO_U16_name;
+        case Opcode::OP_TO_U32:
+            return OP_TO_U32_name;
+        case Opcode::OP_TO_U64:
+            return OP_TO_U64_name;
+        case Opcode::OP_TO_F32:
+            return OP_TO_F32_name;
+        case Opcode::OP_TO_F64:
+            return OP_TO_F64_name;
         case Opcode::OP_IMPORT:
             return OP_IMPORT_name;
         case Opcode::OP_CALL_STATIC:

@@ -118,167 +118,207 @@ lyric_assembler::UndefImmediateInstruction::toString() const
 }
 
 lyric_assembler::BoolImmediateInstruction::BoolImmediateInstruction(bool b)
-    : m_b(b)
+    : BaseImmediateInstruction(InstructionType::BoolImmediate, b)
 {
-}
-
-lyric_assembler::InstructionType
-lyric_assembler::BoolImmediateInstruction::getType() const
-{
-    return InstructionType::BoolImmediate;
 }
 
 tempo_utils::Status
-lyric_assembler::BoolImmediateInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::BoolImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
 {
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::BoolImmediateInstruction::apply(
-    const ObjectWriter &writer,
-    lyric_object::BytecodeBuilder &bytecodeBuilder,
-    std::string &labelName,
-    tu_uint16 &labelOffset,
-    tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const
-{
-    return bytecodeBuilder.loadBool(m_b);
+    return bytecodeBuilder.loadBool(immediateValue());
 }
 
 std::string
 lyric_assembler::BoolImmediateInstruction::toString() const
 {
-    return absl::StrCat("Immediate Bool: ", m_b? "true" : "false");
+    return absl::StrCat("Immediate Bool: ", immediateValue()? "true" : "false");
 }
 
-bool
-lyric_assembler::BoolImmediateInstruction::boolValue() const
+lyric_assembler::I8ImmediateInstruction::I8ImmediateInstruction(tu_int8 i8)
+    : BaseImmediateInstruction(InstructionType::I8Immediate, i8)
 {
-    return m_b;
-}
-
-lyric_assembler::IntImmediateInstruction::IntImmediateInstruction(tu_int64 i64)
-    : m_i64(i64)
-{
-}
-
-lyric_assembler::InstructionType
-lyric_assembler::IntImmediateInstruction::getType() const
-{
-    return InstructionType::IntImmediate;
 }
 
 tempo_utils::Status
-lyric_assembler::IntImmediateInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::I8ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
 {
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::IntImmediateInstruction::apply(
-    const ObjectWriter &writer,
-    lyric_object::BytecodeBuilder &bytecodeBuilder,
-    std::string &labelName,
-    tu_uint16 &labelOffset,
-    tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const
-{
-    return bytecodeBuilder.loadInt(m_i64);
+    return bytecodeBuilder.loadI8(immediateValue());
 }
 
 std::string
-lyric_assembler::IntImmediateInstruction::toString() const
+lyric_assembler::I8ImmediateInstruction::toString() const
 {
-    return absl::StrCat("Immediate Int: ", m_i64);
+    return absl::StrCat("Immediate I8: ", immediateValue());
 }
 
-tu_int64
-lyric_assembler::IntImmediateInstruction::intValue() const
+lyric_assembler::I16ImmediateInstruction::I16ImmediateInstruction(tu_int16 i16)
+    : BaseImmediateInstruction(InstructionType::I16Immediate, i16)
 {
-    return m_i64;
-}
-
-lyric_assembler::FloatImmediateInstruction::FloatImmediateInstruction(double dbl)
-    : m_dbl(dbl)
-{
-}
-
-lyric_assembler::InstructionType
-lyric_assembler::FloatImmediateInstruction::getType() const
-{
-    return InstructionType::FloatImmediate;
 }
 
 tempo_utils::Status
-lyric_assembler::FloatImmediateInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::I16ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
 {
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::FloatImmediateInstruction::apply(
-    const ObjectWriter &writer,
-    lyric_object::BytecodeBuilder &bytecodeBuilder,
-    std::string &labelName,
-    tu_uint16 &labelOffset,
-    tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const
-{
-    return bytecodeBuilder.loadFloat(m_dbl);
+    return bytecodeBuilder.loadI16(immediateValue());
 }
 
 std::string
-lyric_assembler::FloatImmediateInstruction::toString() const
+lyric_assembler::I16ImmediateInstruction::toString() const
 {
-    return absl::StrCat("Immediate Float: ", m_dbl);
+    return absl::StrCat("Immediate I16: ", immediateValue());
 }
 
-double
-lyric_assembler::FloatImmediateInstruction::floatValue() const
+lyric_assembler::I32ImmediateInstruction::I32ImmediateInstruction(tu_int32 i32)
+    : BaseImmediateInstruction(InstructionType::I32Immediate, i32)
 {
-    return m_dbl;
-}
-
-lyric_assembler::CharImmediateInstruction::CharImmediateInstruction(char32_t chr)
-    : m_chr(chr)
-{
-}
-
-lyric_assembler::InstructionType
-lyric_assembler::CharImmediateInstruction::getType() const
-{
-    return InstructionType::CharImmediate;
 }
 
 tempo_utils::Status
-lyric_assembler::CharImmediateInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::I32ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
 {
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::CharImmediateInstruction::apply(
-    const ObjectWriter &writer,
-    lyric_object::BytecodeBuilder &bytecodeBuilder,
-    std::string &labelName,
-    tu_uint16 &labelOffset,
-    tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const
-{
-    return bytecodeBuilder.loadChar(m_chr);
+    return bytecodeBuilder.loadI32(immediateValue());
 }
 
 std::string
-lyric_assembler::CharImmediateInstruction::toString() const
+lyric_assembler::I32ImmediateInstruction::toString() const
 {
-    return absl::StrCat("Immediate Char: ", tempo_utils::convert_to_utf8(m_chr));
+    return absl::StrCat("Immediate I32: ", immediateValue());
 }
 
-char32_t
-lyric_assembler::CharImmediateInstruction::charValue() const
+lyric_assembler::I64ImmediateInstruction::I64ImmediateInstruction(tu_int64 i64)
+    : BaseImmediateInstruction(InstructionType::I64Immediate, i64)
 {
-    return m_chr;
+}
+
+tempo_utils::Status
+lyric_assembler::I64ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadI64(immediateValue());
+}
+
+std::string
+lyric_assembler::I64ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate I64: ", immediateValue());
+}
+
+lyric_assembler::U8ImmediateInstruction::U8ImmediateInstruction(tu_uint8 u8)
+    : BaseImmediateInstruction(InstructionType::U8Immediate, u8)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::U8ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadU8(immediateValue());
+}
+
+std::string
+lyric_assembler::U8ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate U8: ", immediateValue());
+}
+
+lyric_assembler::U16ImmediateInstruction::U16ImmediateInstruction(tu_uint16 u16)
+    : BaseImmediateInstruction(InstructionType::U16Immediate, u16)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::U16ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadU16(immediateValue());
+}
+
+std::string
+lyric_assembler::U16ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate U16: ", immediateValue());
+}
+
+lyric_assembler::U32ImmediateInstruction::U32ImmediateInstruction(tu_uint32 u32)
+    : BaseImmediateInstruction(InstructionType::U32Immediate, u32)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::U32ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadU32(immediateValue());
+}
+
+std::string
+lyric_assembler::U32ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate U32: ", immediateValue());
+}
+
+lyric_assembler::U64ImmediateInstruction::U64ImmediateInstruction(tu_uint64 u64)
+    : BaseImmediateInstruction(InstructionType::U64Immediate, u64)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::U64ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadU64(immediateValue());
+}
+
+std::string
+lyric_assembler::U64ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate U64: ", immediateValue());
+}
+
+lyric_assembler::F32ImmediateInstruction::F32ImmediateInstruction(float f32)
+    : BaseImmediateInstruction(InstructionType::F32Immediate, f32)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::F32ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadF32(immediateValue());
+}
+
+std::string
+lyric_assembler::F32ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate F32: ", immediateValue());
+}
+
+lyric_assembler::F64ImmediateInstruction::F64ImmediateInstruction(double f64)
+    : BaseImmediateInstruction(InstructionType::F64Immediate, f64)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::F64ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadF64(immediateValue());
+}
+
+std::string
+lyric_assembler::F64ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate F64: ", immediateValue());
+}
+
+lyric_assembler::C32ImmediateInstruction::C32ImmediateInstruction(char32_t c32)
+    : BaseImmediateInstruction(InstructionType::C32Immediate, c32)
+{
+}
+
+tempo_utils::Status
+lyric_assembler::C32ImmediateInstruction::applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    return bytecodeBuilder.loadC32(immediateValue());
+}
+
+std::string
+lyric_assembler::C32ImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate C32: ", tempo_utils::convert_to_utf8(immediateValue()));
 }
 
 lyric_assembler::ArithmeticOperationInstruction::ArithmeticOperationInstruction(lyric_object::Opcode opcode)

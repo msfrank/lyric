@@ -139,7 +139,44 @@ lyric_object::BytecodeBuilder::loadBool(bool b)
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::loadInt(tu_int64 i64)
+lyric_object::BytecodeBuilder::loadI8(tu_int8 i8)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_I8));
+    auto offset = m_code.size();
+    m_code.resize(offset + 1);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &i8, 1);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadI16(tu_int16 i16)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_I16));
+    boost::endian::big_int16_buf_t buf{i16};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadI32(tu_int32 i32)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_I32));
+    boost::endian::big_int32_buf_t buf{i32};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadI64(tu_int64 i64)
 {
     TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_I64));
     boost::endian::big_int64_buf_t buf{i64};
@@ -152,10 +189,21 @@ lyric_object::BytecodeBuilder::loadInt(tu_int64 i64)
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::loadFloat(double dbl)
+lyric_object::BytecodeBuilder::loadU8(tu_uint8 u8)
 {
-    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_DBL));
-    boost::endian::big_float64_buf_t buf{dbl};
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_U8));
+    auto offset = m_code.size();
+    m_code.resize(offset + 1);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &u8, 1);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadU16(tu_uint16 u16)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_U16));
+    boost::endian::big_uint16_buf_t buf{u16};
     size_t count = sizeof(buf);
     auto offset = m_code.size();
     m_code.resize(offset + count);
@@ -165,10 +213,62 @@ lyric_object::BytecodeBuilder::loadFloat(double dbl)
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::loadChar(char32_t chr)
+lyric_object::BytecodeBuilder::loadU32(tu_uint32 u32)
 {
-    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_CHR));
-    boost::endian::big_int32_buf_t buf{(tu_int32) chr};
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_U32));
+    boost::endian::big_uint32_buf_t buf{u32};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadU64(tu_uint64 u64)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_U64));
+    boost::endian::big_uint64_buf_t buf{u64};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadF32(float f32)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_F32));
+    boost::endian::big_float32_buf_t buf{f32};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadF64(double f64)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_F64));
+    boost::endian::big_float64_buf_t buf{f64};
+    size_t count = sizeof(buf);
+    auto offset = m_code.size();
+    m_code.resize(offset + count);
+    auto *ptr = m_code.data() + offset;
+    memcpy(ptr, &buf, count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::loadC32(char32_t c32)
+{
+    TU_RETURN_IF_NOT_OK (writeOpcode(Opcode::OP_C32));
+    boost::endian::big_int32_buf_t buf{(tu_int32) c32};
     size_t count = sizeof(buf);
     auto offset = m_code.size();
     m_code.resize(offset + count);
@@ -533,6 +633,66 @@ lyric_object::BytecodeBuilder::patch(tu_uint16 patchOffset, tu_uint16 jumpLabel)
     auto *ptr = &m_code[patchOffset];
     memcpy(ptr, &i16, 2);
     return {};
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToI8()
+{
+    return writeOpcode(Opcode::OP_TO_I8);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToI16()
+{
+    return writeOpcode(Opcode::OP_TO_I16);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToI32()
+{
+    return writeOpcode(Opcode::OP_TO_I32);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToI64()
+{
+    return writeOpcode(Opcode::OP_TO_I64);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToU8()
+{
+    return writeOpcode(Opcode::OP_TO_U8);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToU16()
+{
+    return writeOpcode(Opcode::OP_TO_U16);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToU32()
+{
+    return writeOpcode(Opcode::OP_TO_U32);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToU64()
+{
+    return writeOpcode(Opcode::OP_TO_U64);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToF32()
+{
+    return writeOpcode(Opcode::OP_TO_F32);
+}
+
+tempo_utils::Status
+lyric_object::BytecodeBuilder::convertToF64()
+{
+    return writeOpcode(Opcode::OP_TO_F64);
 }
 
 tempo_utils::Status

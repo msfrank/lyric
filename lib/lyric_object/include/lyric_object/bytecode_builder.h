@@ -36,9 +36,17 @@ namespace lyric_object {
         tempo_utils::Status loadNil();
         tempo_utils::Status loadUndef();
         tempo_utils::Status loadBool(bool b);
-        tempo_utils::Status loadInt(tu_int64 i64);
-        tempo_utils::Status loadFloat(double dbl);
-        tempo_utils::Status loadChar(char32_t chr);
+        tempo_utils::Status loadI8(tu_int8 i8);
+        tempo_utils::Status loadI16(tu_int16 i16);
+        tempo_utils::Status loadI32(tu_int32 i32);
+        tempo_utils::Status loadI64(tu_int64 i64);
+        tempo_utils::Status loadU8(tu_uint8 u8);
+        tempo_utils::Status loadU16(tu_uint16 u16);
+        tempo_utils::Status loadU32(tu_uint32 u32);
+        tempo_utils::Status loadU64(tu_uint64 u64);
+        tempo_utils::Status loadF32(float f32);
+        tempo_utils::Status loadF64(double f64);
+        tempo_utils::Status loadC32(char32_t c32);
 
         tempo_utils::Status loadArgument(tu_uint16 index);
         tempo_utils::Status loadLocal(tu_uint16 index);
@@ -79,6 +87,17 @@ namespace lyric_object {
 
         tempo_utils::Status makeLabel(tu_uint16 &jumpLabel);
         tempo_utils::Status patch(tu_uint16 patchOffset, tu_uint16 jumpLabel);
+
+        tempo_utils::Status convertToI8();
+        tempo_utils::Status convertToI16();
+        tempo_utils::Status convertToI32();
+        tempo_utils::Status convertToI64();
+        tempo_utils::Status convertToU8();
+        tempo_utils::Status convertToU16();
+        tempo_utils::Status convertToU32();
+        tempo_utils::Status convertToU64();
+        tempo_utils::Status convertToF32();
+        tempo_utils::Status convertToF64();
 
         tempo_utils::Status popValue();
         tempo_utils::Status dupValue();

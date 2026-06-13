@@ -497,14 +497,38 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_FALSE:
                 TU_RETURN_IF_NOT_OK (data.fragment->immediateBool(false));
                 break;
+            case lyric_object::Opcode::OP_I8:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateI8(op.operands.immediate_i8.i8));
+                break;
+            case lyric_object::Opcode::OP_I16:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateI16(op.operands.immediate_i16.i16));
+                break;
+            case lyric_object::Opcode::OP_I32:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateI32(op.operands.immediate_i32.i32));
+                break;
             case lyric_object::Opcode::OP_I64:
-                TU_RETURN_IF_NOT_OK (data.fragment->immediateInt(op.operands.immediate_i64.i64));
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateI64(op.operands.immediate_i64.i64));
                 break;
-            case lyric_object::Opcode::OP_DBL:
-                TU_RETURN_IF_NOT_OK (data.fragment->immediateFloat(op.operands.immediate_dbl.dbl));
+            case lyric_object::Opcode::OP_U8:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateU8(op.operands.immediate_u8.u8));
                 break;
-            case lyric_object::Opcode::OP_CHR:
-                TU_RETURN_IF_NOT_OK (data.fragment->immediateChar(op.operands.immediate_chr.chr));
+            case lyric_object::Opcode::OP_U16:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateU16(op.operands.immediate_u16.u16));
+                break;
+            case lyric_object::Opcode::OP_U32:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateU32(op.operands.immediate_u32.u32));
+                break;
+            case lyric_object::Opcode::OP_U64:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateU64(op.operands.immediate_u64.u64));
+                break;
+            case lyric_object::Opcode::OP_F32:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateF32(op.operands.immediate_f32.f32));
+                break;
+            case lyric_object::Opcode::OP_F64:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateF64(op.operands.immediate_f64.f64));
+                break;
+            case lyric_object::Opcode::OP_C32:
+                TU_RETURN_IF_NOT_OK (data.fragment->immediateC32(op.operands.immediate_c32.c32));
                 break;
 
             case lyric_object::Opcode::OP_STRING:

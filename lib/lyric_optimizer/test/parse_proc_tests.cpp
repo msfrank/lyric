@@ -70,15 +70,15 @@ TEST_F(ParseProcTests, ParseConditionalWithPhiFunction)
     fragment->loadRef(cond);
     lyric_assembler::JumpTarget targetIfFalse;
     TU_ASSIGN_OR_RAISE (targetIfFalse, fragment->jumpIfFalse());
-    fragment->immediateInt(1);
-    fragment->immediateInt(2);
+    fragment->immediateI64(1);
+    fragment->immediateI64(2);
     fragment->add();
     fragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, fragment->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
     TU_ASSIGN_OR_RAISE (labelIfFalse, fragment->appendLabel("ifFalse"));
-    fragment->immediateInt(0);
+    fragment->immediateI64(0);
     fragment->storeRef(result);
     lyric_assembler::JumpLabel labelJoin;
     TU_ASSIGN_OR_RAISE (labelJoin, fragment->appendLabel("join"));

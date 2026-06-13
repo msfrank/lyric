@@ -95,9 +95,17 @@ scan_for_basic_blocks(
             case lyric_assembler::InstructionType::NilImmediate:
             case lyric_assembler::InstructionType::UndefImmediate:
             case lyric_assembler::InstructionType::BoolImmediate:
-            case lyric_assembler::InstructionType::IntImmediate:
-            case lyric_assembler::InstructionType::FloatImmediate:
-            case lyric_assembler::InstructionType::CharImmediate:
+            case lyric_assembler::InstructionType::I8Immediate:
+            case lyric_assembler::InstructionType::I16Immediate:
+            case lyric_assembler::InstructionType::I32Immediate:
+            case lyric_assembler::InstructionType::I64Immediate:
+            case lyric_assembler::InstructionType::U8Immediate:
+            case lyric_assembler::InstructionType::U16Immediate:
+            case lyric_assembler::InstructionType::U32Immediate:
+            case lyric_assembler::InstructionType::U64Immediate:
+            case lyric_assembler::InstructionType::F32Immediate:
+            case lyric_assembler::InstructionType::F64Immediate:
+            case lyric_assembler::InstructionType::C32Immediate:
             case lyric_assembler::InstructionType::ArithmeticOperation:
             case lyric_assembler::InstructionType::CompareOperation:
             case lyric_assembler::InstructionType::LogicalOperation:
@@ -282,22 +290,62 @@ translate_instruction(
         case InstructionType::BoolImmediate: {
             auto boolImmediate = std::static_pointer_cast<BoolImmediateInstruction>(instruction);
             return std::static_pointer_cast<AbstractDirective>(
-                std::make_shared<Bool>(boolImmediate->boolValue()));
+                std::make_shared<Bool>(boolImmediate->immediateValue()));
         }
-        case InstructionType::IntImmediate: {
-            auto intImmediate = std::static_pointer_cast<IntImmediateInstruction>(instruction);
+        case InstructionType::I8Immediate: {
+            auto i8Immediate = std::static_pointer_cast<I8ImmediateInstruction>(instruction);
             return std::static_pointer_cast<AbstractDirective>(
-                std::make_shared<Int>(intImmediate->intValue()));
+                std::make_shared<I8>(i8Immediate->immediateValue()));
         }
-        case InstructionType::FloatImmediate: {
-            auto floatImmediate = std::static_pointer_cast<FloatImmediateInstruction>(instruction);
+        case InstructionType::I16Immediate: {
+            auto i16Immediate = std::static_pointer_cast<I16ImmediateInstruction>(instruction);
             return std::static_pointer_cast<AbstractDirective>(
-                std::make_shared<Float>(floatImmediate->floatValue()));
+                std::make_shared<I16>(i16Immediate->immediateValue()));
         }
-        case InstructionType::CharImmediate: {
-            auto charImmediate = std::static_pointer_cast<CharImmediateInstruction>(instruction);
+        case InstructionType::I32Immediate: {
+            auto i32Immediate = std::static_pointer_cast<I32ImmediateInstruction>(instruction);
             return std::static_pointer_cast<AbstractDirective>(
-                std::make_shared<Char>(charImmediate->charValue()));
+                std::make_shared<I32>(i32Immediate->immediateValue()));
+        }
+        case InstructionType::I64Immediate: {
+            auto i64Immediate = std::static_pointer_cast<I64ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<I64>(i64Immediate->immediateValue()));
+        }
+        case InstructionType::U8Immediate: {
+            auto u8Immediate = std::static_pointer_cast<U8ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<U8>(u8Immediate->immediateValue()));
+        }
+        case InstructionType::U16Immediate: {
+            auto u16Immediate = std::static_pointer_cast<U16ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<U16>(u16Immediate->immediateValue()));
+        }
+        case InstructionType::U32Immediate: {
+            auto u32Immediate = std::static_pointer_cast<U32ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<U32>(u32Immediate->immediateValue()));
+        }
+        case InstructionType::U64Immediate: {
+            auto u64Immediate = std::static_pointer_cast<U64ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<U64>(u64Immediate->immediateValue()));
+        }
+        case InstructionType::F32Immediate: {
+            auto f32Immediate = std::static_pointer_cast<F32ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<F32>(f32Immediate->immediateValue()));
+        }
+        case InstructionType::F64Immediate: {
+            auto f64Immediate = std::static_pointer_cast<F64ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<F64>(f64Immediate->immediateValue()));
+        }
+        case InstructionType::C32Immediate: {
+            auto c32Immediate = std::static_pointer_cast<C32ImmediateInstruction>(instruction);
+            return std::static_pointer_cast<AbstractDirective>(
+                std::make_shared<C32>(c32Immediate->immediateValue()));
         }
         case InstructionType::ArithmeticOperation: {
             return translate_arithmetic_operation(std::static_pointer_cast<ArithmeticOperationInstruction>(instruction));

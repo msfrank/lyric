@@ -207,14 +207,24 @@ namespace lyric_object {
 
         OP_NOOP,
 
-        // load and store
+        // immediates
         OP_UNDEF,
         OP_NIL,
         OP_TRUE,
         OP_FALSE,
+        OP_I8,
+        OP_I16,
+        OP_I32,
         OP_I64,
-        OP_DBL,
-        OP_CHR,
+        OP_U8,
+        OP_U16,
+        OP_U32,
+        OP_U64,
+        OP_F32,
+        OP_F64,
+        OP_C32,
+
+        // load and store
         OP_BYTES,
         OP_STRING,
         OP_STATIC,
@@ -269,6 +279,18 @@ namespace lyric_object {
         OP_IF_LT,
         OP_IF_LE,
         OP_JUMP,
+
+        // conversion
+        OP_TO_I8,
+        OP_TO_I16,
+        OP_TO_I32,
+        OP_TO_I64,
+        OP_TO_U8,
+        OP_TO_U16,
+        OP_TO_U32,
+        OP_TO_U64,
+        OP_TO_F32,
+        OP_TO_F64,
 
         // import assembly
         OP_IMPORT,

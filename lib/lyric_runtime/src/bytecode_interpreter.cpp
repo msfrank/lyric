@@ -10,6 +10,7 @@
 #include <lyric_runtime/internal/construct_namespace.h>
 #include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/internal/construct_protocol.h>
+#include <lyric_runtime/internal/convert_ops.h>
 #include <lyric_runtime/internal/numeric_ops.h>
 #include <lyric_runtime/internal/raise_exception.h>
 #include <lyric_runtime/interpreter_state.h>
@@ -159,19 +160,59 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 currentCoro->pushData(Operand::fromBool(false));
                 break;
 
+            // push i8 value onto the stack
+            case lyric_object::Opcode::OP_I8:
+                currentCoro->pushData(Operand::fromI8(op.operands.immediate_i8.i8));
+                break;
+
+            // push i16 value onto the stack
+            case lyric_object::Opcode::OP_I16:
+                currentCoro->pushData(Operand::fromI16(op.operands.immediate_i16.i16));
+                break;
+
+            // push i32 value onto the stack
+            case lyric_object::Opcode::OP_I32:
+                currentCoro->pushData(Operand::fromI32(op.operands.immediate_i32.i32));
+                break;
+
             // push i64 value onto the stack
             case lyric_object::Opcode::OP_I64:
                 currentCoro->pushData(Operand::fromI64(op.operands.immediate_i64.i64));
                 break;
 
-            // push dbl value onto the stack
-            case lyric_object::Opcode::OP_DBL:
-                currentCoro->pushData(Operand::fromF64(op.operands.immediate_dbl.dbl));
+            // push u8 value onto the stack
+            case lyric_object::Opcode::OP_U8:
+                currentCoro->pushData(Operand::fromU8(op.operands.immediate_u8.u8));
                 break;
 
-            // push chr value onto the stack
-            case lyric_object::Opcode::OP_CHR:
-                currentCoro->pushData(Operand::fromC32(op.operands.immediate_chr.chr));
+            // push u16 value onto the stack
+            case lyric_object::Opcode::OP_U16:
+                currentCoro->pushData(Operand::fromU16(op.operands.immediate_u16.u16));
+                break;
+
+            // push u32 value onto the stack
+            case lyric_object::Opcode::OP_U32:
+                currentCoro->pushData(Operand::fromU32(op.operands.immediate_u32.u32));
+                break;
+
+            // push u64 value onto the stack
+            case lyric_object::Opcode::OP_U64:
+                currentCoro->pushData(Operand::fromU64(op.operands.immediate_u64.u64));
+                break;
+
+            // push f32 value onto the stack
+            case lyric_object::Opcode::OP_F32:
+                currentCoro->pushData(Operand::fromF32(op.operands.immediate_f32.f32));
+                break;
+
+            // push f64 value onto the stack
+            case lyric_object::Opcode::OP_F64:
+                currentCoro->pushData(Operand::fromF64(op.operands.immediate_f64.f64));
+                break;
+
+            // push c32 value onto the stack
+            case lyric_object::Opcode::OP_C32:
+                currentCoro->pushData(Operand::fromC32(op.operands.immediate_c32.c32));
                 break;
 
             // push bytes ref onto the stack
@@ -656,6 +697,86 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     TU_LOG_V << "moved ip " << delta << " bytes to " << currentCoro->peekIP();
                 }
                 break;
+            }
+
+            // pop value from stack and convert its representation to I8
+            case lyric_object::Opcode::OP_TO_I8: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I8(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to I16
+            case lyric_object::Opcode::OP_TO_I16: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I16(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to I32
+            case lyric_object::Opcode::OP_TO_I32: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I32(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to I64
+            case lyric_object::Opcode::OP_TO_I64: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I64(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to U8
+            case lyric_object::Opcode::OP_TO_U8: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U8(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to U16
+            case lyric_object::Opcode::OP_TO_U16: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U16(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to U32
+            case lyric_object::Opcode::OP_TO_U32: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U32(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to U64
+            case lyric_object::Opcode::OP_TO_U64: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U64(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to F32
+            case lyric_object::Opcode::OP_TO_F32: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_F32(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+            }
+
+            // pop value from stack and convert its representation to F64
+            case lyric_object::Opcode::OP_TO_F64: {
+                Operand source, result;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_F64(source, result));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
             // load assembly specified by the literal address operand

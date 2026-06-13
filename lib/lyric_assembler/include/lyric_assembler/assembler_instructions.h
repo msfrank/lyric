@@ -53,76 +53,112 @@ namespace lyric_assembler {
         std::string toString() const override;
     };
 
-    class BoolImmediateInstruction: public AbstractInstruction {
+    template<class ImmediateType>
+    class BaseImmediateInstruction: public AbstractInstruction {
+    public:
+        explicit BaseImmediateInstruction(InstructionType type, ImmediateType imm)
+            : m_type(type),
+              m_imm(imm)
+        {
+        }
+        InstructionType getType() const override { return m_type; }
+        tempo_utils::Status touch(ObjectWriter &writer) const override { return {}; }
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override { return applyImmediate(bytecodeBuilder); }
+        ImmediateType immediateValue() const { return m_imm; }
+        virtual tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const = 0;
+    private:
+        InstructionType m_type;
+        ImmediateType m_imm;
+    };
+
+    class BoolImmediateInstruction: public BaseImmediateInstruction<bool> {
     public:
         explicit BoolImmediateInstruction(bool b);
-        InstructionType getType() const override;
-        tempo_utils::Status touch(ObjectWriter &writer) const override;
-        tempo_utils::Status apply(
-            const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder,
-            std::string &labelName,
-            tu_uint16 &labelOffset,
-            tu_uint32 &targetId,
-            tu_uint16 &patchOffset) const override;
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
         std::string toString() const override;
-        bool boolValue() const;
-    private:
-        bool m_b;
     };
 
-    class IntImmediateInstruction: public AbstractInstruction {
+    class I8ImmediateInstruction: public BaseImmediateInstruction<tu_int8> {
     public:
-        explicit IntImmediateInstruction(tu_int64 i64);
-        InstructionType getType() const override;
-        tempo_utils::Status touch(ObjectWriter &writer) const override;
-        tempo_utils::Status apply(
-            const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder,
-            std::string &labelName,
-            tu_uint16 &labelOffset,
-            tu_uint32 &targetId,
-            tu_uint16 &patchOffset) const override;
+        explicit I8ImmediateInstruction(tu_int8 i8);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
         std::string toString() const override;
-        tu_int64 intValue() const;
-    private:
-        tu_int64 m_i64;
     };
 
-    class FloatImmediateInstruction: public AbstractInstruction {
+    class I16ImmediateInstruction: public BaseImmediateInstruction<tu_int16> {
     public:
-        explicit FloatImmediateInstruction(double dbl);
-        InstructionType getType() const override;
-        tempo_utils::Status touch(ObjectWriter &writer) const override;
-        tempo_utils::Status apply(
-            const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder,
-            std::string &labelName,
-            tu_uint16 &labelOffset,
-            tu_uint32 &targetId,
-            tu_uint16 &patchOffset) const override;
+        explicit I16ImmediateInstruction(tu_int16 i16);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
         std::string toString() const override;
-        double floatValue() const;
-    private:
-        double m_dbl;
     };
 
-    class CharImmediateInstruction: public AbstractInstruction {
+    class I32ImmediateInstruction: public BaseImmediateInstruction<tu_int32> {
     public:
-        explicit CharImmediateInstruction(char32_t chr);
-        InstructionType getType() const override;
-        tempo_utils::Status touch(ObjectWriter &writer) const override;
-        tempo_utils::Status apply(
-            const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder,
-            std::string &labelName,
-            tu_uint16 &labelOffset,
-            tu_uint32 &targetId,
-            tu_uint16 &patchOffset) const override;
+        explicit I32ImmediateInstruction(tu_int32 i32);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
         std::string toString() const override;
-        char32_t charValue() const;
-    private:
-        char32_t m_chr;
+    };
+
+    class I64ImmediateInstruction: public BaseImmediateInstruction<tu_int64> {
+    public:
+        explicit I64ImmediateInstruction(tu_int64 i64);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class U8ImmediateInstruction: public BaseImmediateInstruction<tu_uint8> {
+    public:
+        explicit U8ImmediateInstruction(tu_uint8 u8);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class U16ImmediateInstruction: public BaseImmediateInstruction<tu_uint16> {
+    public:
+        explicit U16ImmediateInstruction(tu_uint16 u16);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class U32ImmediateInstruction: public BaseImmediateInstruction<tu_uint32> {
+    public:
+        explicit U32ImmediateInstruction(tu_uint32 u32);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class U64ImmediateInstruction: public BaseImmediateInstruction<tu_uint64> {
+    public:
+        explicit U64ImmediateInstruction(tu_uint64 u64);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class F32ImmediateInstruction: public BaseImmediateInstruction<float> {
+    public:
+        explicit F32ImmediateInstruction(float f32);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class F64ImmediateInstruction: public BaseImmediateInstruction<double> {
+    public:
+        explicit F64ImmediateInstruction(double f64);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
+    };
+
+    class C32ImmediateInstruction: public BaseImmediateInstruction<char32_t> {
+    public:
+        explicit C32ImmediateInstruction(char32_t c32);
+        tempo_utils::Status applyImmediate(lyric_object::BytecodeBuilder &bytecodeBuilder) const override;
+        std::string toString() const override;
     };
 
     class ArithmeticOperationInstruction: public AbstractInstruction {

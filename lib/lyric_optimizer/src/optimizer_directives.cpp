@@ -161,139 +161,467 @@ lyric_optimizer::Bool::toString() const
     return absl::StrCat("Bool(", m_b, ")");
 }
 
-lyric_optimizer::Int::Int(tu_int64 i64)
+lyric_optimizer::I8::I8(tu_int8 i8)
+    : m_i8(i8)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::I8::getType() const
+{
+    return DirectiveType::I8;
+}
+
+bool
+lyric_optimizer::I8::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::I8) {
+        auto directive = std::static_pointer_cast<I8>(other);
+        return m_i8 == directive->m_i8;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::I8::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::I8::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateI8(m_i8);
+}
+
+std::string
+lyric_optimizer::I8::toString() const
+{
+    return absl::StrCat("I8(", m_i8, ")");
+}
+
+lyric_optimizer::I16::I16(tu_int16 i16)
+    : m_i16(i16)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::I16::getType() const
+{
+    return DirectiveType::I16;
+}
+
+bool
+lyric_optimizer::I16::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::I16) {
+        auto directive = std::static_pointer_cast<I16>(other);
+        return m_i16 == directive->m_i16;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::I16::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::I16::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateI16(m_i16);
+}
+
+std::string
+lyric_optimizer::I16::toString() const
+{
+    return absl::StrCat("I16(", m_i16, ")");
+}
+
+lyric_optimizer::I32::I32(tu_int32 i32)
+    : m_i32(i32)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::I32::getType() const
+{
+    return DirectiveType::I32;
+}
+
+bool
+lyric_optimizer::I32::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::I32) {
+        auto directive = std::static_pointer_cast<I32>(other);
+        return m_i32 == directive->m_i32;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::I32::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::I32::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateI32(m_i32);
+}
+
+std::string
+lyric_optimizer::I32::toString() const
+{
+    return absl::StrCat("I32(", m_i32, ")");
+}
+
+lyric_optimizer::I64::I64(tu_int64 i64)
     : m_i64(i64)
 {
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::Int::getType() const
+lyric_optimizer::I64::getType() const
 {
-    return DirectiveType::Int;
+    return DirectiveType::I64;
 }
 
 bool
-lyric_optimizer::Int::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::I64::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::Int) {
-        auto directive = std::static_pointer_cast<Int>(other);
+    if (other && other->getType() == DirectiveType::I64) {
+        auto directive = std::static_pointer_cast<I64>(other);
         return m_i64 == directive->m_i64;
     }
     return false;
 }
 
 tempo_utils::Status
-lyric_optimizer::Int::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::I64::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
 
 tempo_utils::Status
-lyric_optimizer::Int::buildCode(
+lyric_optimizer::I64::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
-    return codeFragment->immediateInt(m_i64);
+    return codeFragment->immediateI64(m_i64);
 }
 
 std::string
-lyric_optimizer::Int::toString() const
+lyric_optimizer::I64::toString() const
 {
-    return absl::StrCat("Int(", m_i64, ")");
+    return absl::StrCat("I64(", m_i64, ")");
 }
 
-lyric_optimizer::Float::Float(double dbl)
-    : m_dbl(dbl)
+lyric_optimizer::U8::U8(tu_uint8 u8)
+    : m_u8(u8)
 {
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::Float::getType() const
+lyric_optimizer::U8::getType() const
 {
-    return DirectiveType::Float;
+    return DirectiveType::U8;
 }
 
 bool
-lyric_optimizer::Float::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::U8::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::Float) {
-        auto directive = std::static_pointer_cast<Float>(other);
-        return m_dbl == directive->m_dbl;
+    if (other && other->getType() == DirectiveType::U8) {
+        auto directive = std::static_pointer_cast<U8>(other);
+        return m_u8 == directive->m_u8;
     }
     return false;
 }
 
 tempo_utils::Status
-lyric_optimizer::Float::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::U8::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
 
 tempo_utils::Status
-lyric_optimizer::Float::buildCode(
+lyric_optimizer::U8::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
-    return codeFragment->immediateFloat(m_dbl);
+    return codeFragment->immediateU8(m_u8);
 }
 
 std::string
-lyric_optimizer::Float::toString() const
+lyric_optimizer::U8::toString() const
 {
-    return absl::StrCat("Float(", m_dbl, ")");
+    return absl::StrCat("U8(", m_u8, ")");
 }
 
-lyric_optimizer::Char::Char(char32_t chr)
-    : m_chr(chr)
+lyric_optimizer::U16::U16(tu_uint16 u16)
+    : m_u16(u16)
 {
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::Char::getType() const
+lyric_optimizer::U16::getType() const
 {
-    return DirectiveType::Char;
+    return DirectiveType::U16;
 }
 
 bool
-lyric_optimizer::Char::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+lyric_optimizer::U16::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::Char) {
-        auto directive = std::static_pointer_cast<Char>(other);
-        return m_chr == directive->m_chr;
+    if (other && other->getType() == DirectiveType::U16) {
+        auto directive = std::static_pointer_cast<U16>(other);
+        return m_u16 == directive->m_u16;
     }
     return false;
 }
 
 tempo_utils::Status
-lyric_optimizer::Char::applyOperands(ActivationState &state, OperandStack &stack)
+lyric_optimizer::U16::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
 
 tempo_utils::Status
-lyric_optimizer::Char::buildCode(
+lyric_optimizer::U16::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
-    return codeFragment->immediateChar(m_chr);
+    return codeFragment->immediateU16(m_u16);
 }
 
 std::string
-lyric_optimizer::Char::toString() const
+lyric_optimizer::U16::toString() const
 {
-    return absl::StrCat("Char(", tempo_utils::convert_to_utf8(m_chr), ")");
+    return absl::StrCat("U16(", m_u16, ")");
+}
+
+lyric_optimizer::U32::U32(tu_uint32 u32)
+    : m_u32(u32)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::U32::getType() const
+{
+    return DirectiveType::U32;
+}
+
+bool
+lyric_optimizer::U32::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::U32) {
+        auto directive = std::static_pointer_cast<U32>(other);
+        return m_u32 == directive->m_u32;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::U32::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::U32::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateU32(m_u32);
+}
+
+std::string
+lyric_optimizer::U32::toString() const
+{
+    return absl::StrCat("U32(", m_u32, ")");
+}
+
+lyric_optimizer::U64::U64(tu_uint64 u64)
+    : m_u64(u64)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::U64::getType() const
+{
+    return DirectiveType::U64;
+}
+
+bool
+lyric_optimizer::U64::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::U64) {
+        auto directive = std::static_pointer_cast<U64>(other);
+        return m_u64 == directive->m_u64;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::U64::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::U64::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateU64(m_u64);
+}
+
+std::string
+lyric_optimizer::U64::toString() const
+{
+    return absl::StrCat("U64(", m_u64, ")");
+}
+
+lyric_optimizer::F32::F32(float f32)
+    : m_f32(f32)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::F32::getType() const
+{
+    return DirectiveType::F32;
+}
+
+bool
+lyric_optimizer::F32::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::F32) {
+        auto directive = std::static_pointer_cast<F32>(other);
+        return m_f32 == directive->m_f32;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::F32::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::F32::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateF32(m_f32);
+}
+
+std::string
+lyric_optimizer::F32::toString() const
+{
+    return absl::StrCat("F32(", m_f32, ")");
+}
+
+lyric_optimizer::F64::F64(double f64)
+    : m_f64(f64)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::F64::getType() const
+{
+    return DirectiveType::F64;
+}
+
+bool
+lyric_optimizer::F64::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::F64) {
+        auto directive = std::static_pointer_cast<F64>(other);
+        return m_f64 == directive->m_f64;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::F64::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::F64::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateF64(m_f64);
+}
+
+std::string
+lyric_optimizer::F64::toString() const
+{
+    return absl::StrCat("F64(", m_f64, ")");
+}
+
+lyric_optimizer::C32::C32(char32_t c32)
+    : m_c32(c32)
+{
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::C32::getType() const
+{
+    return DirectiveType::C32;
+}
+
+bool
+lyric_optimizer::C32::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
+{
+    if (other && other->getType() == DirectiveType::C32) {
+        auto directive = std::static_pointer_cast<C32>(other);
+        return m_c32 == directive->m_c32;
+    }
+    return false;
+}
+
+tempo_utils::Status
+lyric_optimizer::C32::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::C32::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return codeFragment->immediateC32(m_c32);
+}
+
+std::string
+lyric_optimizer::C32::toString() const
+{
+    return absl::StrCat("C32(", tempo_utils::convert_to_utf8(m_c32), ")");
 }
 
 lyric_optimizer::DirectiveType
 lyric_optimizer::Add::getType() const
 {
-    return DirectiveType::IntAdd;
+    return DirectiveType::Add;
 }
 
 bool
 lyric_optimizer::Add::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::IntAdd) {
+    if (other && other->getType() == DirectiveType::Add) {
         auto directive = std::static_pointer_cast<Add>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
@@ -344,13 +672,13 @@ lyric_optimizer::Add::toString() const
 lyric_optimizer::DirectiveType
 lyric_optimizer::Sub::getType() const
 {
-    return DirectiveType::IntSub;
+    return DirectiveType::Sub;
 }
 
 bool
 lyric_optimizer::Sub::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::IntSub) {
+    if (other && other->getType() == DirectiveType::Sub) {
         auto directive = std::static_pointer_cast<Sub>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
@@ -401,13 +729,13 @@ lyric_optimizer::Sub::toString() const
 lyric_optimizer::DirectiveType
 lyric_optimizer::Mul::getType() const
 {
-    return DirectiveType::IntMul;
+    return DirectiveType::Mul;
 }
 
 bool
 lyric_optimizer::Mul::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::IntMul) {
+    if (other && other->getType() == DirectiveType::Mul) {
         auto directive = std::static_pointer_cast<Mul>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
@@ -458,13 +786,13 @@ lyric_optimizer::Mul::toString() const
 lyric_optimizer::DirectiveType
 lyric_optimizer::Div::getType() const
 {
-    return DirectiveType::IntDiv;
+    return DirectiveType::Div;
 }
 
 bool
 lyric_optimizer::Div::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::IntDiv) {
+    if (other && other->getType() == DirectiveType::Div) {
         auto directive = std::static_pointer_cast<Div>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs)
             && m_rhs->isEquivalentTo(directive->m_rhs);
@@ -515,13 +843,13 @@ lyric_optimizer::Div::toString() const
 lyric_optimizer::DirectiveType
 lyric_optimizer::Neg::getType() const
 {
-    return DirectiveType::IntNeg;
+    return DirectiveType::Neg;
 }
 
 bool
 lyric_optimizer::Neg::isEquivalentTo(std::shared_ptr<AbstractDirective> other) const
 {
-    if (other && other->getType() == DirectiveType::IntNeg) {
+    if (other && other->getType() == DirectiveType::Neg) {
         auto directive = std::static_pointer_cast<Neg>(other);
         return m_lhs->isEquivalentTo(directive->m_lhs);
     }

@@ -12,9 +12,17 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_NIL,                 lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_TRUE,                lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_FALSE,               lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_I8,                  lyric_object::OpInfoType::IMMEDIATE_I8 },
+    { lyric_object::Opcode::OP_I16,                 lyric_object::OpInfoType::IMMEDIATE_I16 },
+    { lyric_object::Opcode::OP_I32,                 lyric_object::OpInfoType::IMMEDIATE_I32 },
     { lyric_object::Opcode::OP_I64,                 lyric_object::OpInfoType::IMMEDIATE_I64 },
-    { lyric_object::Opcode::OP_DBL,                 lyric_object::OpInfoType::IMMEDIATE_DBL },
-    { lyric_object::Opcode::OP_CHR,                 lyric_object::OpInfoType::IMMEDIATE_CHR },
+    { lyric_object::Opcode::OP_U8,                  lyric_object::OpInfoType::IMMEDIATE_U8 },
+    { lyric_object::Opcode::OP_U16,                 lyric_object::OpInfoType::IMMEDIATE_U16 },
+    { lyric_object::Opcode::OP_U32,                 lyric_object::OpInfoType::IMMEDIATE_U32 },
+    { lyric_object::Opcode::OP_U64,                 lyric_object::OpInfoType::IMMEDIATE_U64 },
+    { lyric_object::Opcode::OP_F32,                 lyric_object::OpInfoType::IMMEDIATE_F32 },
+    { lyric_object::Opcode::OP_F64,                 lyric_object::OpInfoType::IMMEDIATE_F64 },
+    { lyric_object::Opcode::OP_C32,                 lyric_object::OpInfoType::IMMEDIATE_C32 },
     { lyric_object::Opcode::OP_BYTES,               lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_STRING,              lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_STATIC,              lyric_object::OpInfoType::ADDRESS_U32 },
@@ -55,6 +63,16 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_IF_LT,               lyric_object::OpInfoType::JUMP_I16 },
     { lyric_object::Opcode::OP_IF_LE,               lyric_object::OpInfoType::JUMP_I16 },
     { lyric_object::Opcode::OP_JUMP,                lyric_object::OpInfoType::JUMP_I16 },
+    { lyric_object::Opcode::OP_TO_I8,               lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_I16,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_I32,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_I64,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_U8,               lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_U16,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_U32,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_U64,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_F32,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_TO_F64,              lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_IMPORT,              lyric_object::OpInfoType::ADDRESS_U32 },
     { lyric_object::Opcode::OP_CALL_STATIC,         lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_CALL_VIRTUAL,        lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
@@ -190,16 +208,40 @@ lyric_object::BytecodeIterator::getNext(OpCell &op)
         case OpInfoType::TYPE_U8:
             TU_ASSERT (it.nextU8(op.operands.type_u8.type));
             break;
+        case OpInfoType::IMMEDIATE_I8:
+            TU_ASSERT (it.nextS8(op.operands.immediate_i8.i8));
+            break;
+        case OpInfoType::IMMEDIATE_I16:
+            TU_ASSERT (it.nextS16(op.operands.immediate_i16.i16));
+            break;
+        case OpInfoType::IMMEDIATE_I32:
+            TU_ASSERT (it.nextS32(op.operands.immediate_i32.i32));
+            break;
         case OpInfoType::IMMEDIATE_I64:
             TU_ASSERT (it.nextS64(op.operands.immediate_i64.i64));
             break;
-        case OpInfoType::IMMEDIATE_DBL:
-            TU_ASSERT (it.nextF64(op.operands.immediate_dbl.dbl));
+        case OpInfoType::IMMEDIATE_U8:
+            TU_ASSERT (it.nextU8(op.operands.immediate_u8.u8));
             break;
-        case OpInfoType::IMMEDIATE_CHR: {
+        case OpInfoType::IMMEDIATE_U16:
+            TU_ASSERT (it.nextU16(op.operands.immediate_u16.u16));
+            break;
+        case OpInfoType::IMMEDIATE_U32:
+            TU_ASSERT (it.nextU32(op.operands.immediate_u32.u32));
+            break;
+        case OpInfoType::IMMEDIATE_U64:
+            TU_ASSERT (it.nextU64(op.operands.immediate_u64.u64));
+            break;
+        case OpInfoType::IMMEDIATE_F32:
+            TU_ASSERT (it.nextF32(op.operands.immediate_f32.f32));
+            break;
+        case OpInfoType::IMMEDIATE_F64:
+            TU_ASSERT (it.nextF64(op.operands.immediate_f64.f64));
+            break;
+        case OpInfoType::IMMEDIATE_C32: {
             tu_int32 s32;
             TU_ASSERT (it.nextS32(s32));
-            op.operands.immediate_chr.chr = s32;
+            op.operands.immediate_c32.c32 = s32;
             break;
         }
     }

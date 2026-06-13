@@ -185,28 +185,100 @@ lyric_assembler::CodeFragment::immediateBool(bool b)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::immediateInt(int64_t i64)
+lyric_assembler::CodeFragment::immediateI8(tu_int8 i8)
 {
     Statement statement;
-    statement.instruction = std::make_shared<IntImmediateInstruction>(i64);
+    statement.instruction = std::make_shared<I8ImmediateInstruction>(i8);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::immediateFloat(double dbl)
+lyric_assembler::CodeFragment::immediateI16(tu_int16 i16)
 {
     Statement statement;
-    statement.instruction = std::make_shared<FloatImmediateInstruction>(dbl);
+    statement.instruction = std::make_shared<I16ImmediateInstruction>(i16);
     m_statements.push_back(std::move(statement));
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::immediateChar(char32_t chr)
+lyric_assembler::CodeFragment::immediateI32(tu_int32 i32)
 {
     Statement statement;
-    statement.instruction = std::make_shared<CharImmediateInstruction>(chr);
+    statement.instruction = std::make_shared<I32ImmediateInstruction>(i32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateI64(tu_int64 i64)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<I64ImmediateInstruction>(i64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateU8(tu_uint8 u8)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<U8ImmediateInstruction>(u8);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateU16(tu_uint16 u16)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<U16ImmediateInstruction>(u16);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateU32(tu_uint32 u32)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<U32ImmediateInstruction>(u32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateU64(tu_uint64 u64)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<U64ImmediateInstruction>(u64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateF32(float f32)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<F32ImmediateInstruction>(f32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateF64(double f64)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<F64ImmediateInstruction>(f64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::immediateC32(char32_t c32)
+{
+    Statement statement;
+    statement.instruction = std::make_shared<C32ImmediateInstruction>(c32);
     m_statements.push_back(std::move(statement));
     return {};
 }

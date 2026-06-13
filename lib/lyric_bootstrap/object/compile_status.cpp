@@ -68,7 +68,7 @@ build_core_Ok(BuilderState &state, const CoreStruct *StatusStruct)
         lyric_object::BytecodeBuilder code;
         code.loadReceiver();
         // load the status code immediate
-        code.loadInt(static_cast<tu_int64>(tempo_utils::StatusCode::kOk));
+        code.loadI64(static_cast<tu_int64>(tempo_utils::StatusCode::kOk));
         // load the message argument
         auto literal_index = state.addLiteralString("Ok");
         code.loadString(literal_index);
@@ -134,7 +134,7 @@ build_core_Error_code(
         lyric_object::BytecodeBuilder code;
         code.loadReceiver();
         // load the status code immediate
-        code.loadInt(static_cast<tu_int64>(statusCode));
+        code.loadI64(static_cast<tu_int64>(statusCode));
         // load the message argument
         code.loadArgument(0);
         // call parent ctor

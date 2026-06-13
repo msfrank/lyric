@@ -93,15 +93,15 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
     inputFragment->loadRef(cond);
     lyric_assembler::JumpTarget targetIfFalse;
     TU_ASSIGN_OR_RAISE (targetIfFalse, inputFragment->jumpIfFalse());
-    inputFragment->immediateInt(1);
-    inputFragment->immediateInt(2);
+    inputFragment->immediateI64(1);
+    inputFragment->immediateI64(2);
     inputFragment->add();
     inputFragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, inputFragment->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
     TU_ASSIGN_OR_RAISE (labelIfFalse, inputFragment->appendLabel("ifFalse"));
-    inputFragment->immediateInt(0);
+    inputFragment->immediateI64(0);
     inputFragment->storeRef(result);
     lyric_assembler::JumpLabel labelJoin;
     TU_ASSIGN_OR_RAISE (labelJoin, inputFragment->appendLabel("join"));

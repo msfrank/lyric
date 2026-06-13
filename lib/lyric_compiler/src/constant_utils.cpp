@@ -74,7 +74,7 @@ lyric_compiler::constant_char(
 
     char32_t chr;
     TU_ASSIGN_OR_RETURN (chr, lyric_parser::parse_char_literal(literalValue));
-    TU_RETURN_IF_NOT_OK (fragment->immediateChar(chr));
+    TU_RETURN_IF_NOT_OK (fragment->immediateC32(chr));
     TU_LOG_VV << "immediate char '" << chr << "'";
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Char));
 }
@@ -95,7 +95,7 @@ lyric_compiler::constant_integer(
 
     tu_int64 i64;
     TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
-    TU_RETURN_IF_NOT_OK (fragment->immediateInt(i64));
+    TU_RETURN_IF_NOT_OK (fragment->immediateI64(i64));
     TU_LOG_VV << "immediate int " << i64;
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int));
 }
@@ -118,7 +118,7 @@ lyric_compiler::constant_float(
 
     double dbl;
     TU_ASSIGN_OR_RETURN (dbl, lyric_parser::parse_float_literal(literalValue, base, notation));
-    TU_RETURN_IF_NOT_OK (fragment->immediateFloat(dbl));
+    TU_RETURN_IF_NOT_OK (fragment->immediateF64(dbl));
     TU_LOG_VV << "immediate float " << dbl;
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float));
 }
