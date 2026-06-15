@@ -12,7 +12,7 @@ class CompileCast : public BaseCompilerFixture {};
 TEST_F(CompileCast, EvaluateUpcastWithSubtype)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         val any = foo as Any
         any
     )");
@@ -23,8 +23,8 @@ TEST_F(CompileCast, EvaluateUpcastWithSubtype)
 TEST_F(CompileCast, EvaluateUpcastWithEqualType)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
-        val any = foo as Int
+        val foo: I64 = 100
+        val any = foo as I64
         any
     )");
 
@@ -35,7 +35,7 @@ TEST_F(CompileCast, EvaluateUpcastWithSuperTypeFails)
 {
     auto result = m_tester->compileModule(R"(
         val foo: Any = 100
-        val int = foo as Int
+        val int = foo as I64
         any
     )");
 
@@ -47,8 +47,8 @@ TEST_F(CompileCast, EvaluateUpcastWithSuperTypeFails)
 TEST_F(CompileCast, EvaluateUpcastWithDisjointTypeFails)
 {
     auto result = m_tester->compileModule(R"(
-        val foo: Int = 100
-        val any = foo as Float
+        val foo: I64 = 100
+        val any = foo as F64
         any
     )");
 
@@ -60,7 +60,7 @@ TEST_F(CompileCast, EvaluateUpcastWithDisjointTypeFails)
 TEST_F(CompileCast, EvaluateImplCastWithImplementedConcept)
 {
     auto result = m_tester->runModule(R"(
-        val eq = IntInstance as Equality[Int,Int]
+        val eq = IntInstance as Equality[I64,I64]
         eq
     )");
 
@@ -72,7 +72,7 @@ TEST_F(CompileCast, EvaluateImplCastWithImplementedConcept)
 TEST_F(CompileCast, EvaluateImplCastWithMultipleImplementedConcepts)
 {
     auto result = m_tester->runModule(R"(
-        val eq = IntInstance as Equality[Int,Int] & Arithmetic[Int]
+        val eq = IntInstance as Equality[I64,I64] & Arithmetic[I64]
         eq
     )");
 
@@ -84,7 +84,7 @@ TEST_F(CompileCast, EvaluateImplCastWithMultipleImplementedConcepts)
 TEST_F(CompileCast, EvaluateImplCastWithUnimplementedConceptFails)
 {
     auto result = m_tester->compileModule(R"(
-        val eq = IntInstance as Equality[Float,Float]
+        val eq = IntInstance as Equality[F64,F64]
         eq
     )");
 

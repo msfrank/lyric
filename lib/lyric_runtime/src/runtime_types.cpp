@@ -11,16 +11,33 @@ lyric_runtime::intrinsicTypeToSymbolPath(IntrinsicType intrinsic)
             return lyric_common::SymbolPath::fromString("Undef");
         case IntrinsicType::Bool:
             return lyric_common::SymbolPath::fromString("Bool");
-        case IntrinsicType::Int64:
-            return lyric_common::SymbolPath::fromString("Int");
-        case IntrinsicType::Float64:
-            return lyric_common::SymbolPath::fromString("Float");
-        case IntrinsicType::Char32:
+        case IntrinsicType::Char:
             return lyric_common::SymbolPath::fromString("Char");
         case IntrinsicType::Bytes:
             return lyric_common::SymbolPath::fromString("Bytes");
         case IntrinsicType::String:
             return lyric_common::SymbolPath::fromString("String");
+
+        case IntrinsicType::I64:
+            return lyric_common::SymbolPath::fromString("I64");
+        case IntrinsicType::I32:
+            return lyric_common::SymbolPath::fromString("I32");
+        case IntrinsicType::I16:
+            return lyric_common::SymbolPath::fromString("I16");
+        case IntrinsicType::I8:
+            return lyric_common::SymbolPath::fromString("I8");
+        case IntrinsicType::U64:
+            return lyric_common::SymbolPath::fromString("U64");
+        case IntrinsicType::U32:
+            return lyric_common::SymbolPath::fromString("U32");
+        case IntrinsicType::U16:
+            return lyric_common::SymbolPath::fromString("U16");
+        case IntrinsicType::U8:
+            return lyric_common::SymbolPath::fromString("U8");
+        case IntrinsicType::F64:
+            return lyric_common::SymbolPath::fromString("F64");
+        case IntrinsicType::F32:
+            return lyric_common::SymbolPath::fromString("F32");
 
         case IntrinsicType::Action:
             return lyric_common::SymbolPath::fromString("Action");

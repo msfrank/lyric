@@ -16,7 +16,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *typeCache = objectState->typeCache();
     auto *rootBlock = objectRoot->rootBlock();
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     lyric_object::TemplateParameter tp0;
     tp0.index = 0;
@@ -59,7 +59,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     auto *typeCache = objectState->typeCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
 
     lyric_object::TemplateParameter tp0;
@@ -115,7 +115,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *typeCache = objectState->typeCache();
     auto *rootBlock = objectRoot->rootBlock();
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto NilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
 
     lyric_object::TemplateParameter tp0;

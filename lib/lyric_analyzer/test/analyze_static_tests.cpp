@@ -17,7 +17,7 @@ class AnalyzeStatic : public BaseAnalyzerFixture {};
 TEST_F(AnalyzeStatic, DeclareStaticVal)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
-        global val Static: Int = 0
+        global val Static: I64 = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
         tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Completed)));
@@ -27,18 +27,18 @@ TEST_F(AnalyzeStatic, DeclareStaticVal)
     ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numStatics());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     auto static0 = object.getStatic(0);
     ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
-    ASSERT_EQ (IntType, static0.getStaticType().getTypeDef());
+    ASSERT_EQ (I64Type, static0.getStaticType().getTypeDef());
     ASSERT_FALSE (static0.isVariable());
 }
 
 TEST_F(AnalyzeStatic, DeclareStaticVar)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
-        global var Static: Int = 0
+        global var Static: I64 = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
                  tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Completed)));
@@ -52,11 +52,11 @@ TEST_F(AnalyzeStatic, DeclareStaticVar)
     ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numStatics());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     auto static0 = object.getStatic(0);
     ASSERT_TRUE (static0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
-    ASSERT_EQ (IntType, static0.getStaticType().getTypeDef());
+    ASSERT_EQ (I64Type, static0.getStaticType().getTypeDef());
     ASSERT_TRUE (static0.isVariable());
 }

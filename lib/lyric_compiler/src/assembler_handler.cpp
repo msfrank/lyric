@@ -62,8 +62,7 @@ public:
         auto *driver = getDriver();
         auto *fundamentalCache = driver->getFundamentalCache();
         auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-        auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
-        auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
+        auto I64Type = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
         switch (opcode) {
             case lyric_object::Opcode::OP_NOOP:
@@ -124,10 +123,10 @@ public:
             // comparisons
             case lyric_object::Opcode::OP_CMP:
                 TU_RETURN_IF_NOT_OK (m_fragment->compare());
-                return updateResultStack(2, IntType);
+                return updateResultStack(2, I64Type);
             case lyric_object::Opcode::OP_TYPE_CMP:
                 TU_RETURN_IF_NOT_OK (m_fragment->typeCompare());
-                return updateResultStack(2, IntType);
+                return updateResultStack(2, I64Type);
 
             // logical operations
             case lyric_object::Opcode::OP_LOGICAL_AND:

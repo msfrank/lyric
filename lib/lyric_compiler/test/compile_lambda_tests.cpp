@@ -12,7 +12,7 @@ class CompileLambda : public BaseCompilerFixture {};
 TEST_F(CompileLambda, EvaluatePureLambda)
 {
     auto result = m_tester->runModule(R"(
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + 1
         }
         f
@@ -26,7 +26,7 @@ TEST_F(CompileLambda, EvaluatePureLambda)
 TEST_F(CompileLambda, EvaluatePureLambdaFrom)
 {
     auto result = m_tester->runModule(R"(
-        def fn(n: Int): Int {
+        def fn(n: I64): I64 {
           n + 1
         }
         lambda from fn
@@ -40,7 +40,7 @@ TEST_F(CompileLambda, EvaluatePureLambdaFrom)
 TEST_F(CompileLambda, EvaluateInvokePureLambda)
 {
     auto result = m_tester->runModule(R"(
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + 1
         }
         f.Apply(2)
@@ -52,10 +52,10 @@ TEST_F(CompileLambda, EvaluateInvokePureLambda)
 TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
 {
     auto result = m_tester->runModule(R"(
-        def fn(n: Int): Int {
+        def fn(n: I64): I64 {
           n + 1
         }
-        val f: Function1[Int,Int] = lambda from fn
+        val f: Function1[I64,I64] = lambda from fn
         f.Apply(2)
     )");
 
@@ -65,8 +65,8 @@ TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
 TEST_F(CompileLambda, EvaluateLambdaClosure)
 {
     auto result = m_tester->runModule(R"(
-        val x: Int = 1
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        val x: I64 = 1
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + x
         }
         f
@@ -80,8 +80,8 @@ TEST_F(CompileLambda, EvaluateLambdaClosure)
 TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
 {
     auto result = m_tester->runModule(R"(
-        global val x: Int = 1
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        global val x: I64 = 1
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + x
         }
         f.Apply(2)
@@ -93,8 +93,8 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
 TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
 {
     auto result = m_tester->runModule(R"(
-        val x: Int = 1
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        val x: I64 = 1
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + x
         }
         f.Apply(2)
@@ -106,8 +106,8 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
 TEST_F(CompileLambda, CompileInvokeLambdaClosureOverPrivateVariableFails)
 {
     auto result = m_tester->compileModule(R"(
-        val _x: Int = 1
-        val f: Function1[Int,Int] = lambda (n: Int): Int {
+        val _x: I64 = 1
+        val f: Function1[I64,I64] = lambda (n: I64): I64 {
           n + _x
         }
         f.Apply(2)

@@ -10,7 +10,7 @@ class CompileVar : public BaseCompilerFixture {};
 TEST_F(CompileVar, EvaluateVar)
 {
     auto result = m_tester->runModule(R"(
-        var foo: Int = 100
+        var foo: I64 = 100
         foo
     )");
 

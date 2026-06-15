@@ -1,8 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_COMPARISON_H
-#define ZURI_CORE_COMPILE_COMPARISON_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_COMPARISON_H
+#define LYRIC_BOOTSTRAP_COMPILE_COMPARISON_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Comparison(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *BoolType);
+CoreConcept *build_core_Comparison(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_COMPARISON_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_COMPARISON_H

@@ -85,7 +85,7 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
         true));
     lyric_assembler::DataReference result;
     TU_ASSIGN_OR_RAISE (result, inputBlock->declareTemporary(
-        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow(),
+        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow(),
         true));
 
     inputFragment->immediateBool(true);

@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_MAP_REF_H
-#define ZURI_CORE_MAP_REF_H
+#ifndef LYRIC_BOOTSTRAP_MAP_REF_H
+#define LYRIC_BOOTSTRAP_MAP_REF_H
 
 #include <stack>
 
@@ -145,4 +145,4 @@ tempo_utils::Status map_iterator_next(
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
 
-#endif // ZURI_CORE_MAP_REF_H
+#endif // LYRIC_BOOTSTRAP_MAP_REF_H

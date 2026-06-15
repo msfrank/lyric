@@ -10,7 +10,7 @@ class CompileAlias : public BaseCompilerFixture {};
 TEST_F(CompileAlias, EvaluateGlobalAlias)
 {
     auto result = m_tester->runModule(R"(
-        global val Fortytwo: Int = 42
+        global val Fortytwo: I64 = 42
         alias Fortytwoalias = Fortytwo
         Fortytwoalias
     )");
@@ -23,7 +23,7 @@ TEST_F(CompileAlias, EvaluateGlobalAlias)
 TEST_F(CompileAlias, EvaluateFunctionAlias)
 {
     auto result = m_tester->runModule(R"(
-        def Add10(x: Int): Int {
+        def Add10(x: I64): I64 {
             x + 10
         }
         alias Add10alias = Add10
@@ -39,7 +39,7 @@ TEST_F(CompileAlias, EvaluateClassAlias)
 {
     auto result = m_tester->runModule(R"(
         defclass Fooclass {
-            val Value: Int = 42
+            val Value: I64 = 42
         }
         alias Fooalias = Fooclass
         val fooalias: Fooalias = Fooalias{}
@@ -55,7 +55,7 @@ TEST_F(CompileAlias, EvaluateStructAlias)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foostruct {
-            val Value: Int = 42
+            val Value: I64 = 42
         }
         alias Fooalias = Foostruct
         val fooalias: Fooalias = Fooalias{}
@@ -70,7 +70,7 @@ TEST_F(CompileAlias, EvaluateStructAlias)
 TEST_F(CompileAlias, EvaluateUnionAlias)
 {
     auto result = m_tester->runModule(R"(
-        alias Fooalias = Int | Bool
+        alias Fooalias = I64 | Bool
         val fooalias: Fooalias = 42
         fooalias
     )");
@@ -89,7 +89,7 @@ TEST_F(CompileAlias, EvaluateParameterizedAlias)
                 this.Value = value
             }
         }
-        alias Fooalias = Foo[Int]
+        alias Fooalias = Foo[I64]
         val fooalias: Fooalias = Fooalias{42}
         fooalias.Value
     )");
@@ -110,7 +110,7 @@ TEST_F(CompileAlias, EvaluatePartiallyParameterizedAlias)
                 this.UValue = u
             }
         }
-        alias Fooalias[U] = Foo[Int,U]
+        alias Fooalias[U] = Foo[I64,U]
         val fooalias: Fooalias[Bool] = Fooalias[Bool]{42, true}
         fooalias.UValue
     )");

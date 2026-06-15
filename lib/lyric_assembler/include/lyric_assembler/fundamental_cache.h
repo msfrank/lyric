@@ -34,17 +34,22 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalClass;
         lyric_common::SymbolUrl m_fundamentalComparison;
         lyric_common::SymbolUrl m_fundamentalConcept;
+        lyric_common::SymbolUrl m_fundamentalConverter;
         lyric_common::SymbolUrl m_fundamentalDescriptor;
         lyric_common::SymbolUrl m_fundamentalEnum;
         lyric_common::SymbolUrl m_fundamentalEquality;
         lyric_common::SymbolUrl m_fundamentalError;
-        lyric_common::SymbolUrl m_fundamentalFloat;
+        lyric_common::SymbolUrl m_fundamentalF64;
+        lyric_common::SymbolUrl m_fundamentalF32;
         lyric_common::SymbolUrl m_fundamentalIdea;
-        lyric_common::SymbolUrl m_fundamentalInt;
         lyric_common::SymbolUrl m_fundamentalInstance;
         lyric_common::SymbolUrl m_fundamentalIntrinsic;
         lyric_common::SymbolUrl m_fundamentalIterable;
         lyric_common::SymbolUrl m_fundamentalIterator;
+        lyric_common::SymbolUrl m_fundamentalI64;
+        lyric_common::SymbolUrl m_fundamentalI32;
+        lyric_common::SymbolUrl m_fundamentalI16;
+        lyric_common::SymbolUrl m_fundamentalI8;
         lyric_common::SymbolUrl m_fundamentalMap;
         lyric_common::SymbolUrl m_fundamentalNamespace;
         lyric_common::SymbolUrl m_fundamentalNil;
@@ -62,6 +67,10 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalStruct;
         lyric_common::SymbolUrl m_fundamentalType;
         lyric_common::SymbolUrl m_fundamentalUndef;
+        lyric_common::SymbolUrl m_fundamentalU64;
+        lyric_common::SymbolUrl m_fundamentalU32;
+        lyric_common::SymbolUrl m_fundamentalU16;
+        lyric_common::SymbolUrl m_fundamentalU8;
 
         lyric_common::SymbolUrl m_fundamentalOk;
         lyric_common::SymbolUrl m_fundamentalCancelled;

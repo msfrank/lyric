@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_PROTOCOL_TRAPS_H
-#define ZURI_CORE_PROTOCOL_TRAPS_H
+#ifndef LYRIC_BOOTSTRAP_PROTOCOL_TRAPS_H
+#define LYRIC_BOOTSTRAP_PROTOCOL_TRAPS_H
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_interpreter.h>
@@ -22,4 +22,4 @@ tempo_utils::Status protocol_can_receive(
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
 
-#endif // ZURI_CORE_PROTOCOL_TRAPS_H
+#endif // LYRIC_BOOTSTRAP_PROTOCOL_TRAPS_H

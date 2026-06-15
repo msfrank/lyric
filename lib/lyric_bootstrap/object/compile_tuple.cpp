@@ -2,7 +2,7 @@
 #include "compile_tuple.h"
 
 CoreClass *
-declare_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
+declare_core_TupleN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
     TU_ASSERT (arity > 0);
 
@@ -16,20 +16,18 @@ declare_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass
     }
 
     auto *TupleNTemplate = state.addTemplate(classPath, placeholders);
-    auto *TupleNClass = state.addGenericClass(classPath, TupleNTemplate, lyo1::ClassFlags::NONE, ObjectClass);
+    auto *TupleNClass = state.addGenericClass(classPath, TupleNTemplate, lyo1::ClassFlags::NONE, preludeSymbols.ObjectClass);
     return TupleNClass;
 }
 
 void
-build_core_TupleN(
-    BuilderState &state,
-    const CoreClass *TupleNClass,
-    int arity,
-    const CoreConcept *UnwrapNConcept)
+build_core_TupleN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
     TU_ASSERT (arity > 0);
 
+    auto *TupleNClass = preludeSymbols.tupleClasses[arity - 1];
     auto *TupleNTemplate = TupleNClass->classTemplate;
+    auto *UnwrapNConcept = preludeSymbols.unwrapConcepts[arity - 1];
 
     //
     std::vector<tu_uint32> tupleFields(arity);
@@ -80,8 +78,8 @@ build_core_TupleN(
 
     {
         lyric_object::BytecodeBuilder code;
-        code.loadArgument(0);
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Unwrap", TupleNUnwrapImpl,
             {
                 make_list_param("wrapped", TupleNClass->classType),
@@ -91,22 +89,21 @@ build_core_TupleN(
 }
 
 const CoreInstance *
-build_core_TupleNInstance(
-    BuilderState &state,
-    const CoreClass *TupleNClass,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *UnwrapConcept)
+build_core_TupleNInstance(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
+    auto *TupleNClass = preludeSymbols.tupleClasses[arity - 1];
+    auto *UnwrapNConcept = preludeSymbols.unwrapConcepts[arity - 1];
+
     lyric_common::SymbolPath instancePath({absl::StrCat(TupleNClass->classPath.getName(), "Instance")});
 
     auto *TupleUnwrapType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        UnwrapConcept->concept_index,
+        UnwrapNConcept->concept_index,
         {TupleNClass->classType, TupleNClass->classType});
 
     auto *TupleInstance = state.addInstance(instancePath,
-        lyo1::InstanceFlags::NONE, SingletonInstance);
-    auto *TupleUnwrapImpl = state.addImpl(instancePath, TupleUnwrapType, UnwrapConcept);
+        lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
+    auto *TupleUnwrapImpl = state.addImpl(instancePath, TupleUnwrapType, UnwrapNConcept);
 
     {
         lyric_object::BytecodeBuilder code;

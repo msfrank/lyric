@@ -14,7 +14,7 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     auto *typeCache = objectState->typeCache();
 

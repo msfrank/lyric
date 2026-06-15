@@ -10,7 +10,7 @@ class CompileConditional : public BaseCompilerFixture {};
 TEST_F(CompileConditional, EvaluateIf)
 {
     auto result = m_tester->runModule(R"(
-        var x: Int = 0
+        var x: I64 = 0
         if true { x = 1 }
         x
     )");
@@ -22,7 +22,7 @@ TEST_F(CompileConditional, EvaluateDo)
 {
     auto result = m_tester->runModule(R"(
         var x: String = "two"
-        var y: Int = 0
+        var y: I64 = 0
         do {
           when x == "one"   { y = 1 }
           when x == "two"   { y = 2 }

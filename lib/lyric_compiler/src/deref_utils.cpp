@@ -108,11 +108,11 @@ lyric_compiler::deref_literal(
             break;
         case lyric_schema::LyricAstId::Integer:
             TU_RETURN_IF_NOT_OK (constant_integer(node, block, fragment, driver));
-            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Int);
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::I64);
             break;
         case lyric_schema::LyricAstId::Float:
             TU_RETURN_IF_NOT_OK (constant_float(node, block, fragment, driver));
-            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Float);
+            symbolUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::F64);
             break;
         case lyric_schema::LyricAstId::Char:
             TU_RETURN_IF_NOT_OK (constant_char(node, block, fragment, driver));

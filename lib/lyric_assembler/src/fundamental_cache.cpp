@@ -29,6 +29,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Comparison));
     m_fundamentalConcept = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Concept));
+    m_fundamentalConverter = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Converter));
     m_fundamentalDescriptor = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Descriptor));
     m_fundamentalEnum = lyric_common::SymbolUrl(preludeLocation,
@@ -37,20 +39,28 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Equality));
     m_fundamentalError = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Error));
-    m_fundamentalFloat = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Float));
+    m_fundamentalF64 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::F64));
+    m_fundamentalF32 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::F32));
     m_fundamentalIdea = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Idea));
     m_fundamentalInstance = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Instance));
-    m_fundamentalInt = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Int));
     m_fundamentalIntrinsic = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Intrinsic));
     m_fundamentalIterable = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Iterable));
     m_fundamentalIterator = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Iterator));
+    m_fundamentalI64 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::I64));
+    m_fundamentalI32 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::I32));
+    m_fundamentalI16 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::I16));
+    m_fundamentalI8 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::I8));
     m_fundamentalMap = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Map));
     m_fundamentalNamespace = lyric_common::SymbolUrl(preludeLocation,
@@ -85,6 +95,14 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         fundamentalTypeToSymbolPath(FundamentalSymbol::Type));
     m_fundamentalUndef = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Undef));
+    m_fundamentalU64 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::U64));
+    m_fundamentalU32 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::U32));
+    m_fundamentalU16 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::U16));
+    m_fundamentalU8 = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::U8));
 
     // cache symbol urls for statuses
     m_fundamentalOk = lyric_common::SymbolUrl(preludeLocation,
@@ -239,6 +257,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalComparison;
         case FundamentalSymbol::Concept:
             return m_fundamentalConcept;
+        case FundamentalSymbol::Converter:
+            return m_fundamentalConverter;
         case FundamentalSymbol::Descriptor:
             return m_fundamentalDescriptor;
         case FundamentalSymbol::Enum:
@@ -247,20 +267,28 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalEquality;
         case FundamentalSymbol::Error:
             return m_fundamentalError;
-        case FundamentalSymbol::Float:
-            return m_fundamentalFloat;
+        case FundamentalSymbol::F64:
+            return m_fundamentalF64;
+        case FundamentalSymbol::F32:
+            return m_fundamentalF32;
         case FundamentalSymbol::Idea:
             return m_fundamentalIdea;
         case FundamentalSymbol::Instance:
             return m_fundamentalInstance;
-        case FundamentalSymbol::Int:
-            return m_fundamentalInt;
         case FundamentalSymbol::Intrinsic:
             return m_fundamentalIntrinsic;
         case FundamentalSymbol::Iterable:
             return m_fundamentalIterable;
         case FundamentalSymbol::Iterator:
             return m_fundamentalIterator;
+        case FundamentalSymbol::I64:
+            return m_fundamentalI64;
+        case FundamentalSymbol::I32:
+            return m_fundamentalI32;
+        case FundamentalSymbol::I16:
+            return m_fundamentalI16;
+        case FundamentalSymbol::I8:
+            return m_fundamentalI8;
         case FundamentalSymbol::Map:
             return m_fundamentalMap;
         case FundamentalSymbol::Namespace:
@@ -295,6 +323,14 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalType;
         case FundamentalSymbol::Undef:
             return m_fundamentalUndef;
+        case FundamentalSymbol::U64:
+            return m_fundamentalU64;
+        case FundamentalSymbol::U32:
+            return m_fundamentalU32;
+        case FundamentalSymbol::U16:
+            return m_fundamentalU16;
+        case FundamentalSymbol::U8:
+            return m_fundamentalU8;
 
         case FundamentalSymbol::Ok:
             return m_fundamentalOk;

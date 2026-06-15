@@ -12,7 +12,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithDefaultConstructor)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -74,8 +74,8 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitThisInit)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
-            init(i: Int) {
+            val Value: I64
+            init(i: I64) {
                 this.Value = i
             }
             init Named() from this(42) {}
@@ -92,8 +92,8 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitNamedThisInit)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
-            init Named(i: Int) {
+            val Value: I64
+            init Named(i: I64) {
                 this.Value = i
             }
             init() from this.Named(42) {}
@@ -110,8 +110,8 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithConstructor)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
-            init(i: Int, j: Int) {
+            val Value: I64
+            init(i: I64, j: I64) {
                 this.Value = i + j
             }
         }
@@ -126,7 +126,7 @@ TEST_F(CompileDefstruct, EvaluateDerefPublicVarMember)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
+            val Value: I64
         }
         var foo: Foo = Foo{Value = 100}
         foo.Value
@@ -139,8 +139,8 @@ TEST_F(CompileDefstruct, EvaluateInvokeMethod)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val value: Int
-            def plus10(): Int {
+            val value: I64
+            def plus10(): I64 {
                 this.value + 10
             }
         }
@@ -155,13 +155,13 @@ TEST_F(CompileDefstruct, EvaluateInvokePrivateMethodFromInheritedStruct)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            def _Index(): Int {
+            def _Index(): I64 {
                 1
             }
         }
         defstruct Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 this._Index()
             }
         }
@@ -176,7 +176,7 @@ TEST_F(CompileDefstruct, EvaluateInvokeMethodWithNoReturnType)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val value: Int
+            val value: I64
             def NoReturn() {
                 this.value + 10
             }
@@ -194,13 +194,13 @@ TEST_F(CompileDefstruct, EvaluateInvokeVirtualMethodOverridingBaseMethod)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 1
             }
         }
         defstruct Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -215,11 +215,11 @@ TEST_F(CompileDefstruct, EvaluateInvokeVirtualMethodOverridingBaseStub)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
         defstruct Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -234,12 +234,12 @@ TEST_F(CompileDefstruct, CompileDefineStubOverridingMethodFails)
 {
     auto result = m_tester->compileModule(R"(
         defstruct Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 1
             }
         }
         defstruct Bar from Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
     )");
 
@@ -252,10 +252,10 @@ TEST_F(CompileDefstruct, CompileDefineStubOverridingStubFails)
 {
     auto result = m_tester->compileModule(R"(
         defstruct Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
         defstruct Bar from Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
     )");
 
@@ -268,12 +268,12 @@ TEST_F(CompileDefstruct, CompileDefineMethodOverridingFinalMethodFails)
 {
     auto result = m_tester->compileModule(R"(
         defstruct Foo {
-            def Index(): Int final {
+            def Index(): I64 final {
                 1
             }
         }
         defstruct Bar from Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -288,7 +288,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceOfSealedStruct)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo sealed {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -316,7 +316,7 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceOfFinalStruct)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo final {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -331,7 +331,7 @@ TEST_F(CompileDefstruct, EvaluateDerefGlobalMember)
     auto result = m_tester->runModule(R"(
         defstruct Foo {
             global {
-                val GlobalValue: Int = 42
+                val GlobalValue: I64 = 42
             }
         }
         Foo.GlobalValue
@@ -345,7 +345,7 @@ TEST_F(CompileDefstruct, EvaluateInvokeGlobalMethod)
     auto result = m_tester->runModule(R"(
         defstruct Foo {
             global {
-                def GetValue(): Int { 42 }
+                def GetValue(): I64 { 42 }
             }
         }
         Foo.GetValue()

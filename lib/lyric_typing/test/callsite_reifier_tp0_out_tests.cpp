@@ -13,7 +13,7 @@ class CallsiteReifierTP0Out : public BaseTypingFixture {};
 TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_returnsT)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     auto *typeCache = objectState->typeCache();
 

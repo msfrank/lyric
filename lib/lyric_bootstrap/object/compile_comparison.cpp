@@ -1,10 +1,11 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_comparison.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Comparison(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *BoolType)
+CoreConcept *build_core_Comparison(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+
     lyric_common::SymbolPath conceptPath({"Comparison"});
 
     auto *ComparisonTemplate = state.addTemplate(
@@ -18,7 +19,7 @@ CoreConcept *build_core_Comparison(BuilderState &state, const CoreConcept *IdeaC
     auto *RType = ComparisonTemplate->types["R"];
 
     auto *ComparisonConcept = state.addGenericConcept(conceptPath, ComparisonTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     state.addConceptAction("LessThan", ComparisonConcept,
         {

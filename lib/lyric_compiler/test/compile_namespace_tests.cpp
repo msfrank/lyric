@@ -26,7 +26,7 @@ TEST_F(CompileNamespace, EvaluateDereferenceNamespacedGlobal)
 {
     auto result = m_tester->runModule(R"(
         namespace foo {
-            global val qux: Int = 42
+            global val qux: I64 = 42
         }
         foo.qux
     )");
@@ -38,7 +38,7 @@ TEST_F(CompileNamespace, EvaluateInvokeNamespacedFunction)
 {
     auto result = m_tester->runModule(R"(
         namespace foo {
-            def bar(): Int { 42 }
+            def bar(): I64 { 42 }
         }
         foo.bar()
     )");

@@ -10,8 +10,8 @@ class TupleTests : public BaseBootstrapFixture {};
 TEST_F(TupleTests, TestEvaluateTuple1)
 {
     auto result = runModule(R"(
-        val t: Tuple1[Int] = Tuple1[Int]{42}
-        val i: Int = t.Element0
+        val t: Tuple1[I64] = Tuple1[I64]{42}
+        val i: I64 = t.Element0
         i
     )");
 
@@ -21,8 +21,8 @@ TEST_F(TupleTests, TestEvaluateTuple1)
 TEST_F(TupleTests, TestEvaluateTuple2)
 {
     auto result = runModule(R"(
-        val t: Tuple2[Float,Int] = Tuple2[Float,Int]{0.1, 42}
-        val i: Int = t.Element1
+        val t: Tuple2[F64,I64] = Tuple2[F64,I64]{0.1, 42}
+        val i: I64 = t.Element1
         i
     )");
 
@@ -32,8 +32,8 @@ TEST_F(TupleTests, TestEvaluateTuple2)
 TEST_F(TupleTests, TestEvaluateTuple3)
 {
     auto result = runModule(R"(
-        val t: Tuple3[Float,String,Int] = Tuple3[Float,String,Int]{0.1, "hello, world!", 42}
-        val i: Int = t.Element2
+        val t: Tuple3[F64,String,I64] = Tuple3[F64,String,I64]{0.1, "hello, world!", 42}
+        val i: I64 = t.Element2
         i
     )");
 

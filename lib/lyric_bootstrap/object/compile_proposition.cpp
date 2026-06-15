@@ -1,8 +1,11 @@
 
 #include "compile_proposition.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Proposition(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *BoolType)
+CoreConcept *build_core_Proposition(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+
     lyric_common::SymbolPath conceptPath({"Proposition"});
 
     auto *PropositionTemplate = state.addTemplate(
@@ -14,7 +17,7 @@ CoreConcept *build_core_Proposition(BuilderState &state, const CoreConcept *Idea
     auto *TType = PropositionTemplate->types["T"];
 
     auto *PropositionConcept = state.addGenericConcept(conceptPath, PropositionTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     state.addConceptAction("Conjunct", PropositionConcept,
         {

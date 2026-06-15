@@ -1,18 +1,17 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_descriptor.h"
+#include "prelude_symbols.h"
 
 CoreExistential *
-declare_core_Descriptor(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Descriptor(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Descriptor"});
     auto *DescriptorExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Sealed, AnyExistential);
+        existentialPath, lyo1::ExistentialFlags::Sealed, preludeSymbols.AnyExistential);
     return DescriptorExistential;
 }
 
 void
-build_core_Descriptor(BuilderState &state, const CoreExistential *DescriptorExistential)
+build_core_Descriptor(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
 }

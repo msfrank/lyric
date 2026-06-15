@@ -3,10 +3,10 @@
 
 #include "compile_intrinsic.h"
 
-CoreExistential *build_core_Intrinsic(BuilderState &state, const CoreExistential *AnyExistential)
+CoreExistential *build_core_Intrinsic(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Intrinsic"});
     auto *IntrinsicExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Sealed, AnyExistential);
+        existentialPath, lyo1::ExistentialFlags::Sealed, preludeSymbols.AnyExistential);
     return IntrinsicExistential;
 }

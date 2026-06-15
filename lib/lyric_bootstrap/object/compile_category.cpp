@@ -1,10 +1,9 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_category.h"
+#include "prelude_symbols.h"
 
 CoreEnum *
-declare_core_Category(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Category(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     uint32_t type_index = state.types.size();
     uint32_t enum_index = state.enums.size();
@@ -14,7 +13,7 @@ declare_core_Category(BuilderState &state, const CoreExistential *AnyExistential
     CategoryType->typeAssignable = lyo1::Assignable::ConcreteAssignable;
     CategoryType->concreteSection = lyo1::TypeSection::Enum;
     CategoryType->concreteDescriptor = enum_index;
-    CategoryType->superType = AnyExistential->existentialType;
+    CategoryType->superType = preludeSymbols.AnyExistential->existentialType;
     state.types.push_back(CategoryType);
 
     auto *CategoryEnum = new CoreEnum();
@@ -40,12 +39,12 @@ declare_core_Category(BuilderState &state, const CoreExistential *AnyExistential
 }
 
 void
-build_core_Category(BuilderState &state, const CoreEnum *CategoryEnum)
+build_core_Category(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     {
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addEnumCtor(CategoryEnum, {}, code);
-        state.setEnumAllocator(CategoryEnum, "CategoryAlloc");
+        state.addEnumCtor(preludeSymbols.CategoryEnum, {}, code);
+        state.setEnumAllocator(preludeSymbols.CategoryEnum, "CategoryAlloc");
     }
 }

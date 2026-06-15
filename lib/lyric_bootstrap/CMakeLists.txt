@@ -74,6 +74,8 @@ add_executable(prelude-builder
     object/compile_comparison.h
     object/compile_concept.cpp
     object/compile_concept.h
+    object/compile_converter.cpp
+    object/compile_converter.h
     object/compile_intrinsic.cpp
     object/compile_intrinsic.h
     object/compile_descriptor.cpp
@@ -108,8 +110,8 @@ add_executable(prelude-builder
     object/compile_map.h
     object/compile_namespace.cpp
     object/compile_namespace.h
-    object/compile_undef.cpp
-    object/compile_undef.h
+    object/compile_num.cpp
+    object/compile_num.h
     object/compile_object.cpp
     object/compile_object.h
     object/compile_ordered.cpp
@@ -140,11 +142,14 @@ add_executable(prelude-builder
     object/compile_tuple.h
     object/compile_type.cpp
     object/compile_type.h
+    object/compile_undef.cpp
+    object/compile_undef.h
     object/compile_unwrap.cpp
     object/compile_unwrap.h
     object/compile_varargs.cpp
     object/compile_varargs.h
     object/lib_builder.cpp
+    object/prelude_symbols.h
     )
 
 target_compile_definitions(prelude-builder PRIVATE

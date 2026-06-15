@@ -45,7 +45,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         definstance Foo {
-            var answer: Int
+            var answer: I64
             init() {
                 set this.answer = 42
             }
@@ -64,13 +64,13 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
     ASSERT_TRUE (instance0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, instance0.numMembers());
     auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
+    ASSERT_EQ (I64Type, field0.getFieldType().getTypeDef());
     ASSERT_TRUE (field0.isVariable());
 }
 
@@ -79,7 +79,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         definstance Foo {
-            val answer: Int = 42
+            val answer: I64 = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -95,13 +95,13 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
     ASSERT_TRUE (instance0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, instance0.numMembers());
     auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
+    ASSERT_EQ (I64Type, field0.getFieldType().getTypeDef());
     ASSERT_FALSE (field0.isVariable());
 }
 
@@ -109,7 +109,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVar)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         definstance Foo {
-            var answer: Int = 42
+            var answer: I64 = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -125,13 +125,13 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVar)
     ASSERT_TRUE (instance0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, instance0.numMembers());
     auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
+    ASSERT_EQ (I64Type, field0.getFieldType().getTypeDef());
     ASSERT_TRUE (field0.isVariable());
 }
 
@@ -139,7 +139,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMethod)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         definstance Foo {
-            def Identity(x: Int): Int { return x }
+            def Identity(x: I64): I64 { return x }
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -162,19 +162,19 @@ TEST_F(AnalyzeInstance, DeclareInstanceMethod)
         instanceMethods[method.getSymbolPath().getName()] = method;
     }
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_TRUE (instanceMethods.contains("Identity"));
     auto identity = instanceMethods.at("Identity");
     ASSERT_TRUE (identity.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), identity.getSymbolPath());
-    ASSERT_EQ (IntType, identity.getResultType().getTypeDef());
+    ASSERT_EQ (I64Type, identity.getResultType().getTypeDef());
 
     ASSERT_EQ (1, identity.numListParameters());
     ASSERT_EQ (0, identity.numNamedParameters());
     auto param0 = identity.getListParameter(0);
     ASSERT_EQ ("x", param0.getParameterName());
-    ASSERT_EQ (IntType, param0.getParameterType().getTypeDef());
+    ASSERT_EQ (I64Type, param0.getParameterType().getTypeDef());
 
     ASSERT_TRUE (instanceMethods.contains("$ctor"));
     auto ctor = instanceMethods.at("$ctor");

@@ -29,8 +29,8 @@ TEST_F(CompileDefconcept, EvaluateDefconceptImplementation)
             decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
-            impl Sum[Int] {
-                def sum(x1: Int, x2: Int): Int {
+            impl Sum[I64] {
+                def sum(x1: I64, x2: I64): I64 {
                     x1 + x2
                 }
             }
@@ -55,14 +55,14 @@ TEST_F(CompileDefconcept, EvaluateDefconceptAction)
             decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
-            impl Sum[Int] {
-                def sum(x1: Int, x2: Int): Int {
+            impl Sum[I64] {
+                def sum(x1: I64, x2: I64): I64 {
                     x1 + x2
                 }
             }
         }
 
-        val concept: Sum[Int] = SumInstance
+        val concept: Sum[I64] = SumInstance
 
         concept.sum(1, 4)
     )");
@@ -79,14 +79,14 @@ TEST_F(CompileDefconcept, EvaluateImplementationOfSealedConcept)
             decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
-            impl Sum[Int] {
-                def sum(x1: Int, x2: Int): Int {
+            impl Sum[I64] {
+                def sum(x1: I64, x2: I64): I64 {
                     x1 + x2
                 }
             }
         }
 
-        val concept: Sum[Int] = SumInstance
+        val concept: Sum[I64] = SumInstance
 
         concept.sum(1, 4)
     )");
@@ -103,14 +103,14 @@ TEST_F(CompileDefconcept, EvaluateImplementationOfFinalConcept)
             decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
-            impl Sum[Int] {
-                def sum(x1: Int, x2: Int): Int {
+            impl Sum[I64] {
+                def sum(x1: I64, x2: I64): I64 {
                     x1 + x2
                 }
             }
         }
 
-        val concept: Sum[Int] = SumInstance
+        val concept: Sum[I64] = SumInstance
 
         concept.sum(1, 4)
     )");
@@ -125,7 +125,7 @@ TEST_F(CompileDefconcept, EvaluateDerefGlobalMember)
     auto result = m_tester->runModule(R"(
         defconcept Foo {
             global {
-                val GlobalValue: Int = 42
+                val GlobalValue: I64 = 42
             }
         }
         Foo.GlobalValue
@@ -139,7 +139,7 @@ TEST_F(CompileDefconcept, EvaluateInvokeGlobalMethod)
     auto result = m_tester->runModule(R"(
         defconcept Foo {
             global {
-                def GetValue(): Int { 42 }
+                def GetValue(): I64 { 42 }
             }
         }
         Foo.GetValue()

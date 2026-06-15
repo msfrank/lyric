@@ -27,11 +27,27 @@ lyric_runtime::TypeManager::typeOf(const Operand &value)
         case OperandType::Bool:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::Bool)];
         case OperandType::Int64:
-            return m_intrinsiccache[static_cast<int>(IntrinsicType::Int64)];
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::I64)];
+        case OperandType::Int32:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::I32)];
+        case OperandType::Int16:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::I16)];
+        case OperandType::Int8:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::I8)];
+        case OperandType::UInt64:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::U64)];
+        case OperandType::UInt32:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::U32)];
+        case OperandType::UInt16:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::U16)];
+        case OperandType::UInt8:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::U8)];
         case OperandType::Float64:
-            return m_intrinsiccache[static_cast<int>(IntrinsicType::Float64)];
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::F64)];
+        case OperandType::Float32:
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::F32)];
         case OperandType::Char32:
-            return m_intrinsiccache[static_cast<int>(IntrinsicType::Char32)];
+            return m_intrinsiccache[static_cast<int>(IntrinsicType::Char)];
         case OperandType::String:
             return m_intrinsiccache[static_cast<int>(IntrinsicType::String)];
         case OperandType::Bytes:

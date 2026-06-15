@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_BUILDER_STATE_H
-#define ZURI_CORE_BUILDER_STATE_H
+#ifndef LYRIC_BOOTSTRAP_BUILDER_STATE_H
+#define LYRIC_BOOTSTRAP_BUILDER_STATE_H
 
 #include <vector>
 
@@ -509,4 +509,4 @@ struct BuilderState {
     lyric_object::LyricObject toObject() const;
 };
 
-#endif // ZURI_CORE_BUILDER_STATE_H
+#endif // LYRIC_BOOTSTRAP_BUILDER_STATE_H

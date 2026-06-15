@@ -1,9 +1,8 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_idea.h"
+#include "prelude_symbols.h"
 
-CoreConcept *declare_core_Idea(BuilderState &state, const CoreExistential *AnyExistential)
+CoreConcept *declare_core_Idea(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     uint32_t type_index = state.types.size();
     uint32_t concept_index = state.enums.size();
@@ -13,7 +12,7 @@ CoreConcept *declare_core_Idea(BuilderState &state, const CoreExistential *AnyEx
     IdeaType->typeAssignable = lyo1::Assignable::ConcreteAssignable;
     IdeaType->concreteSection = lyo1::TypeSection::Concept;
     IdeaType->concreteDescriptor = concept_index;
-    IdeaType->superType = AnyExistential->existentialType;
+    IdeaType->superType = preludeSymbols.AnyExistential->existentialType;
     state.types.push_back(IdeaType);
 
     auto *IdeaConcept = new CoreConcept();

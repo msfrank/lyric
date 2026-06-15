@@ -10,7 +10,7 @@ class CompileVal : public BaseCompilerFixture {};
 TEST_F(CompileVal, EvaluateVal)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         foo
     )");
 

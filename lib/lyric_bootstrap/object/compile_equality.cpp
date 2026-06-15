@@ -1,10 +1,11 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_equality.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Equality(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *BoolType)
+CoreConcept *build_core_Equality(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+
     lyric_common::SymbolPath conceptPath({"Equality"});
 
     auto *EqualityTemplate = state.addTemplate(
@@ -18,7 +19,7 @@ CoreConcept *build_core_Equality(BuilderState &state, const CoreConcept *IdeaCon
     auto *RType = EqualityTemplate->types["R"];
 
     auto *EqualityConcept = state.addGenericConcept(conceptPath, EqualityTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     state.addConceptAction("Equals", EqualityConcept,
         {

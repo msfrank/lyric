@@ -12,15 +12,15 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
     auto result = runModule(R"(
 
         defclass CountdownIterator {
-            var _count: Int
-            init(count: Int) {
+            var _count: I64
+            init(count: I64) {
                 this._count = count
             }
-            impl Iterator[Int] {
+            impl Iterator[I64] {
                 def Valid(): Bool {
                     this._count > 0
                 }
-                def Next(): Int {
+                def Next(): I64 {
                     if this._count > 0 {
                         this._count -= 1
                     }
@@ -29,9 +29,9 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
             }
         }
 
-        var count: Int = 0
-        val it: Iterator[Int] = CountdownIterator{3}
-        for n: Int in it {
+        var count: I64 = 0
+        val it: Iterator[I64] = CountdownIterator{3}
+        for n: I64 in it {
             count += 1
         }
         count
@@ -47,21 +47,21 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
     auto result = runModule(R"(
 
         defclass CountdownIterator {
-            var _count: Int
-            init(count: Int) {
+            var _count: I64
+            init(count: I64) {
                 this._count = count
             }
             impl Iterable[CountdownIterator] {
-                alias IterableT using Iterable[1] = Int
+                alias IterableT using Iterable[1] = I64
                 def Iterate(it: CountdownIterator): Iterator[IterableT] {
                     this
                 }
             }
-            impl Iterator[Int] {
+            impl Iterator[I64] {
                 def Valid(): Bool {
                     this._count > 0
                 }
-                def Next(): Int {
+                def Next(): I64 {
                     if this._count > 0 {
                         this._count -= 1
                     }
@@ -70,8 +70,8 @@ TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
             }
         }
 
-        var count: Int = 0
-        for n: Int in CountdownIterator{3} {
+        var count: I64 = 0
+        for n: I64 in CountdownIterator{3} {
             count += 1
         }
         count

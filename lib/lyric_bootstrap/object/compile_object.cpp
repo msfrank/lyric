@@ -1,8 +1,9 @@
 
 #include "compile_object.h"
+#include "prelude_symbols.h"
 
 CoreClass *
-declare_core_Object(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Object(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     uint32_t type_index = state.types.size();
     uint32_t class_index = state.classes.size();
@@ -12,7 +13,7 @@ declare_core_Object(BuilderState &state, const CoreExistential *AnyExistential)
     ObjectType->typeAssignable = lyo1::Assignable::ConcreteAssignable;
     ObjectType->concreteSection = lyo1::TypeSection::Class;
     ObjectType->concreteDescriptor = class_index;
-    ObjectType->superType = AnyExistential->existentialType;
+    ObjectType->superType = preludeSymbols.AnyExistential->existentialType;
     state.types.push_back(ObjectType);
 
     auto *ObjectClass = new CoreClass();
@@ -38,12 +39,12 @@ declare_core_Object(BuilderState &state, const CoreExistential *AnyExistential)
 }
 
 void
-build_core_Object(BuilderState &state, const CoreClass *ObjectClass)
+build_core_Object(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     {
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addClassCtor(ObjectClass, {}, code);
-        state.setClassAllocator(ObjectClass, "ObjectAlloc");
+        state.addClassCtor(preludeSymbols.ObjectClass, {}, code);
+        state.setClassAllocator(preludeSymbols.ObjectClass, "ObjectAlloc");
     }
 }

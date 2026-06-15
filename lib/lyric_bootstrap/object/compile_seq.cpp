@@ -1,20 +1,18 @@
 
 #include "compile_seq.h"
+#include "prelude_symbols.h"
 
 CoreStruct *
-build_core_Seq(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreConcept *IterableConcept,
-    const CoreClass *SeqIteratorClass,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *IntegerType)
+build_core_Seq(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *DataType = preludeSymbols.DataUnionType;
+    auto *DataIteratorType = preludeSymbols.DataIteratorType;
+
     lyric_common::SymbolPath structPath({"Seq"});
 
     auto *SeqStruct = state.addStruct(structPath,
-        lyo1::StructFlags::Final, RecordStruct);
+        lyo1::StructFlags::Final, preludeSymbols.RecordStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -36,7 +34,7 @@ build_core_Seq(
             lyo1::CallFlags::NONE,
             {},
             code,
-            IntegerType);
+            I64Type);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -46,7 +44,7 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntegerType),
+                make_list_param("index", I64Type),
                 make_list_param("default", DataType),
             },
             code,
@@ -87,20 +85,20 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("start", IntegerType),
-                make_list_param("length", IntegerType),
+                make_list_param("start", I64Type),
+                make_list_param("length", I64Type),
             },
             code,
             SeqStruct->structType);
     }
 
     auto *SeqIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IterableConcept->concept_index, {SeqStruct->structType, DataType});
+        preludeSymbols.IterableConcept->concept_index, {SeqStruct->structType, DataType});
 
-    auto *IterableImpl = state.addImpl(structPath, SeqIterableType, IterableConcept);
+    auto *IterableImpl = state.addImpl(structPath, SeqIterableType, preludeSymbols.IterableConcept);
     {
         lyric_object::BytecodeBuilder code;
-        code.loadClass(SeqIteratorClass->class_index);
+        code.loadClass(preludeSymbols.SeqIteratorClass->class_index);
         state.writeTrap(code, "SeqIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Iterate", IterableImpl,
@@ -115,17 +113,15 @@ build_core_Seq(
 }
 
 CoreClass *
-build_core_SeqIterator(
-    BuilderState &state,
-    const CoreClass *ObjectClass,
-    const CoreConcept *IteratorConcept,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *BoolType)
+build_core_SeqIterator(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *DataType = preludeSymbols.DataUnionType;
+    auto *DataIteratorType = preludeSymbols.DataIteratorType;
+
     lyric_common::SymbolPath classPath({"SeqIterator"});
 
-    auto *SeqIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, ObjectClass);
+    auto *SeqIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, preludeSymbols.ObjectClass);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -136,7 +132,7 @@ build_core_SeqIterator(
         state.setClassAllocator(SeqIteratorClass, "SeqIteratorAlloc");
     }
 
-    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
+    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, preludeSymbols.IteratorConcept);
 
     {
         lyric_object::BytecodeBuilder code;

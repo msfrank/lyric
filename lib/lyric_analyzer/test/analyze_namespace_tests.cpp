@@ -17,7 +17,7 @@ TEST_F(AnalyzeNamespace, DeclareNamespace)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         namespace Foo {
-            global val FortyTwo: Int = 42
+            global val FortyTwo: I64 = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,

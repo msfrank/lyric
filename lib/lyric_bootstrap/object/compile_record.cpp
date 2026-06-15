@@ -1,8 +1,9 @@
 
-#include "compile_singleton.h"
+#include "compile_record.h"
+#include "prelude_symbols.h"
 
 CoreStruct *
-declare_core_Record(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Record(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     uint32_t type_index = state.types.size();
     uint32_t struct_index = state.structs.size();
@@ -12,7 +13,7 @@ declare_core_Record(BuilderState &state, const CoreExistential *AnyExistential)
     RecordType->typeAssignable = lyo1::Assignable::ConcreteAssignable;
     RecordType->concreteSection = lyo1::TypeSection::Struct;
     RecordType->concreteDescriptor = struct_index;
-    RecordType->superType = AnyExistential->existentialType;
+    RecordType->superType = preludeSymbols.AnyExistential->existentialType;
     state.types.push_back(RecordType);
 
     auto *RecordStruct = new CoreStruct();
@@ -38,12 +39,12 @@ declare_core_Record(BuilderState &state, const CoreExistential *AnyExistential)
 }
 
 void
-build_core_Record(BuilderState &state, const CoreStruct *RecordStruct)
+build_core_Record(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     {
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addStructCtor(RecordStruct, {}, code);
-        state.setStructAllocator(RecordStruct, "RecordAlloc");
+        state.addStructCtor(preludeSymbols.RecordStruct, {}, code);
+        state.setStructAllocator(preludeSymbols.RecordStruct, "RecordAlloc");
     }
 }

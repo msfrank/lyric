@@ -1,8 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_EQUALITY_H
-#define ZURI_CORE_COMPILE_EQUALITY_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_EQUALITY_H
+#define LYRIC_BOOTSTRAP_COMPILE_EQUALITY_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Equality(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *BoolType);
+CoreConcept *build_core_Equality(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_EQUALITY_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_EQUALITY_H

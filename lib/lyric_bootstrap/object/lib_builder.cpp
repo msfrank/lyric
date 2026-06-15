@@ -17,6 +17,7 @@
 #include "compile_class.h"
 #include "compile_comparison.h"
 #include "compile_concept.h"
+#include "compile_converter.h"
 #include "compile_descriptor.h"
 #include "compile_discard_protocol.h"
 #include "compile_enum.h"
@@ -34,7 +35,7 @@
 #include "compile_map.h"
 #include "compile_namespace.h"
 #include "compile_nil.h"
-#include "compile_undef.h"
+#include "compile_num.h"
 #include "compile_object.h"
 #include "compile_ordered.h"
 #include "compile_pair.h"
@@ -50,10 +51,12 @@
 #include "compile_struct.h"
 #include "compile_tuple.h"
 #include "compile_type.h"
+#include "compile_undef.h"
 #include "compile_unwrap.h"
 #include "compile_varargs.h"
 
 #include "native_prelude.h"
+#include "prelude_symbols.h"
 
 #define NUM_FUNCTION_CLASSES        8
 #define NUM_TUPLE_CLASSES           8
@@ -69,201 +72,186 @@ main(int argc, char *argv[])
     auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     BuilderState state(location);
 
+    PreludeSymbols preludeSymbols;
+
     // define the Any existential, which is the top of the main type hierarchy
-    auto *AnyExistential = build_core_Any(state);
+    preludeSymbols.AnyExistential = build_core_Any(state);
 
     // define the Undef existential, which exists in its own isolated type hierarchy
-    auto *UndefExistential = build_core_Undef(state);
+    preludeSymbols.UndefExistential = build_core_Undef(state);
 
     // define Intrinsic existential
-    auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
+    preludeSymbols.IntrinsicExistential = build_core_Intrinsic(state, preludeSymbols);
 
     // declare intrinsic existentials
-    build_core_Nil(state, IntrinsicExistential);
-    auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
-    auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
-    auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
-    auto *FloatExistential = declare_core_Float(state, IntrinsicExistential);
-    auto *StringExistential = declare_core_String(state, IntrinsicExistential);
-    auto *BytesExistential = declare_core_Bytes(state, IntrinsicExistential);
+    preludeSymbols.NilExistential = build_core_Nil(state, preludeSymbols);
+    preludeSymbols.BoolExistential = declare_core_Bool(state, preludeSymbols);
+    preludeSymbols.CharExistential = declare_core_Char(state, preludeSymbols);
+    preludeSymbols.NumExistential = declare_core_Num(state, preludeSymbols);
+    preludeSymbols.StringExistential = declare_core_String(state, preludeSymbols);
+    preludeSymbols.BytesExistential = declare_core_Bytes(state, preludeSymbols);
+
+    // signed integral types
+    preludeSymbols.I64Existential = declare_core_I64(state, preludeSymbols);
+    preludeSymbols.I32Existential = declare_core_I32(state, preludeSymbols);
+    preludeSymbols.I16Existential = declare_core_I16(state, preludeSymbols);
+    preludeSymbols.I8Existential = declare_core_I8(state, preludeSymbols);
+
+    // unsigned integral types
+    preludeSymbols.U64Existential = declare_core_U64(state, preludeSymbols);
+    preludeSymbols.U32Existential = declare_core_U32(state, preludeSymbols);
+    preludeSymbols.U16Existential = declare_core_U16(state, preludeSymbols);
+    preludeSymbols.U8Existential = declare_core_U8(state, preludeSymbols);
+
+    // floating point types
+    preludeSymbols.F32Existential = declare_core_F32(state, preludeSymbols);
+    preludeSymbols.F64Existential = declare_core_F64(state, preludeSymbols);
 
     // declare Rest existential
-    auto *RestExistential = declare_core_Rest(state, AnyExistential);
+    preludeSymbols.RestExistential = declare_core_Rest(state, preludeSymbols);
 
     // declare Descriptor existential
-    auto *DescriptorExistential = declare_core_Descriptor(state, AnyExistential);
+    preludeSymbols.DescriptorExistential = declare_core_Descriptor(state, preludeSymbols);
 
     // declare Type existential
-    auto *TypeExistential = declare_core_Type(state, AnyExistential);
+    preludeSymbols.TypeExistential = declare_core_Type(state, preludeSymbols);
 
     // define descriptor existentials
-    build_core_Action(state, DescriptorExistential);
-    build_core_Binding(state, DescriptorExistential);
-    build_core_Class(state, DescriptorExistential);
-    build_core_Concept(state, DescriptorExistential);
-    build_core_Enum(state, DescriptorExistential);
-    build_core_Existential(state, DescriptorExistential);
-    build_core_Field(state, DescriptorExistential);
-    build_core_Instance(state, DescriptorExistential);
-    build_core_Namespace(state, DescriptorExistential);
-    build_core_Struct(state, DescriptorExistential);
-
-    // declare descriptor existentials
-    auto *CallExistential = build_core_Call(state, DescriptorExistential);
-    auto *ProtocolExistential = declare_core_Protocol(state, DescriptorExistential);
+    preludeSymbols.ActionExistential = build_core_Action(state, preludeSymbols);
+    preludeSymbols.BindingExistential = build_core_Binding(state, preludeSymbols);
+    preludeSymbols.CallExistential = build_core_Call(state, preludeSymbols);
+    preludeSymbols.ClassExistential = build_core_Class(state, preludeSymbols);
+    preludeSymbols.ConceptExistential = build_core_Concept(state, preludeSymbols);
+    preludeSymbols.EnumExistential = build_core_Enum(state, preludeSymbols);
+    preludeSymbols.ExistentialExistential = build_core_Existential(state, preludeSymbols);
+    preludeSymbols.FieldExistential = build_core_Field(state, preludeSymbols);
+    preludeSymbols.InstanceExistential = build_core_Instance(state, preludeSymbols);
+    preludeSymbols.NamespaceExistential = build_core_Namespace(state, preludeSymbols);
+    preludeSymbols.ProtocolExistential = declare_core_Protocol(state, preludeSymbols);
+    preludeSymbols.StructExistential = build_core_Struct(state, preludeSymbols);
 
     // declare (but do not define) root types for concepts, classes, structs, instances, and enums
-    auto *IdeaConcept = declare_core_Idea(state, AnyExistential);
-    auto *ObjectClass = declare_core_Object(state, AnyExistential);
-    auto *RecordStruct = declare_core_Record(state, AnyExistential);
-    auto *SingletonInstance = declare_core_Singleton(state, AnyExistential);
-    auto *CategoryEnum = declare_core_Category(state, AnyExistential);
+    preludeSymbols.ObjectClass = declare_core_Object(state, preludeSymbols);
+    preludeSymbols.IdeaConcept = declare_core_Idea(state, preludeSymbols);
+    preludeSymbols.CategoryEnum = declare_core_Category(state, preludeSymbols);
+    preludeSymbols.SingletonInstance = declare_core_Singleton(state, preludeSymbols);
+    preludeSymbols.RecordStruct = declare_core_Record(state, preludeSymbols);
 
     // declare Function classes
-    std::vector<const CoreClass *> functionClasses;
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {
-        const auto *FunctionNClass = declare_core_FunctionN(state, i, ObjectClass);
-        functionClasses.push_back(FunctionNClass);
+        auto *FunctionNClass = declare_core_FunctionN(state, i, preludeSymbols);
+        preludeSymbols.functionClasses.push_back(FunctionNClass);
     }
 
     // define core concepts
-    auto *ArithmeticConcept = build_core_Arithmetic(state, IdeaConcept);
-    auto *ComparisonConcept = build_core_Comparison(state, IdeaConcept, BoolExistential->existentialType);
-    auto *EqualityConcept = build_core_Equality(state, IdeaConcept, BoolExistential->existentialType);
-    auto *IteratorConcept = build_core_Iterator(state, IdeaConcept, BoolExistential->existentialType);
-    auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
-    auto *OrderedConcept = build_core_Ordered(state, IdeaConcept, IntExistential->existentialType);
-    auto *PropositionConcept = build_core_Proposition(state, IdeaConcept, BoolExistential->existentialType);
-    build_core_Varargs(state, IdeaConcept);
+    preludeSymbols.ArithmeticConcept = build_core_Arithmetic(state, preludeSymbols);
+    preludeSymbols.ComparisonConcept = build_core_Comparison(state, preludeSymbols);
+    preludeSymbols.ConverterConcept = build_core_Converter(state, preludeSymbols);
+    preludeSymbols.EqualityConcept = build_core_Equality(state, preludeSymbols);
+    preludeSymbols.IteratorConcept = build_core_Iterator(state, preludeSymbols);
+    preludeSymbols.IterableConcept = build_core_Iterable(state, preludeSymbols);
+    preludeSymbols.OrderedConcept = build_core_Ordered(state, preludeSymbols);
+    preludeSymbols.PropositionConcept = build_core_Proposition(state, preludeSymbols);
+    preludeSymbols.VariadicConcept = build_core_Varargs(state, preludeSymbols);
 
     // define descriptor existentials
-    build_core_Protocol(state, ProtocolExistential, BoolExistential->existentialType);
+    build_core_Protocol(state, preludeSymbols);
 
     // define intrinsic existentials
-    build_core_Bool(state, BoolExistential);
-    build_core_Char(state, CharExistential);
-    build_core_Int(state, IntExistential);
-    build_core_Float(state, FloatExistential);
-    build_core_Descriptor(state, DescriptorExistential);
-    build_core_Bytes(state, BytesExistential, IntExistential->existentialType,
-        StringExistential->existentialType, UndefExistential->existentialType);
-    build_core_String(state, StringExistential, IntExistential->existentialType,
-        CharExistential->existentialType, BytesExistential->existentialType,
-        UndefExistential->existentialType);
+    build_core_Bool(state, preludeSymbols);
+    build_core_Char(state, preludeSymbols);
+    build_core_Num(state, preludeSymbols);
+    build_core_Descriptor(state, preludeSymbols);
+    build_core_Bytes(state, preludeSymbols);
+    build_core_String(state, preludeSymbols);
+
+    build_core_I64(state, preludeSymbols);
+    build_core_U64(state, preludeSymbols);
+    build_core_F64(state, preludeSymbols);
+    build_core_F32(state, preludeSymbols);
 
     // define Type existential
-    build_core_Type(state, TypeExistential, IntExistential->existentialType,
-        BoolExistential->existentialType);
+    build_core_Type(state, preludeSymbols);
 
     // define Function classes
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {
-        build_core_FunctionN(state, i, functionClasses[i], CallExistential->existentialType);
+        build_core_FunctionN(state, i, preludeSymbols);
     }
 
     // define core reference types
-    build_core_Singleton(state, SingletonInstance);
-    build_core_Category(state, CategoryEnum);
-    build_core_Object(state, ObjectClass);
-    build_core_Record(state, RecordStruct);
+    build_core_Singleton(state, preludeSymbols);
+    build_core_Category(state, preludeSymbols);
+    build_core_Object(state, preludeSymbols);
+    build_core_Record(state, preludeSymbols);
 
     // status struct hierarchy
-    auto *StatusStruct = build_core_Status(
-        state, IntExistential->existentialType, StringExistential->existentialType);
-    build_core_Ok(state, StatusStruct);
-    auto *ErrorStruct = build_core_Error(state, StatusStruct,
-        IntExistential->existentialType, StringExistential->existentialType);
+    preludeSymbols.StatusStruct = build_core_Status(state, preludeSymbols);
+    preludeSymbols.OkStruct = build_core_Ok(state, preludeSymbols);
+    preludeSymbols.ErrorStruct = build_core_Error(state, preludeSymbols);
 
-    build_core_Error_code(tempo_utils::StatusCode::kCancelled,
-        "Cancelled", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kInvalidArgument,
-        "InvalidArgument", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kDeadlineExceeded,
-        "DeadlineExceeded", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kNotFound,
-        "NotFound", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kAlreadyExists,
-        "AlreadyExists", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kPermissionDenied,
-        "PermissionDenied", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kUnauthenticated,
-        "Unauthenticated", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kResourceExhausted,
-        "ResourceExhausted", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kFailedPrecondition,
-        "FailedPrecondition", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kAborted,
-        "Aborted", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kUnavailable,
-        "Unavailable", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kOutOfRange,
-        "OutOfRange", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kUnimplemented,
-        "Unimplemented", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kInternal,
-        "Internal", state, ErrorStruct, StringExistential->existentialType);
-    build_core_Error_code(tempo_utils::StatusCode::kUnknown,
-        "Unknown", state, ErrorStruct, StringExistential->existentialType);
+    build_core_Error_code(tempo_utils::StatusCode::kCancelled, "Cancelled", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kInvalidArgument, "InvalidArgument", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kDeadlineExceeded, "DeadlineExceeded", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kNotFound, "NotFound", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kAlreadyExists, "AlreadyExists", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kPermissionDenied, "PermissionDenied", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kUnauthenticated, "Unauthenticated", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kResourceExhausted, "ResourceExhausted", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kFailedPrecondition, "FailedPrecondition", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kAborted, "Aborted", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kUnavailable, "Unavailable", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kOutOfRange, "OutOfRange", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kUnimplemented, "Unimplemented", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kInternal, "Internal", state, preludeSymbols);
+    build_core_Error_code(tempo_utils::StatusCode::kUnknown, "Unknown", state, preludeSymbols);
 
     // define core instances
-    build_core_BoolInstance(state, BoolExistential->existentialType, SingletonInstance,
-        EqualityConcept, OrderedConcept, PropositionConcept,
-        IntExistential->existentialType);
-    build_core_CharInstance(state, CharExistential->existentialType, SingletonInstance,
-        ComparisonConcept, EqualityConcept, OrderedConcept,
-        IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_IntInstance(state, IntExistential->existentialType, SingletonInstance,
-        ArithmeticConcept, ComparisonConcept, EqualityConcept, OrderedConcept,
-        BoolExistential->existentialType);
-    build_core_FloatInstance(state, FloatExistential->existentialType, SingletonInstance,
-        ArithmeticConcept, ComparisonConcept, EqualityConcept, OrderedConcept,
-        IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_StringInstance(state, StringExistential->existentialType, SingletonInstance,
-        ComparisonConcept, EqualityConcept, OrderedConcept,
-        CharExistential->existentialType, IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_BytesInstance(state, BytesExistential->existentialType, SingletonInstance,
-        ComparisonConcept, EqualityConcept, OrderedConcept,
-        IntExistential->existentialType, BoolExistential->existentialType);
+    build_core_BoolInstance(state, preludeSymbols);
+    build_core_CharInstance(state, preludeSymbols);
+    build_core_IntInstance(state, preludeSymbols);
+    build_core_FloatInstance(state, preludeSymbols);
+    build_core_StringInstance(state, preludeSymbols);
+    build_core_BytesInstance(state, preludeSymbols);
 
     for (int i = 1; i < NUM_TUPLE_CLASSES; i++) {
-        auto *TupleNClass = declare_core_TupleN(state, i, ObjectClass);
-        auto *UnwrapNConcept = build_core_UnwrapN(state, i, IdeaConcept, TupleNClass->classType);
-        build_core_TupleN(state, TupleNClass, i, UnwrapNConcept);
+        auto *TupleNClass = declare_core_TupleN(state, i, preludeSymbols);
+        preludeSymbols.tupleClasses.push_back(TupleNClass);
+        auto *UnwrapNConcept = build_core_UnwrapN(state, i, preludeSymbols);
+        preludeSymbols.unwrapConcepts.push_back(UnwrapNConcept);
+        build_core_TupleN(state, i, preludeSymbols);
     }
 
-    // define Data union type
-    auto *DataUnionType = state.addUnionType({IntrinsicExistential->existentialType, RecordStruct->structType});
-    auto *DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IteratorConcept->concept_index, {DataUnionType});
+    // define data union type
+    preludeSymbols.DataUnionType = state.addUnionType({
+        preludeSymbols.IntrinsicExistential->existentialType,
+        preludeSymbols.RecordStruct->structType});
+
+    // define data union iterator type
+    preludeSymbols.DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        preludeSymbols.IteratorConcept->concept_index, {preludeSymbols.DataUnionType});
 
     // define Pair struct
-    build_core_Pair(state, RecordStruct, DataUnionType);
+    preludeSymbols.PairStruct = build_core_Pair(state, preludeSymbols);
 
     // define Rest existential
-    auto *RestIteratorClass = build_core_RestIterator(state, ObjectClass, IteratorConcept,
-        BoolExistential->existentialType);
-    build_core_Rest(state, RestExistential, IterableConcept, IteratorConcept, RestIteratorClass,
-        IntExistential->existentialType, UndefExistential->existentialType);
+    preludeSymbols.RestIteratorClass = build_core_RestIterator(state, preludeSymbols);
+    build_core_Rest(state, preludeSymbols);
 
     // define Seq struct
-    auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
-        DataIteratorType, BoolExistential->existentialType);
-    build_core_Seq(state, RecordStruct, IterableConcept, SeqIteratorClass, DataUnionType,
-        DataIteratorType, IntExistential->existentialType);
+    preludeSymbols.SeqIteratorClass = build_core_SeqIterator(state, preludeSymbols);
+    build_core_Seq(state, preludeSymbols);
 
     // define Map struct
-    auto *MapIteratorClass = build_core_MapIterator(state, ObjectClass, IteratorConcept, DataUnionType,
-        DataIteratorType, BoolExistential->existentialType);
-    build_core_Map(state, RecordStruct, IterableConcept, MapIteratorClass, DataUnionType,
-        DataIteratorType, BoolExistential->existentialType, IntExistential->existentialType);
+    preludeSymbols.MapIteratorClass = build_core_MapIterator(state, preludeSymbols);
+    build_core_Map(state, preludeSymbols);
 
     // define DiscardProtocol
-    build_core_DiscardProtocol(state, ProtocolExistential, AnyExistential->existentialType,
-        UndefExistential->existentialType);
+    preludeSymbols.DiscardProtocol = build_core_DiscardProtocol(state, preludeSymbols);
 
     // define prelude functions
-    build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);
-    build_core_prelude_va_load(state, IntExistential->existentialType, AnyExistential->existentialType);
-    build_core_prelude_va_size(state, IntExistential->existentialType);
+    build_core_prelude_trap(state, preludeSymbols);
+    build_core_prelude_va_load(state, preludeSymbols);
+    build_core_prelude_va_size(state, preludeSymbols);
 
     auto object = state.toObject();
 

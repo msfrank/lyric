@@ -27,6 +27,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Comparison";
         case FundamentalSymbol::Concept:
             return "Concept";
+        case FundamentalSymbol::Converter:
+            return "Converter";
         case FundamentalSymbol::Descriptor:
             return "Descriptor";
         case FundamentalSymbol::Enum:
@@ -35,20 +37,28 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Equality";
         case FundamentalSymbol::Error:
             return "Error";
-        case FundamentalSymbol::Float:
-            return "Float";
+        case FundamentalSymbol::F64:
+            return "F64";
+        case FundamentalSymbol::F32:
+            return "F32";
         case FundamentalSymbol::Idea:
             return "Idea";
         case FundamentalSymbol::Instance:
             return "Instance";
-        case FundamentalSymbol::Int:
-            return "Int";
         case FundamentalSymbol::Intrinsic:
             return "Intrinsic";
         case FundamentalSymbol::Iterable:
             return "Iterable";
         case FundamentalSymbol::Iterator:
             return "Iterator";
+        case FundamentalSymbol::I64:
+            return "I64";
+        case FundamentalSymbol::I32:
+            return "I32";
+        case FundamentalSymbol::I16:
+            return "I16";
+        case FundamentalSymbol::I8:
+            return "I8";
         case FundamentalSymbol::Map:
             return "Map";
         case FundamentalSymbol::Namespace:
@@ -83,6 +93,14 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Type";
         case FundamentalSymbol::Undef:
             return "Undef";
+        case FundamentalSymbol::U64:
+            return "U64";
+        case FundamentalSymbol::U32:
+            return "U32";
+        case FundamentalSymbol::U16:
+            return "U16";
+        case FundamentalSymbol::U8:
+            return "U8";
 
         case FundamentalSymbol::Ok:
             return "Ok";

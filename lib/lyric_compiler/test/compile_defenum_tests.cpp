@@ -62,8 +62,8 @@ TEST_F(CompileDefenum, EvaluateEnumCaseVal)
 {
     auto result = m_tester->runModule(R"(
         defenum Direction {
-            val Index: Int
-            init(index: Int) {
+            val Index: I64
+            init(index: I64) {
                 this.Index = index
             }
             case North(1)
@@ -85,7 +85,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDef)
             init(abbreviation: String) {
                 this.abbreviation = abbreviation
             }
-            def IndexOf(): Int {
+            def IndexOf(): I64 {
                 cond {
                     when this.abbreviation == "N" -> 1
                     when this.abbreviation == "S" -> 2
@@ -139,7 +139,7 @@ TEST_F(CompileDefenum, EvaluateDerefGlobalMember)
             case West
 
             global {
-                val GlobalValue: Int = 42
+                val GlobalValue: I64 = 42
             }
         }
         Direction.GlobalValue
@@ -158,7 +158,7 @@ TEST_F(CompileDefenum, EvaluateInvokeGlobalMethod)
             case West
 
             global {
-                def GetValue(): Int { 42 }
+                def GetValue(): I64 { 42 }
             }
         }
         Direction.GetValue()

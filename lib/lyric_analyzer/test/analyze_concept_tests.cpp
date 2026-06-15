@@ -40,7 +40,7 @@ TEST_F(AnalyzeConcept, DeclareConceptAction)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defconcept Foo {
-            decl Identity(x: Int): Int
+            decl Identity(x: I64): I64
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -56,19 +56,19 @@ TEST_F(AnalyzeConcept, DeclareConceptAction)
     ASSERT_TRUE (concept0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, concept0.numActions());
     auto action0 = concept0.getAction(0);
     ASSERT_TRUE (action0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), action0.getSymbolPath());
-    ASSERT_EQ (IntType, action0.getResultType().getTypeDef());
+    ASSERT_EQ (I64Type, action0.getResultType().getTypeDef());
 
     ASSERT_EQ (1, action0.numListParameters());
     ASSERT_EQ (0, action0.numNamedParameters());
     auto param0 = action0.getListParameter(0);
     ASSERT_EQ ("x", param0.getParameterName());
-    ASSERT_EQ (IntType, param0.getParameterType().getTypeDef());
+    ASSERT_EQ (I64Type, param0.getParameterType().getTypeDef());
 }
 
 TEST_F(AnalyzeConcept, DeclareConceptImplMethod)

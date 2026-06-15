@@ -1,54 +1,49 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "builder_state.h"
+#include "compile_bool.h"
 
-const CoreExistential *
-declare_core_Bool(BuilderState &state, const CoreExistential *IntrinsicExistential)
+CoreExistential *
+declare_core_Bool(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Bool"});
     auto *BoolExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
+        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return BoolExistential;
 }
 
 void
-build_core_Bool(BuilderState &state, const CoreExistential *BoolExistential)
+build_core_Bool(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
 }
 
-const CoreInstance *
-build_core_BoolInstance(
-    BuilderState &state,
-    const CoreType *BoolType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreConcept *PropositionConcept,
-    const CoreType *IntegerType)
+CoreInstance *
+build_core_BoolInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath instancePath({"BoolInstance"});
 
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     auto *BoolEqualityType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        EqualityConcept->concept_index,
+        preludeSymbols.EqualityConcept->concept_index,
         {BoolType, BoolType});
 
     auto *BoolOrderedType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        OrderedConcept->concept_index,
+        preludeSymbols.OrderedConcept->concept_index,
         {BoolType});
 
     auto *BoolPropositionType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        PropositionConcept->concept_index,
+        preludeSymbols.PropositionConcept->concept_index,
         {BoolType});
 
     auto *BoolInstance = state.addInstance(instancePath,
-        lyo1::InstanceFlags::NONE, SingletonInstance);
-    auto *BoolEqualityImpl = state.addImpl(instancePath, BoolEqualityType, EqualityConcept);
-    auto *BoolOrderedImpl = state.addImpl(instancePath, BoolOrderedType, OrderedConcept);
-    auto *BoolPropositionImpl = state.addImpl(instancePath, BoolPropositionType, PropositionConcept);
+        lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
+    auto *BoolEqualityImpl = state.addImpl(instancePath, BoolEqualityType, preludeSymbols.EqualityConcept);
+    auto *BoolOrderedImpl = state.addImpl(instancePath, BoolOrderedType, preludeSymbols.OrderedConcept);
+    auto *BoolPropositionImpl = state.addImpl(instancePath, BoolPropositionType, preludeSymbols.PropositionConcept);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -83,7 +78,7 @@ build_core_BoolInstance(
                 make_list_param("lhs", BoolType),
                 make_list_param("rhs", BoolType),
             },
-            code, IntegerType, true);
+            code, I64Type, true);
     }
     {
         lyric_object::BytecodeBuilder code;

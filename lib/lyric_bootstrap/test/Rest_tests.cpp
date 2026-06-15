@@ -10,7 +10,7 @@ class RestTests : public BaseBootstrapFixture {};
 TEST_F(RestTests, TestEvaluateRestSize)
 {
     auto result = runModule(R"(
-        def CountArgs(args: ...Int): Int {
+        def CountArgs(args: ...I64): I64 {
             args.Size()
         }
         CountArgs(1, 2, 3, 4, 5)
@@ -23,7 +23,7 @@ TEST_F(RestTests, TestEvaluateRestSize)
 TEST_F(RestTests, TestEvaluateRestGet)
 {
     auto result = runModule(R"(
-        def ArgAt(index: Int, args: ...Int): Int | Nil {
+        def ArgAt(index: I64, args: ...I64): I64 | Nil {
             args.Get(index)
         }
         ArgAt(0, 1, 2, 3, 4, 5)
@@ -36,9 +36,9 @@ TEST_F(RestTests, TestEvaluateRestGet)
 TEST_F(RestTests, TestEvaluateRestIterateImpl)
 {
     auto result = runModule(R"(
-        def SumArgs(args: ...Int): Int {
-            var count: Int = 0
-            for n: Int in args {
+        def SumArgs(args: ...I64): I64 {
+            var count: I64 = 0
+            for n: I64 in args {
                 count += n
             }
             count

@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_PAIR_REF_H
-#define ZURI_CORE_PAIR_REF_H
+#ifndef LYRIC_BOOTSTRAP_PAIR_REF_H
+#define LYRIC_BOOTSTRAP_PAIR_REF_H
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_interpreter.h>
@@ -45,4 +45,4 @@ tempo_utils::Status pair_second(
     lyric_runtime::InterpreterState *state,
     const lyric_runtime::VirtualTable *vtable);
 
-#endif // ZURI_CORE_PAIR_REF_H
+#endif // LYRIC_BOOTSTRAP_PAIR_REF_H

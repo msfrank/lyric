@@ -1,13 +1,10 @@
-#ifndef ZURI_CORE_COMPILE_TYPE_H
-#define ZURI_CORE_COMPILE_TYPE_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_TYPE_H
+#define LYRIC_BOOTSTRAP_COMPILE_TYPE_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreExistential *declare_core_Type(BuilderState &state, const CoreExistential *AnyExistential);
-void build_core_Type(
-    BuilderState &state,
-    const CoreExistential *TypeExistential,
-    const CoreType *IntegerType,
-    const CoreType *BoolType);
+CoreExistential *declare_core_Type(BuilderState &state, const PreludeSymbols &preludeSymbols);
+void build_core_Type(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_TYPE_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_TYPE_H

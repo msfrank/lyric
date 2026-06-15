@@ -12,7 +12,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructor)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -74,8 +74,8 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitThisInit)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val Value: Int
-            init(i: Int) {
+            val Value: I64
+            init(i: I64) {
                 this.Value = i
             }
             init Named() from this(42) {}
@@ -92,8 +92,8 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedThisInit)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val Value: Int
-            init Named(i: Int) {
+            val Value: I64
+            init Named(i: I64) {
                 this.Value = i
             }
             init() from this.Named(42) {}
@@ -110,7 +110,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val i: Int = 100
+            val i: I64 = 100
             init() {}
         }
         Foo{}
@@ -125,7 +125,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultIniti
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val i: Int = 100
+            val i: I64 = 100
         }
         Foo{}
     )");
@@ -139,8 +139,8 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var Index: Int
-            init(i: Int) {
+            var Index: I64
+            init(i: I64) {
                 this.Index = i
             }
         }
@@ -157,7 +157,7 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var Index: Int = 100
+            var Index: I64 = 100
         }
         var foo: Foo = Foo{}
         foo.Index
@@ -172,17 +172,17 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var _index: Int
-            init(i: Int) {
+            var _index: I64
+            init(i: I64) {
                 this._index = i
             }
-            def index(): Int {
+            def index(): I64 {
                 this._index
             }
         }
         defclass Bar from Foo {
-            init(i: Int) from super(i) {}
-            def Add(i: Int): Int {
+            init(i: I64) from super(i) {}
+            def Add(i: I64): I64 {
                 i + this.index()
             }
         }
@@ -197,8 +197,8 @@ TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
 {
     auto result = m_tester->compileModule(R"(
         defclass Foo {
-            var _index: Int
-            init(i: Int) {
+            var _index: I64
+            init(i: I64) {
                 this._index = i
             }
         }
@@ -215,11 +215,11 @@ TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var _index: Int
-            init(i: Int) {
+            var _index: I64
+            init(i: I64) {
                 this._index = i
             }
-            def Index(): Int {
+            def Index(): I64 {
                 this._index
             }
         }
@@ -235,13 +235,13 @@ TEST_F(CompileDefclass, EvaluateInvokePrivateMethodFromInheritedClass)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            def _Index(): Int {
+            def _Index(): I64 {
                 1
             }
         }
         defclass Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 this._Index()
             }
         }
@@ -256,8 +256,8 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var _index: Int
-            init(i: Int) {
+            var _index: I64
+            init(i: I64) {
                 this._index = i
             }
             def NoReturn() {
@@ -277,13 +277,13 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 1
             }
         }
         defclass Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -298,11 +298,11 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseStub)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
         defclass Bar from Foo {
             init() {}
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -317,12 +317,12 @@ TEST_F(CompileDefclass, CompileDefineStubOverridingMethodFails)
 {
     auto result = m_tester->compileModule(R"(
         defclass Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 1
             }
         }
         defclass Bar from Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
     )");
 
@@ -335,10 +335,10 @@ TEST_F(CompileDefclass, CompileDefineStubOverridingStubFails)
 {
     auto result = m_tester->compileModule(R"(
         defclass Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
         defclass Bar from Foo {
-            decl Index(): Int
+            decl Index(): I64
         }
     )");
 
@@ -351,12 +351,12 @@ TEST_F(CompileDefclass, CompileDefineMethodOverridingFinalMethodFails)
 {
     auto result = m_tester->compileModule(R"(
         defclass Foo {
-            def Index(): Int final {
+            def Index(): I64 final {
                 1
             }
         }
         defclass Bar from Foo {
-            def Index(): Int {
+            def Index(): I64 {
                 2
             }
         }
@@ -379,8 +379,8 @@ TEST_F(CompileDefclass, EvaluateDefGenericClass)
                 this._index
             }
         }
-        val foo: Foo[Int] = Foo[Int]{100}
-        val i: Int = foo.Index()
+        val foo: Foo[I64] = Foo[I64]{100}
+        val i: I64 = foo.Index()
         i
     )");
 
@@ -393,16 +393,16 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            var _index: Int
-            init(i: Int) {
+            var _index: I64
+            init(i: I64) {
                 this._index = i
             }
-            def Tuple[T](t: T): Tuple2[T,Int] {
-                Tuple2[T,Int]{t, this._index}
+            def Tuple[T](t: T): Tuple2[T,I64] {
+                Tuple2[T,I64]{t, this._index}
             }
         }
         var foo: Foo = Foo{100}
-        val tuple: Tuple2[Int,Int] = foo.Tuple[Int](42)
+        val tuple: Tuple2[I64,I64] = foo.Tuple[I64](42)
         tuple.Element0 + tuple.Element1
     )");
 
@@ -422,8 +422,8 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
                 Tuple2[T,S]{t, this._s}
             }
         }
-        var foo: Foo[Int] = Foo[Int]{100}
-        val tuple: Tuple2[Int,Int] = foo.Tuple(42)
+        var foo: Foo[I64] = Foo[I64]{100}
+        val tuple: Tuple2[I64,I64] = foo.Tuple(42)
         tuple.Element0 + tuple.Element1
     )");
 
@@ -435,7 +435,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceOfSealedClass)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo sealed {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -464,7 +464,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceOfFinalClass)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo final {
-            val value: Int = 42
+            val value: I64 = 42
         }
         Foo{}
     )");
@@ -479,7 +479,7 @@ TEST_F(CompileDefclass, EvaluateDerefGlobalMember)
     auto result = m_tester->runModule(R"(
         defclass Foo final {
             global {
-                val GlobalValue: Int = 42
+                val GlobalValue: I64 = 42
             }
         }
         Foo.GlobalValue
@@ -493,7 +493,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGlobalMethod)
     auto result = m_tester->runModule(R"(
         defclass Foo final {
             global {
-                def GetValue(): Int { 42 }
+                def GetValue(): I64 { 42 }
             }
         }
         Foo.GetValue()

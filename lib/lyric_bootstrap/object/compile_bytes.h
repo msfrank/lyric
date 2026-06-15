@@ -1,24 +1,12 @@
-#ifndef ZURI_CORE_COMPILE_BYTES_H
-#define ZURI_CORE_COMPILE_BYTES_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_BYTES_H
+#define LYRIC_BOOTSTRAP_COMPILE_BYTES_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreExistential *declare_core_Bytes(BuilderState &state, const CoreExistential *IntrinsicExistential);
-void build_core_Bytes(
-    BuilderState &state,
-    const CoreExistential *BytesExistential,
-    const CoreType *IntType,
-    const CoreType *StringType,
-    const CoreType *UndefType);
+CoreExistential *declare_core_Bytes(BuilderState &state, const PreludeSymbols &preludeSymbols);
+void build_core_Bytes(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-CoreInstance *build_core_BytesInstance(
-    BuilderState &state,
-    const CoreType *BytesType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *ComparisonConcept,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreType *IntegerType,
-    const CoreType *BoolType);
+CoreInstance *build_core_BytesInstance(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_BYTES_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_BYTES_H

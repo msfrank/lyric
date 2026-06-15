@@ -2,11 +2,10 @@
 #include "compile_prelude.h"
 
 CoreCall *
-build_core_prelude_trap(
-    BuilderState &state,
-    const CoreType *IntegerType,
-    const CoreType *NoReturnType)
+build_core_prelude_trap(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     lyric_common::SymbolPath callPath({"Trap"});
 
     lyric_object::BytecodeBuilder code;
@@ -15,20 +14,20 @@ build_core_prelude_trap(
     auto *TrapCall = state.addFunction(
         callPath,
         {
-            make_list_param("index", IntegerType),
+            make_list_param("index", I64Type),
         },
         code,
-        NoReturnType,
+        state.noReturnType,
         true);
 
     return TrapCall;
 }
 
 CoreCall *
-build_core_prelude_va_size(
-    BuilderState &state,
-    const CoreType *IntegerType)
+build_core_prelude_va_size(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     lyric_common::SymbolPath callPath({"VaSize"});
 
     lyric_object::BytecodeBuilder code;
@@ -37,18 +36,18 @@ build_core_prelude_va_size(
         callPath,
         {},
         code,
-        IntegerType,
+        I64Type,
         true);
 
     return VaSizeCall;
 }
 
 CoreCall *
-build_core_prelude_va_load(
-    BuilderState &state,
-    const CoreType *IntegerType,
-    const CoreType *AnyType)
+build_core_prelude_va_load(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *AnyType = preludeSymbols.AnyExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     lyric_common::SymbolPath callPath({"VaLoad"});
 
     lyric_object::BytecodeBuilder code;
@@ -57,7 +56,7 @@ build_core_prelude_va_load(
     auto *VaLoadCall = state.addFunction(
         callPath,
         {
-            make_list_param("index", IntegerType),
+            make_list_param("index", I64Type),
         },
         code,
         AnyType,

@@ -11,7 +11,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceWithExplicitInit)
 {
     auto result = m_tester->runModule(R"(
         definstance Foo {
-            val Index: Int
+            val Index: I64
             init() {
                 this.Index = 100
             }
@@ -26,7 +26,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceValMember)
 {
     auto result = m_tester->runModule(R"(
         definstance Foo {
-            val Index: Int = 100
+            val Index: I64 = 100
         }
         Foo.Index
     )");
@@ -38,7 +38,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceVarMember)
 {
     auto result = m_tester->runModule(R"(
         definstance Foo {
-            var Index: Int = 100
+            var Index: I64 = 100
         }
         Foo.Index
     )");
@@ -50,7 +50,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceMethod)
 {
     auto result = m_tester->runModule(R"(
         definstance Foo {
-            def Identity(x: Int): Int {
+            def Identity(x: I64): I64 {
                 x
             }
         }
@@ -80,8 +80,8 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
 {
     auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
-            impl Ordered[Int] {
-                def Compare(lhs: Int, rhs: Int): Int {
+            impl Ordered[I64] {
+                def Compare(lhs: I64, rhs: I64): I64 {
                     cond {
                         when lhs > rhs -> -1
                         when lhs < rhs -> 1
@@ -105,8 +105,8 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
 {
     auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
-            impl Ordered[Int] {
-                def Compare(lhs: Int, rhs: Int): Int {
+            impl Ordered[I64] {
+                def Compare(lhs: I64, rhs: I64): I64 {
                     cond {
                         when lhs > rhs -> -1
                         when lhs < rhs -> 1
@@ -133,7 +133,7 @@ TEST_F(CompileDefinstance, EvaluateDerefGlobalMemberOnAbstractInstance)
     auto result = m_tester->runModule(R"(
         definstance Foo abstract {
             global {
-                val GlobalValue: Int = 42
+                val GlobalValue: I64 = 42
             }
         }
         Foo.GlobalValue
@@ -147,7 +147,7 @@ TEST_F(CompileDefinstance, EvaluateInvokeGlobalMethodOnAbstractInstance)
     auto result = m_tester->runModule(R"(
         definstance Foo abstract {
             global {
-                def GetValue(): Int { 42 }
+                def GetValue(): I64 { 42 }
             }
         }
         Foo.GetValue()

@@ -45,7 +45,7 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defenum Foo {
-            val answer: Int
+            val answer: I64
             init() {
                 set this.answer = 42
             }
@@ -64,13 +64,13 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, enum0.numMembers());
     auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
+    ASSERT_EQ (I64Type, field0.getFieldType().getTypeDef());
     ASSERT_FALSE (field0.isVariable());
 }
 
@@ -113,7 +113,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defenum Foo {
-            val answer: Int
+            val answer: I64
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -129,13 +129,13 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_EQ (1, enum0.numMembers());
     auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
+    ASSERT_EQ (I64Type, field0.getFieldType().getTypeDef());
     ASSERT_FALSE (field0.isVariable());
 }
 
@@ -143,7 +143,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defenum Foo {
-            def Identity(x: Int): Int { return x }
+            def Identity(x: I64): I64 { return x }
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -166,19 +166,19 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
         enumMethods[method.getSymbolPath().getName()] = method;
     }
 
-    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+    auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
 
     ASSERT_TRUE (enumMethods.contains("Identity"));
     auto identity = enumMethods.at("Identity");
     ASSERT_TRUE (identity.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), identity.getSymbolPath());
-    ASSERT_EQ (IntType, identity.getResultType().getTypeDef());
+    ASSERT_EQ (I64Type, identity.getResultType().getTypeDef());
 
     ASSERT_EQ (1, identity.numListParameters());
     ASSERT_EQ (0, identity.numNamedParameters());
     auto param0 = identity.getListParameter(0);
     ASSERT_EQ ("x", param0.getParameterName());
-    ASSERT_EQ (IntType, param0.getParameterType().getTypeDef());
+    ASSERT_EQ (I64Type, param0.getParameterType().getTypeDef());
 
     ASSERT_TRUE (enumMethods.contains("$ctor"));
     auto ctor = enumMethods.at("$ctor");

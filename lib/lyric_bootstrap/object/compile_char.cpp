@@ -1,48 +1,42 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_char.h"
 
 CoreExistential *
-declare_core_Char(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Char(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Char"});
     auto *CharExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
+        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return CharExistential;
 }
 
 void
-build_core_Char(BuilderState &state, const CoreExistential *CharExistential)
+build_core_Char(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
 }
 
 CoreInstance *
-build_core_CharInstance(
-    BuilderState &state,
-    const CoreType *CharType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *ComparisonConcept,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreType *IntegerType,
-    const CoreType *BoolType)
+build_core_CharInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath instancePath({"CharInstance"});
 
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *CharType = preludeSymbols.CharExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     auto *CharComparisonType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        ComparisonConcept->concept_index, {CharType, CharType});
+        preludeSymbols.ComparisonConcept->concept_index, {CharType, CharType});
 
     auto *CharEqualityType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        EqualityConcept->concept_index, {CharType, CharType});
+        preludeSymbols.EqualityConcept->concept_index, {CharType, CharType});
 
     auto *CharOrderedType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        OrderedConcept->concept_index, {CharType});
+        preludeSymbols.OrderedConcept->concept_index, {CharType});
 
-    auto *CharInstance = state.addInstance(instancePath, lyo1::InstanceFlags::NONE, SingletonInstance);
-    auto *CharComparisonImpl = state.addImpl(instancePath, CharComparisonType, ComparisonConcept);
-    auto *CharEqualityImpl = state.addImpl(instancePath, CharEqualityType, EqualityConcept);
-    auto *CharOrderedImpl = state.addImpl(instancePath, CharOrderedType, OrderedConcept);
+    auto *CharInstance = state.addInstance(instancePath, lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
+    auto *CharComparisonImpl = state.addImpl(instancePath, CharComparisonType, preludeSymbols.ComparisonConcept);
+    auto *CharEqualityImpl = state.addImpl(instancePath, CharEqualityType, preludeSymbols.EqualityConcept);
+    auto *CharOrderedImpl = state.addImpl(instancePath, CharOrderedType, preludeSymbols.OrderedConcept);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -165,7 +159,7 @@ build_core_CharInstance(
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
             },
-            code, IntegerType, true);
+            code, I64Type, true);
     }
     {
         lyric_object::BytecodeBuilder code;

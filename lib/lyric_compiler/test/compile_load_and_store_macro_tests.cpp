@@ -10,7 +10,7 @@ class CompileLoadAndStoreMacro : public BaseCompilerFixture {};
 TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInEntry)
 {
     auto result = m_tester->runModule(R"(
-        var tmp: Int = 0
+        var tmp: I64 = 0
         @{
             LoadData(10)
             StoreData(tmp)
@@ -26,8 +26,8 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInEntry)
 TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInDef)
 {
     auto result = m_tester->runModule(R"(
-        def add10(x: Int): Int {
-            var tmp: Int = 0
+        def add10(x: I64): I64 {
+            var tmp: I64 = 0
             @{
                 LoadData(10)
                 StoreData(tmp)
@@ -47,13 +47,13 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
     auto result = m_tester->runModule(R"(
         defclass Foo {
 
-            var Value: Int = 0
+            var Value: I64 = 0
 
-            init(initial: Int) {
+            init(initial: I64) {
                 this.Value = initial
             }
 
-            def Add(x: Int): Int {
+            def Add(x: I64): I64 {
                 @{
                     LoadData(this.Value)
                     LoadData(x)

@@ -36,7 +36,7 @@ TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
@@ -65,8 +65,8 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
 {
     auto *fundamentalCache = objectState->fundamentalCache();
-    auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::F64);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     lyric_assembler::Parameter p0;
     p0.index = 0;

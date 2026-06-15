@@ -1,44 +1,44 @@
 
 #include "compile_bytes.h"
+#include "prelude_symbols.h"
 
 CoreExistential *
-declare_core_Bytes(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Bytes(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Bytes"});
     auto *BytesExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, IntrinsicExistential);
+        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return BytesExistential;
 }
 
 void
-build_core_Bytes(
-    BuilderState &state,
-    const CoreExistential *BytesExistential,
-    const CoreType *IntType,
-    const CoreType *StringType,
-    const CoreType *UndefType)
+build_core_Bytes(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
-    auto *BytesType = BytesExistential->existentialType;
-    auto *IntOrUndefType = state.addUnionType({IntType,UndefType});
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *StringType = preludeSymbols.StringExistential->existentialType;
+    auto *UndefType = preludeSymbols.UndefExistential->existentialType;
+    auto *BytesType = preludeSymbols.BytesExistential->existentialType;
+
+    auto *IntOrUndefType = state.addUnionType({I64Type,UndefType});
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "BytesLength");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Length",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {},
-            code, IntType);
+            code, I64Type);
     }
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "BytesAt");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("At",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntType),
+                make_list_param("index", I64Type),
             },
             code, IntOrUndefType);
     }
@@ -47,7 +47,7 @@ build_core_Bytes(
         state.writeTrap(code, "BytesToString");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("ToString",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {},
             code, StringType);
@@ -57,7 +57,7 @@ build_core_Bytes(
         state.writeTrap(code, "BytesAppend");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Append",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
                 make_list_param("other", BytesType),
@@ -69,7 +69,7 @@ build_core_Bytes(
         state.writeTrap(code, "BytesPrepend");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Prepend",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
                 make_list_param("other", BytesType),
@@ -81,10 +81,10 @@ build_core_Bytes(
         state.writeTrap(code, "BytesInsert");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Insert",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntType),
+                make_list_param("index", I64Type),
                 make_list_param("other", BytesType),
             },
             code, BytesType);
@@ -94,11 +94,11 @@ build_core_Bytes(
         state.writeTrap(code, "BytesRemove");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Remove",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntType),
-                make_list_param("count", IntType),
+                make_list_param("index", I64Type),
+                make_list_param("count", I64Type),
             },
             code, BytesType);
     }
@@ -107,48 +107,44 @@ build_core_Bytes(
         state.writeTrap(code, "BytesSubspan");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Subspan",
-            BytesExistential,
+            preludeSymbols.BytesExistential,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntType),
-                make_list_param("count", IntType),
+                make_list_param("index", I64Type),
+                make_list_param("count", I64Type),
             },
             code, BytesType);
     }
 }
 
 CoreInstance *
-build_core_BytesInstance(
-    BuilderState &state,
-    const CoreType *BytesType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *ComparisonConcept,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreType *IntegerType,
-    const CoreType *BoolType)
+build_core_BytesInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *BytesType = preludeSymbols.BytesExistential->existentialType;
+
     lyric_common::SymbolPath instancePath({"BytesInstance"});
 
     auto *BytesComparisonType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        ComparisonConcept->concept_index,
+        preludeSymbols.ComparisonConcept->concept_index,
         {BytesType, BytesType});
 
     auto *BytesEqualityType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        EqualityConcept->concept_index,
+        preludeSymbols.EqualityConcept->concept_index,
         {BytesType, BytesType});
 
     auto *BytesOrderedType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        OrderedConcept->concept_index,
+        preludeSymbols.OrderedConcept->concept_index,
         {BytesType});
 
-    auto *BytesInstance = state.addInstance(instancePath, lyo1::InstanceFlags::NONE, SingletonInstance);
-    auto *BytesComparisonImpl = state.addImpl(instancePath, BytesComparisonType, ComparisonConcept);
-    auto *BytesEqualityImpl = state.addImpl(instancePath, BytesEqualityType, EqualityConcept);
-    auto *BytesOrderedImpl = state.addImpl(instancePath, BytesOrderedType, OrderedConcept);
+    auto *BytesInstance = state.addInstance(instancePath, lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
+    auto *BytesComparisonImpl = state.addImpl(instancePath, BytesComparisonType, preludeSymbols.ComparisonConcept);
+    auto *BytesEqualityImpl = state.addImpl(instancePath, BytesEqualityType, preludeSymbols.EqualityConcept);
+    auto *BytesOrderedImpl = state.addImpl(instancePath, BytesOrderedType, preludeSymbols.OrderedConcept);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -259,7 +255,7 @@ build_core_BytesInstance(
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
             },
-            code, IntegerType, false);
+            code, I64Type, false);
     }
     {
         lyric_object::BytecodeBuilder code;

@@ -11,7 +11,7 @@ class CompileDataDeref : public BaseCompilerFixture {};
 TEST_F(CompileDataDeref, EvaluateName)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         foo
     )");
 
@@ -46,11 +46,11 @@ TEST_F(CompileDataDeref, EvaluateHiddenMemberFromInstanceOfSameClass)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            val _priv: Int
-            init(priv: Int) {
+            val _priv: I64
+            init(priv: I64) {
                 this._priv = priv
             }
-            def OtherValue(other: Foo): Int {
+            def OtherValue(other: Foo): I64 {
                 other._priv
             }
         }

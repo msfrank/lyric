@@ -1,12 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_UNWRAP_H
-#define ZURI_CORE_COMPILE_UNWRAP_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_UNWRAP_H
+#define LYRIC_BOOTSTRAP_COMPILE_UNWRAP_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_UnwrapN(
-    BuilderState &state,
-    int arity,
-    const CoreConcept *IdeaConcept,
-    const CoreType *TupleNType);
+CoreConcept *build_core_UnwrapN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_UNWRAP_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_UNWRAP_H

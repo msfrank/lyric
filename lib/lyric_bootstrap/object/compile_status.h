@@ -1,23 +1,19 @@
-#ifndef ZURI_CORE_COMPILE_STATUS_H
-#define ZURI_CORE_COMPILE_STATUS_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_STATUS_H
+#define LYRIC_BOOTSTRAP_COMPILE_STATUS_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-const CoreStruct *build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *StringType);
+CoreStruct *build_core_Status(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-void build_core_Ok(BuilderState &state, const CoreStruct *StatusStruct);
+CoreStruct *build_core_Ok(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-const CoreStruct *build_core_Error(
-    BuilderState &state,
-    const CoreStruct *StatusStruct,
-    const CoreType *IntType,
-    const CoreType *StringType);
+CoreStruct *build_core_Error(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-const CoreType *build_core_Error_code(
+CoreStruct *build_core_Error_code(
     tempo_utils::StatusCode statusCode,
     std::string_view name,
     BuilderState &state,
-    const CoreStruct *ErrorStruct,
-    const CoreType *StringType);
+    const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_STATUS_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_STATUS_H

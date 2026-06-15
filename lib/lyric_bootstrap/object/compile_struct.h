@@ -1,8 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_STRUCT_H
-#define ZURI_CORE_COMPILE_STRUCT_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_STRUCT_H
+#define LYRIC_BOOTSTRAP_COMPILE_STRUCT_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreExistential *build_core_Struct(BuilderState &state, const CoreExistential *DescriptorExistential);
+CoreExistential *build_core_Struct(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_STRUCT_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_STRUCT_H

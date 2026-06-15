@@ -1,14 +1,15 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_pair.h"
+#include "prelude_symbols.h"
 
 CoreStruct *
-build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreType *DataType)
+build_core_Pair(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *DataType = preludeSymbols.DataUnionType;
+
     lyric_common::SymbolPath structPath({"Pair"});
 
-    auto *PairStruct = state.addStruct(structPath, lyo1::StructFlags::Final, RecordStruct);
+    auto *PairStruct = state.addStruct(structPath, lyo1::StructFlags::Final, preludeSymbols.RecordStruct);
 
     {
         lyric_object::BytecodeBuilder code;

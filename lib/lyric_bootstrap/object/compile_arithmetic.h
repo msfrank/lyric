@@ -1,8 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_ARITHMETIC_H
-#define ZURI_CORE_COMPILE_ARITHMETIC_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_ARITHMETIC_H
+#define LYRIC_BOOTSTRAP_COMPILE_ARITHMETIC_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Arithmetic(BuilderState &state, const CoreConcept *IdeaConcept);
+CoreConcept *build_core_Arithmetic(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_ARITHMETIC_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_ARITHMETIC_H

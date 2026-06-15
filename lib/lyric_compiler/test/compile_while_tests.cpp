@@ -10,8 +10,8 @@ class CompileWhile : public BaseCompilerFixture {};
 TEST_F(CompileWhile, EvaluateWhile)
 {
     auto result = m_tester->runModule(R"(
-        var count: Int = 0
-        var sum: Int = 0
+        var count: I64 = 0
+        var sum: I64 = 0
         while count < 5 {
           count = count + 1
           sum = sum + count
@@ -25,8 +25,8 @@ TEST_F(CompileWhile, EvaluateWhile)
 TEST_F(CompileWhile, EvaluateContinueFromWhile)
 {
     auto result = m_tester->runModule(R"(
-        var count: Int = 0
-        var sum: Int = 0
+        var count: I64 = 0
+        var sum: I64 = 0
         while count < 5 {
           count = count + 1
           if sum > 5 { continue }
@@ -41,8 +41,8 @@ TEST_F(CompileWhile, EvaluateContinueFromWhile)
 TEST_F(CompileWhile, EvaluateBreakFromWhile)
 {
     auto result = m_tester->runModule(R"(
-        var count: Int = 0
-        var sum: Int = 0
+        var count: I64 = 0
+        var sum: I64 = 0
         while count < 5 {
           count = count + 1
           sum = sum + count

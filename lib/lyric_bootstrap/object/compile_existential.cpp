@@ -1,13 +1,12 @@
 
-#include <lyric_common/symbol_url.h>
+#include "compile_existential.h"
+#include "prelude_symbols.h"
 
-#include "compile_binding.h"
-
-CoreExistential *build_core_Existential(BuilderState &state, const CoreExistential *DescriptorExistential)
+CoreExistential *build_core_Existential(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Existential"});
 
     auto *ExistentialExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, DescriptorExistential);
+        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.DescriptorExistential);
     return ExistentialExistential;
 }

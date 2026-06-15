@@ -10,7 +10,7 @@ class CompileDef : public BaseCompilerFixture {};
 TEST_F(CompileDef, EvaluateDefUnaryFunction)
 {
     auto result = m_tester->runModule(R"(
-        def add10(x: Int): Int {
+        def add10(x: I64): I64 {
             x + 10
         }
         add10(5)
@@ -24,7 +24,7 @@ TEST_F(CompileDef, EvaluateDefUnaryFunction)
 TEST_F(CompileDef, EvaluateDefBinaryFunction)
 {
     auto result = m_tester->runModule(R"(
-        def subtractInts(x: Int, y: Int): Int {
+        def subtractInts(x: I64, y: I64): I64 {
             x - y
         }
         subtractInts(5, 4)
@@ -38,7 +38,7 @@ TEST_F(CompileDef, EvaluateDefBinaryFunction)
 TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
 {
     auto result = m_tester->runModule(R"(
-        def subtractInts(x: Int, named y: Int): Int {
+        def subtractInts(x: I64, named y: I64): I64 {
             x - y
         }
         subtractInts(5, y = 4)
@@ -52,7 +52,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
 TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
 {
     auto result = m_tester->runModule(R"(
-        def numInts(ints: ...Int): Int {
+        def numInts(ints: ...I64): I64 {
             ints.Size()
         }
         numInts(5, 4, 3, 2, 1)
@@ -66,7 +66,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
 TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
 {
     auto result = m_tester->runModule(R"(
-        def subtractInts(x: Int, named y: Int = 1): Int {
+        def subtractInts(x: I64, named y: I64 = 1): I64 {
             x - y
         }
         subtractInts(5)
@@ -80,7 +80,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
 TEST_F(CompileDef, EvaluateDefFunctionWithNoReturnType)
 {
     auto result = m_tester->runModule(R"(
-        def noReturn(x: Int, y: Int) {
+        def noReturn(x: I64, y: I64) {
             x - y
         }
         noReturn(5, 4)
@@ -97,7 +97,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunction)
         def identity[A](x: A): A {
             x
         }
-        val sum: Int = 5 + identity(5)
+        val sum: I64 = 5 + identity(5)
         sum
     )");
 
@@ -109,7 +109,7 @@ TEST_F(CompileDef, EvaluateDefGenericFunction)
 TEST_F(CompileDef, EvaluateDefGenericFunctionWithUpperBound)
 {
     auto result = m_tester->runModule(R"(
-        def identity[A](x: A): A where A < Int {
+        def identity[A](x: A): A where A < I64 {
             x
         }
         identity(5)

@@ -1,37 +1,8 @@
 
 #include "compile_unwrap.h"
+#include "prelude_symbols.h"
 
-// CoreConcept *build_core_Unwrap(BuilderState &state, const CoreConcept *IdeaConcept)
-// {
-//     lyric_common::SymbolPath conceptPath({"Unwrap"});
-//
-//     auto *UnwrapTemplate = state.addTemplate(
-//         conceptPath,
-//         {
-//             {"W", lyo1::PlaceholderVariance::Invariant},
-//             {"T", lyo1::PlaceholderVariance::Invariant},
-//         });
-//
-//     auto *WType = UnwrapTemplate->types["W"];
-//     auto *TType = UnwrapTemplate->types["T"];
-//
-//     auto *UnwrapConcept = state.addGenericConcept(conceptPath, UnwrapTemplate,
-//         lyo1::ConceptFlags::NONE, IdeaConcept);
-//
-//     state.addConceptAction("Unwrap", UnwrapConcept,
-//         {
-//             make_list_param("wrapped", WType),
-//         },
-//         TType);
-//
-//     return UnwrapConcept;
-// }
-
-CoreConcept *build_core_UnwrapN(
-    BuilderState &state,
-    int arity,
-    const CoreConcept *IdeaConcept,
-    const CoreType *TupleNType)
+CoreConcept *build_core_UnwrapN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath conceptPath({absl::StrCat("Unwrap", arity)});
 
@@ -48,13 +19,16 @@ CoreConcept *build_core_UnwrapN(
     auto *WrappedType = UnwrapNTemplate->types["WrappedType"];
 
     auto *UnwrapConcept = state.addGenericConcept(conceptPath, UnwrapNTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     std::vector<const CoreType *> elementTypes;
     for (int i = 1; i < UnwrapNTemplate->placeholders.size(); i++) {
         const auto *elementType = UnwrapNTemplate->types.at(absl::StrCat("T", i - 1));
         elementTypes.push_back(elementType);
     }
+
+    auto *TupleNClass = preludeSymbols.tupleClasses[arity - 1];
+    auto *TupleNType = TupleNClass->classType;
 
     auto *ResultType = state.addConcreteType(
         TupleNType, TupleNType->concreteSection, TupleNType->concreteDescriptor, elementTypes);

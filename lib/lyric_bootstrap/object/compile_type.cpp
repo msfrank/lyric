@@ -1,24 +1,23 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_type.h"
+#include "prelude_symbols.h"
 
 CoreExistential *
-declare_core_Type(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Type(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Type"});
     auto *TypeExistential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, AnyExistential);
+        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.AnyExistential);
     return TypeExistential;
 }
 
 void
-build_core_Type(
-    BuilderState &state,
-    const CoreExistential *TypeExistential,
-    const CoreType *IntegerType,
-    const CoreType *BoolType)
+build_core_Type(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
+    auto *TypeExistential = preludeSymbols.TypeExistential;
     auto *TypeType = TypeExistential->existentialType;
 
     {
@@ -33,7 +32,7 @@ build_core_Type(
                 make_list_param("other", TypeType),
             },
             code,
-            IntegerType,
+            I64Type,
             /* isInline= */ true);
     }
     {

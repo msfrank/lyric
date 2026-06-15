@@ -1,23 +1,11 @@
-#ifndef ZURI_CORE_COMPILE_SEQ_H
-#define ZURI_CORE_COMPILE_SEQ_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_SEQ_H
+#define LYRIC_BOOTSTRAP_COMPILE_SEQ_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreStruct *build_core_Seq(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreConcept *IterableConcept,
-    const CoreClass *SeqIteratorClass,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *IntegerType);
+CoreStruct *build_core_Seq(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-CoreClass *build_core_SeqIterator(
-    BuilderState &state,
-    const CoreClass *ObjectClass,
-    const CoreConcept *IteratorConcept,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *BoolType);
+CoreClass *build_core_SeqIterator(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_SEQ_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_SEQ_H

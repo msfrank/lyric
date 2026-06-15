@@ -13,7 +13,7 @@ class CompileAssignment : public BaseCompilerFixture {};
 TEST_F(CompileAssignment, EvaluateTypedVal)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         foo
     )");
 
@@ -43,7 +43,7 @@ TEST_F(CompileAssignment, EvaluateTypedValFromDefaultInitializer)
 TEST_F(CompileAssignment, EvaluateUntypedVal)
 {
     auto result = m_tester->runModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         foo
     )");
 
@@ -54,7 +54,7 @@ TEST_F(CompileAssignment, EvaluateUntypedVal)
 TEST_F(CompileAssignment, EvaluateUntypedValFromExpression)
 {
     auto result = m_tester->runModule(R"(
-        def FortyTwo(): Int {
+        def FortyTwo(): I64 {
             42
         }
         val foo = FortyTwo()
@@ -68,7 +68,7 @@ TEST_F(CompileAssignment, EvaluateUntypedValFromExpression)
 TEST_F(CompileAssignment, CompileValAssignmentFails)
 {
     auto result = m_tester->compileModule(R"(
-        val foo: Int = 100
+        val foo: I64 = 100
         foo = 1
     )");
 
@@ -80,7 +80,7 @@ TEST_F(CompileAssignment, CompileValAssignmentFails)
 TEST_F(CompileAssignment, EvaluateVarAssignment)
 {
     auto result = m_tester->runModule(R"(
-        var mutablefoo: Int = 100
+        var mutablefoo: I64 = 100
         mutablefoo = 1
         mutablefoo
     )");
@@ -93,7 +93,7 @@ TEST_F(CompileAssignment, EvaluateVarAssignment)
 TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
 {
     auto result = m_tester->runModule(R"(
-        var mutablefoo: Int = 100
+        var mutablefoo: I64 = 100
         mutablefoo += 10
         mutablefoo
     )");
@@ -106,7 +106,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
 TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
 {
     auto result = m_tester->runModule(R"(
-        var mutablefoo: Int = 100
+        var mutablefoo: I64 = 100
         mutablefoo -= 10
         mutablefoo
     )");
@@ -119,7 +119,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
 TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
 {
     auto result = m_tester->runModule(R"(
-        var mutablefoo: Int = 100
+        var mutablefoo: I64 = 100
         mutablefoo *= 5
         mutablefoo
     )");
@@ -132,7 +132,7 @@ TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
 TEST_F(CompileAssignment, EvaluateVarInplaceDivide)
 {
     auto result = m_tester->runModule(R"(
-        var mutablefoo: Int = 100
+        var mutablefoo: I64 = 100
         mutablefoo /= 50
         mutablefoo
     )");
@@ -146,8 +146,8 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
             }
         }
@@ -166,8 +166,8 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
             }
         }
@@ -186,8 +186,8 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
             }
         }
@@ -207,8 +207,8 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
     auto result = m_tester->runModule(R"(
 
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
             }
         }
@@ -227,8 +227,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceAdd)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
                 this.Count += 1
             }
@@ -247,8 +247,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceSubtract)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
                 this.Count -= 1
             }
@@ -267,8 +267,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceMultiply)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
                 this.Count *= 2
             }
@@ -288,8 +288,8 @@ TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
     auto result = m_tester->runModule(R"(
 
         defclass Test {
-            var Count: Int
-            init(count: Int) {
+            var Count: I64
+            init(count: I64) {
                 this.Count = count
                 this.Count /= 2
             }
@@ -307,7 +307,7 @@ TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
 TEST_F(CompileAssignment, EvaluateGlobalVal)
 {
     auto result = m_tester->runModule(R"(
-        global val foo: Int = 100
+        global val foo: I64 = 100
         foo
     )");
 
@@ -338,7 +338,7 @@ TEST_F(CompileAssignment, EvaluateGlobalValFromDefaultInitializer)
 TEST_F(CompileAssignment, CompileGlobalValAssignmentFails)
 {
     auto result = m_tester->compileModule(R"(
-        global val foo: Int = 100
+        global val foo: I64 = 100
         foo = 1
     )");
 
@@ -350,7 +350,7 @@ TEST_F(CompileAssignment, CompileGlobalValAssignmentFails)
 TEST_F(CompileAssignment, EvaluateGlobalVar)
 {
     auto result = m_tester->runModule(R"(
-        global var foo: Int = 100
+        global var foo: I64 = 100
         foo
     )");
 
@@ -381,7 +381,7 @@ TEST_F(CompileAssignment, EvaluateGlobalVarFromDefaultInitializer)
 TEST_F(CompileAssignment, EvaluateGlobalVarAssignment)
 {
     auto result = m_tester->runModule(R"(
-        global var mutablefoo: Int = 100
+        global var mutablefoo: I64 = 100
         mutablefoo = 1
         mutablefoo
     )");

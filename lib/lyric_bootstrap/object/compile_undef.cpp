@@ -1,5 +1,6 @@
 
 #include "compile_undef.h"
+#include "prelude_symbols.h"
 
 CoreExistential *build_core_Undef(BuilderState &state)
 {

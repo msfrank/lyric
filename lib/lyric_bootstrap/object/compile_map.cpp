@@ -1,21 +1,18 @@
 
 #include "compile_map.h"
+#include "prelude_symbols.h"
 
 CoreStruct *
-build_core_Map(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreConcept *IterableConcept,
-    const CoreClass *MapIteratorClass,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *BoolType,
-    const CoreType *IntegerType)
+build_core_Map( BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *DataType = preludeSymbols.DataUnionType;
+    auto *DataIteratorType = preludeSymbols.DataIteratorType;
+
     lyric_common::SymbolPath structPath({"Map"});
 
-    auto *MapStruct = state.addStruct(structPath,
-        lyo1::StructFlags::Final, RecordStruct);
+    auto *MapStruct = state.addStruct(structPath, lyo1::StructFlags::Final, preludeSymbols.RecordStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -37,7 +34,7 @@ build_core_Map(
             lyo1::CallFlags::NONE,
             {},
             code,
-            IntegerType);
+            I64Type);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -95,13 +92,13 @@ build_core_Map(
     }
 
     auto *MapIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IterableConcept->concept_index, {MapStruct->structType, DataType});
+        preludeSymbols.IterableConcept->concept_index, {MapStruct->structType, DataType});
 
-    auto *IterableImpl = state.addImpl(structPath, MapIterableType, IterableConcept);
+    auto *IterableImpl = state.addImpl(structPath, MapIterableType, preludeSymbols.IterableConcept);
 
     {
         lyric_object::BytecodeBuilder code;
-        code.loadClass(MapIteratorClass->class_index);
+        code.loadClass(preludeSymbols.MapIteratorClass->class_index);
         state.writeTrap(code, "MapIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Iterate", IterableImpl,
@@ -116,17 +113,15 @@ build_core_Map(
 }
 
 CoreClass *
-build_core_MapIterator(
-    BuilderState &state,
-    const CoreClass *ObjectClass,
-    const CoreConcept *IteratorConcept,
-    const CoreType *DataType,
-    const CoreType *DataIteratorType,
-    const CoreType *BoolType)
+build_core_MapIterator(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+    auto *DataType = preludeSymbols.DataUnionType;
+    auto *DataIteratorType = preludeSymbols.DataIteratorType;
+
     lyric_common::SymbolPath classPath({"MapIterator"});
 
-    auto *MapIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, ObjectClass);
+    auto *MapIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, preludeSymbols.ObjectClass);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -137,7 +132,7 @@ build_core_MapIterator(
         state.setClassAllocator(MapIteratorClass, "MapIteratorAlloc");
     }
 
-    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
+    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, preludeSymbols.IteratorConcept);
 
     {
         lyric_object::BytecodeBuilder code;

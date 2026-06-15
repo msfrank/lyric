@@ -10,7 +10,7 @@ class VaTests : public BaseBootstrapFixture {};
 TEST_F(VaTests, EvaluateVaSize)
 {
     auto result = runModule(R"(
-        def CountVaArgs(...Any): Int {
+        def CountVaArgs(...Any): I64 {
             VaSize()
         }
         CountVaArgs(1, 2, 3)
@@ -24,7 +24,7 @@ TEST_F(VaTests, EvaluateVaSize)
 TEST_F(VaTests, EvaluateVaLoad)
 {
     auto result = runModule(R"(
-        def GetVaArg(index: Int, ...Any): Any {
+        def GetVaArg(index: I64, ...Any): Any {
             VaLoad(index)
         }
         GetVaArg(1, 1, 2, 3)

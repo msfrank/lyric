@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_MAP_KEY_H
-#define ZURI_CORE_MAP_KEY_H
+#ifndef LYRIC_BOOTSTRAP_MAP_KEY_H
+#define LYRIC_BOOTSTRAP_MAP_KEY_H
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytes_ref.h>
@@ -149,4 +149,4 @@ H AbslHashValue(H h, const MapKey &key)
     }
 }
 
-#endif // ZURI_CORE_MAP_KEY_H
+#endif // LYRIC_BOOTSTRAP_MAP_KEY_H

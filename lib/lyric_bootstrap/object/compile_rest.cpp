@@ -1,8 +1,9 @@
 
 #include "compile_rest.h"
+#include "prelude_symbols.h"
 
 CoreExistential *
-declare_core_Rest(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Rest(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Rest"});
 
@@ -11,20 +12,17 @@ declare_core_Rest(BuilderState &state, const CoreExistential *AnyExistential)
     auto *RestTemplate = state.addTemplate(existentialPath, placeholders);
 
     auto *RestExistential = state.addGenericExistential(
-        existentialPath, RestTemplate, lyo1::ExistentialFlags::Final, AnyExistential);
+        existentialPath, RestTemplate, lyo1::ExistentialFlags::Final, preludeSymbols.AnyExistential);
     return RestExistential;
 }
 
 void
-build_core_Rest(
-    BuilderState &state,
-    const CoreExistential *RestExistential,
-    const CoreConcept *IterableConcept,
-    const CoreConcept *IteratorConcept,
-    const CoreClass *RestIteratorClass,
-    const CoreType *IntType,
-    const CoreType *UndefType)
+build_core_Rest(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *UndefType = preludeSymbols.UndefExistential->existentialType;
+
+    auto *RestExistential = preludeSymbols.RestExistential;
     auto *TType = RestExistential->existentialTemplate->types.at("T");
     auto *TOrUndefType = state.addUnionType({TType,UndefType});
 
@@ -36,7 +34,7 @@ build_core_Rest(
             RestExistential,
             lyo1::CallFlags::NONE,
             {},
-            code, IntType);
+            code, I64Type);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -46,21 +44,21 @@ build_core_Rest(
             RestExistential,
             lyo1::CallFlags::NONE,
             {
-                make_list_param("index", IntType),
+                make_list_param("index", I64Type),
             },
             code, TOrUndefType);
     }
 
     auto *RestIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IterableConcept->concept_index, {RestExistential->existentialType, TType});
+        preludeSymbols.IterableConcept->concept_index, {RestExistential->existentialType, TType});
 
-    auto *IterableImpl = state.addImpl(RestExistential->existentialPath, RestIterableType, IterableConcept);
+    auto *IterableImpl = state.addImpl(RestExistential->existentialPath, RestIterableType, preludeSymbols.IterableConcept);
 
     {
         auto *IteratorTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-            IteratorConcept->concept_index, {TType});
+            preludeSymbols.IteratorConcept->concept_index, {TType});
         lyric_object::BytecodeBuilder code;
-        code.loadClass(RestIteratorClass->class_index);
+        code.loadClass(preludeSymbols.RestIteratorClass->class_index);
         state.writeTrap(code, "RestIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Iterate", IterableImpl,
@@ -73,12 +71,10 @@ build_core_Rest(
 }
 
 CoreClass *
-build_core_RestIterator(
-    BuilderState &state,
-    const CoreClass *ObjectClass,
-    const CoreConcept *IteratorConcept,
-    const CoreType *BoolType)
+build_core_RestIterator(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+
     lyric_common::SymbolPath classPath({"RestIterator"});
 
     auto *RestIteratorTemplate = state.addTemplate(
@@ -90,7 +86,7 @@ build_core_RestIterator(
     auto *TType = RestIteratorTemplate->types["T"];
 
     auto *RestIteratorClass = state.addGenericClass(classPath, RestIteratorTemplate,
-        lyo1::ClassFlags::Final, ObjectClass);
+        lyo1::ClassFlags::Final, preludeSymbols.ObjectClass);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -102,9 +98,9 @@ build_core_RestIterator(
     }
 
     auto *IteratorTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IteratorConcept->concept_index, {TType});
+        preludeSymbols.IteratorConcept->concept_index, {TType});
 
-    auto *IteratorImpl = state.addImpl(classPath, IteratorTType, IteratorConcept);
+    auto *IteratorImpl = state.addImpl(classPath, IteratorTType, preludeSymbols.IteratorConcept);
 
     {
         lyric_object::BytecodeBuilder code;

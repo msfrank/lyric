@@ -50,9 +50,9 @@ TEST_F(CompileMatch, EvaluateNoMatchDisjointType)
 TEST_F(CompileMatch, CompileIsABoundedPlaceholderTypeDisjointFails)
 {
     auto result = m_tester->compileModule(R"(
-        def generic[T](t: T): Bool where T < Int {
+        def generic[T](t: T): Bool where T < I64 {
             match t {
-                when x: Float -> true
+                when x: F64 -> true
                 else          -> false
             }
         }
@@ -71,8 +71,8 @@ TEST_F(CompileMatch, EvaluateMatchIntrinsic)
         match x {
             when t0: Bool  -> 0
             when t1: Char  -> 1
-            when t2: Int   -> 2
-            when t3: Float -> 3
+            when t2: I64   -> 2
+            when t3: F64 -> 3
             else           -> nil
         }
     )");
@@ -85,7 +85,7 @@ TEST_F(CompileMatch, EvaluateMatchPlaceholderType)
     auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any {
             match t {
-                when i: Int -> true
+                when i: I64 -> true
                 else        -> false
             }
         }
@@ -100,7 +100,7 @@ TEST_F(CompileMatch, EvaluateNoMatchPlaceholderType)
     auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any {
             match t {
-                when f: Float -> true
+                when f: F64 -> true
                 else          -> false
             }
         }
@@ -115,7 +115,7 @@ TEST_F(CompileMatch, EvaluateMatchBoundedPlaceholderType)
     auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any where T < Intrinsic {
             match t {
-                when i: Int -> true
+                when i: I64 -> true
                 else        -> false
             }
         }
@@ -130,7 +130,7 @@ TEST_F(CompileMatch, EvaluateNoMatchBoundedPlaceholderType)
     auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any where T < Intrinsic {
             match t {
-                when f: Float -> true
+                when f: F64 -> true
                 else          -> false
             }
         }
@@ -143,9 +143,9 @@ TEST_F(CompileMatch, EvaluateNoMatchBoundedPlaceholderType)
 TEST_F(CompileMatch, CompileMatchBoundedPlaceholderTypeDisjointFails)
 {
     auto result = m_tester->compileModule(R"(
-        def generic[T](t: T): Any where T < Int {
+        def generic[T](t: T): Any where T < I64 {
             match t {
-                when f: Float -> true
+                when f: F64 -> true
                 else          -> false
             }
         }
@@ -203,11 +203,11 @@ TEST_F(CompileMatch, EvaluateMatchDerefAlias)
 {
     auto result = m_tester->runModule(R"(
         defclass Test1 {
-            val x: Int
-            init(x: Int) {
+            val x: I64
+            init(x: I64) {
                 this.x = x
             }
-            def GetX(): Int {
+            def GetX(): I64 {
                 this.x
             }
         }
@@ -225,9 +225,9 @@ TEST_F(CompileMatch, EvaluateMatchDerefAlias)
 TEST_F(CompileMatch, EvaluateMatchUnwrapGenericClass)
 {
     auto result = m_tester->runModule(R"(
-        val x: Tuple3[Int,Int,Int] = Tuple3[Int,Int,Int]{1, 2, 3}
+        val x: Tuple3[I64,I64,I64] = Tuple3[I64,I64,I64]{1, 2, 3}
         match x {
-            when Tuple3[Int, Int, Int](t1: Int, t2: Int, t3: Int) -> t1 + t2 + t3
+            when Tuple3[I64, I64, I64](t1: I64, t2: I64, t3: I64) -> t1 + t2 + t3
         }
     )");
 

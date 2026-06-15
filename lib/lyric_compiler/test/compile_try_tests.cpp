@@ -11,7 +11,7 @@ class CompileTry : public BaseCompilerFixture {};
 TEST_F(CompileTry, EvaluateTryCatch)
 {
     auto result = m_tester->runModule(R"(
-        var x: Int = 0
+        var x: I64 = 0
         try {
             raise Internal{message="something failed"}
         } catch {
@@ -84,7 +84,7 @@ TEST_F(CompileTry, EvaluateNestedTryCatchOuter)
 TEST_F(CompileTry, EvaluateRaiseNewExceptionInCatch)
 {
     auto result = m_tester->runModule(R"(
-        var x: Int = 0
+        var x: I64 = 0
         try {
             x += 1
             try {
@@ -109,7 +109,7 @@ TEST_F(CompileTry, EvaluateRaiseNewExceptionInCatch)
 TEST_F(CompileTry, EvaluateReraiseExceptionInCatch)
 {
     auto result = m_tester->runModule(R"(
-        var x: Int = 0
+        var x: I64 = 0
         try {
             x += 1
             try {

@@ -1,8 +1,9 @@
 
 #include "compile_function.h"
+#include "prelude_symbols.h"
 
 CoreClass *
-declare_core_FunctionN(BuilderState &state, int arity, const CoreClass *ObjectClass)
+declare_core_FunctionN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath classPath({absl::StrCat("Function", arity)});
 
@@ -17,7 +18,7 @@ declare_core_FunctionN(BuilderState &state, int arity, const CoreClass *ObjectCl
 
     auto *FunctionNClass = state.addGenericClass(classPath,
         FunctionNTemplate, lyo1::ClassFlags::Final,
-        ObjectClass);
+        preludeSymbols.ObjectClass);
 
     TU_ASSERT (!state.functionclasspaths.contains(arity));
     state.functionclasspaths[arity] = FunctionNClass->classPath;
@@ -26,11 +27,13 @@ declare_core_FunctionN(BuilderState &state, int arity, const CoreClass *ObjectCl
 }
 
 void
-build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNClass, const CoreType *CallType)
+build_core_FunctionN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols)
 {
-    auto classPath = FunctionNClass->classPath;
+    auto *CallType = preludeSymbols.CallExistential->existentialType;
 
+    auto *FunctionNClass = preludeSymbols.functionClasses[arity];
     auto *FunctionNTemplate = FunctionNClass->classTemplate;
+    auto classPath = FunctionNClass->classPath;
 
     std::vector<CoreParam> applyParams;
     for (int i = 0; i < arity; i++) {

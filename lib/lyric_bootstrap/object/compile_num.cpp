@@ -1,91 +1,130 @@
 
-#include "compile_float.h"
-#include "prelude_symbols.h"
+#include "compile_int.h"
 
 CoreExistential *
-declare_core_F64(BuilderState &state, const PreludeSymbols &preludeSymbols)
+declare_core_Num(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
-    lyric_common::SymbolPath existentialPath({"F64"});
-    auto *F64Existential = state.addExistential(
+    lyric_common::SymbolPath existentialPath({"Num"});
+    auto *NumExistential = state.addExistential(
         existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
-    return F64Existential;
+    return NumExistential;
 }
 
 void
-build_core_F64(BuilderState &state, const PreludeSymbols &preludeSymbols)
+build_core_Num(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
-    auto *F64Existential = preludeSymbols.F64Existential;
-    auto *F64Type = F64Existential->existentialType;
+    auto *NumType = preludeSymbols.NumExistential->existentialType;
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *I32Type = preludeSymbols.I32Existential->existentialType;
+    auto *I16Type = preludeSymbols.I16Existential->existentialType;
+    auto *I8Type = preludeSymbols.I8Existential->existentialType;
+    auto *NumExistential = preludeSymbols.NumExistential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *I64ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {NumType, I64Type});
+    auto *I64ConverterImpl = state.addImpl(NumExistential->existentialPath, I64ConverterType, ConverterConcept);
 
     {
         lyric_object::BytecodeBuilder code;
-        state.writeTrap(code, "FloatCeil");
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addExistentialMethod("Ceil", F64Existential, {}, {}, code, F64Type);
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I64ConverterImpl,
+            {
+                make_list_param("source", I64Type),
+            },
+            code, NumType, true);
     }
+
+    auto *I32ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {NumType, I32Type});
+    auto *I32ConverterImpl = state.addImpl(NumExistential->existentialPath, I32ConverterType, ConverterConcept);
+
     {
         lyric_object::BytecodeBuilder code;
-        state.writeTrap(code, "FloatFloor");
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addExistentialMethod("Floor", F64Existential, {}, {}, code, F64Type);
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I32ConverterImpl,
+            {
+                make_list_param("source", I32Type),
+            },
+            code, NumType, true);
     }
+
+    auto *I16ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {NumType, I16Type});
+    auto *I16ConverterImpl = state.addImpl(NumExistential->existentialPath, I16ConverterType, ConverterConcept);
+
     {
         lyric_object::BytecodeBuilder code;
-        state.writeTrap(code, "FloatTrunc");
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addExistentialMethod("Trunc", F64Existential, {}, {}, code, F64Type);
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I16ConverterImpl,
+            {
+                make_list_param("source", I16Type),
+            },
+            code, NumType, true);
     }
-}
 
-CoreExistential *
-declare_core_F32(BuilderState &state, const PreludeSymbols &preludeSymbols)
-{
-    lyric_common::SymbolPath existentialPath({"F32"});
-    auto *F32Existential = state.addExistential(
-        existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
-    return F32Existential;
-}
+    auto *I8ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {NumType, I8Type});
+    auto *I8ConverterImpl = state.addImpl(NumExistential->existentialPath, I8ConverterType, ConverterConcept);
 
-void
-build_core_F32(BuilderState &state, const PreludeSymbols &preludeSymbols)
-{
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I8ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, NumType, true);
+    }
 }
 
 CoreInstance *
-build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
+build_core_NumInstance(
+    BuilderState &state,
+    const CoreType *NumType,
+    const CoreInstance *SingletonInstance,
+    const CoreConcept *ArithmeticConcept,
+    const CoreConcept *ComparisonConcept,
+    const CoreConcept *EqualityConcept,
+    const CoreConcept *OrderedConcept,
+    const CoreType *BoolType)
 {
-    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
-    auto *I64Type = preludeSymbols.I64Existential->existentialType;
-    auto *F64Type = preludeSymbols.F64Existential->existentialType;
+    lyric_common::SymbolPath instancePath({"NumInstance"});
 
-    lyric_common::SymbolPath instancePath({"FloatInstance"});
-
-    auto *FloatArithmeticType = state.addConcreteType(nullptr,
+    auto *NumArithmeticType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        preludeSymbols.ArithmeticConcept->concept_index,
-        {F64Type});
+        ArithmeticConcept->concept_index,
+        {NumType});
 
-    auto *FloatComparisonType = state.addConcreteType(nullptr,
+    auto *NumComparisonType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        preludeSymbols.ComparisonConcept->concept_index,
-        {F64Type, F64Type});
+        ComparisonConcept->concept_index,
+        {NumType, NumType});
 
-    auto *FloatEqualityType = state.addConcreteType(nullptr,
+    auto *NumEqualityType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        preludeSymbols.EqualityConcept->concept_index,
-        {F64Type, F64Type});
+        EqualityConcept->concept_index,
+        {NumType, NumType});
 
-    auto *FloatOrderedType = state.addConcreteType(nullptr,
+    auto *NumOrderedType = state.addConcreteType(nullptr,
         lyo1::TypeSection::Concept,
-        preludeSymbols.OrderedConcept->concept_index,
-        {F64Type});
+        OrderedConcept->concept_index,
+        {NumType});
 
-    auto *FloatInstance = state.addInstance(instancePath, lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
-
-    auto *FloatArithmeticImpl = state.addImpl(instancePath, FloatArithmeticType, preludeSymbols.ArithmeticConcept);
-    auto *FloatComparisonImpl = state.addImpl(instancePath, FloatComparisonType, preludeSymbols.ComparisonConcept);
-    auto *FloatEqualityImpl = state.addImpl(instancePath, FloatEqualityType, preludeSymbols.EqualityConcept);
-    auto *FloatOrderedImpl = state.addImpl(instancePath, FloatOrderedType, preludeSymbols.OrderedConcept);
+    auto *NumInstance = state.addInstance(instancePath,
+        lyo1::InstanceFlags::NONE, SingletonInstance);
+    auto *NumArithmeticImpl = state.addImpl(instancePath, NumArithmeticType, ArithmeticConcept);
+    auto *NumComparisonImpl = state.addImpl(instancePath, NumComparisonType, ComparisonConcept);
+    auto *NumEqualityImpl = state.addImpl(instancePath, NumEqualityType, EqualityConcept);
+    auto *NumOrderedImpl = state.addImpl(instancePath, NumOrderedType, OrderedConcept);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -93,12 +132,12 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_ADD));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Add", FloatArithmeticImpl,
+        state.addImplExtension("Add", NumArithmeticImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
-            code, F64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -106,12 +145,12 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_SUB));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Subtract", FloatArithmeticImpl,
+        state.addImplExtension("Subtract", NumArithmeticImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
-            code, F64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -119,12 +158,12 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_MUL));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Multiply", FloatArithmeticImpl,
+        state.addImplExtension("Multiply", NumArithmeticImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
-            code, F64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -132,23 +171,23 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DIV));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Divide", FloatArithmeticImpl,
+        state.addImplExtension("Divide", NumArithmeticImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
-            code, F64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NEG));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Negate", FloatArithmeticImpl,
+        state.addImplExtension("Negate", NumArithmeticImpl,
             {
-                make_list_param("lhs", F64Type),
+                make_list_param("lhs", NumType),
             },
-            code, F64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -165,10 +204,10 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Equals", FloatEqualityImpl,
+        state.addImplExtension("Equals", NumEqualityImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
             code, BoolType, true);
     }
@@ -187,10 +226,10 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("LessThan", FloatComparisonImpl,
+        state.addImplExtension("LessThan", NumComparisonImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
             code, BoolType, true);
     }
@@ -209,10 +248,10 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("GreaterThan", FloatComparisonImpl,
+        state.addImplExtension("GreaterThan", NumComparisonImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
             code, BoolType, true);
     }
@@ -231,10 +270,10 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("LessEquals", FloatComparisonImpl,
+        state.addImplExtension("LessEquals", NumComparisonImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
             code, BoolType, true);
     }
@@ -253,10 +292,10 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("GreaterEquals", FloatComparisonImpl,
+        state.addImplExtension("GreaterEquals", NumComparisonImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
             code, BoolType, true);
     }
@@ -266,19 +305,19 @@ build_core_FloatInstance(BuilderState &state, const PreludeSymbols &preludeSymbo
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CMP));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addImplExtension("Compare", FloatOrderedImpl,
+        state.addImplExtension("Compare", NumOrderedImpl,
             {
-                make_list_param("lhs", F64Type),
-                make_list_param("rhs", F64Type),
+                make_list_param("lhs", NumType),
+                make_list_param("rhs", NumType),
             },
-            code, I64Type, true);
+            code, NumType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addInstanceCtor(FloatInstance, {}, code);
-        state.setInstanceAllocator(FloatInstance, "SingletonAlloc");
+        state.addInstanceCtor(NumInstance, {}, code);
+        state.setInstanceAllocator(NumInstance, "SingletonAlloc");
     }
 
-    return FloatInstance;
+    return NumInstance;
 }

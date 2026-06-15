@@ -1,9 +1,8 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_arithmetic.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Arithmetic(BuilderState &state, const CoreConcept *IdeaConcept)
+CoreConcept *build_core_Arithmetic(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath conceptPath({"Arithmetic"});
 
@@ -16,7 +15,7 @@ CoreConcept *build_core_Arithmetic(BuilderState &state, const CoreConcept *IdeaC
     auto *TType = ArithmeticTemplate->types["T"];
 
     auto *ArithmeticConcept = state.addGenericConcept(conceptPath, ArithmeticTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     state.addConceptAction("Add", ArithmeticConcept,
         {

@@ -1,10 +1,11 @@
 
-#include <lyric_common/symbol_url.h>
-
 #include "compile_ordered.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Ordered(BuilderState &state, const CoreConcept *IdeaConcept, const CoreType *IntegerType)
+CoreConcept *build_core_Ordered(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+
     lyric_common::SymbolPath conceptPath({"Ordered"});
 
     auto *OrderedTemplate = state.addTemplate(
@@ -16,14 +17,14 @@ CoreConcept *build_core_Ordered(BuilderState &state, const CoreConcept *IdeaConc
     auto *TType = OrderedTemplate->types["T"];
 
     auto *OrderedConcept = state.addGenericConcept(conceptPath, OrderedTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
 
     state.addConceptAction("Compare", OrderedConcept,
         {
             make_list_param("lhs", TType),
             make_list_param("rhs", TType),
         },
-        IntegerType);
+        I64Type);
 
     return OrderedConcept;
 }

@@ -1,8 +1,9 @@
 
 #include "compile_protocol.h"
+#include "prelude_symbols.h"
 
 CoreExistential *
-declare_core_Protocol(BuilderState &state, const CoreExistential *DescriptorExistential)
+declare_core_Protocol(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath existentialPath({"Protocol"});
 
@@ -12,17 +13,17 @@ declare_core_Protocol(BuilderState &state, const CoreExistential *DescriptorExis
     auto *ProtocolTemplate = state.addTemplate(existentialPath, placeholders);
 
     auto *ProtocolExistential = state.addGenericExistential(
-        existentialPath, ProtocolTemplate, lyo1::ExistentialFlags::NONE, DescriptorExistential);
+        existentialPath, ProtocolTemplate, lyo1::ExistentialFlags::NONE, preludeSymbols.DescriptorExistential);
 
     return ProtocolExistential;
 }
 
 void
-build_core_Protocol(
-    BuilderState &state,
-    const CoreExistential *ProtocolExistential,
-    const CoreType *BoolType)
+build_core_Protocol(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *ProtocolExistential = preludeSymbols.ProtocolExistential;
+    auto *BoolType = preludeSymbols.BoolExistential->existentialType;
+
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "ProtocolIsAcceptor");

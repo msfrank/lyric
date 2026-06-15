@@ -20,8 +20,8 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
 {
     auto *fundamentalCache = objectState->fundamentalCache();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::F64);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
 
     lyric_object::TemplateParameter tp0;

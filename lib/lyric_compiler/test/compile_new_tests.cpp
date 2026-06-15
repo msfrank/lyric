@@ -37,8 +37,8 @@ TEST_F(CompileNew, EvaluateNewClassUsingNamedConstructor)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
-            init Named(value: Int) {
+            val Value: I64
+            init Named(value: I64) {
                 this.Value = value
             }
         }
@@ -54,8 +54,8 @@ TEST_F(CompileNew, EvaluateNewStructUsingNamedConstructor)
 {
     auto result = m_tester->runModule(R"(
         defstruct Foo {
-            val Value: Int
-            init Named(value: Int) {
+            val Value: I64
+            init Named(value: I64) {
                 this.Value = value
             }
         }

@@ -12,14 +12,14 @@ class CompileExpect : public BaseCompilerFixture {};
 TEST_F(CompileExpect, EvaluateExpectYieldsResult)
 {
     auto result = m_tester->runModule(R"(
-        def PositiveOrError(x: Int): Int | Error {
+        def PositiveOrError(x: I64): I64 | Error {
             cond {
                 when x > 0 -> x
                 else       -> OutOfRange{message="integer is not positive"}
             }
         }
-        def Add10(x: Int): Int | Error {
-            val positive: Int = expect PositiveOrError(x)
+        def Add10(x: I64): I64 | Error {
+            val positive: I64 = expect PositiveOrError(x)
             positive + 10
         }
         Add10(5)
@@ -33,14 +33,14 @@ TEST_F(CompileExpect, EvaluateExpectYieldsResult)
 TEST_F(CompileExpect, EvaluateExpectReturnsError)
 {
     auto result = m_tester->runModule(R"(
-        def PositiveOrError(x: Int): Int | Error {
+        def PositiveOrError(x: I64): I64 | Error {
             cond {
                 when x > 0 -> x
                 else       -> OutOfRange{message="integer is not positive"}
             }
         }
-        def Add10(x: Int): Int | Error {
-            val positive: Int = expect PositiveOrError(x)
+        def Add10(x: I64): I64 | Error {
+            val positive: I64 = expect PositiveOrError(x)
             positive + 10
         }
         Add10(-5)
@@ -54,7 +54,7 @@ TEST_F(CompileExpect, EvaluateExpectReturnsError)
 TEST_F(CompileExpect, EvaluateExpectWithStatusOperandMember)
 {
     auto result = m_tester->runModule(R"(
-        def PositiveOrStatus(x: Int): Int | Status {
+        def PositiveOrStatus(x: I64): I64 | Status {
             cond {
                 when x > 0 -> x
                 else       -> OutOfRange{message="integer is not positive"}
@@ -71,7 +71,7 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandMember)
 TEST_F(CompileExpect, EvaluateExpectWithStatusOperandYieldsResult)
 {
     auto result = m_tester->runModule(R"(
-        def CheckPositive(x: Int): Status {
+        def CheckPositive(x: I64): Status {
             cond {
                 when x > 0 -> Ok{}
                 else       -> OutOfRange{message="integer is not positive"}
@@ -88,7 +88,7 @@ TEST_F(CompileExpect, EvaluateExpectWithStatusOperandYieldsResult)
 TEST_F(CompileExpect, EvaluateExpectWithStatusOperandReturnsError)
 {
     auto result = m_tester->runModule(R"(
-        def CheckPositive(x: Int): Status {
+        def CheckPositive(x: I64): Status {
             cond {
                 when x > 0 -> Ok{}
                 else       -> OutOfRange{message="integer is not positive"}
@@ -145,7 +145,7 @@ TEST_F(CompileExpect, CompileExpectFailsWhenOperandTypeIsMissingSuccessType)
 TEST_F(CompileExpect, CompileExpectFailsWhenOperandTypeIsMissingErrorType)
 {
     auto result = m_tester->compileModule(R"(
-        def Identity(x: Int): Int { x }
+        def Identity(x: I64): I64 { x }
         expect Identity(1)
     )");
 
@@ -157,7 +157,7 @@ TEST_F(CompileExpect, CompileExpectFailsWhenOperandTypeIsMissingErrorType)
 TEST_F(CompileExpect, CompileExpectFailsWhenOperandTypeIsAny)
 {
     auto result = m_tester->compileModule(R"(
-        def PositiveOrStatus(x: Int): Any {
+        def PositiveOrStatus(x: I64): Any {
             cond {
                 when x > 0 -> x
                 else       -> OutOfRange{message="integer is not positive"}

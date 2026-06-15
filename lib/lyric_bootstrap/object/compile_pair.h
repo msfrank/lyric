@@ -1,11 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_PAIR_H
-#define ZURI_CORE_COMPILE_PAIR_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_PAIR_H
+#define LYRIC_BOOTSTRAP_COMPILE_PAIR_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreStruct *build_core_Pair(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreType *DataType);
+CoreStruct *build_core_Pair(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_PAIR_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_PAIR_H

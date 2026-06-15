@@ -2,19 +2,12 @@
 #define LYRIC_BOOTSTRAP_COMPILE_CHAR_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreExistential *declare_core_Char(BuilderState &state, const CoreExistential *IntrinsicExistential);
-void build_core_Char(BuilderState &state, const CoreExistential *CharExistential);
+CoreExistential *declare_core_Char(BuilderState &state, const PreludeSymbols &preludeSymbols);
+void build_core_Char(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
 CoreInstance *
-build_core_CharInstance(
-    BuilderState &state,
-    const CoreType *CharType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *ComparisonConcept,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreType *IntegerType,
-    const CoreType *BoolType);
+build_core_CharInstance(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
 #endif // LYRIC_BOOTSTRAP_COMPILE_CHAR_H

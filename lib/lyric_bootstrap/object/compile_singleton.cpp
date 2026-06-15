@@ -1,8 +1,9 @@
 
 #include "compile_singleton.h"
+#include "prelude_symbols.h"
 
 CoreInstance *
-declare_core_Singleton(BuilderState &state, const CoreExistential *AnyExistential)
+declare_core_Singleton(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     uint32_t type_index = state.types.size();
     uint32_t instance_index = state.instances.size();
@@ -12,7 +13,7 @@ declare_core_Singleton(BuilderState &state, const CoreExistential *AnyExistentia
     SingletonType->typeAssignable = lyo1::Assignable::ConcreteAssignable;
     SingletonType->concreteSection = lyo1::TypeSection::Instance;
     SingletonType->concreteDescriptor = instance_index;
-    SingletonType->superType = AnyExistential->existentialType;
+    SingletonType->superType = preludeSymbols.AnyExistential->existentialType;
     state.types.push_back(SingletonType);
 
     auto *SingletonInstance = new CoreInstance();
@@ -38,12 +39,12 @@ declare_core_Singleton(BuilderState &state, const CoreExistential *AnyExistentia
 }
 
 void
-build_core_Singleton(BuilderState &state, const CoreInstance *SingletonInstance)
+build_core_Singleton(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     {
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addInstanceCtor(SingletonInstance, {}, code);
-        state.setInstanceAllocator(SingletonInstance, "SingletonAlloc");
+        state.addInstanceCtor(preludeSymbols.SingletonInstance, {}, code);
+        state.setInstanceAllocator(preludeSymbols.SingletonInstance, "SingletonAlloc");
     }
 }

@@ -15,7 +15,7 @@ TEST_F(CallsiteReifierDegree1Inheritance, InvokeOverrideMethodOnDirectSubclassOf
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     // define base class Base
     lyric_assembler::ClassSymbol *BaseClass;
@@ -71,7 +71,7 @@ TEST_F(CallsiteReifierDegree1Inheritance, InvokeBaseMethodOnDirectSubclassOfBase
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
 
     // define base class Base
     lyric_assembler::ClassSymbol *BaseClass;
@@ -119,7 +119,7 @@ TEST_F(CallsiteReifierDegree1Inheritance, InvokeBaseMethodOnParameterizedDirectS
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
 
     // define base class Base[T]
@@ -173,7 +173,7 @@ TEST_F(CallsiteReifierDegree1Inheritance, InvokeBaseMethodOnGenericDirectSubclas
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
 
     // define base class Base[T]
@@ -231,7 +231,7 @@ TEST_F(CallsiteReifierDegree1Inheritance, InvokeBaseMethodOnGenericDirectSubclas
     auto *fundamentalCache = objectState->fundamentalCache();
     auto *rootBlock = objectRoot->rootBlock();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+    auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
 
     // define base class Base

@@ -1,11 +1,9 @@
-#ifndef ZURI_CORE_COMPILE_ITERABLE_H
-#define ZURI_CORE_COMPILE_ITERABLE_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_ITERABLE_H
+#define LYRIC_BOOTSTRAP_COMPILE_ITERABLE_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreConcept *build_core_Iterable(
-    BuilderState &state,
-    const CoreConcept *IdeaConcept,
-    const CoreConcept *IteratorConcept);
+CoreConcept *build_core_Iterable(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_ITERABLE_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_ITERABLE_H

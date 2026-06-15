@@ -97,7 +97,7 @@ lyric_compiler::constant_integer(
     TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
     TU_RETURN_IF_NOT_OK (fragment->immediateI64(i64));
     TU_LOG_VV << "immediate int " << i64;
-    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int));
+    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64));
 }
 
 tempo_utils::Status
@@ -120,7 +120,7 @@ lyric_compiler::constant_float(
     TU_ASSIGN_OR_RETURN (dbl, lyric_parser::parse_float_literal(literalValue, base, notation));
     TU_RETURN_IF_NOT_OK (fragment->immediateF64(dbl));
     TU_LOG_VV << "immediate float " << dbl;
-    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float));
+    return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::F64));
 }
 
 tempo_utils::Status

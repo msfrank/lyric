@@ -116,7 +116,7 @@ TEST_F(MapTests, TestEvaluateMapIterateImpl)
             Pair{first = "two", second = 2},
             Pair{first = "three", second = 3}
             }
-        var count: Int = 0
+        var count: I64 = 0
         for n: Any in names {
             count += 1
         }

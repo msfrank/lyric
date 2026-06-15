@@ -1,5 +1,5 @@
-#ifndef ZURI_CORE_NATIVE_CORE_H
-#define ZURI_CORE_NATIVE_CORE_H
+#ifndef LYRIC_BOOTSTRAP_NATIVE_CORE_H
+#define LYRIC_BOOTSTRAP_NATIVE_CORE_H
 
 #include <lyric_runtime/native_interface.h>
 
@@ -15,4 +15,4 @@ public:
 
 const NativeCore kPreludeInterface;
 
-#endif // ZURI_CORE_NATIVE_CORE_H
+#endif // LYRIC_BOOTSTRAP_NATIVE_CORE_H

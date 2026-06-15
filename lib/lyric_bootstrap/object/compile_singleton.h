@@ -1,9 +1,10 @@
-#ifndef ZURI_CORE_COMPILE_SINGLETON_H
-#define ZURI_CORE_COMPILE_SINGLETON_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_SINGLETON_H
+#define LYRIC_BOOTSTRAP_COMPILE_SINGLETON_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreInstance *declare_core_Singleton(BuilderState &state, const CoreExistential *AnyExistential);
-void build_core_Singleton(BuilderState &state, const CoreInstance *SingletonInstance);
+CoreInstance *declare_core_Singleton(BuilderState &state, const PreludeSymbols &preludeSymbols);
+void build_core_Singleton(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_SINGLETON_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_SINGLETON_H

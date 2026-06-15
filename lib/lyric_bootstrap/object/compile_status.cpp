@@ -1,9 +1,12 @@
 
 #include "compile_status.h"
 
-const CoreStruct *
-build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *StringType)
+CoreStruct *
+build_core_Status(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *StringType = preludeSymbols.StringExistential->existentialType;
+
     uint32_t struct_index = state.structs.size();
 
     auto *StatusType = state.addConcreteType(nullptr, lyo1::TypeSection::Struct, struct_index);
@@ -34,7 +37,7 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
         state.setStructAllocator(StatusStruct, "StatusAlloc");
         auto *ctor = state.addStructCtor(StatusStruct,
             {
-                make_list_param("code", IntType),
+                make_list_param("code", I64Type),
                 make_list_param("message", StringType),
             },
             code);
@@ -44,7 +47,7 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "StatusGetCode");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addStructMethod("GetCode", StatusStruct, lyo1::CallFlags::NONE, {}, code, IntType);
+        state.addStructMethod("GetCode", StatusStruct, lyo1::CallFlags::NONE, {}, code, I64Type);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -56,13 +59,13 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     return StatusStruct;
 }
 
-void
-build_core_Ok(BuilderState &state, const CoreStruct *StatusStruct)
+CoreStruct *
+build_core_Ok(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath structPath({"Ok"});
 
-    auto *OkStruct = state.addStruct(structPath, lyo1::StructFlags::Final, StatusStruct);
-    state.addStructSealedSubtype(StatusStruct, OkStruct);
+    auto *OkStruct = state.addStruct(structPath, lyo1::StructFlags::Final, preludeSymbols.StatusStruct);
+    state.addStructSealedSubtype(preludeSymbols.StatusStruct, OkStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -73,25 +76,26 @@ build_core_Ok(BuilderState &state, const CoreStruct *StatusStruct)
         auto literal_index = state.addLiteralString("Ok");
         code.loadString(literal_index);
         // call parent ctor
-        code.callVirtual(StatusStruct->structCtor->call_index, 2);
+        code.callVirtual(preludeSymbols.StatusStruct->structCtor->call_index, 2);
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(OkStruct,
             {},
             code);
     }
+
+    return OkStruct;
 }
 
-const CoreStruct *
-build_core_Error(
-    BuilderState &state,
-    const CoreStruct *StatusStruct,
-    const CoreType *IntType,
-    const CoreType *StringType)
+CoreStruct *
+build_core_Error(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *StringType = preludeSymbols.StringExistential->existentialType;
+
     lyric_common::SymbolPath structPath({"Error"});
 
-    auto *ErrorStruct = state.addStruct(structPath, lyo1::StructFlags::Sealed, StatusStruct);
-    state.addStructSealedSubtype(StatusStruct, ErrorStruct);
+    auto *ErrorStruct = state.addStruct(structPath, lyo1::StructFlags::Sealed, preludeSymbols.StatusStruct);
+    state.addStructSealedSubtype(preludeSymbols.StatusStruct, ErrorStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -101,11 +105,11 @@ build_core_Error(
         // load the message argument
         code.loadArgument(1);
         // call parent ctor
-        code.callVirtual(StatusStruct->structCtor->call_index, 2);
+        code.callVirtual(preludeSymbols.StatusStruct->structCtor->call_index, 2);
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         auto *ctor = state.addStructCtor(ErrorStruct,
             {
-                make_list_param("code", IntType),
+                make_list_param("code", I64Type),
                 make_list_param("message", StringType),
             },
             code);
@@ -115,20 +119,21 @@ build_core_Error(
     return ErrorStruct;
 }
 
-const CoreType *
+CoreStruct *
 build_core_Error_code(
     tempo_utils::StatusCode statusCode,
     std::string_view name,
     BuilderState &state,
-    const CoreStruct *ErrorStruct,
-    const CoreType *StringType)
+    const PreludeSymbols &preludeSymbols)
 {
     TU_ASSERT (statusCode != tempo_utils::StatusCode::kOk);
 
+    auto *StringType = preludeSymbols.StringExistential->existentialType;
+
     lyric_common::SymbolPath structPath({std::string(name)});
 
-    auto *ErrorCodeStruct = state.addStruct(structPath, lyo1::StructFlags::NONE, ErrorStruct);
-    state.addStructSealedSubtype(ErrorStruct, ErrorCodeStruct);
+    auto *ErrorCodeStruct = state.addStruct(structPath, lyo1::StructFlags::NONE, preludeSymbols.ErrorStruct);
+    state.addStructSealedSubtype(preludeSymbols.ErrorStruct, ErrorCodeStruct);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -138,7 +143,7 @@ build_core_Error_code(
         // load the message argument
         code.loadArgument(0);
         // call parent ctor
-        code.callVirtual(ErrorStruct->structCtor->call_index, 2);
+        code.callVirtual(preludeSymbols.ErrorStruct->structCtor->call_index, 2);
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(ErrorCodeStruct,
             {
@@ -147,5 +152,5 @@ build_core_Error_code(
             code);
     }
 
-    return ErrorCodeStruct->structType;
+    return ErrorCodeStruct;
 }

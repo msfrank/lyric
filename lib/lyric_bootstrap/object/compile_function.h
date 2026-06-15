@@ -1,9 +1,10 @@
-#ifndef ZURI_CORE_COMPILE_FUNCTION_H
-#define ZURI_CORE_COMPILE_FUNCTION_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_FUNCTION_H
+#define LYRIC_BOOTSTRAP_COMPILE_FUNCTION_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreClass *declare_core_FunctionN(BuilderState &state, int arity, const CoreClass *ObjectClass);
-void build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNClass, const CoreType *CallType);
+CoreClass *declare_core_FunctionN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols);
+void build_core_FunctionN(BuilderState &state, int arity, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_FUNCTION_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_FUNCTION_H

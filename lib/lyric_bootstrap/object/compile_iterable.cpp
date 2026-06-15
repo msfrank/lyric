@@ -1,11 +1,9 @@
 
 #include "compile_iterator.h"
+#include "prelude_symbols.h"
 
 CoreConcept *
-build_core_Iterable(
-    BuilderState &state,
-    const CoreConcept *IdeaConcept,
-    const CoreConcept *IteratorConcept)
+build_core_Iterable(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
     lyric_common::SymbolPath conceptPath({"Iterable"});
 
@@ -20,9 +18,9 @@ build_core_Iterable(
     auto *ElementType = IterableTemplate->types["ElementType"];
 
     auto *IterableConcept = state.addGenericConcept(conceptPath, IterableTemplate,
-        lyo1::ConceptFlags::NONE, IdeaConcept);
+        lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);
     auto *IteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
-        IteratorConcept->concept_index, {ElementType});
+        preludeSymbols.IteratorConcept->concept_index, {ElementType});
 
     state.addConceptAction("Iterate", IterableConcept,
         {

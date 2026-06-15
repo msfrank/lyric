@@ -1,26 +1,12 @@
-#ifndef ZURI_CORE_COMPILE_STRING_H
-#define ZURI_CORE_COMPILE_STRING_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_STRING_H
+#define LYRIC_BOOTSTRAP_COMPILE_STRING_H
 
 #include "builder_state.h"
+#include "prelude_symbols.h"
 
-CoreExistential *declare_core_String(BuilderState &state, const CoreExistential *IntrinsicExistential);
-void build_core_String(
-    BuilderState &state,
-    const CoreExistential *StringExistential,
-    const CoreType *IntType,
-    const CoreType *CharType,
-    const CoreType *BytesType,
-    const CoreType *UndefType);
+CoreExistential *declare_core_String(BuilderState &state, const PreludeSymbols &preludeSymbols);
+void build_core_String(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-CoreInstance *build_core_StringInstance(
-    BuilderState &state,
-    const CoreType *StringType,
-    const CoreInstance *SingletonInstance,
-    const CoreConcept *ComparisonConcept,
-    const CoreConcept *EqualityConcept,
-    const CoreConcept *OrderedConcept,
-    const CoreType *CharType,
-    const CoreType *IntegerType,
-    const CoreType *BoolType);
+CoreInstance *build_core_StringInstance(BuilderState &state, const PreludeSymbols &preludeSymbols);
 
-#endif // ZURI_CORE_COMPILE_STRING_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_STRING_H

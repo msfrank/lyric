@@ -15,7 +15,7 @@ TEST_F(CompileImport, EvaluateImportSingleRelativeLocation)
     absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskData> depStates;
 
     auto compileDep1Result = m_tester->compileModule(R"(
-        def Return42(): Int {
+        def Return42(): I64 {
             42
         }
     )", "dep1");
@@ -49,7 +49,7 @@ TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
     absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskData> depStates;
 
     auto compileDep1Result = m_tester->compileModule(R"(
-        def Dep1(): Int {
+        def Dep1(): I64 {
             1
         }
     )", "dep1");
@@ -61,7 +61,7 @@ TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
     depStates[dep1Key] = dep1.getState();
 
     auto compileDep2Result = m_tester->compileModule(R"(
-        def Dep2(): Int {
+        def Dep2(): I64 {
             2
         }
     )", "dep2");
@@ -73,7 +73,7 @@ TEST_F(CompileImport, EvaluateImportMultipleRelativeLocations)
     depStates[dep2Key] = dep2.getState();
 
     auto compileDep3Result = m_tester->compileModule(R"(
-        def Dep3(): Int {
+        def Dep3(): I64 {
             3
         }
     )", "dep3");
