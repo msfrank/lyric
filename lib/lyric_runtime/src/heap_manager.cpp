@@ -1,13 +1,16 @@
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytes_ref.h>
+#include <lyric_runtime/f64_ref.h>
 #include <lyric_runtime/heap_manager.h>
+#include <lyric_runtime/i64_ref.h>
 #include <lyric_runtime/namespace_ref.h>
 #include <lyric_runtime/protocol_ref.h>
 #include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/system_scheduler.h>
+#include <lyric_runtime/u64_ref.h>
 
 lyric_runtime::HeapManager::HeapManager(
     PreludeTables preludeTables,
@@ -20,6 +23,30 @@ lyric_runtime::HeapManager::HeapManager(
       m_heap(std::move(heap))
 {
     TU_ASSERT (m_heap != nullptr);
+}
+
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateI64(tu_int64 i64)
+{
+    auto *instance = new I64Ref(m_preludeTables.I64Table, i64);
+    m_heap->insertInstance(instance);
+    return Operand::fromI64(instance);
+}
+
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateU64(tu_uint64 u64)
+{
+    auto *instance = new U64Ref(m_preludeTables.U64Table, u64);
+    m_heap->insertInstance(instance);
+    return Operand::fromU64(instance);
+}
+
+lyric_runtime::Operand
+lyric_runtime::HeapManager::allocateF64(double f64)
+{
+    auto *instance = new F64Ref(m_preludeTables.F64Table, f64);
+    m_heap->insertInstance(instance);
+    return Operand::fromF64(instance);
 }
 
 lyric_runtime::Operand

@@ -23,10 +23,12 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/connection.h
     include/lyric_runtime/operand_stack.h
     include/lyric_runtime/descriptor_entry.h
+    include/lyric_runtime/f64_ref.h
     include/lyric_runtime/gc_heap.h
     include/lyric_runtime/heap_manager.h
     include/lyric_runtime/interpreter_result.h
     include/lyric_runtime/interpreter_state.h
+    include/lyric_runtime/i64_ref.h
     include/lyric_runtime/library_plugin.h
     include/lyric_runtime/lyric_runtime.h
     include/lyric_runtime/namespace_ref.h
@@ -49,6 +51,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/trap_index.h
     include/lyric_runtime/type_entry.h
     include/lyric_runtime/type_manager.h
+    include/lyric_runtime/u64_ref.h
     include/lyric_runtime/virtual_table.h
     )
 set_target_properties(lyric_runtime PROPERTIES PUBLIC_HEADER "${LYRIC_RUNTIME_INCLUDES}")
@@ -63,10 +66,12 @@ target_sources(lyric_runtime PRIVATE
     src/connection.cpp
     src/operand_stack.cpp
     src/descriptor_entry.cpp
+    src/f64_ref.cpp
     src/gc_heap.cpp
     src/heap_manager.cpp
     src/interpreter_result.cpp
     src/interpreter_state.cpp
+    src/i64_ref.cpp
     src/library_plugin.cpp
     src/namespace_ref.cpp
     src/native_interface.cpp
@@ -88,6 +93,7 @@ target_sources(lyric_runtime PRIVATE
     src/trap_index.cpp
     src/type_entry.cpp
     src/type_manager.cpp
+    src/u64_ref.cpp
     src/virtual_table.cpp
 
     include/lyric_runtime/internal/activation_ops.h

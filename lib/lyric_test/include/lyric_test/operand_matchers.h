@@ -59,7 +59,17 @@ namespace lyric_test {
         Matcher<lyric_runtime::Operand> OperandNil();
         Matcher<lyric_runtime::Operand> OperandUndef();
         Matcher<lyric_runtime::Operand> OperandBool(bool b);
-        Matcher<lyric_runtime::Operand> OperandInt(int64_t i64);
+        Matcher<lyric_runtime::Operand> OperandI64(tu_int64 i64);
+        Matcher<lyric_runtime::Operand> OperandI32(tu_int32 i32);
+        Matcher<lyric_runtime::Operand> OperandI16(tu_int16 i16);
+        Matcher<lyric_runtime::Operand> OperandI8(tu_int8 i8);
+        Matcher<lyric_runtime::Operand> OperandU64(tu_uint64 u64);
+        Matcher<lyric_runtime::Operand> OperandU32(tu_uint32 u32);
+        Matcher<lyric_runtime::Operand> OperandU16(tu_uint16 u16);
+        Matcher<lyric_runtime::Operand> OperandU8(tu_uint8 u8);
+        Matcher<lyric_runtime::Operand> OperandF64(double f64);
+        Matcher<lyric_runtime::Operand> OperandF32(float f32);
+        Matcher<lyric_runtime::Operand> OperandInt(tu_int64 i64);
         Matcher<lyric_runtime::Operand> OperandFloat(double dbl);
         Matcher<lyric_runtime::Operand> OperandChar(char32_t chr);
         Matcher<lyric_runtime::Operand> OperandString(std::string_view str);

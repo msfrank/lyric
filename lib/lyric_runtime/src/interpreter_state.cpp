@@ -284,6 +284,15 @@ allocate_heap_manager(
     tempo_utils::Status status;
 
     // resolve existential tables
+    preludeTables.I64Table = resolve_bootstrap_existential_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("I64"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.U64Table = resolve_bootstrap_existential_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("U64"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.F64Table = resolve_bootstrap_existential_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("F64"), status);
+    TU_RETURN_IF_NOT_OK (status);
     preludeTables.BytesTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Bytes"), status);
     TU_RETURN_IF_NOT_OK (status);

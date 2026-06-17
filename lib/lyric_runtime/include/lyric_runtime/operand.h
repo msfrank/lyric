@@ -15,12 +15,17 @@ namespace lyric_runtime {
     class BaseRef;
     class BytesRef;
     class DescriptorEntry;
+    class I64Ref;
+    class U64Ref;
+    class F64Ref;
+    class NumRef;
     class NamespaceRef;
     class ProtocolRef;
     class RestRef;
     class StatusRef;
     class StringRef;
     class TypeEntry;
+    class HeapManager;
 
     constexpr tu_uint32 kInvalidSmallValue      = 0x00000008;
     constexpr tu_uint64 kInvalidLargeValue      = 0x0000000000000007;
@@ -125,13 +130,16 @@ namespace lyric_runtime {
         static Operand fromI16(tu_int16 i16);
         static Operand fromI32(tu_int32 i32);
         static Operand fromI64(tu_int64 i64);
+        static Operand fromI64(I64Ref *i64);
         static Operand fromU8(tu_uint8 u8);
         static Operand fromU16(tu_uint16 u16);
         static Operand fromU32(tu_uint32 u32);
         static Operand fromU64(tu_uint64 u64);
+        static Operand fromU64(U64Ref *u64);
         static Operand fromC32(char32_t c32);
         static Operand fromF32(float f32);
         static Operand fromF64(double f64);
+        static Operand fromF64(F64Ref *f64);
         static Operand fromRef(BaseRef *ref);
         static Operand fromBytes(BytesRef *bytes);
         static Operand fromNamespace(NamespaceRef *ns);
@@ -156,6 +164,8 @@ namespace lyric_runtime {
 
         static Operand fromPointer(void *ptr, tu_uint8 pointertag);
         void *getPointer(tu_uint8 pointertag) const;
+
+        friend void value_to_operand(double v, Operand &op, HeapManager *heapManager);
     };
 
     bool operand_to_value(const Operand &op, bool &v);
@@ -181,18 +191,18 @@ namespace lyric_runtime {
     bool operand_to_pointer(const Operand &op, DescriptorEntry *&e);
     bool operand_to_pointer(const Operand &op, TypeEntry *&e);
 
-    void value_to_operand(bool v, Operand &op);
-    void value_to_operand(tu_int8 v, Operand &op);
-    void value_to_operand(tu_int16 v, Operand &op);
-    void value_to_operand(tu_int32 v, Operand &op);
-    void value_to_operand(tu_int64 v, Operand &op);
-    void value_to_operand(tu_uint8 v, Operand &op);
-    void value_to_operand(tu_uint16 v, Operand &op);
-    void value_to_operand(tu_uint32 v, Operand &op);
-    void value_to_operand(tu_uint64 v, Operand &op);
-    void value_to_operand(float v, Operand &op);
-    void value_to_operand(double v, Operand &op);
-    void value_to_operand(char32_t v, Operand &op);
+    void value_to_operand(bool v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_int8 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_int16 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_int32 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_int64 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_uint8 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_uint16 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_uint32 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(tu_uint64 v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(float v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(double v, Operand &op, HeapManager *heapManager);
+    void value_to_operand(char32_t v, Operand &op, HeapManager *heapManager);
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const Operand &operand);
 

@@ -7,6 +7,12 @@
 
 namespace lyric_compiler {
 
+    struct Cast {
+        lyric_common::TypeDef castType;
+        lyric_assembler::CodeFragment *fragment = nullptr;
+        bool isImmediateConversion = false;
+    };
+
     class CastHandler : public BaseGrouping {
     public:
         CastHandler(
@@ -27,15 +33,13 @@ namespace lyric_compiler {
 
     private:
         bool m_isSideEffect;
-        lyric_assembler::CodeFragment *m_fragment;
-        lyric_common::TypeDef m_castType;
+        Cast m_cast;
     };
 
     class CastTarget : public BaseChoice {
     public:
         CastTarget(
-            const lyric_common::TypeDef &castType,
-            lyric_assembler::CodeFragment *fragment,
+            Cast *cast,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -45,8 +49,7 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        lyric_common::TypeDef m_castType;
-        lyric_assembler::CodeFragment *m_fragment;
+        Cast *m_cast;
     };
 }
 

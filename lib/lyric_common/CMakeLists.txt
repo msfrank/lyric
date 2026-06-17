@@ -12,6 +12,7 @@ set(LYRIC_COMMON_INCLUDES
     include/lyric_common/common_serde.h
     include/lyric_common/common_status.h
     include/lyric_common/common_types.h
+    include/lyric_common/parse_numeric.h
     include/lyric_common/plugin.h
     include/lyric_common/runtime_policy.h
     include/lyric_common/symbol_path.h
@@ -27,6 +28,7 @@ target_sources(lyric_common
     src/common_serde.cpp
     src/common_status.cpp
     src/common_types.cpp
+    src/parse_numeric.cpp
     src/plugin.cpp
     src/runtime_policy.cpp
     src/symbol_path.cpp
@@ -66,6 +68,9 @@ target_link_libraries(lyric_common
     tempo::tempo_tracing
     tempo::tempo_utils
     absl::flat_hash_map
+    PRIVATE
+    Boost::headers
+    absl::strings
     )
 
 # install targets

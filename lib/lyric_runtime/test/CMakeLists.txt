@@ -7,6 +7,7 @@ include(GoogleTest)
 set(TEST_CASES
     connection_tests.cpp
     convert_ops_tests.cpp
+    numeric_ops_tests.cpp
     operand_stack_tests.cpp
     port_multiplexer_tests.cpp
     system_scheduler_tests.cpp

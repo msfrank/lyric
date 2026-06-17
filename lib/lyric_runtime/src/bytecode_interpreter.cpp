@@ -344,7 +344,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::add(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::add(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -354,7 +354,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::sub(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::sub(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -364,7 +364,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::mul(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::mul(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -374,7 +374,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::div(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::div(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -383,7 +383,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_NEG: {
                 Operand element, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::neg(element, result));
+                ON_ERROR_IF_NOT_OK (internal::neg(heapManager, element, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -480,7 +480,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_and(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_and(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -489,7 +489,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_or(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_or(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -498,7 +498,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand lhs, rhs, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_xor(lhs, rhs, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_xor(heapManager, lhs, rhs, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -506,7 +506,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_BITWISE_NOT: {
                 Operand element, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_not(element, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_not(heapManager, element, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -515,7 +515,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand element, count, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(count));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_shr(element, count, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_shr(heapManager, element, count, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -524,7 +524,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 Operand element, count, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(count));
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(element));
-                ON_ERROR_IF_NOT_OK (internal::bitwise_shl(element, count, result));
+                ON_ERROR_IF_NOT_OK (internal::bitwise_shl(heapManager, element, count, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
@@ -703,7 +703,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_I8: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_I8(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I8(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -711,7 +711,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_I16: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_I16(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I16(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -719,7 +719,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_I32: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_I32(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -727,7 +727,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_I64: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_I64(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_I64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -735,7 +735,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_U8: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_U8(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U8(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -743,7 +743,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_U16: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_U16(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U16(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -751,7 +751,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_U32: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_U32(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -759,7 +759,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_U64: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_U64(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_U64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -767,7 +767,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_F32: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_F32(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_F32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 
@@ -775,7 +775,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_TO_F64: {
                 Operand source, result;
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
-                ON_ERROR_IF_NOT_OK (internal::convert_to_F64(source, result));
+                ON_ERROR_IF_NOT_OK (internal::convert_to_F64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
             }
 

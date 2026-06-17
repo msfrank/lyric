@@ -6,6 +6,7 @@ include(GoogleTest)
 
 set(TEST_CASES
     module_location_tests.cpp
+    parse_numeric_tests.cpp
     symbol_url_tests.cpp
     type_def_tests.cpp
     )

@@ -184,6 +184,7 @@ target_link_libraries(lyric_compiler
     absl::flat_hash_set
     PRIVATE
     absl::strings
+    Boost::headers
     )
 
 # install targets

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_bootstrap/bootstrap_loader.h>
-#include <lyric_runtime/internal/convert_ops.h>
+#include <lyric_runtime/internal/numeric_ops.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/operand.h>
 #include <lyric_runtime/static_loader.h>
@@ -10,7 +10,7 @@
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/memory_bytes.h>
 
-class ConvertOps : public ::testing::Test {
+class NumericOps : public ::testing::Test {
 protected:
     lyric_common::ModuleLocation testmodLocation;
     lyric_object::LyricObject testmodObject;
@@ -32,13 +32,13 @@ protected:
     }
 };
 
-TEST_F (ConvertOps, ConvertI8ToU8)
+TEST_F (NumericOps, Add)
 {
-    auto from = lyric_runtime::Operand::fromI8(100);
+    auto lhs = lyric_runtime::Operand::fromI32(101);
+    auto rhs = lyric_runtime::Operand::fromI32(202);
     lyric_runtime::Operand result;
-    ASSERT_THAT (lyric_runtime::internal::convert_to_U8(heapManager, from, result), tempo_test::IsOk());
-    tu_uint8 u8;
-    ASSERT_TRUE (result.getU8(u8));
-    ASSERT_EQ (100, u8);
+    ASSERT_THAT (lyric_runtime::internal::add(heapManager, lhs, rhs, result), tempo_test::IsOk());
+    tu_int32 i32;
+    ASSERT_TRUE (result.getI32(i32));
+    ASSERT_EQ (303, i32);
 }
-

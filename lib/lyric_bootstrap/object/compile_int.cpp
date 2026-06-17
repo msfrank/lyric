@@ -78,6 +78,47 @@ declare_core_I32(BuilderState &state, const PreludeSymbols &preludeSymbols)
     return I32Existential;
 }
 
+void build_core_I32(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *I32Type = preludeSymbols.I32Existential->existentialType;
+    auto *I16Type = preludeSymbols.I16Existential->existentialType;
+    auto *I8Type = preludeSymbols.I8Existential->existentialType;
+    auto *I32Existential = preludeSymbols.I32Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *I16ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I16Type, I32Type});
+    auto *I16ConverterImpl = state.addImpl(I32Existential->existentialPath, I16ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
+        state.addImplExtension("Convert", I16ConverterImpl,
+            {
+                make_list_param("source", I16Type),
+            },
+            code, I32Type, true);
+    }
+
+    auto *I8ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I8Type, I32Type});
+    auto *I8ConverterImpl = state.addImpl(I32Existential->existentialPath, I8ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
+        state.addImplExtension("Convert", I8ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, I32Type, true);
+    }
+}
+
 CoreExistential *
 declare_core_I16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
@@ -85,6 +126,30 @@ declare_core_I16(BuilderState &state, const PreludeSymbols &preludeSymbols)
     auto *I16Existential = state.addExistential(
         existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return I16Existential;
+}
+
+void build_core_I16(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *I16Type = preludeSymbols.I16Existential->existentialType;
+    auto *I8Type = preludeSymbols.I8Existential->existentialType;
+    auto *I16Existential = preludeSymbols.I16Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *I8ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I8Type, I16Type});
+    auto *I8ConverterImpl = state.addImpl(I16Existential->existentialPath, I8ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I16));
+        state.addImplExtension("Convert", I8ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, I16Type, true);
+    }
 }
 
 CoreExistential *
@@ -172,6 +237,47 @@ declare_core_U32(BuilderState &state, const PreludeSymbols &preludeSymbols)
     return U32Existential;
 }
 
+void build_core_U32(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *U32Type = preludeSymbols.U32Existential->existentialType;
+    auto *U16Type = preludeSymbols.U16Existential->existentialType;
+    auto *U8Type = preludeSymbols.U8Existential->existentialType;
+    auto *U32Existential = preludeSymbols.U32Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *U16ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U16Type, U32Type});
+    auto *U16ConverterImpl = state.addImpl(U32Existential->existentialPath, U16ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
+        state.addImplExtension("Convert", U16ConverterImpl,
+            {
+                make_list_param("source", U16Type),
+            },
+            code, U32Type, true);
+    }
+
+    auto *U8ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U8Type, U32Type});
+    auto *U8ConverterImpl = state.addImpl(U32Existential->existentialPath, U8ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
+        state.addImplExtension("Convert", U8ConverterImpl,
+            {
+                make_list_param("source", U8Type),
+            },
+            code, U32Type, true);
+    }
+}
+
 CoreExistential *
 declare_core_U16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
@@ -179,6 +285,30 @@ declare_core_U16(BuilderState &state, const PreludeSymbols &preludeSymbols)
     auto *U16Existential = state.addExistential(
         existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return U16Existential;
+}
+
+void build_core_U16(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *U16Type = preludeSymbols.U16Existential->existentialType;
+    auto *U8Type = preludeSymbols.U8Existential->existentialType;
+    auto *U16Existential = preludeSymbols.U16Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *U8ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U8Type, U16Type});
+    auto *U8ConverterImpl = state.addImpl(U16Existential->existentialPath, U8ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U16));
+        state.addImplExtension("Convert", U8ConverterImpl,
+            {
+                make_list_param("source", U8Type),
+            },
+            code, U16Type, true);
+    }
 }
 
 CoreExistential *

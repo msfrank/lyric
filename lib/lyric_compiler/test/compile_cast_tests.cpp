@@ -1,13 +1,43 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
 #include "base_compiler_fixture.h"
-#include "lyric_bootstrap/bootstrap_helpers.h"
 
 class CompileCast : public BaseCompilerFixture {};
+
+TEST_F(CompileCast, EvaluateIntegerPromotion)
+{
+    auto result = m_tester->runModule(R"(
+        val i8: I8 = 100 as I8
+        i8
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandI8(100))));
+}
+
+TEST_F(CompileCast, EvaluateFloatPromotion)
+{
+    auto result = m_tester->runModule(R"(
+        val f32: F32 = 100.0 as F32
+        f32
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandF32(100.0))));
+}
+
+TEST_F(CompileCast, EvaluateFloatPromotionForAmbiguousLiteral)
+{
+    auto result = m_tester->runModule(R"(
+        val f32: F32 = 100 as F32
+        f32
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(OperandF32(100.0))));
+}
 
 TEST_F(CompileCast, EvaluateUpcastWithSubtype)
 {

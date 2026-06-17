@@ -9,6 +9,9 @@
 namespace lyric_runtime {
 
     struct PreludeTables {
+        const ExistentialTable *I64Table = nullptr;
+        const ExistentialTable *U64Table = nullptr;
+        const ExistentialTable *F64Table = nullptr;
         const ExistentialTable *BytesTable = nullptr;
         const ExistentialTable *RestTable = nullptr;
         const ExistentialTable *StringTable = nullptr;
@@ -40,6 +43,10 @@ namespace lyric_runtime {
             SystemScheduler *systemScheduler,
             std::shared_ptr<AbstractHeap> heap);
         virtual ~HeapManager() = default;
+
+        virtual Operand allocateI64(tu_int64 i64);
+        virtual Operand allocateU64(tu_uint64 u64);
+        virtual Operand allocateF64(double f64);
 
         virtual Operand allocateString(std::string_view string, bool isPermanent);
         virtual Operand allocateString(tempo_utils::Rope<char> rope, bool isPermanent);

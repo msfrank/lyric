@@ -5,12 +5,16 @@
 #include <boost/endian.hpp>
 
 #include <lyric_runtime/bytes_ref.h>
+#include <lyric_runtime/f64_ref.h>
+#include <lyric_runtime/i64_ref.h>
+#include <lyric_runtime/heap_manager.h>
 #include <lyric_runtime/namespace_ref.h>
 #include <lyric_runtime/operand.h>
 #include <lyric_runtime/protocol_ref.h>
 #include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/u64_ref.h>
 #include <tempo_utils/unicode.h>
 
 /*
@@ -48,6 +52,10 @@
  *   String:    00001110 (14)
  *   Desc:      00010000 (16)
  *   Type:      00010010 (18)
+ *   I64:       00010100 (20)
+ *   U64:       00010110 (22)
+ *   F64:       00011000 (24)
+ *   Num:       00011010 (26)
  */
 
 /*
@@ -126,6 +134,10 @@ constexpr tu_uint8 kPointerStatusTag        = 0x0C;
 constexpr tu_uint8 kPointerStringTag        = 0x0E;
 constexpr tu_uint8 kPointerDescTag          = 0x10;
 constexpr tu_uint8 kPointerTypeTag          = 0x12;
+constexpr tu_uint8 kPointerI64Tag           = 0x14;
+constexpr tu_uint8 kPointerU64Tag           = 0x16;
+constexpr tu_uint8 kPointerF64Tag           = 0x18;
+constexpr tu_uint8 kPointerNumTag           = 0x1A;
 
 constexpr tu_uint32 kUndefEnum              = 0x01;
 constexpr tu_uint32 kNilEnum                = 0x02;
@@ -133,6 +145,14 @@ constexpr tu_uint32 kTrueEnum               = 0x03;
 constexpr tu_uint32 kFalseEnum              = 0x04;
 constexpr tu_uint32 kF64ZeroEnum            = 0x05;
 constexpr tu_uint32 kF64NZeroEnum           = 0x06;
+
+constexpr tu_int32 kMinI32StackValue        = -0x10000000;
+constexpr tu_int32 kMaxI32StackValue        = 0x10000000;
+constexpr tu_uint32 kMaxU32StackValue       = 0x1fffffff;
+constexpr tu_int64 kMinI64StackValue        = -0x800000000000000;
+constexpr tu_int64 kMaxI64StackValue        = 0x800000000000000;
+constexpr tu_uint64 kMaxU64StackValue       = 0x0fffffffffffffff;
+constexpr char32_t kMaxC32Value             = 0x10ffff;
 
 inline tu_uint8 get_info_byte(const std::array<tu_uint8,8> &bytes) { return bytes[7]; }
 
@@ -474,6 +494,14 @@ lyric_runtime::Operand::getType() const
                     return OperandType::Descriptor;
                 case kPointerTypeTag:
                     return OperandType::Type;
+                case kPointerI64Tag:
+                    return OperandType::Int64;
+                case kPointerU64Tag:
+                    return OperandType::UInt64;
+                case kPointerF64Tag:
+                    return OperandType::Float64;
+                case kPointerNumTag:
+                    return OperandType::Invalid;
                 default:
                     return OperandType::Invalid;
             }
@@ -706,6 +734,13 @@ bool
 lyric_runtime::Operand::getI64(tu_int64 &i64) const
 {
     tu_uint8 info = get_info_byte(m_bytes);
+    if ((info & kTagMask) == kDoubleWordPointerTag) {
+        auto *ptr = (I64Ref *) getPointer(kPointerI64Tag);
+        if (ptr == nullptr)
+            return false;
+        i64 = ptr->getI64();
+        return true;
+    }
     if ((info & kNum64Mask) != kNum64SignedTag)
         return false;
     auto *ptr = (tu_uint64 *) m_bytes.data();
@@ -721,9 +756,14 @@ lyric_runtime::Operand::getI64(tu_int64 &i64) const
 bool
 lyric_runtime::Operand::getU64(tu_uint64 &u64) const
 {
-    if (getOverlay() != OverlayType::LargeValue)
-        return false;
     tu_uint8 info = get_info_byte(m_bytes);
+    if ((info & kTagMask) == kDoubleWordPointerTag) {
+        auto *ptr = (U64Ref *) getPointer(kPointerU64Tag);
+        if (ptr == nullptr)
+            return false;
+        u64 = ptr->getU64();
+        return true;
+    }
     if ((info & kNum64Mask) != kNum64UnsignedTag)
         return false;
     auto *ptr = (tu_uint64 *) m_bytes.data();
@@ -764,34 +804,46 @@ lyric_runtime::Operand::getF32(float &f32) const
 bool
 lyric_runtime::Operand::getF64(double &f64) const
 {
-    if (getOverlay() == OverlayType::SmallValue) [[unlikely]] {
-        switch (get_enum_byte(m_bytes)) {
-            case kF64ZeroEnum:
-                f64 = 0.0;
-                return true;
-            case kF64NZeroEnum:
-                f64 = -0.0;
-                return true;
-            default:
-                return false;
+    switch (getOverlay()) {
+        case OverlayType::SmallValue: {
+            switch (get_enum_byte(m_bytes)) {
+                case kF64ZeroEnum:
+                    f64 = 0.0;
+                    return true;
+                case kF64NZeroEnum:
+                    f64 = -0.0;
+                    return true;
+                default:
+                    return false;
+            }
         }
-    }
 
-    if (getOverlay() != OverlayType::LargeValue)
-        return false;
+        case OverlayType::LargeValue: {
+            tu_uint8 tag = get_info_tag(m_bytes);
+            switch (tag) {
+                case kDoubleWordSelf1Tag:
+                case kDoubleWordSelf2Tag: {
+                    tu_uint64 large;
+                    memcpy(&large, m_bytes.data(), 8);
+                    boost::endian::big_to_native_inplace(large);
+                    large = std::rotl(large, 60);
+                    auto *ptr = (double *) &large;
+                    f64 = *ptr;
+                    return true;
+                }
+                default:
+                    return false;
+            }
+        }
 
-    tu_uint8 tag = get_info_tag(m_bytes);
-    switch (tag) {
-        case kDoubleWordSelf1Tag:
-        case kDoubleWordSelf2Tag: {
-            tu_uint64 large;
-            memcpy(&large, m_bytes.data(), 8);
-            boost::endian::big_to_native_inplace(large);
-            large = std::rotl(large, 60);
-            auto *ptr = (double *) &large;
-            f64 = *ptr;
+        case OverlayType::Pointer: {
+            auto *ptr = (F64Ref *) getPointer(kPointerF64Tag);
+            if (ptr == nullptr)
+                return false;
+            f64 = ptr->getF64();
             return true;
         }
+
         default:
             return false;
     }
@@ -969,7 +1021,7 @@ lyric_runtime::Operand
 lyric_runtime::Operand::fromI32(tu_int32 i32)
 {
     std::array<tu_uint8,8> bytes;
-    if (i32 < -0x10000000 || i32 > 0x10000000) [[unlikely]] {
+    if (i32 < kMinI32StackValue || i32 > kMaxI32StackValue) [[unlikely]] {
         boost::endian::endian_store<tu_int32,4,boost::endian::order::native>(bytes.data() + 3, i32);
         bytes[7] = kNum32SignedTag;
         return Operand(bytes);
@@ -988,7 +1040,7 @@ lyric_runtime::Operand
 lyric_runtime::Operand::fromU32(tu_uint32 u32)
 {
     std::array<tu_uint8,8> bytes;
-    if (u32 > (0xffffffff >> 3)) [[unlikely]] {
+    if (u32 > kMaxU32StackValue) [[unlikely]] {
         boost::endian::endian_store<tu_uint32,4,boost::endian::order::native>(bytes.data() + 3, u32);
         bytes[7] = kNum32UnsignedTag;
         return Operand(bytes);
@@ -1002,7 +1054,7 @@ lyric_runtime::Operand::fromU32(tu_uint32 u32)
 lyric_runtime::Operand
 lyric_runtime::Operand::fromI64(tu_int64 i64)
 {
-    if (i64 < -0x800000000000000 || i64 > 0x800000000000000)
+    if (i64 < kMinI64StackValue || i64 > kMaxI64StackValue)
         return {};
     std::array<tu_uint8,8> bytes;
     tu_uint64 large = std::abs(i64);
@@ -1016,9 +1068,15 @@ lyric_runtime::Operand::fromI64(tu_int64 i64)
 }
 
 lyric_runtime::Operand
+lyric_runtime::Operand::fromI64(I64Ref *i64)
+{
+    return fromPointer(i64, kPointerI64Tag);
+}
+
+lyric_runtime::Operand
 lyric_runtime::Operand::fromU64(tu_uint64 u64)
 {
-    if (u64 > (0xffffffffffffffff >> 4))
+    if (u64 > kMaxU64StackValue)
         return {};
     std::array<tu_uint8,8> bytes;
     tu_uint64 large = boost::endian::native_to_big(u64 << 4);
@@ -1028,9 +1086,15 @@ lyric_runtime::Operand::fromU64(tu_uint64 u64)
 }
 
 lyric_runtime::Operand
+lyric_runtime::Operand::fromU64(U64Ref *u64)
+{
+    return fromPointer(u64, kPointerU64Tag);
+}
+
+lyric_runtime::Operand
 lyric_runtime::Operand::fromC32(char32_t c32)
 {
-    if (c32 > 0x10ffff)
+    if (c32 > kMaxC32Value)
         return {};
     std::array<tu_uint8,8> bytes;
     tu_uint32 small = boost::endian::native_to_big(c32 << 8);
@@ -1048,16 +1112,8 @@ lyric_runtime::Operand::fromF32(float f32)
     return Operand(bytes);
 }
 
-lyric_runtime::Operand
-lyric_runtime::Operand::fromF64(double f64)
+inline bool encode_f64(double f64, std::array<tu_uint8,8> &bytes)
 {
-    std::array<tu_uint8,8> bytes;
-    if (f64 == 0.0) [[unlikely]] {
-        bytes[6] = std::signbit(f64)? kF64NZeroEnum : kF64ZeroEnum;
-        bytes[7] = kShortEnumTag;
-        return Operand(bytes);
-    }
-
     tu_uint64 large;
     memcpy(&large, &f64, 8);
     large = std::rotr(large, 60);
@@ -1068,10 +1124,31 @@ lyric_runtime::Operand::fromF64(double f64)
     switch (tag) {
         case kDoubleWordSelf1Tag:
         case kDoubleWordSelf2Tag:
-            return Operand(bytes);
+            return true;
         default:
-            return {};
+            return false;
     }
+}
+
+lyric_runtime::Operand
+lyric_runtime::Operand::fromF64(double f64)
+{
+    std::array<tu_uint8,8> bytes;
+    if (f64 == 0.0) [[unlikely]] {
+        bytes[6] = std::signbit(f64)? kF64NZeroEnum : kF64ZeroEnum;
+        bytes[7] = kShortEnumTag;
+        return Operand(bytes);
+    }
+
+    if (encode_f64(f64, bytes))
+        return Operand(bytes);
+    return {};
+}
+
+lyric_runtime::Operand
+lyric_runtime::Operand::fromF64(F64Ref *f64)
+{
+    return fromPointer(f64, kPointerF64Tag);
 }
 
 lyric_runtime::Operand
@@ -1707,62 +1784,75 @@ bool lyric_runtime::operand_to_pointer(const Operand &op, TypeEntry *&e)
     return op.getType(e);
 }
 
-void lyric_runtime::value_to_operand(bool v, Operand &op)
+void lyric_runtime::value_to_operand(bool v, Operand &op, HeapManager *)
 {
     op = Operand::fromBool(v);
 }
 
-void lyric_runtime::value_to_operand(tu_int8 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_int8 v, Operand &op, HeapManager *)
 {
     op = Operand::fromI8(v);
 }
 
-void lyric_runtime::value_to_operand(tu_int16 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_int16 v, Operand &op, HeapManager *)
 {
     op = Operand::fromI16(v);
 }
 
-void lyric_runtime::value_to_operand(tu_int32 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_int32 v, Operand &op, HeapManager *)
 {
     op = Operand::fromI32(v);
 }
 
-void lyric_runtime::value_to_operand(tu_int64 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_int64 v, Operand &op, HeapManager *heapManager)
 {
-    op = Operand::fromI64(v);
+    if (v < kMinI64StackValue || v > kMaxI64StackValue) [[unlikely]] {
+        op = heapManager->allocateI64(v);
+    } else {
+        op = Operand::fromI64(v);
+    }
 }
 
-void lyric_runtime::value_to_operand(tu_uint8 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_uint8 v, Operand &op, HeapManager *)
 {
     op = Operand::fromU8(v);
 }
 
-void lyric_runtime::value_to_operand(tu_uint16 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_uint16 v, Operand &op, HeapManager *)
 {
     op = Operand::fromU16(v);
 }
 
-void lyric_runtime::value_to_operand(tu_uint32 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_uint32 v, Operand &op, HeapManager *)
 {
     op = Operand::fromU32(v);
 }
 
-void lyric_runtime::value_to_operand(tu_uint64 v, Operand &op)
+void lyric_runtime::value_to_operand(tu_uint64 v, Operand &op, HeapManager *heapManager)
 {
-    op = Operand::fromU64(v);
+    if (v > kMaxU64StackValue) [[unlikely]] {
+        op = heapManager->allocateU64(v);
+    } else {
+        op = Operand::fromU64(v);
+    }
 }
 
-void lyric_runtime::value_to_operand(float v, Operand &op)
+void lyric_runtime::value_to_operand(float v, Operand &op, HeapManager *)
 {
     op = Operand::fromF32(v);
 }
 
-void lyric_runtime::value_to_operand(double v, Operand &op)
+void lyric_runtime::value_to_operand(double v, Operand &op, HeapManager *heapManager)
 {
-    op = Operand::fromF64(v);
+    std::array<tu_uint8,8> bytes;
+    if (!encode_f64(v, bytes)) {
+        op = heapManager->allocateF64(v);
+    } else {
+        op = Operand(bytes);
+    }
 }
 
-void lyric_runtime::value_to_operand(char32_t v, Operand &op)
+void lyric_runtime::value_to_operand(char32_t v, Operand &op, HeapManager *)
 {
     op = Operand::fromC32(v);
 }

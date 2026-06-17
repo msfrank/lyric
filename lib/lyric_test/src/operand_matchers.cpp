@@ -194,6 +194,66 @@ lyric_test::matchers::OperandBool(bool b)
     return OperandMatcher(lyric_runtime::Operand::fromBool(b));
 }
 
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandI64(tu_int64 i64)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromI64(i64));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandI32(tu_int32 i32)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromI32(i32));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandI16(tu_int16 i16)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromI16(i16));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandI8(tu_int8 i8)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromI8(i8));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandU64(tu_uint64 u64)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromU64(u64));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandU32(tu_uint32 u32)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromU32(u32));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandU16(tu_uint16 u16)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromU16(u16));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandU8(tu_uint8 u8)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromU8(u8));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandF64(double f64)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromF64(f64));
+}
+
+Matcher<lyric_runtime::Operand>
+lyric_test::matchers::OperandF32(float f32)
+{
+    return OperandMatcher(lyric_runtime::Operand::fromF32(f32));
+}
+
 testing::Matcher<lyric_runtime::Operand>
 lyric_test::matchers::OperandInt(tu_int64 i64)
 {
