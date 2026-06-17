@@ -30,6 +30,15 @@ namespace lyric_common {
     constexpr const char *kObjectContentType = LYRIC_COMMON_OBJECT_CONTENT_TYPE;
 
     constexpr const char *kPluginContentType = LYRIC_COMMON_PLUGIN_CONTENT_TYPE;
+
+    enum class NumericBase {
+        Invalid,
+        Autodetect,
+        Decimal,
+        Hex,
+        Octal,
+        Binary,
+    };
 }
 
 #endif // LYRIC_COMMON_COMMON_TYPES_H

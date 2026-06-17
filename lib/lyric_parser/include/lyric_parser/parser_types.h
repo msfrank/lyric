@@ -35,19 +35,6 @@ namespace lyric_parser {
         Final,
     };
 
-    enum class BaseType {
-        Binary,
-        Octal,
-        Decimal,
-        Hex,
-    };
-
-    enum class NotationType {
-        Integral,
-        Fixed,
-        Scientific,
-    };
-
     enum class PortType {
         Connect,
         Accept,

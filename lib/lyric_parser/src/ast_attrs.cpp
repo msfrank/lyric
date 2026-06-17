@@ -4,88 +4,43 @@
 #include <tempo_schema/schema_result.h>
 
 lyric_parser::BaseTypeAttr::BaseTypeAttr(const tempo_schema::ComparableResource *resource)
-    : tempo_schema::AttrSerde<BaseType>(resource)
+    : tempo_schema::AttrSerde<lyric_common::NumericBase>(resource)
 {
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::BaseTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const BaseType &binding) const
+lyric_parser::BaseTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const lyric_common::NumericBase &base) const
 {
     TU_ASSERT (writer != nullptr);
-    return writer->putUInt32(static_cast<tu_uint32>(binding));
+    return writer->putUInt32(static_cast<tu_uint32>(base));
 }
 
 static tempo_utils::Status
-value_to_base_type(tu_uint32 value, lyric_parser::BaseType &base)
+value_to_base_type(tu_uint32 value, lyric_common::NumericBase &base)
 {
-    switch (static_cast<lyric_parser::BaseType>(value)) {
-        case lyric_parser::BaseType::Binary:
-            base = lyric_parser::BaseType::Binary;
-            return {};
-        case lyric_parser::BaseType::Octal:
-            base = lyric_parser::BaseType::Octal;
-            return {};
-        case lyric_parser::BaseType::Decimal:
-            base = lyric_parser::BaseType::Decimal;
-            return {};
-        case lyric_parser::BaseType::Hex:
-            base = lyric_parser::BaseType::Hex;
+    auto base_ = static_cast<lyric_common::NumericBase>(value);
+
+    switch (static_cast<lyric_common::NumericBase>(value)) {
+        case lyric_common::NumericBase::Binary:
+        case lyric_common::NumericBase::Octal:
+        case lyric_common::NumericBase::Decimal:
+        case lyric_common::NumericBase::Hex:
+            base = base_;
             return {};
         default:
             return tempo_schema::SchemaStatus::forCondition(
-                tempo_schema::SchemaCondition::kConversionError, "invalid base type");
+                tempo_schema::SchemaCondition::kConversionError, "invalid numeric base");
     }
 }
 
 tempo_utils::Status
-lyric_parser::BaseTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, BaseType &binding) const
+lyric_parser::BaseTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, lyric_common::NumericBase &binding) const
 {
     tu_uint32 value;
     auto status = parser->getUInt32(index, value);
     if (status.notOk())
         return status;
     return value_to_base_type(value, binding);
-}
-
-lyric_parser::NotationTypeAttr::NotationTypeAttr(const tempo_schema::ComparableResource *resource)
-    : tempo_schema::AttrSerde<NotationType>(resource)
-{
-}
-
-tempo_utils::Result<tu_uint32>
-lyric_parser::NotationTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const NotationType &binding) const
-{
-    TU_ASSERT (writer != nullptr);
-    return writer->putUInt32(static_cast<tu_uint32>(binding));
-}
-
-static tempo_utils::Status
-value_to_notation_type(tu_int64 value, lyric_parser::NotationType &notation)
-{
-    switch (static_cast<lyric_parser::NotationType>(value)) {
-        case lyric_parser::NotationType::Integral:
-            notation = lyric_parser::NotationType::Integral;
-            return {};
-        case lyric_parser::NotationType::Fixed:
-            notation = lyric_parser::NotationType::Fixed;
-            return {};
-        case lyric_parser::NotationType::Scientific:
-            notation = lyric_parser::NotationType::Scientific;
-            return {};
-        default:
-            return tempo_schema::SchemaStatus::forCondition(
-                tempo_schema::SchemaCondition::kConversionError, "invalid notation type");
-    }
-}
-
-tempo_utils::Status
-lyric_parser::NotationTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, NotationType &notation) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    return value_to_notation_type(value, notation);
 }
 
 lyric_parser::BoundTypeAttr::BoundTypeAttr(const tempo_schema::ComparableResource *resource)
@@ -101,7 +56,7 @@ lyric_parser::BoundTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer,
 }
 
 static tempo_utils::Status
-value_to_bound_type(tu_int64 value, lyric_parser::BoundType &bound)
+value_to_bound_type(tu_uint32 value, lyric_parser::BoundType &bound)
 {
     switch (static_cast<lyric_parser::BoundType>(value)) {
         case lyric_parser::BoundType::Extends:
@@ -343,7 +298,7 @@ lyric_parser::NodeAttr::parseAttr(
 const tempo_schema::StringAttr lyric_parser::kLyricAstLiteralValue(&lyric_schema::kLyricAstLiteralValueProperty);
 
 const lyric_parser::BaseTypeAttr lyric_parser::kLyricAstBaseType(&lyric_schema::kLyricAstBaseEnumProperty);
-const lyric_parser::NotationTypeAttr lyric_parser::kLyricAstNotationType(&lyric_schema::kLyricAstNotationEnumProperty);
+const tempo_schema::BoolAttr lyric_parser::kLyricAstIsScientific(&lyric_schema::kLyricAstIsScientificProperty);
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
 const lyric_parser::DeriveTypeAttr lyric_parser::kLyricAstDeriveType(&lyric_schema::kLyricAstDeriveEnumProperty);

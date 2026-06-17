@@ -3,7 +3,7 @@
 
 #include <lyric_common/module_location.h>
 #include <lyric_common/common_serde.h>
-#include <lyric_common/symbol_url.h>
+#include <lyric_common/parse_numeric.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_schema/attr_serde.h>
 #include <tempo_schema/url_serde.h>
@@ -15,34 +15,19 @@
 
 namespace lyric_parser {
 
-    class BaseTypeAttr : public tempo_schema::AttrSerde<BaseType> {
+    class BaseTypeAttr : public tempo_schema::AttrSerde<lyric_common::NumericBase> {
 
-        using SerdeType = BaseType;
+        using SerdeType = lyric_common::NumericBase;
 
     public:
         explicit BaseTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
             tempo_schema::AbstractAttrWriter *writer,
-            const BaseType &value) const override;
+            const lyric_common::NumericBase &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
             tempo_schema::AbstractAttrParser *parser,
-            BaseType &value) const override;
-    };
-
-    class NotationTypeAttr : public tempo_schema::AttrSerde<NotationType> {
-
-        using SerdeType = NotationType;
-
-    public:
-        explicit NotationTypeAttr(const tempo_schema::ComparableResource *resource);
-        tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_schema::AbstractAttrWriter *writer,
-            const NotationType &value) const override;
-        tempo_utils::Status parseAttr(
-            tu_uint32 index,
-            tempo_schema::AbstractAttrParser *parser,
-            NotationType &value) const override;
+            lyric_common::NumericBase &value) const override;
     };
 
     class BoundTypeAttr : public tempo_schema::AttrSerde<BoundType> {
@@ -139,7 +124,7 @@ namespace lyric_parser {
     extern const tempo_schema::StringAttr kLyricAstLiteralValue;
 
     extern const BaseTypeAttr kLyricAstBaseType;
-    extern const NotationTypeAttr kLyricAstNotationType;
+    extern const tempo_schema::BoolAttr kLyricAstIsScientific;
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
     extern const DeriveTypeAttr kLyricAstDeriveType;

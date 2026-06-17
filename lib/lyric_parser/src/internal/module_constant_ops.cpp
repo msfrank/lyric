@@ -96,8 +96,7 @@ lyric_parser::internal::ModuleConstantOps::parseDecimalInteger(ModuleParser::Dec
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Decimal));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 
@@ -123,8 +122,7 @@ lyric_parser::internal::ModuleConstantOps::parseHexInteger(ModuleParser::HexInte
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Hex));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 
@@ -150,8 +148,7 @@ lyric_parser::internal::ModuleConstantOps::parseOctalInteger(ModuleParser::Octal
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Octal));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Octal));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 
@@ -172,8 +169,8 @@ lyric_parser::internal::ModuleConstantOps::parseDecimalFixedFloat(ModuleParser::
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstFloatClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Decimal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstIsScientific, false));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 
@@ -194,8 +191,8 @@ lyric_parser::internal::ModuleConstantOps::parseDecimalScientificFloat(ModulePar
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstFloatClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Scientific));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Decimal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstIsScientific, true));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 
@@ -232,8 +229,8 @@ lyric_parser::internal::ModuleConstantOps::parseHexFloat(ModuleParser::HexFloatC
     ArchetypeNode *literalNode;
     TU_ASSIGN_OR_RAISE (literalNode, state->appendNode(lyric_schema::kLyricAstFloatClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
-    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, lyric_common::NumericBase::Hex));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstIsScientific, false));
     TU_RAISE_IF_NOT_OK (state->pushNode(literalNode));
 }
 

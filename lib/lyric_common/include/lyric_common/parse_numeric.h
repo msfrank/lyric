@@ -3,16 +3,9 @@
 
 #include <tempo_utils/result.h>
 
-namespace lyric_common {
+#include "common_types.h"
 
-    enum class NumericBase {
-        Invalid,
-        Autodetect,
-        Decimal,
-        Hex,
-        Octal,
-        Binary,
-    };
+namespace lyric_common {
 
     tempo_utils::Result<tu_int64> parse_I64(std::string_view s, NumericBase base = NumericBase::Autodetect);
     tempo_utils::Result<tu_int32> parse_I32(std::string_view s, NumericBase base = NumericBase::Autodetect);

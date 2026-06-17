@@ -8,15 +8,6 @@
 
 namespace lyric_parser {
 
-    tempo_utils::Result<int64_t> parse_integer_literal(
-        std::string_view literalValue,
-        BaseType baseType);
-
-    tempo_utils::Result<double> parse_float_literal(
-        std::string_view literalValue,
-        BaseType baseType,
-        NotationType notationType);
-
     tempo_utils::Result<char32_t> parse_char_literal(std::string_view literalValue);
 
     tempo_utils::Result<std::string> parse_string_literal(

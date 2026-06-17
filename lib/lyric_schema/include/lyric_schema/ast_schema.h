@@ -138,7 +138,7 @@ namespace lyric_schema {
         LiteralValue,
 
         BaseEnum,                   // enum identifying the literal number base
-        NotationEnum,               // enum identifying the literal floating point notation
+        IsScientific,               // boolean indicating whether a float literal is encoded in scientific notation
         BoundEnum,                  // enum identifying the type bound
         VarianceEnum,               // enum identifying the type variance
         DeriveEnum,                 // enum identifying the definition derive
@@ -395,8 +395,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::BaseEnum, "BaseEnum", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-    kLyricAstNotationEnumProperty(
-        &kLyricAstNs, LyricAstId::NotationEnum, "NotationEnum", tempo_schema::PropertyType::kUInt32);
+    kLyricAstIsScientificProperty(
+        &kLyricAstNs, LyricAstId::IsScientific, "IsScientific", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstBoundEnumProperty(
@@ -621,7 +621,7 @@ namespace lyric_schema {
         &kLyricAstLiteralValueProperty,
 
         &kLyricAstBaseEnumProperty,
-        &kLyricAstNotationEnumProperty,
+        &kLyricAstIsScientificProperty,
         &kLyricAstBoundEnumProperty,
         &kLyricAstVarianceEnumProperty,
         &kLyricAstDeriveEnumProperty,

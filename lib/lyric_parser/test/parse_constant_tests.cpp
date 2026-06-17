@@ -4,13 +4,12 @@
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/parse_diagnostics.h>
+#include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/ast_schema.h>
 #include <tempo_test/result_matchers.h>
 #include <tempo_tracing/error_walker.h>
 
 #include "base_parser_fixture.h"
-#include "lyric_parser/ast_attrs.h"
-#include "lyric_schema/assembler_schema.h"
-#include "lyric_schema/ast_schema.h"
 
 class ParseConstant : public BaseParserFixture {};
 
@@ -30,12 +29,9 @@ TEST_F(ParseConstant, ParseDecimalInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
 }
 
 TEST_F(ParseConstant, ParseNegativeDecimalInteger) {
@@ -54,12 +50,9 @@ TEST_F(ParseConstant, ParseNegativeDecimalInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("-123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
 }
 
 TEST_F(ParseConstant, ParseDecimalFixedFloat) {
@@ -78,12 +71,12 @@ TEST_F(ParseConstant, ParseDecimalFixedFloat) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123.456", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Fixed, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
+    bool scientific;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstIsScientific, scientific), tempo_test::IsOk());
+    ASSERT_FALSE (scientific);
 }
 
 TEST_F(ParseConstant, ParseNegativeDecimalFixedFloat) {
@@ -102,12 +95,12 @@ TEST_F(ParseConstant, ParseNegativeDecimalFixedFloat) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("-123.456", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Fixed, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
+    bool scientific;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstIsScientific, scientific), tempo_test::IsOk());
+    ASSERT_FALSE (scientific);
 }
 
 TEST_F(ParseConstant, ParseDecimalScientificFloat) {
@@ -126,12 +119,12 @@ TEST_F(ParseConstant, ParseDecimalScientificFloat) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123.456e7", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Scientific, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
+    bool scientific;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstIsScientific, scientific), tempo_test::IsOk());
+    ASSERT_TRUE (scientific);
 }
 
 TEST_F(ParseConstant, ParseNegativeDecimalScientificFloat) {
@@ -150,12 +143,12 @@ TEST_F(ParseConstant, ParseNegativeDecimalScientificFloat) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("-123.456e7", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Scientific, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Decimal, base);
+    bool scientific;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstIsScientific, scientific), tempo_test::IsOk());
+    ASSERT_TRUE (scientific);
 }
 
 TEST_F(ParseConstant, ParseHexInteger) {
@@ -174,12 +167,9 @@ TEST_F(ParseConstant, ParseHexInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Hex, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Hex, base);
 }
 
 TEST_F(ParseConstant, ParseNegativeHexInteger) {
@@ -198,12 +188,9 @@ TEST_F(ParseConstant, ParseNegativeHexInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("-123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Hex, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Hex, base);
 }
 
 TEST_F(ParseConstant, ParseOctalInteger) {
@@ -222,12 +209,9 @@ TEST_F(ParseConstant, ParseOctalInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Octal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Octal, base);
 }
 
 TEST_F(ParseConstant, ParseNegativeOctalInteger) {
@@ -246,12 +230,9 @@ TEST_F(ParseConstant, ParseNegativeOctalInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("-123", literalValue);
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::BaseType::Octal, base);
-    lyric_parser::NotationType notation;
-    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+    ASSERT_EQ (lyric_common::NumericBase::Octal, base);
 }
 
 TEST_F(ParseConstant, InvalidHexIntegerIsSyntaxError) {

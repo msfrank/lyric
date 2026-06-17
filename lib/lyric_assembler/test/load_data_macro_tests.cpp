@@ -107,7 +107,7 @@ TEST_F(LoadDataMacro, LoadLiteralInt)
 
     auto literalNode = loadDataNode.getChild(0);
     ASSERT_TRUE (literalNode.isClass(lyric_schema::kLyricAstIntegerClass));
-    ASSERT_EQ (3, literalNode.numAttrs());
+    ASSERT_EQ (2, literalNode.numAttrs());
     ASSERT_EQ (0, literalNode.numChildren());
 
     std::string literalValue;

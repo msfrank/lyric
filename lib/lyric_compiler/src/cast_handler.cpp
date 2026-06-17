@@ -86,16 +86,6 @@ lyric_compiler::CastTarget::CastTarget(
     TU_NOTNULL (m_cast);
 }
 
-lyric_common::NumericBase base_type_to_numeric_base(lyric_parser::BaseType base) {
-    switch (base) {
-        case lyric_parser::BaseType::Decimal:   return lyric_common::NumericBase::Decimal;
-        case lyric_parser::BaseType::Hex:       return lyric_common::NumericBase::Hex;
-        case lyric_parser::BaseType::Octal:     return lyric_common::NumericBase::Octal;
-        case lyric_parser::BaseType::Binary:    return lyric_common::NumericBase::Binary;
-        default:                                return lyric_common::NumericBase::Invalid;
-    }
-}
-
 tempo_utils::Result<bool>
 cast_to_integer(
     const lyric_assembler::FundamentalCache *fundamentalCache,
@@ -105,9 +95,8 @@ cast_to_integer(
 {
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
-    lyric_parser::BaseType base_;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base_));
-    auto base = base_type_to_numeric_base(base_);
+    lyric_common::NumericBase base;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base));
 
     auto I64Type = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64);
     if (castType == I64Type) {
@@ -201,12 +190,10 @@ cast_to_float(
 {
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
-    lyric_parser::BaseType base_;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base_));
-    auto base = base_type_to_numeric_base(base_);
-    lyric_parser::NotationType notation;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNotationType, notation));
-    bool scientific = notation == lyric_parser::NotationType::Scientific;
+    lyric_common::NumericBase base;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base));
+    bool scientific;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsScientific, scientific));
 
     auto F64Type = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::F64);
     if (castType == F64Type) {

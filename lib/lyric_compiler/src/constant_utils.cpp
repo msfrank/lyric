@@ -1,12 +1,6 @@
 
-#include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/concept_symbol.h>
-#include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
-#include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/literal_cache.h>
-#include <lyric_assembler/struct_symbol.h>
-#include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_parser/ast_attrs.h>
@@ -90,13 +84,13 @@ lyric_compiler::constant_integer(
 
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base));
 
     tu_int64 i64;
-    TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
+    TU_ASSIGN_OR_RETURN (i64, lyric_common::parse_I64(literalValue, base));
     TU_RETURN_IF_NOT_OK (fragment->immediateI64(i64));
-    TU_LOG_VV << "immediate int " << i64;
+    TU_LOG_VV << "immediate I64 " << i64;
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::I64));
 }
 
@@ -111,15 +105,18 @@ lyric_compiler::constant_float(
 
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
-    lyric_parser::BaseType base;
+    lyric_common::NumericBase base;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstBaseType, base));
-    lyric_parser::NotationType notation;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNotationType, notation));
 
-    double dbl;
-    TU_ASSIGN_OR_RETURN (dbl, lyric_parser::parse_float_literal(literalValue, base, notation));
-    TU_RETURN_IF_NOT_OK (fragment->immediateF64(dbl));
-    TU_LOG_VV << "immediate float " << dbl;
+    bool scientific = false;
+    if (node->hasAttr(lyric_parser::kLyricAstIsScientific)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsScientific, scientific));
+    }
+
+    double f64;
+    TU_ASSIGN_OR_RETURN (f64, lyric_common::parse_F64(literalValue, base, scientific));
+    TU_RETURN_IF_NOT_OK (fragment->immediateF64(f64));
+    TU_LOG_VV << "immediate F64 " << f64;
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::F64));
 }
 
