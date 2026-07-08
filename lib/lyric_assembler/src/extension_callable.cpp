@@ -9,13 +9,15 @@
 
 lyric_assembler::ExtensionCallable::ExtensionCallable()
     : m_type(InvokeType::INVALID),
-      m_callSymbol(nullptr)
+      m_callSymbol(nullptr),
+      m_offset(lyric_object::INVALID_OFFSET_U16)
 {
 }
 
 lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol)
     : m_type(InvokeType::INLINE),
-      m_callSymbol(callSymbol)
+      m_callSymbol(callSymbol),
+      m_offset(lyric_object::INVALID_OFFSET_U16)
 {
     TU_ASSERT (m_callSymbol != nullptr);
 }
@@ -23,7 +25,8 @@ lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol)
 lyric_assembler::ExtensionCallable::ExtensionCallable(CallSymbol *callSymbol, const DataReference &implRef)
     : m_type(InvokeType::REF),
       m_callSymbol(callSymbol),
-      m_implRef(implRef)
+      m_implRef(implRef),
+      m_offset(lyric_object::INVALID_OFFSET_U16)
 {
     TU_ASSERT (m_callSymbol != nullptr);
 }

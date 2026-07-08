@@ -1,11 +1,11 @@
 
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/entry_handle.h>
+#include <lyric_assembler/object_root.h>
+#include <lyric_assembler/object_writer.h>
 #include <lyric_runtime/static_loader.h>
 
 #include "base_assembler_fixture.h"
-
-#include "lyric_assembler/call_symbol.h"
-#include "lyric_assembler/object_root.h"
-#include "lyric_assembler/object_writer.h"
 
 void
 BaseAssemblerFixture::SetUp()
@@ -38,8 +38,9 @@ BaseAssemblerFixture::writeObject(lyric_object::LyricObject &object)
 tempo_utils::Status
 BaseAssemblerFixture::writeObjectWithEmptyEntry(lyric_object::LyricObject &object)
 {
-    auto *entryCall = objectRoot->entryCall();
-    auto *proc = entryCall->callProc();
+    lyric_assembler::EntryHandle *entryHandle;
+    TU_ASSIGN_OR_RETURN (entryHandle, objectRoot->declareEntry());
+    auto *proc = entryHandle->entryProc();
     auto *root = proc->procFragment();
     TU_RAISE_IF_NOT_OK (root->returnToCaller());
 

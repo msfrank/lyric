@@ -20,8 +20,11 @@ TEST_F(ParseDefClass, EmptyClass) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (0, defclassNode.numChildren());
@@ -42,8 +45,11 @@ TEST_F(ParseDefClass, ClassWithEmptyGlobalBlock) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (1, defclassNode.numChildren());
@@ -65,8 +71,11 @@ TEST_F(ParseDefClass, ClassWithGlobalVal) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (1, defclassNode.numChildren());
@@ -97,8 +106,11 @@ TEST_F(ParseDefClass, ClassWithDecl) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (1, defclassNode.numChildren());

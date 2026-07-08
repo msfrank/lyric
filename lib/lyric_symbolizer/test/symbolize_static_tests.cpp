@@ -22,7 +22,7 @@ TEST_F(SymbolizeStatic, DeclareStaticVal)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Static"));
@@ -40,7 +40,7 @@ TEST_F(SymbolizeStatic, DeclareStaticVar)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Static"));

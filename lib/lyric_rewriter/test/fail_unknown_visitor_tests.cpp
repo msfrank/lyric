@@ -49,9 +49,15 @@ TEST(FailUnknownVisitor, FailsWhenEncounteringUnhandledNode)
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
 
-    auto blockNode = archetype.getRoot();
-    ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
-    ASSERT_EQ (0, blockNode.numAttrs());
+    auto rootNode = archetype.getRoot();
+    ASSERT_TRUE (rootNode.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, rootNode.numChildren());
+
+    lyric_parser::NodeWalker entryNode;
+    ASSERT_THAT (rootNode.parseAttr(lyric_parser::kLyricAstEntryOffset, entryNode), tempo_test::IsOk());
+    ASSERT_EQ (1, entryNode.numChildren());
+
+    auto blockNode = entryNode.getChild(0);
     ASSERT_EQ (1, blockNode.numChildren());
 
     auto intNode = blockNode.getChild(0);

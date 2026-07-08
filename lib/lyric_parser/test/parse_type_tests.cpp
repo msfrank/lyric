@@ -19,9 +19,20 @@ TEST_F(ParseType, ParseSimpleTypeSingleIdentifier) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;
@@ -41,9 +52,20 @@ TEST_F(ParseType, ParseSimpleTypeMultipleIdentifiers) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;
@@ -63,9 +85,20 @@ TEST_F(ParseType, ParseParametricTypeSingleParameter) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;
@@ -87,9 +120,20 @@ TEST_F(ParseType, ParseParametricTypeMultipleParameters) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;
@@ -121,9 +165,20 @@ TEST_F(ParseType, ParseUnionType) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;
@@ -155,9 +210,20 @@ TEST_F(ParseType, ParseIntersectionType) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
-    auto child1 = root.getChild(0);
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstValClass));
 
     lyric_parser::NodeWalker typeNode;

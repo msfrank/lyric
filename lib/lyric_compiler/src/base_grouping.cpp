@@ -3,12 +3,27 @@
 #include <lyric_compiler/base_grouping.h>
 #include <lyric_compiler/compiler_result.h>
 
+#include "lyric_assembler/object_root.h"
+#include "lyric_compiler/compiler_scan_driver.h"
+
 lyric_compiler::BaseGrouping::BaseGrouping(CompilerScanDriver *driver)
-    : m_block(nullptr),
-      m_driver(driver),
+    : m_driver(driver),
       m_curr(0)
 {
     TU_NOTNULL (m_driver);
+    auto *root = m_driver->getObjectRoot();
+    m_block = root->rootBlock();
+}
+
+lyric_compiler::BaseGrouping::BaseGrouping(
+    lyric_assembler::AbstractSymbol *symbol,
+    CompilerScanDriver *driver)
+    : m_driver(driver),
+      m_curr(0)
+{
+    TU_NOTNULL (symbol);
+    TU_NOTNULL (driver);
+    m_block = symbol->derefBlock();
 }
 
 lyric_compiler::BaseGrouping::BaseGrouping(

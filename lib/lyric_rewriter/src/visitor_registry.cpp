@@ -4,6 +4,8 @@
 #include <lyric_rewriter/visitor_registry.h>
 #include <lyric_schema/ast_schema.h>
 
+#include "lyric_rewriter/ast_root_visitor.h"
+
 static std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>
 make_ast_visitor(const lyric_parser::ArchetypeNode *node, lyric_rewriter::AbstractProcessorState *state);
 
@@ -143,6 +145,10 @@ make_ast_visitor(
 
     switch (astId) {
 
+        // root form
+        case lyric_schema::LyricAstId::Root:
+            return std::make_shared<lyric_rewriter::AstRootVisitor>(astId, state);
+
         // terminal forms
         case lyric_schema::LyricAstId::Nil:
         case lyric_schema::LyricAstId::Undef:
@@ -194,10 +200,11 @@ make_ast_visitor(
             return std::make_shared<lyric_rewriter::AstBinaryVisitor>(astId, state);
 
         // sequence forms
+        case lyric_schema::LyricAstId::Entry:
+        case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::DataDeref:
         case lyric_schema::LyricAstId::SymbolDeref:
         case lyric_schema::LyricAstId::New:
-        case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::Lambda:
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:

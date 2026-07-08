@@ -1,16 +1,15 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/parse_diagnostics.h>
+#include <lyric_schema/assembler_schema.h>
+#include <lyric_schema/ast_schema.h>
 #include <tempo_test/result_matchers.h>
-#include <tempo_tracing/error_walker.h>
 
 #include "base_parser_fixture.h"
-#include "lyric_parser/ast_attrs.h"
-#include "lyric_schema/assembler_schema.h"
-#include "lyric_schema/ast_schema.h"
 
 class ParsePrecedence : public BaseParserFixture {};
 
@@ -22,10 +21,20 @@ TEST_F(ParsePrecedence, MultiplicationPrecedesAddition)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto add = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto add = block.getChild(0);
     ASSERT_TRUE (add.isClass(lyric_schema::kLyricAstAddClass));
     ASSERT_EQ (2, add.numChildren());
 
@@ -63,10 +72,20 @@ TEST_F(ParsePrecedence, DivisionPrecedesAddition)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto add = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto add = block.getChild(0);
     ASSERT_TRUE (add.isClass(lyric_schema::kLyricAstAddClass));
     ASSERT_EQ (2, add.numChildren());
 
@@ -104,10 +123,20 @@ TEST_F(ParsePrecedence, MultiplicationPrecedesSubtraction)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto sub = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto sub = block.getChild(0);
     ASSERT_TRUE (sub.isClass(lyric_schema::kLyricAstSubClass));
     ASSERT_EQ (2, sub.numChildren());
 
@@ -145,10 +174,20 @@ TEST_F(ParsePrecedence, DivisionPrecedesSubtraction)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto sub = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto sub = block.getChild(0);
     ASSERT_TRUE (sub.isClass(lyric_schema::kLyricAstSubClass));
     ASSERT_EQ (2, sub.numChildren());
 

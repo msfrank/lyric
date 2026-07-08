@@ -111,6 +111,9 @@ namespace lyric_object {
         const tu_uint8 *getBytecodeData() const;
         uint32_t getBytecodeSize() const;
 
+        bool hasEntry() const;
+        CallWalker getEntry() const;
+
         std::shared_ptr<const internal::ObjectReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
         std::shared_ptr<const tempo_utils::ImmutableBytes> toBytes() const;

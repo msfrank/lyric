@@ -385,14 +385,22 @@ lyric_assembler::CodeFragment::loadRef(const ImplReference &ref)
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.usingRef.symbolUrl));
 
+    // load the using ref
     if (symbol->getSymbolType() == SymbolType::SYNTHETIC) {
         auto *syntheticSymbol = cast_symbol_to_synthetic(symbol);
         statement.instruction = std::make_shared<LoadSyntheticInstruction>(syntheticSymbol->getSyntheticType());
     } else {
         statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
     }
-
     m_statements.push_back(std::move(statement));
+
+    // if a capture url is attached then invoke it
+    if (ref.captureUrl.isValid()) {
+        CallSymbol *captureCall;
+        TU_ASSIGN_OR_RETURN (captureCall, symbolCache->getOrImportCall(ref.captureUrl));
+        TU_RETURN_IF_NOT_OK (callStatic(captureCall, 1, 0));
+    }
+
     return {};
 }
 

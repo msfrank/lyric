@@ -28,7 +28,7 @@ TEST_F(AnalyzeInstance, DeclareInstance)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
 
     auto instance0 = object.getInstance(0);
@@ -56,7 +56,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
     ASSERT_EQ (1, object.numFields());
 
@@ -87,7 +87,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
     ASSERT_EQ (1, object.numFields());
 
@@ -117,7 +117,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVar)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
     ASSERT_EQ (1, object.numFields());
 
@@ -147,9 +147,9 @@ TEST_F(AnalyzeInstance, DeclareInstanceMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto instance0 = object.getInstance(0);
     ASSERT_TRUE (instance0.isDeclOnly());
@@ -197,9 +197,9 @@ TEST_F(AnalyzeInstance, DeclareInstanceImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numInstances());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto instance0 = object.getInstance(0);
     ASSERT_TRUE (instance0.isDeclOnly());

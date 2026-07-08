@@ -41,6 +41,9 @@ namespace lyric_symbolizer {
         };
         std::stack<Scope> m_scopes;
 
+        tempo_utils::Status pushEntry(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status popEntry();
+
         tempo_utils::Status pushBlock();
         tempo_utils::Status popBlock();
 

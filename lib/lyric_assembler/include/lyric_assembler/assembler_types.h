@@ -266,6 +266,7 @@ namespace lyric_assembler {
     struct ImplReference {
         lyric_common::TypeDef implType;             /**< The impl concept type */
         DataReference usingRef;                     /**< The data reference which implements the concept */
+        lyric_common::SymbolUrl captureUrl;         /**< The url of the call used to capture the impl, if needed */
     };
 
     struct Parameter {

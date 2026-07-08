@@ -1,7 +1,7 @@
 
 #include <lyric_parser/parse_diagnostics.h>
 #include <lyric_parser/parser_attrs.h>
-#include <tempo_tracing/error_walker.h>
+#include <tempo_tracing/failure_walker.h>
 #include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/log_helpers.h>
 
@@ -142,10 +142,10 @@ print_error(
 void
 lyric_parser::ParseDiagnostics::printDiagnostics() const
 {
-    auto errorWalker = m_spanset.getErrors();
+    auto failureWalker = m_spanset.getFailures();
 
-    for (int i = 0; i < errorWalker.numErrors(); i++) {
-        auto error = errorWalker.getError(i);
+    for (int i = 0; i < failureWalker.numFailures(); i++) {
+        auto error = failureWalker.getFailure(i);
         print_error(error, 0, m_options);
     }
 }

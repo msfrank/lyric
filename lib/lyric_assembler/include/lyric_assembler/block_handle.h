@@ -64,9 +64,9 @@ namespace lyric_assembler {
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_common::SymbolPath &typePath,
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
+
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const lyric_common::SymbolPath &symbolPath) override;
-
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const std::vector<std::string> &path);
 
@@ -90,7 +90,10 @@ namespace lyric_assembler {
             bool declOnly = false);
 
         tempo_utils::Result<DataReference> resolveReference(const std::string &name);
-        tempo_utils::Result<DataReference> resolveReference(const std::vector<std::string> &path);
+
+        tempo_utils::Result<DataReference> resolveReference(
+            const lyric_common::SymbolPath &symbolPath,
+            std::vector<std::string> &remaining);
 
         tempo_utils::Result<CallSymbol *> declareFunction(
             const std::string &name,
@@ -172,6 +175,10 @@ namespace lyric_assembler {
             const DataReference &usingRef,
             const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
         tempo_utils::Status useImpls(
+            const DataReference &usingRef,
+            const lyric_common::SymbolUrl &captureUrl,
+            const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
+        tempo_utils::Status useImpls(
             const InstanceSymbol *usingInstance,
             const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
 
@@ -221,6 +228,12 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::TypeDef, ImplReference> m_impls;
 
         tempo_utils::Result<SymbolBinding> resolveBinding(const std::vector<std::string> &path);
+
+        tempo_utils::Status putImpls(
+            const AbstractSymbol *symbol,
+            const DataReference &usingRef,
+            const lyric_common::SymbolUrl &captureUrl,
+            const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
 
         tempo_utils::Result<TypenameSymbol *> checkForTypenameOrNull(
             std::string_view name,

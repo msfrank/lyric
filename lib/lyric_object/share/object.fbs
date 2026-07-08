@@ -602,6 +602,8 @@ table Object {
     strings: [string];                          // array of utf8 string literals
 
     bytecode: [uint8];                          // the bytecode for this object
+
+    entry_point: uint32 = 0xffffffff;           // the index of the call descriptor for the module entry point
 }
 
 root_type Object;

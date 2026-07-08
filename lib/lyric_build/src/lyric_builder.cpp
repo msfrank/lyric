@@ -14,14 +14,12 @@
 #include <lyric_build/task_registry.h>
 #include <lyric_runtime/chain_loader.h>
 #include <tempo_config/base_conversions.h>
-#include <tempo_config/container_conversions.h>
-#include <tempo_utils/directory_maker.h>
 #include <tempo_utils/log_message.h>
 
-static void on_notification(
-    lyric_build::BuildRunner *runner,
-    std::unique_ptr<lyric_build::TaskNotification> notification,
-    void *data);
+// static void on_notification(
+//     lyric_build::BuildRunner *runner,
+//     std::unique_ptr<lyric_build::TaskNotification> notification,
+//     void *data);
 
 /**
  * Construct a LyricBuilder.
@@ -243,7 +241,7 @@ lyric_build::LyricBuilder::computeTargets(
 
     // construct a new task manager for managing parallel tasks
     BuildRunner runner(taskSettings, state, m_artifactCache, m_taskRegistry.get(),
-        m_numThreads, m_waitTimeoutInMs, on_notification, this);
+        m_numThreads, m_waitTimeoutInMs, on_task_notification, this);
 
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
     for (const auto &target : targets) {
@@ -377,29 +375,61 @@ lyric_build::LyricBuilder::getVirtualFilesystem() const
 }
 
 void
-lyric_build::LyricBuilder::onTaskNotification(
+lyric_build::on_task_notification(
     BuildRunner *runner,
-    std::unique_ptr<TaskNotification> notification)
+    std::unique_ptr<TaskNotification> notification,
+    void *data)
 {
-    TU_ASSERT (notification != nullptr);
+    TU_NOTNULL (runner);
+    TU_NOTNULL (notification);
+    TU_NOTNULL (data);
+
+    auto *builder = static_cast<LyricBuilder *>(data);
+    auto &notifier = builder->m_options.taskNotifier;
 
     switch (notification->getType()) {
 
         case NotificationType::STATE_CHANGED: {
-
             const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification.get());
             auto key = stateChanged->getKey();
             auto state = stateChanged->getState();
 
-            if (m_targets.contains(key)) {
+            if (builder->m_targets.contains(key)) {
                 switch (state.getState()) {
                     case TaskState::Completed:
                     case TaskState::Failed:
-                        m_targets.erase(key);
+                        builder->m_targets.erase(key);
                         break;
                     default:
                         break;
                 }
+            }
+            if (notifier != nullptr) {
+                notifier->onStateChanged(runner, key, state);
+            }
+            break;
+        }
+
+        case NotificationType::TASK_REQUESTED: {
+            const auto *taskRequested = static_cast<const NotifyTaskRequested *>(notification.get());
+            if (notifier != nullptr) {
+                notifier->onTaskRequested(runner, taskRequested->getRequested());
+            }
+            break;
+        }
+
+        case NotificationType::TASK_BLOCKED: {
+            const auto *taskBlocked = static_cast<const NotifyTaskBlocked *>(notification.get());
+            if (notifier != nullptr) {
+                notifier->onTaskBlocked(runner, taskBlocked->getKey(), taskBlocked->getDependencies());
+            }
+            break;
+        }
+
+        case NotificationType::TASK_UNBLOCKED: {
+            const auto *taskUnblocked = static_cast<const NotifyTaskUnblocked *>(notification.get());
+            if (notifier != nullptr) {
+                notifier->onTaskUnblocked(runner, taskUnblocked->getUnblocked());
             }
             break;
         }
@@ -408,18 +438,8 @@ lyric_build::LyricBuilder::onTaskNotification(
             break;
     }
 
-    if (m_targets.empty() && m_running) {
-        m_running = false;
+    if (builder->m_targets.empty() && builder->m_running) {
+        builder->m_running = false;
         runner->shutdown();
     }
-}
-
-static void
-on_notification(
-    lyric_build::BuildRunner *runner,
-    std::unique_ptr<lyric_build::TaskNotification> notification,
-    void *data)
-{
-    auto *builder = static_cast<lyric_build::LyricBuilder *>(data);
-    builder->onTaskNotification(runner, std::move(notification));
 }

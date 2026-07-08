@@ -26,12 +26,11 @@ TEST(AllocatorTrapMacro, AllocatorTrapOnClass)
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
 
-    auto blockNode = archetype.getRoot();
-    ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
-    ASSERT_EQ (0, blockNode.numAttrs());
-    ASSERT_EQ (1, blockNode.numChildren());
+    auto rootNode = archetype.getRoot();
+    ASSERT_TRUE (rootNode.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, rootNode.numChildren());
 
-    auto defclassNode = blockNode.getChild(0);
+    auto defclassNode = rootNode.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (0, defclassNode.numChildren());
 
@@ -65,12 +64,12 @@ TEST(AllocatorTrapMacro, AllocatorTrapOnClass)
     ASSERT_THAT (rewriteArchetypeResult, tempo_test::IsResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 
-    blockNode = rewritten.getRoot();
-    ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
-    ASSERT_EQ (0, blockNode.numAttrs());
-    ASSERT_EQ (1, blockNode.numChildren());
+    rootNode = rewritten.getRoot();
+    ASSERT_TRUE (rootNode.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, rootNode.numAttrs());
+    ASSERT_EQ (1, rootNode.numChildren());
 
-    defclassNode = blockNode.getChild(0);
+    defclassNode = rootNode.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (0, defclassNode.numChildren());
 

@@ -52,12 +52,12 @@ lyric_parser::internal::ModuleArchetype::getState() const
 }
 
 void
-lyric_parser::internal::ModuleArchetype::logErrorOrThrow(
+lyric_parser::internal::ModuleArchetype::logError(
     size_t lineNr,
     size_t columnNr,
     const std::string &message)
 {
-    auto fullMessage = absl::Substitute("syntax error at $0:$1: $2", lineNr, columnNr, message);
+    auto fullMessage = absl::Substitute("$0:$1: $2", lineNr, columnNr, message);
     TU_LOG_VV << fullMessage;
 
     // if this is the first error seen then set status
@@ -69,8 +69,42 @@ lyric_parser::internal::ModuleArchetype::logErrorOrThrow(
     tempo_tracing::CurrentScope scope;
     scope.putTag(tempo_tracing::kOpentracingError, true);
     auto log = scope.appendLog(absl::Now(), tempo_tracing::LogSeverity::kError);
-    log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint64) lineNr);
-    log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint64) columnNr);
+    log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint32) lineNr);
+    log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint32) columnNr);
+    log->putField(tempo_tracing::kOpentracingMessage, message);
+}
+
+void
+lyric_parser::internal::ModuleArchetype::logWarning(
+    size_t lineNr,
+    size_t columnNr,
+    const std::string &message)
+{
+    auto fullMessage = absl::Substitute("$0:$1: $2", lineNr, columnNr, message);
+    TU_LOG_VV << fullMessage;
+
+    tempo_tracing::CurrentScope scope;
+    scope.putTag(tempo_tracing::kOpentracingError, true);
+    auto log = scope.appendLog(absl::Now(), tempo_tracing::LogSeverity::kWarn);
+    log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint32) lineNr);
+    log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint32) columnNr);
+    log->putField(tempo_tracing::kOpentracingMessage, message);
+}
+
+void
+lyric_parser::internal::ModuleArchetype::logInfo(
+    size_t lineNr,
+    size_t columnNr,
+    const std::string &message)
+{
+    auto fullMessage = absl::Substitute("$0:$1: $2", lineNr, columnNr, message);
+    TU_LOG_VV << fullMessage;
+
+    tempo_tracing::CurrentScope scope;
+    scope.putTag(tempo_tracing::kOpentracingError, true);
+    auto log = scope.appendLog(absl::Now(), tempo_tracing::LogSeverity::kInfo);
+    log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint32) lineNr);
+    log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint32) columnNr);
     log->putField(tempo_tracing::kOpentracingMessage, message);
 }
 
@@ -84,14 +118,14 @@ lyric_parser::internal::ModuleArchetype::hasError() const
     try {                                               \
         stmt;                                           \
     } catch (SemanticException &ex) {                   \
-        logErrorOrThrow(                                \
+        logError(                                \
             ex.getLineNr(),                             \
             ex.getColumnNr(),                           \
             ex.getMessage());                           \
     } catch (std::exception &ex) {                      \
         auto *token = ctx->getStart();                  \
         std::string message((const char *) ex.what());  \
-        logErrorOrThrow(                                \
+        logError(                                \
             token->getLine(),                           \
             token->getCharPositionInLine(),             \
             message);                                   \
@@ -108,6 +142,117 @@ void
 lyric_parser::internal::ModuleArchetype::enterRoot(ModuleParser::RootContext *ctx)
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleArchetype::enterRoot");
+
+    IGNORE_RULE_IF_HAS_ERROR
+    auto location = get_token_location(ctx->getStart());
+    ArchetypeNode *rootNode;
+    TU_ASSIGN_OR_RAISE (rootNode, m_state->appendNode(lyric_schema::kLyricAstRootClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(rootNode));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    IGNORE_RULE_IF_HAS_ERROR
+
+    ArchetypeNode *rootNode;
+    TU_ASSIGN_OR_RAISE (rootNode, m_state->popNode(lyric_schema::kLyricAstRootClass));
+
+    if (m_implicitBlock != nullptr) {
+        TU_ASSERT (m_moduleEntry == nullptr);
+
+        // synthesize the entry node
+        TU_ASSIGN_OR_RAISE (m_moduleEntry, m_state->appendNode(lyric_schema::kLyricAstEntryClass, {}));
+
+        // append the implicit init block
+        TU_RAISE_IF_NOT_OK (m_moduleEntry->appendChild(m_implicitBlock));
+    }
+
+    // if module init was defined (or synthesized) then add attr to the root
+    if (m_moduleEntry != nullptr) {
+        TU_RAISE_IF_NOT_OK (rootNode->putAttr(kLyricAstEntryOffset, m_moduleEntry));
+    }
+
+    // set the root node
+    m_state->setRoot(rootNode);
+
+    // at this point node stack should be empty
+    if (!m_state->isEmpty())
+        throw tempo_utils::StatusException(
+            ParseStatus::forCondition(ParseCondition::kParseInvariant,
+                "found extra nodes on the parse stack"));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::exitRootStatement(ModuleParser::RootStatementContext *ctx)
+{
+    IGNORE_RULE_IF_HAS_ERROR
+
+    ArchetypeNode *statementNode;
+    TU_ASSIGN_OR_RAISE (statementNode, m_state->popNode());
+
+    ArchetypeNode *rootNode;
+    TU_ASSIGN_OR_RAISE (rootNode, m_state->peekNode(lyric_schema::kLyricAstRootClass));
+
+    TU_RAISE_IF_NOT_OK (rootNode->appendChild(statementNode));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::enterRootForm(ModuleParser::RootFormContext *ctx)
+{
+    if (m_implicitBlock == nullptr) {
+        auto location = get_token_location(ctx->getStart());
+        TU_ASSIGN_OR_RAISE (m_implicitBlock, m_state->appendNode(lyric_schema::kLyricAstBlockClass, location));
+    }
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(m_implicitBlock));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::exitRootForm(ModuleParser::RootFormContext *ctx)
+{
+    TU_RAISE_IF_STATUS (m_state->popNode(lyric_schema::kLyricAstBlockClass));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::enterEntryStatement(ModuleParser::EntryStatementContext *ctx)
+{
+    auto location = get_token_location(ctx->getStart());
+
+    if (m_implicitBlock != nullptr) {
+        logError(location.lineNumber, location.columnNumber, "module init is already defined implicitly");
+        return;
+    }
+
+    if (m_moduleEntry != nullptr) {
+        logError(location.lineNumber, location.columnNumber, "module init is already defined");
+        return;
+    }
+
+    ArchetypeNode *rootNode;
+    TU_ASSIGN_OR_RAISE (rootNode, m_state->peekNode(lyric_schema::kLyricAstRootClass));
+
+    TU_ASSIGN_OR_RAISE (m_moduleEntry, m_state->appendNode(lyric_schema::kLyricAstEntryClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(m_moduleEntry));
+
+    TU_RAISE_IF_NOT_OK (rootNode->putAttr(kLyricAstEntryOffset, m_moduleEntry));
+}
+
+void
+lyric_parser::internal::ModuleArchetype::exitEntryStatement(ModuleParser::EntryStatementContext *ctx)
+{
+    // the init block
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
+
+    // the module entry
+    ArchetypeNode *entryNode;
+    TU_ASSIGN_OR_RAISE (entryNode, m_state->popNode(lyric_schema::kLyricAstEntryClass));
+    TU_ASSERT (entryNode == m_moduleEntry);
+
+    // append block node to entry
+    TU_RAISE_IF_NOT_OK (entryNode->appendChild(blockNode));
 }
 
 void
@@ -133,26 +278,6 @@ lyric_parser::internal::ModuleArchetype::exitForm(ModuleParser::FormContext *ctx
 
     // otherwise append form to the block
     TU_RAISE_IF_NOT_OK (blockNode->appendChild(formNode));
-}
-
-void
-lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx)
-{
-    tempo_tracing::ExitScope scope;
-
-    IGNORE_RULE_IF_HAS_ERROR
-
-    ArchetypeNode *rootNode;
-    TU_ASSIGN_OR_RAISE (rootNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
-
-    // set the root node
-    m_state->setRoot(rootNode);
-
-    // at this point node stack should be empty
-    if (!m_state->isEmpty())
-        throw tempo_utils::StatusException(
-            ParseStatus::forCondition(ParseCondition::kParseInvariant,
-                "found extra nodes on the parse stack"));
 }
 
 void
@@ -191,10 +316,10 @@ void lyric_parser::internal::ModuleArchetype::enterUsingStatement(ModuleParser::
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUsingStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUsingRef(ModuleParser::UsingRefContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitUsingPath(ModuleParser::UsingPathContext *ctx)
 {
     ModuleSymbolOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUsingRef(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUsingPath(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUsingType(ModuleParser::UsingTypeContext *ctx)

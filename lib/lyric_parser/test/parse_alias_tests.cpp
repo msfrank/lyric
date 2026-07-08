@@ -19,8 +19,11 @@ TEST_F(ParseAlias, ParseBindingAlias)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto aliasNode = root.getChild(0);
     ASSERT_TRUE (aliasNode.isClass(lyric_schema::kLyricAstAliasClass));
     ASSERT_LE (0, aliasNode.numChildren());
@@ -50,8 +53,11 @@ TEST_F(ParseAlias, ParseParametricBindingAlias)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto aliasNode = root.getChild(0);
     ASSERT_TRUE (aliasNode.isClass(lyric_schema::kLyricAstAliasClass));
     ASSERT_LE (0, aliasNode.numChildren());
@@ -81,8 +87,11 @@ TEST_F(ParseAlias, ParseIndexAlias)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto aliasNode = root.getChild(0);
     ASSERT_TRUE (aliasNode.isClass(lyric_schema::kLyricAstAliasClass));
     ASSERT_LE (0, aliasNode.numChildren());
@@ -120,8 +129,11 @@ TEST_F(ParseAlias, ParseKeyAlias)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto aliasNode = root.getChild(0);
     ASSERT_TRUE (aliasNode.isClass(lyric_schema::kLyricAstAliasClass));
     ASSERT_LE (0, aliasNode.numChildren());

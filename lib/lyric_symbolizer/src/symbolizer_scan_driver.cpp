@@ -1,12 +1,11 @@
 
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <lyric_symbolizer/symbolizer_result.h>
-
-#include "lyric_assembler/call_symbol.h"
 
 lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(
     lyric_assembler::ObjectRoot *root,
@@ -32,6 +31,9 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::Entry:
+            return pushEntry(node);
+
         case lyric_schema::LyricAstId::Block:
             return pushBlock();
 
@@ -87,6 +89,9 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::Entry:
+            return popEntry();
+
         case lyric_schema::LyricAstId::Block:
             return popBlock();
 
@@ -119,6 +124,34 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::finish()
 {
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::pushEntry(const lyric_parser::ArchetypeNode *node)
+{
+    m_scopes.push(Scope::Definition);
+
+    m_symbolPath.emplace_back(lyric_assembler::kDefaultEntryName);
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, lyric_object::LinkageSection::Call);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared entry " << symbolUrl;
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::popEntry()
+{
+    if (m_scopes.top() != Scope::Definition)
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "top scope is not Definition scope");
+    m_scopes.pop();
+    m_symbolPath.pop_back();
     return {};
 }
 
@@ -198,7 +231,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareAction(const lyric_parser::Archet
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_V << "declared action " << symbolUrl;
 
-    return putNamespaceTarget(symbolUrl);
+    return {};
 }
 
 tempo_utils::Status
@@ -473,13 +506,6 @@ lyric_symbolizer::SymbolizerScanDriverBuilder::makeScanDriver()
     // define the object root
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RETURN (root, m_state->defineRoot());
-
-    auto *entryCall = root->entryCall();
-    auto *entryProc = entryCall->callProc();
-    auto *entryFragment = entryProc->procFragment();
-
-    // symbolizer output is not meant to be executed
-    TU_RETURN_IF_NOT_OK (entryFragment->invokeAbort());
 
     auto driver = std::make_shared<SymbolizerScanDriver>(root, m_state.get());
 

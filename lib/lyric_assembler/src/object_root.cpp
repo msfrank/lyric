@@ -3,6 +3,7 @@
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/entry_handle.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
@@ -18,8 +19,7 @@
 
 lyric_assembler::ObjectRoot::ObjectRoot(ObjectState *state)
     : m_state(state),
-      m_globalNamespace(nullptr),
-      m_entryCall(nullptr)
+      m_globalNamespace(nullptr)
 {
     TU_ASSERT (m_state != nullptr);
     m_preludeBlock = std::make_unique<BlockHandle>(m_state);
@@ -27,10 +27,14 @@ lyric_assembler::ObjectRoot::ObjectRoot(ObjectState *state)
     m_rootBlock = std::make_unique<BlockHandle>(m_environmentBlock.get(), m_state);
 }
 
+lyric_assembler::ObjectRoot::~ObjectRoot()
+{
+}
+
 inline tempo_utils::Result<lyric_common::TypeDef>
 type_import_to_typedef(
-    std::weak_ptr<lyric_importer::TypeImport> typeImport,
-    const lyric_common::SymbolUrl symbolUrl)
+    const std::weak_ptr<lyric_importer::TypeImport> &typeImport,
+    const lyric_common::SymbolUrl &symbolUrl)
 {
     auto type = typeImport.lock();
     if (type == nullptr)
@@ -68,12 +72,6 @@ lyric_assembler::ObjectRoot::initialize(
     auto globalNamespace = std::make_unique<NamespaceSymbol>(
         globalUrl, globalTypeHandle, m_rootBlock.get(), m_state);
     TU_ASSIGN_OR_RETURN (m_globalNamespace, m_state->appendNamespace(std::move(globalNamespace)));
-
-    // create the $entry call
-    lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
-    auto entryCall = std::make_unique<CallSymbol>(
-        entryUrl, m_rootBlock.get(), m_state);
-    TU_ASSIGN_OR_RETURN (m_entryCall, m_state->appendCall(std::move(entryCall)));
 
     // import all prelude symbols into the prelude block
     for (int i = 0; i < preludeObject.numSymbols(); i++) {
@@ -281,8 +279,37 @@ lyric_assembler::ObjectRoot::globalNamespace()
     return m_globalNamespace;
 }
 
-lyric_assembler::CallSymbol *
-lyric_assembler::ObjectRoot::entryCall()
+bool
+lyric_assembler::ObjectRoot::hasEntry() const
 {
-    return m_entryCall;
+    return m_entryHandle != nullptr;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ObjectRoot::getEntry() const
+{
+    if (m_entryHandle == nullptr)
+        return {};
+    return m_entryHandle->getSymbolUrl();
+}
+
+tempo_utils::Result<lyric_assembler::EntryHandle *>
+lyric_assembler::ObjectRoot::declareEntry(std::string_view name)
+{
+    if (m_entryHandle != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "entry is already declared");
+
+    auto location = m_state->getLocation();
+    std::string entryName(name);
+    lyric_common::SymbolPath entryPath({entryName});
+    lyric_common::SymbolUrl entryUrl(location, entryPath);
+    auto entryCall = std::make_unique<CallSymbol>(entryUrl, m_rootBlock.get(), m_state);
+
+    CallSymbol *entryPtr;
+    TU_ASSIGN_OR_RETURN (entryPtr, m_state->appendCall(std::move(entryCall)));
+
+    m_entryHandle = std::make_unique<EntryHandle>(entryName, entryPtr);
+
+    return m_entryHandle.get();
 }

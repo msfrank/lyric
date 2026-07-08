@@ -1,4 +1,5 @@
 
+#include <absl/strings/substitute.h>
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/internal/tracing_error_listener.h>
 #include <lyric_parser/internal/parser_utils.h>
@@ -21,7 +22,7 @@ lyric_parser::internal::TracingErrorListener::syntaxError(
 {
     if (offendingSymbol) {
         if (offendingSymbol->getType() == antlr4::Token::EOF) {
-            m_archetype->logErrorOrThrow(line, charPositionInLine, message);
+            m_archetype->logError(line, charPositionInLine, message);
             return;
         }
     }
@@ -32,7 +33,7 @@ lyric_parser::internal::TracingErrorListener::syntaxError(
     //  - antlr reporting ambiguity warnings
     //  - user error notifications via notifyErrorListeners()
     if (!e) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
+        m_archetype->logError(line, charPositionInLine, message);
         return;
     }
 
@@ -40,16 +41,19 @@ lyric_parser::internal::TracingErrorListener::syntaxError(
     try {
         std::rethrow_exception(e);
     } catch(antlr4::InputMismatchException &ex) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::FailedPredicateException &ex) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::NoViableAltException &ex) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::LexerNoViableAltException &ex) {
-        m_archetype->logErrorOrThrow(line, charPositionInLine, message);
     } catch(antlr4::RuntimeException &ex) {
         // if we encounter any other antlr exception then we exit parsing immediately
         throw tempo_utils::StatusException(
             ParseStatus::forCondition(ParseCondition::kParseInvariant, message));
     }
+
+    // log user visible syntax error message
+    m_archetype->logError(line, charPositionInLine, "syntax error");
+
+    // log full exception message at VV severity
+    auto fullMessage = absl::Substitute("$0:$1: $2", line, charPositionInLine, message);
+    TU_LOG_VV << fullMessage;
 }

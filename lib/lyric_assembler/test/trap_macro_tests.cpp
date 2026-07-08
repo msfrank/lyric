@@ -26,9 +26,16 @@ TEST(TrapMacro, TrapInBlock)
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
 
-    auto blockNode = archetype.getRoot();
-    ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
-    ASSERT_EQ (0, blockNode.numAttrs());
+    auto rootNode = archetype.getRoot();
+    ASSERT_TRUE (rootNode.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, rootNode.numChildren());
+
+    lyric_parser::NodeWalker entryNode;
+    ASSERT_THAT (rootNode.parseAttr(lyric_parser::kLyricAstEntryOffset, entryNode), tempo_test::IsOk());
+    ASSERT_TRUE (entryNode.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entryNode.numChildren());
+
+    auto blockNode = entryNode.getChild(0);
     ASSERT_EQ (1, blockNode.numChildren());
 
     auto macroListNode = blockNode.getChild(0);
@@ -60,7 +67,15 @@ TEST(TrapMacro, TrapInBlock)
     ASSERT_THAT (rewriteArchetypeResult, tempo_test::IsResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 
-    blockNode = rewritten.getRoot();
+    rootNode = rewritten.getRoot();
+    ASSERT_TRUE (rootNode.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, rootNode.numChildren());
+
+    ASSERT_THAT (rootNode.parseAttr(lyric_parser::kLyricAstEntryOffset, entryNode), tempo_test::IsOk());
+    ASSERT_TRUE (entryNode.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entryNode.numChildren());
+
+    blockNode = entryNode.getChild(0);
     ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
     ASSERT_EQ (0, blockNode.numAttrs());
     ASSERT_EQ (1, blockNode.numChildren());

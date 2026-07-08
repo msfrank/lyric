@@ -3,13 +3,13 @@
 #include <lyric_analyzer/analyzer_scan_driver.h>
 #include <lyric_analyzer/class_analyzer_context.h>
 #include <lyric_analyzer/concept_analyzer_context.h>
-#include <lyric_analyzer/entry_analyzer_context.h>
 #include <lyric_analyzer/enum_analyzer_context.h>
 #include <lyric_analyzer/import_analyzer_context.h>
 #include <lyric_analyzer/instance_analyzer_context.h>
 #include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/namespace_analyzer_context.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
+#include <lyric_analyzer/root_analyzer_context.h>
 #include <lyric_analyzer/struct_analyzer_context.h>
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
@@ -19,22 +19,19 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/object_root.h>
+#include <lyric_assembler/protocol_symbol.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
-#include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/typename_symbol.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-#include "lyric_assembler/protocol_symbol.h"
-#include "lyric_assembler/static_symbol.h"
-
 lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(
     lyric_assembler::ObjectRoot *root,
     lyric_assembler::ObjectState *state)
     : m_root(root),
-      m_state(state),
-      m_typeSystem(nullptr)
+      m_state(state)
 {
     TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
@@ -54,8 +51,8 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
             "analyzer scan driver is already initialized");
     m_typeSystem = new lyric_typing::TypeSystem(m_state);
 
-    // push the entry context
-    auto ctx = std::make_unique<EntryAnalyzerContext>(this, m_root);
+    // push the root context
+    auto ctx = std::make_unique<RootAnalyzerContext>(this, m_root);
     return pushContext(std::move(ctx));
 }
 
@@ -302,6 +299,29 @@ lyric_analyzer::AnalyzerScanDriver::declareProtocol(
     TU_LOG_V << "declared protocol " << protocolSymbol->getSymbolUrl();
 
     return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::pushEntry(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    if (m_entryHandle != nullptr)
+        return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+            "module entry is already defined");
+
+    TU_ASSIGN_OR_RETURN (m_entryHandle, m_root->declareEntry());
+    TU_LOG_V << "declared entry " << m_entryHandle->getSymbolUrl();
+
+    auto *entryProc = m_entryHandle->entryProc();
+
+    // analyzer output is not meant to be executed
+    auto *fragment = entryProc->procFragment();
+    TU_RETURN_IF_NOT_OK (fragment->invokeAbort());
+
+    // push the function context
+    auto ctx = std::make_unique<ProcAnalyzerContext>(this, entryProc);
+    return pushContext(std::move(ctx));
 }
 
 tempo_utils::Status
@@ -715,13 +735,6 @@ lyric_analyzer::AnalyzerScanDriverBuilder::makeScanDriver()
     // define the object root
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RETURN (root, m_state->defineRoot());
-
-    auto *entryCall = root->entryCall();
-    auto *entryProc = entryCall->callProc();
-    auto *entryFragment = entryProc->procFragment();
-
-    // analyzer output is not meant to be executed
-    TU_RETURN_IF_NOT_OK (entryFragment->invokeAbort());
 
     // initialize the driver
     auto driver = std::make_shared<AnalyzerScanDriver>(root, m_state.get());

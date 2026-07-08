@@ -146,7 +146,6 @@ AbstractKeyword         : 'abstract' ;
 ImplKeyword             : 'impl' ;
 ImportKeyword           : 'import' ;
 InitKeyword             : 'init' ;
-WithKeyword             : 'with' ;
 FromKeyword             : 'from' ;
 UsingKeyword            : 'using' ;
 LambdaKeyword           : 'lambda' ;

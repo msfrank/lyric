@@ -17,7 +17,7 @@ namespace lyric_parser::internal {
         void exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx);
 
         void enterUsingStatement(ModuleParser::UsingStatementContext *ctx);
-        void exitUsingRef(ModuleParser::UsingRefContext *ctx);
+        void exitUsingPath(ModuleParser::UsingPathContext *ctx);
         void exitUsingType(ModuleParser::UsingTypeContext *ctx);
         void exitUsingStatement(ModuleParser::UsingStatementContext *ctx);
 

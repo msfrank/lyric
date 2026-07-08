@@ -24,7 +24,7 @@ TEST_F(AnalyzeStatic, DeclareStaticVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numStatics());
 
     auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();
@@ -49,7 +49,7 @@ TEST_F(AnalyzeStatic, DeclareStaticVar)
         auto symbol = object.getSymbol(i);
         TU_LOG_INFO << "symbol " << symbol.getSymbolPath().toString();
     }
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numStatics());
 
     auto I64Type = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("I64")).orElseThrow();

@@ -7,7 +7,6 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_test/result_matchers.h>
-#include <tempo_tracing/error_walker.h>
 
 #include "base_parser_fixture.h"
 
@@ -21,10 +20,20 @@ TEST_F(ParseConstant, ParseDecimalInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -42,10 +51,20 @@ TEST_F(ParseConstant, ParseNegativeDecimalInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -63,10 +82,20 @@ TEST_F(ParseConstant, ParseDecimalFixedFloat) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -87,10 +116,20 @@ TEST_F(ParseConstant, ParseNegativeDecimalFixedFloat) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -111,10 +150,20 @@ TEST_F(ParseConstant, ParseDecimalScientificFloat) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -135,10 +184,20 @@ TEST_F(ParseConstant, ParseNegativeDecimalScientificFloat) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -159,10 +218,20 @@ TEST_F(ParseConstant, ParseHexInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -180,10 +249,20 @@ TEST_F(ParseConstant, ParseNegativeHexInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -201,10 +280,20 @@ TEST_F(ParseConstant, ParseOctalInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
@@ -222,10 +311,20 @@ TEST_F(ParseConstant, ParseNegativeOctalInteger) {
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
-    auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
 
-    auto child1 = root.getChild(0);
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (0, root.numChildren());
+
+    lyric_parser::NodeWalker entry;
+    ASSERT_THAT (root.parseAttr(lyric_parser::kLyricAstEntryOffset, entry), tempo_test::IsOk());
+    ASSERT_TRUE (entry.isClass(lyric_schema::kLyricAstEntryClass));
+    ASSERT_EQ (1, entry.numChildren());
+
+    auto block = entry.getChild(0);
+    ASSERT_EQ (1, block.numChildren());
+
+    auto child1 = block.getChild(0);
     ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());

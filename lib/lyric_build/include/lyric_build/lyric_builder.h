@@ -13,6 +13,8 @@
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
 
+#include "abstract_task_notifier.h"
+
 namespace lyric_build {
 
     constexpr const char *kBuildRootDirectoryName = ".zuribuildroot";
@@ -75,6 +77,10 @@ namespace lyric_build {
          * is appended to the loader chain.
          */
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader = {};
+        /**
+         * If specified then the task notifier is used to receive task notifications from the builder.
+         */
+        std::shared_ptr<AbstractTaskNotifier> taskNotifier = {};
     };
 
     struct ComputeTargetOverrides {
@@ -116,8 +122,6 @@ namespace lyric_build {
         std::shared_ptr<TaskRegistry> getTaskRegistry() const;
         std::shared_ptr<AbstractVirtualFilesystem> getVirtualFilesystem() const;
 
-        void onTaskNotification(BuildRunner *runner, std::unique_ptr<TaskNotification> notification);
-
     private:
         std::filesystem::path m_workspaceRoot;
         TaskSettings m_taskSettings;
@@ -140,7 +144,17 @@ namespace lyric_build {
         // updated during each invocation of computeTargets
         absl::flat_hash_set<TaskKey> m_targets;
         bool m_running;
+
+        friend void on_task_notification(
+            BuildRunner *runner,
+            std::unique_ptr<TaskNotification> notification,
+            void *data);
     };
-}
+
+    void on_task_notification(
+         BuildRunner *runner,
+         std::unique_ptr<TaskNotification> notification,
+         void *data);
+    }
 
 #endif // LYRIC_BUILD_LYRIC_BUILDER_H

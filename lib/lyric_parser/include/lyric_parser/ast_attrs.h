@@ -143,6 +143,7 @@ namespace lyric_parser {
     extern const tempo_schema::BoolAttr kLyricAstNoOverride;
     extern const tempo_schema::BoolAttr kLyricAstThisBase;
 
+    extern const NodeAttr kLyricAstEntryOffset;
     extern const NodeAttr kLyricAstTypeOffset;
     extern const NodeAttr kLyricAstDefaultOffset;
     extern const NodeAttr kLyricAstRestOffset;

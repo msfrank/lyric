@@ -29,7 +29,7 @@ TEST_F(AnalyzeClass, DeclareClass)
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
     TU_LOG_INFO << object.dumpJson();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numClasses());
 
     auto class0 = object.getClass(0);
@@ -55,7 +55,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numClasses());
     ASSERT_EQ (1, object.numFields());
 
@@ -84,7 +84,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVar)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numClasses());
     ASSERT_EQ (1, object.numFields());
 
@@ -113,9 +113,9 @@ TEST_F(AnalyzeClass, DeclareClassMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numClasses());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
@@ -163,9 +163,9 @@ TEST_F(AnalyzeClass, DeclareClassImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numClasses());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());

@@ -27,7 +27,7 @@ TEST_F(AnalyzeConcept, DeclareConcept)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numConcepts());
 
     auto concept0 = object.getConcept(0);
@@ -48,7 +48,7 @@ TEST_F(AnalyzeConcept, DeclareConceptAction)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numConcepts());
     ASSERT_EQ (1, object.numActions());
 
@@ -85,9 +85,9 @@ TEST_F(AnalyzeConcept, DeclareConceptImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numConcepts());
-    ASSERT_EQ (2, object.numCalls());
+    ASSERT_EQ (1, object.numCalls());
 
     auto concept0 = object.getConcept(0);
     ASSERT_TRUE (concept0.isDeclOnly());

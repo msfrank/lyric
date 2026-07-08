@@ -1,25 +1,17 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
-#include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/object_root.h>
-#include <lyric_assembler/struct_symbol.h>
-#include <lyric_assembler/symbol_cache.h>
-#include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
-#include <lyric_compiler/base_choice.h>
-#include <lyric_compiler/base_grouping.h>
 #include <lyric_compiler/compiler_scan_driver.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/entry_handler.h>
+#include <lyric_compiler/root_handler.h>
 #include <lyric_compiler/visitor_context.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
-#include <lyric_schema/ast_schema.h>
 
 lyric_compiler::CompilerScanDriver::CompilerScanDriver(
     lyric_assembler::ObjectRoot *root,
@@ -399,7 +391,7 @@ lyric_compiler::CompilerScanDriverBuilder::makeScanDriver()
 
     // initialize the driver
     auto driver = std::make_shared<CompilerScanDriver>(root, m_state.get());
-    auto rootHandler = std::make_unique<EntryHandler>(driver.get());
+    auto rootHandler = std::make_unique<RootHandler>(driver.get());
     TU_RETURN_IF_NOT_OK (driver->initialize(std::move(rootHandler)));
 
     return std::static_pointer_cast<lyric_rewriter::AbstractScanDriver>(driver);

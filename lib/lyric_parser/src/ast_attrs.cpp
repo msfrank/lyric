@@ -317,6 +317,7 @@ const tempo_schema::BoolAttr lyric_parser::kLyricAstIsAlias(&lyric_schema::kLyri
 const tempo_schema::BoolAttr lyric_parser::kLyricAstNoOverride(&lyric_schema::kLyricAstNoOverrideProperty);
 const tempo_schema::BoolAttr lyric_parser::kLyricAstThisBase(&lyric_schema::kLyricAstThisBaseProperty);
 
+const lyric_parser::NodeAttr lyric_parser::kLyricAstEntryOffset(&lyric_schema::kLyricAstEntryOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema::kLyricAstDefaultOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);

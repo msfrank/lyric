@@ -39,11 +39,11 @@ lyric_parser::ArchetypeState::getLimits() const
 
 tempo_utils::Result<lyric_parser::ArchetypeAttr *>
 lyric_parser::ArchetypeState::loadAttr(
-    const lyric_parser::LyricArchetype &archetype,
+    const LyricArchetype &archetype,
     const tempo_schema::AttrKey &key,
     const tempo_schema::AttrValue &value,
-    lyric_parser::ArchetypeState *state,
-    std::vector<lyric_parser::ArchetypeNode *> &nodeTable)
+    ArchetypeState *state,
+    std::vector<ArchetypeNode *> &nodeTable)
 {
     lyric_parser::ArchetypeNamespace *attrNamespace;
     TU_ASSIGN_OR_RETURN (attrNamespace, state->putNamespace(key.ns));
@@ -62,10 +62,10 @@ lyric_parser::ArchetypeState::loadAttr(
 
 tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeState::loadNode(
-    const lyric_parser::LyricArchetype &archetype,
-    const lyric_parser::NodeWalker &node,
-    lyric_parser::ArchetypeState *state,
-    std::vector<lyric_parser::ArchetypeNode *> &nodeTable)
+    const LyricArchetype &archetype,
+    const NodeWalker &node,
+    ArchetypeState *state,
+    std::vector<ArchetypeNode *> &nodeTable)
 {
     auto address = node.getAddress().getAddress();
 

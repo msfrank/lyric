@@ -1,19 +1,11 @@
 
 #include <lyric_assembler/object_root.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/alias_handler.h>
-#include <lyric_compiler/defclass_handler.h>
-#include <lyric_compiler/defconcept_handler.h>
-#include <lyric_compiler/defenum_handler.h>
-#include <lyric_compiler/definstance_handler.h>
-#include <lyric_compiler/defstatic_handler.h>
-#include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/entry_handler.h>
-#include <lyric_compiler/import_handler.h>
-#include <lyric_compiler/namespace_handler.h>
-#include <lyric_compiler/typename_handler.h>
 #include <lyric_parser/ast_attrs.h>
+
+#include "lyric_assembler/entry_handle.h"
+#include "lyric_compiler/proc_handler.h"
 
 lyric_compiler::EntryHandler::EntryHandler(CompilerScanDriver *driver)
     : BaseGrouping(driver)
@@ -26,119 +18,19 @@ lyric_compiler::EntryHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    if (!node->isClass(lyric_schema::kLyricAstBlockClass))
-        return CompilerStatus::forCondition(
-            CompilerCondition::kCompilerInvariant, "invalid node for entry");
-
     TU_LOG_VV << "before EntryHandler@" << this;
 
     auto *driver = getDriver();
+    auto *objectRoot = driver->getObjectRoot();
 
-    auto *root = driver->getObjectRoot();
-    auto *entryCall = root->entryCall();
-    auto *globalNamespace = root->globalNamespace();
-    auto *rootBlock = root->rootBlock();
+    TU_ASSIGN_OR_RETURN (m_entryHandle, objectRoot->declareEntry());
 
-    auto *entryProc = entryCall->callProc();
-    auto *entryBlock = entryProc->procBlock();
-    auto *fragment = entryProc->procFragment();
+    auto *entryProc = m_entryHandle->entryProc();
+    m_fragment = entryProc->procFragment();
 
-    auto numChildren = node->numChildren();
-    TU_ASSERT (numChildren > 0);
-
-    for (int i = 0; i < numChildren; i++) {
-        auto *child = node->getChild(i);
-
-        bool isSideEffect = i < numChildren - 1;
-        auto formType = isSideEffect? FormType::SideEffect : FormType::Any;
-
-        // delegate any nodes not in AST namespace to the form handler
-        if (!child->isNamespace(lyric_schema::kLyricAstNs)) {
-            auto any = std::make_unique<FormChoice>(formType, fragment, entryBlock, driver);
-            ctx.appendChoice(std::move(any));
-            continue;
-        }
-
-        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
-
-        // ensure that definitions are placed in the global namespace
-        auto astId = resource->getId();
-        switch (astId) {
-            case lyric_schema::LyricAstId::Namespace: {
-                auto ns = std::make_unique<NamespaceHandler>(
-                    globalNamespace, isSideEffect, rootBlock, driver);
-                ctx.appendGrouping(std::move(ns));
-                break;
-            }
-            case lyric_schema::LyricAstId::Def: {
-                auto handler = std::make_unique<DefHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::Alias: {
-                auto handler = std::make_unique<AliasHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefClass: {
-                auto handler = std::make_unique<DefClassHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefConcept: {
-                auto handler = std::make_unique<DefConceptHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefEnum: {
-                auto handler = std::make_unique<DefEnumHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefInstance: {
-                auto handler = std::make_unique<DefInstanceHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefStatic: {
-                auto handler = std::make_unique<DefStaticHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::DefStruct: {
-                auto handler = std::make_unique<DefStructHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::TypeName: {
-                auto handler = std::make_unique<TypenameHandler>(
-                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendChoice(std::move(handler));
-                break;
-            }
-            case lyric_schema::LyricAstId::ImportAll:
-            case lyric_schema::LyricAstId::ImportModule:
-            case lyric_schema::LyricAstId::ImportSymbols: {
-                auto handler = std::make_unique<ImportHandler>(
-                    globalNamespace, globalNamespace->namespaceBlock(), driver);
-                ctx.appendGrouping(std::move(handler));
-                break;
-            }
-            default: {
-                auto any = std::make_unique<FormChoice>(formType, fragment, entryBlock, driver);
-                ctx.appendChoice(std::move(any));
-                break;
-            }
-        }
-    }
+    auto handler = std::make_unique<ProcHandler>(
+        entryProc, /* requiresResult= */ false, entryProc->procBlock(), driver);
+    ctx.appendGrouping(std::move(handler));
 
     return {};
 }
@@ -151,16 +43,11 @@ lyric_compiler::EntryHandler::after(
 {
     TU_LOG_VV << "after EntryHandler@" << this;
 
-    auto *driver = getDriver();
-    auto *root = driver->getObjectRoot();
-    auto *entryCall = root->entryCall();
-    auto *entryProc = entryCall->callProc();
-    auto *fragment = entryProc->procFragment();
-    auto numStatements = fragment->numStatements();
+    auto numStatements = m_fragment->numStatements();
     bool unfinished = true;
 
     if (numStatements > 0) {
-        auto lastStatement = fragment->getStatement(fragment->numStatements() - 1);
+        auto lastStatement = m_fragment->getStatement(m_fragment->numStatements() - 1);
         switch (lastStatement.instruction->getType()) {
             case lyric_assembler::InstructionType::Jump:
             case lyric_assembler::InstructionType::Return:
@@ -174,9 +61,9 @@ lyric_compiler::EntryHandler::after(
         }
     }
 
-    // add RETURN op if the last statement does not unconditionally transfer control or terminate
+    // add HALT op if the last statement does not unconditionally transfer control or terminate
     if (unfinished) {
-        TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+        TU_RETURN_IF_NOT_OK (m_fragment->invokeHalt());
     }
 
     return {};

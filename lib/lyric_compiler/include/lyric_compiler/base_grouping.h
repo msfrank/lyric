@@ -11,6 +11,7 @@ namespace lyric_compiler {
     class BaseGrouping : public AbstractGrouping {
     public:
         explicit BaseGrouping(CompilerScanDriver *driver);
+        BaseGrouping(lyric_assembler::AbstractSymbol *symbol, CompilerScanDriver *driver);
         BaseGrouping(lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
 
         tempo_utils::Status before(

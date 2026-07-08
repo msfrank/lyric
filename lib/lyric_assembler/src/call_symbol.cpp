@@ -478,13 +478,19 @@ lyric_assembler::CallSymbol::defineCall(
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "cannot redefine call {}", m_callUrl.toString());
 
-    auto *symbolCache = m_state->symbolCache();
-    auto *typeCache = m_state->typeCache();
+    if (returnType.isValid()) {
+        if (priv->returnType.isValid())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "cannot redefine call {}", m_callUrl.toString());
+        priv->returnType = returnType;
+    }
 
     priv->listParameters = parameterPack.listParameters;
     priv->namedParameters = parameterPack.namedParameters;
     priv->restParameter = parameterPack.restParameter;
-    priv->returnType = returnType;
+
+    auto *symbolCache = m_state->symbolCache();
+    auto *typeCache = m_state->typeCache();
 
     absl::flat_hash_map<std::string,SymbolBinding> bindings;
 

@@ -89,20 +89,26 @@ lyric_parser::internal::ModuleSymbolOps::enterUsingStatement(ModuleParser::Using
 }
 
 void
-lyric_parser::internal::ModuleSymbolOps::exitUsingRef(ModuleParser::UsingRefContext *ctx)
+lyric_parser::internal::ModuleSymbolOps::exitUsingPath(ModuleParser::UsingPathContext *ctx)
 {
     auto *state = getState();
     if (hasError())
         return;
 
-    ArchetypeNode *refNode;
-    TU_ASSIGN_OR_RAISE (refNode, state->popNode());
+    std::vector<std::string> parts;
+    for (size_t i = 0; i < ctx->symbolPath()->getRuleIndex(); i++) {
+        if (ctx->symbolPath()->Identifier(i) == nullptr)
+            continue;
+        parts.push_back(ctx->symbolPath()->Identifier(i)->getText());
+    }
+    lyric_common::SymbolPath symbolPath(parts);
 
+    // using node should be on the top of the stack
     ArchetypeNode *usingNode;
     TU_ASSIGN_OR_RAISE (usingNode, state->peekNode(lyric_schema::kLyricAstUsingClass));
 
-    // otherwise add using reference to the node
-    TU_RAISE_IF_NOT_OK (usingNode->appendChild(refNode));
+    // add impl path attr to the using node
+    TU_RAISE_IF_NOT_OK (usingNode->putAttr(kLyricAstSymbolPath, symbolPath));
 }
 
 void

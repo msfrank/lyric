@@ -3,6 +3,7 @@
 
 #include <stack>
 
+#include <lyric_assembler/entry_handle.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/abstract_scan_driver.h>
 #include <lyric_typing/type_system.h>
@@ -39,6 +40,7 @@ namespace lyric_analyzer {
         tempo_utils::Status declareBinding(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status declareProtocol(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status pushEntry(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushFunction(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushNamespace(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushClass(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
@@ -51,7 +53,8 @@ namespace lyric_analyzer {
     private:
         lyric_assembler::ObjectRoot *m_root;
         lyric_assembler::ObjectState *m_state;
-        lyric_typing::TypeSystem *m_typeSystem;
+        lyric_typing::TypeSystem *m_typeSystem = nullptr;
+        lyric_assembler::EntryHandle *m_entryHandle = nullptr;
         std::vector<std::unique_ptr<AbstractAnalyzerContext>> m_handlers;
         std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
     };

@@ -35,6 +35,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/code_fragment.h
     include/lyric_assembler/concept_symbol.h
     include/lyric_assembler/ctor_constructable.h
+    include/lyric_assembler/entry_handle.h
     include/lyric_assembler/enum_symbol.h
     include/lyric_assembler/existential_callable.h
     include/lyric_assembler/existential_symbol.h
@@ -95,6 +96,7 @@ target_sources(lyric_assembler PRIVATE
     src/code_fragment.cpp
     src/concept_symbol.cpp
     src/ctor_constructable.cpp
+    src/entry_handle.cpp
     src/enum_symbol.cpp
     src/existential_callable.cpp
     src/existential_symbol.cpp

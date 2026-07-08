@@ -560,7 +560,7 @@ lyric_compiler::FormChoice::decide(
 
         // using statement form
         case lyric_schema::LyricAstId::Using: {
-            auto def = std::make_unique<UsingHandler>(isSideEffect, m_fragment, block, driver);
+            auto def = std::make_unique<BlockUsingHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

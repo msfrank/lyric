@@ -23,7 +23,7 @@ TEST_F(SymbolizeDefstruct, DeclareDefstruct)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Struct"));
@@ -44,7 +44,7 @@ TEST_F(SymbolizeDefstruct, DeclareStructDefaultInit)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Struct.$ctor"));
@@ -65,7 +65,7 @@ TEST_F(SymbolizeDefstruct, DeclareStructNamedInit)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Struct.Named"));

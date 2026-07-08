@@ -23,7 +23,7 @@ TEST_F(SymbolizeDefclass, DeclareDefclass)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class"));
@@ -44,7 +44,7 @@ TEST_F(SymbolizeDefclass, DeclareClassDefaultInit)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.$ctor"));
@@ -65,7 +65,7 @@ TEST_F(SymbolizeDefclass, DeclareClassNamedInit)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.Named"));
@@ -87,7 +87,7 @@ TEST_F(SymbolizeDefclass, DeclareClassGlobalVal)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numImports());
 
     auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Class.Val"));

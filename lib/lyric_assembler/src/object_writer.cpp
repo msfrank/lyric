@@ -31,6 +31,7 @@
 #include <lyric_assembler/internal/write_types.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_plugin.h>
+#include <lyric_assembler/object_root.h>
 #include <lyric_assembler/object_writer.h>
 #include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
@@ -58,25 +59,21 @@ lyric_assembler::ObjectWriter::initialize()
 {
     auto *symbolCache = m_state->symbolCache();
 
-    // walk the entry call
-    lyric_common::SymbolUrl entryUrl(m_state->getLocation(), lyric_common::SymbolPath({"$entry"}));
-    auto *entrySymbol = symbolCache->getSymbolOrNull(entryUrl);
-    if (entrySymbol != nullptr) {
-        if (entrySymbol->getSymbolType() != SymbolType::CALL)
+    auto *objectRoot = m_state->objectRoot();
+    TU_NOTNULL (objectRoot);
+
+    // walk the entry call if it exists
+    if (objectRoot->hasEntry()) {
+        auto entryUrl = objectRoot->getEntry();
+        auto *entrySymbol = symbolCache->getSymbolOrNull(entryUrl);
+        if (entrySymbol == nullptr || entrySymbol->getSymbolType() != SymbolType::CALL)
             return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid symbol $entry");
+                AssemblerCondition::kAssemblerInvariant, "invalid entry call");
         TU_RETURN_IF_NOT_OK (touchCall(cast_symbol_to_call(entrySymbol)));
     }
 
     // walk the global namespace
-    lyric_common::SymbolUrl globalUrl(m_state->getLocation(), lyric_common::SymbolPath({"$global"}));
-    auto *globalSymbol = symbolCache->getSymbolOrNull(globalUrl);
-    if (globalSymbol != nullptr) {
-        if (globalSymbol->getSymbolType() != SymbolType::NAMESPACE)
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid symbol $global");
-        TU_RETURN_IF_NOT_OK (touchNamespace(cast_symbol_to_namespace(globalSymbol)));
-    }
+    TU_RETURN_IF_NOT_OK (touchNamespace(objectRoot->globalNamespace()));
 
     // touch linkages
     for (auto iterator = m_state->linkagesBegin(); iterator != m_state->linkagesEnd(); iterator++) {
@@ -961,6 +958,14 @@ lyric_assembler::ObjectWriter::toObject() const
     // serialize bytecode
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
+    // get the index of the entry point, if it exists
+    tu_uint32 entryPointIndex = lyric_object::INVALID_ADDRESS_U32;
+    auto *objectRoot = m_state->objectRoot();
+    if (objectRoot->hasEntry()) {
+        TU_ASSIGN_OR_RETURN (entryPointIndex, getSectionAddress(
+            objectRoot->getEntry(), lyric_object::LinkageSection::Call));
+    }
+
     // build assembly from buffer
     lyo1::ObjectBuilder objectBuilder(buffer);
 
@@ -995,6 +1000,8 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_strings(literalsOffset);
 
     objectBuilder.add_bytecode(bytecodeOffset);
+
+    objectBuilder.add_entry_point(entryPointIndex);
 
     // serialize assembly and mark the buffer as finished
     auto object = objectBuilder.Finish();

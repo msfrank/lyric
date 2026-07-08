@@ -4,6 +4,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_registry.h>
 #include <lyric_runtime/chain_loader.h>
+#include <tempo_tracing/tracing_schema.h>
 
 lyric_build::BuildState::BuildState(std::unique_ptr<Priv> priv)
     : m_priv(std::move(priv))
@@ -163,6 +164,11 @@ lyric_build::BuildState::getOrMakeTask(
         return entry->second;
 
     auto span = recorder->makeSpan();
+    span->putTag(tempo_tracing::kOpentracingComponent, std::string{"lyric_build"});
+    span->putTag(tempo_tracing::kTempoTracingComponentActivity, std::string{"computeTargets"});
+    span->putTag(tempo_tracing::kTempoTracingComponentClass, key.getDomain());
+    span->putTag(tempo_tracing::kTempoTracingComponentInstance, key.getId());
+
     BaseTask *task;
     TU_ASSIGN_OR_RETURN (task, registry->makeTask(m_priv->buildGen, key, weak_from_this(), std::move(span)));
     m_priv->tasks[key] = task;

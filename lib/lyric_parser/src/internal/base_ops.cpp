@@ -31,7 +31,7 @@ lyric_parser::internal::BaseOps::logErrorOrThrow(
     size_t columnNr,
     const std::string &message)
 {
-    m_listener->logErrorOrThrow(lineNr, columnNr, message);
+    m_listener->logError(lineNr, columnNr, message);
 }
 
 void
@@ -39,5 +39,5 @@ lyric_parser::internal::BaseOps::logErrorOrThrow(const antlr4::Token *token, con
 {
     auto lineNr = token->getLine();
     auto columnNr = token->getCharPositionInLine();
-    m_listener->logErrorOrThrow(lineNr, columnNr, message);
+    m_listener->logError(lineNr, columnNr, message);
 }

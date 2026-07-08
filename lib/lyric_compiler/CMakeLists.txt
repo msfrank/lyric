@@ -62,6 +62,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/proc_handler.h
     include/lyric_compiler/raise_handler.h
     include/lyric_compiler/resolve_utils.h
+    include/lyric_compiler/root_handler.h
     include/lyric_compiler/stub_handler.h
     include/lyric_compiler/symbol_deref_handler.h
     include/lyric_compiler/target_handler.h
@@ -132,6 +133,7 @@ target_sources(lyric_compiler PRIVATE
     src/proc_handler.cpp
     src/raise_handler.cpp
     src/resolve_utils.cpp
+    src/root_handler.cpp
     src/stub_handler.cpp
     src/symbol_deref_handler.cpp
     src/target_handler.cpp

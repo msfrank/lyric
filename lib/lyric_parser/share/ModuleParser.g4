@@ -3,8 +3,10 @@ parser grammar ModuleParser;
 options { tokenVocab = ModuleLexer; }
 
 
-root                : pragmaMacro* block EOF ;
-block               : form+ ;
+root                : pragmaMacro* rootSpec+ EOF ;
+rootStatement       : toplevelStatement ;
+rootForm            : form ;
+rootSpec            : entryStatement | rootStatement | rootForm ;
 
 
 // a form is an individually parseable unit of code
@@ -14,8 +16,12 @@ form                : blockMacro
                     | statement
                     ;
 
+// a block is a linear sequence of forms contained within a definition
 
-// forms which return a value
+block               : form+ ;
+
+
+// an expression is a form which returns a value
 
 expression          : <assoc=right> expression ThenKeyword expression
                         ElseKeyword expression                                      # ternaryExpression
@@ -32,30 +38,13 @@ namedExpression     : condExpression
                     ;
 
 
-// forms which do not return a value
+// a statement is a form which does not return a value
 
-statement           : controlStatement
-                    | definitionStatement
-                    | typenameStatement
-                    | importStatement
-                    | usingStatement
-                    | setStatement
-                    ;
-
-definitionStatement : valStatement
+statement           : toplevelStatement
+                    | valStatement
                     | varStatement
-                    | defStatement
-                    | defclassStatement
-                    | defconceptStatement
-                    | defenumStatement
-                    | definstanceStatement
-                    | defstaticStatement
-                    | defstructStatement
-                    | aliasStatement
-                    | namespaceStatement
-                    ;
-
-controlStatement    : ifStatement
+                    | setStatement
+                    | ifStatement
                     | doStatement
                     | continueStatement
                     | breakStatement
@@ -63,6 +52,23 @@ controlStatement    : ifStatement
                     | forStatement
                     | tryStatement
                     | returnStatement
+                    ;
+
+
+// a toplevel statement is a statement which is valid outside of block context
+
+toplevelStatement   : defStatement
+                    | defclassStatement
+                    | defconceptStatement
+                    | defenumStatement
+                    | definstanceStatement
+                    | defstaticStatement
+                    | defstructStatement
+                    | aliasStatement
+                    | importStatement
+                    | namespaceStatement
+                    | typenameStatement
+                    | usingStatement
                     ;
 
 
@@ -282,6 +288,10 @@ procBlock           : ArrowOperator basicExpression
                         { notifyErrorListeners("Missing '}' closing def"); }
                     ;
 
+// entry statement
+
+entryStatement      : InitKeyword procBlock ;
+
 
 // def statement
 
@@ -291,6 +301,7 @@ defStatement        : definitionMacro? DefKeyword
 
 // impl spec
 
+implStatement       : ImplKeyword placeholderSpec? assignableType constraintSpec? CurlyOpen implSpec* CurlyClose ;
 implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 implExt             : aliasStatement ;
 implSpec            : implDef | implExt ;
@@ -440,11 +451,11 @@ importStatement     : ImportKeyword FromKeyword moduleLocation EllipsisOperator 
                     | ImportKeyword moduleLocation NamedKeyword Identifier              # importModuleStatement
                     ;
 
-usingRef            : newOrDeref ;
+usingPath           : symbolPath ;
 usingType           : singularType ;
 usingSet            : CurlyOpen usingType ( CommaOperator usingType )* CurlyClose ;
-usingAll            : UsingKeyword usingRef ;
-usingImpls          : UsingKeyword FromKeyword usingRef usingSet ;
+usingAll            : UsingKeyword usingPath ;
+usingImpls          : UsingKeyword FromKeyword usingPath usingSet ;
 usingStatement      : usingAll | usingImpls ;
 
 // clause block

@@ -1,15 +1,12 @@
 
 #include <lyric_parser/archetype_state.h>
-#include <lyric_parser/node_walker.h>
 #include <lyric_rewriter/abstract_rewrite_driver.h>
-#include <lyric_rewriter/ast_sequence_visitor.h>
+#include <lyric_rewriter/ast_root_visitor.h>
 #include <lyric_rewriter/lyric_rewriter.h>
+#include <lyric_rewriter/pragma_rewriter.h>
 #include <lyric_rewriter/rewriter_result.h>
 #include <lyric_rewriter/rewrite_processor.h>
 #include <tempo_tracing/enter_scope.h>
-#include <tempo_utils/log_stream.h>
-
-#include "lyric_rewriter/pragma_rewriter.h"
 
 lyric_rewriter::LyricRewriter::LyricRewriter(const RewriterOptions &options)
     : m_options(options)
@@ -117,8 +114,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         RewriteProcessorState processorState(visitorRegistry, rewriteDriver, &archetypeState);
 
         // construct the root visitor
-        auto rootVisitor = std::make_shared<AstSequenceVisitor>(
-            lyric_schema::LyricAstId::Block, &processorState);
+        auto rootVisitor = std::make_shared<AstRootVisitor>(lyric_schema::LyricAstId::Root, &processorState);
 
         // rewrite archetype
         TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, rootVisitor));
@@ -232,8 +228,7 @@ lyric_rewriter::LyricRewriter::scanArchetype(
         ScanProcessorState processorState(visitorRegistry, scanDriver, &archetypeState);
 
         // construct the root visitor
-        auto rootVisitor = std::make_shared<AstSequenceVisitor>(
-            lyric_schema::LyricAstId::Block, &processorState);
+        auto rootVisitor = std::make_shared<AstRootVisitor>(lyric_schema::LyricAstId::Root, &processorState);
 
         // scan archetype
         TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, rootVisitor));

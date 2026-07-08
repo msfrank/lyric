@@ -594,6 +594,22 @@ lyric_object::internal::ObjectReader::getBytecodeSize() const
     return m_object->bytecode() ? m_object->bytecode()->size() : 0;
 }
 
+bool
+lyric_object::internal::ObjectReader::hasEntry() const
+{
+    if (m_object == nullptr)
+        return false;
+    return m_object->entry_point() != INVALID_ADDRESS_U32;
+}
+
+const tu_uint32
+lyric_object::internal::ObjectReader::getEntryIndex() const
+{
+    if (m_object != nullptr)
+        return m_object->entry_point();
+    return INVALID_ADDRESS_U32;
+}
+
 std::span<const tu_uint8>
 lyric_object::internal::ObjectReader::bytesView() const
 {

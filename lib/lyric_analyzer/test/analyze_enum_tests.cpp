@@ -28,7 +28,7 @@ TEST_F(AnalyzeEnum, DeclareEnum)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numEnums());
 
     auto enum0 = object.getEnum(0);
@@ -56,7 +56,7 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numEnums());
     ASSERT_EQ (1, object.numFields());
 
@@ -86,7 +86,7 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (6, object.numSymbols());
+    ASSERT_EQ (5, object.numSymbols());
     ASSERT_EQ (2, object.numEnums());
 
     auto FooEnum = object.getEnum(object.findSymbol(lyric_common::SymbolPath({"Foo"})).getLinkageIndex());
@@ -121,7 +121,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numEnums());
     ASSERT_EQ (1, object.numFields());
 
@@ -151,9 +151,9 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numEnums());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
@@ -201,9 +201,9 @@ TEST_F(AnalyzeEnum, DeclareEnumImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numEnums());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());

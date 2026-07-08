@@ -7,17 +7,34 @@
 
 namespace lyric_compiler {
 
-    struct Using {
-        lyric_assembler::CodeFragment *fragment = nullptr;
-        lyric_assembler::DataReference usingRef;
+    struct Capture {
+        lyric_common::SymbolPath usingPath;
+        lyric_assembler::DataReference captureRef;
         absl::flat_hash_set<lyric_common::TypeDef> implTypes;
     };
 
-    class UsingHandler : public BaseGrouping {
+    class RootUsingHandler : public BaseGrouping {
     public:
-        UsingHandler(
+        explicit RootUsingHandler(CompilerScanDriver *driver);
+
+        tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) override;
+
+        tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) override;
+
+    private:
+        Capture m_capture;
+    };
+
+    class BlockUsingHandler : public BaseGrouping {
+    public:
+        BlockUsingHandler(
             bool isSideEffect,
-            lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -33,33 +50,13 @@ namespace lyric_compiler {
 
     private:
         bool m_isSideEffect;
-        Using m_using;
-    };
-
-    class UsingRef : public BaseGrouping {
-    public:
-        UsingRef(
-            Using *using_,
-            lyric_assembler::BlockHandle *block,
-            CompilerScanDriver *driver);
-
-        tempo_utils::Status before(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            BeforeContext &ctx) override;
-        tempo_utils::Status after(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            AfterContext &ctx) override;
-
-    private:
-        Using *m_using;
+        Capture m_capture;
     };
 
     class UsingImpl : public BaseChoice {
     public:
         UsingImpl(
-            Using *using_,
+            Capture *capture,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -69,7 +66,7 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        Using *m_using;
+        Capture *m_capture;
     };
 }
 

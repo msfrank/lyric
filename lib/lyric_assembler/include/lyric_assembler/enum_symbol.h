@@ -106,7 +106,7 @@ namespace lyric_assembler {
             const std::string &name,
             AbstractMemberReifier &reifier,
             const lyric_common::TypeDef &receiverType,
-            bool thisReceiver) const;
+            bool thisReceiver = false) const;
 
         bool isMemberInitialized(const std::string &name) const;
         tempo_utils::Status setMemberInitialized(const std::string &name);

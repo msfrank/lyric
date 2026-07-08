@@ -1,15 +1,14 @@
-#ifndef LYRIC_COMPILER_ENTRY_HANDLER_H
-#define LYRIC_COMPILER_ENTRY_HANDLER_H
-
-#include <lyric_assembler/entry_handle.h>
+#ifndef LYRIC_COMPILER_ROOT_HANDLER_H
+#define LYRIC_COMPILER_ROOT_HANDLER_H
 
 #include "base_grouping.h"
+#include "compiler_scan_driver.h"
 
 namespace lyric_compiler {
 
-    class EntryHandler : public BaseGrouping {
+    class RootHandler : public BaseGrouping {
     public:
-        explicit EntryHandler(CompilerScanDriver *driver);
+        explicit RootHandler(CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -20,11 +19,7 @@ namespace lyric_compiler {
             const lyric_parser::ArchetypeState *state,
             const lyric_parser::ArchetypeNode *node,
             AfterContext &ctx) override;
-
-    private:
-        lyric_assembler::EntryHandle *m_entryHandle;
-        lyric_assembler::CodeFragment *m_fragment;
     };
 }
 
-#endif // LYRIC_COMPILER_ENTRY_HANDLER_H
+#endif // LYRIC_COMPILER_ROOT_HANDLER_H

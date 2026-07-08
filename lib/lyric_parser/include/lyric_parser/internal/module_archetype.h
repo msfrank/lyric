@@ -16,17 +16,40 @@ namespace lyric_parser::internal {
 
         ArchetypeState *getState() const;
 
-        void logErrorOrThrow(
+        void logError(
+            size_t lineNr,
+            size_t columnNr,
+            const std::string &message);
+
+        void logWarning(
+            size_t lineNr,
+            size_t columnNr,
+            const std::string &message);
+
+        void logInfo(
             size_t lineNr,
             size_t columnNr,
             const std::string &message);
 
         bool hasError() const;
 
+        /*
+         *
+         */
+
         void enterRoot(ModuleParser::RootContext *ctx) override;
+        void exitRoot(ModuleParser::RootContext *ctx) override;
+
+        void exitRootStatement(ModuleParser::RootStatementContext *ctx) override;
+
+        void enterRootForm(ModuleParser::RootFormContext *ctx) override;
+        void exitRootForm(ModuleParser::RootFormContext *ctx) override;
+
+        void enterEntryStatement(ModuleParser::EntryStatementContext *ctx) override;
+        void exitEntryStatement(ModuleParser::EntryStatementContext *ctx) override;
+
         void enterBlock(ModuleParser::BlockContext *ctx) override;
         void exitForm(ModuleParser::FormContext *ctx) override;
-        void exitRoot(ModuleParser::RootContext *ctx) override;
 
         void exitSymbolIdentifier(ModuleParser::SymbolIdentifierContext *ctx) override;
 
@@ -36,7 +59,7 @@ namespace lyric_parser::internal {
         void exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx) override;
 
         void enterUsingStatement(ModuleParser::UsingStatementContext *ctx) override;
-        void exitUsingRef(ModuleParser::UsingRefContext *ctx) override;
+        void exitUsingPath(ModuleParser::UsingPathContext *ctx) override;
         void exitUsingType(ModuleParser::UsingTypeContext *ctx) override;
         void exitUsingStatement(ModuleParser::UsingStatementContext *ctx) override;
 
@@ -300,7 +323,9 @@ namespace lyric_parser::internal {
         tempo_utils::Result<LyricArchetype> toArchetype() const;
 
     private:
-        ArchetypeState *m_state;
+        ArchetypeState *m_state = nullptr;
+        ArchetypeNode *m_implicitBlock = nullptr;
+        ArchetypeNode *m_moduleEntry = nullptr;
         std::shared_ptr<tempo_tracing::TraceContext> m_context;
         tempo_utils::Status m_status;
     };

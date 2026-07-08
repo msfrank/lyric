@@ -18,6 +18,9 @@ namespace lyric_schema {
 
         // AST classes
 
+        Root,                       // the root of the AST
+        Entry,                      // the module entry point
+
         Nil,                        // nil literal
         Undef,                      // undef literal
         False,                      // false literal
@@ -158,6 +161,7 @@ namespace lyric_schema {
         NoOverride,
         ThisBase,
 
+        EntryOffset,                // offset of the module entry point, if it exists
         TypeOffset,                 // type descriptor offset
         DefaultOffset,
         RestOffset,
@@ -169,6 +173,11 @@ namespace lyric_schema {
 
         NUM_IDS,                    // must be last
     };
+
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRootClass(
+        &kLyricAstNs, LyricAstId::Root, "Root");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstEntryClass(
+        &kLyricAstNs, LyricAstId::Entry, "Entry");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNilClass(
         &kLyricAstNs, LyricAstId::Nil, "Nil");
@@ -467,6 +476,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::ThisBase, "ThisBase", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstEntryOffsetProperty(
+        &kLyricAstNs, LyricAstId::EntryOffset, "EntryOffset", tempo_schema::PropertyType::kUInt32);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeOffsetProperty(
         &kLyricAstNs, LyricAstId::TypeOffset, "TypeOffset", tempo_schema::PropertyType::kUInt32);
 
@@ -502,6 +515,9 @@ namespace lyric_schema {
         const tempo_schema::SchemaResource<LyricAstNs,LyricAstId> *,
         static_cast<std::size_t>(LyricAstId::NUM_IDS)>
     kLyricAstResources = {
+
+        &kLyricAstRootClass,
+        &kLyricAstEntryClass,
 
         &kLyricAstNilClass,
         &kLyricAstUndefClass,
@@ -641,6 +657,7 @@ namespace lyric_schema {
         &kLyricAstNoOverrideProperty,
         &kLyricAstThisBaseProperty,
 
+        &kLyricAstEntryOffsetProperty,
         &kLyricAstTypeOffsetProperty,
         &kLyricAstDefaultOffsetProperty,
         &kLyricAstRestOffsetProperty,

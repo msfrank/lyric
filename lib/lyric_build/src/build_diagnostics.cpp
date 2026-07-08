@@ -67,9 +67,21 @@ lyric_build::BuildDiagnostics::printDiagnostics() const
     auto rootWalker = m_spanset.getRoots();
     for (int i = 0; i < rootWalker.numRoots(); i++) {
         auto root = rootWalker.getRoot(i);
+
+        std::string component;
+        root.parseTagOrDefault(tempo_tracing::kOpentracingComponent, component, {});
+        if (component != "lyric_build")
+            continue;
+
+        std::string activity;
+        root.parseTagOrDefault(tempo_tracing::kTempoTracingComponentActivity, activity, {});
+        if (activity != "computeTargets")
+            continue;
+
         auto taskId = TaskId::fromString(root.getOperationName());
         if (m_options.skipUnknownTargets && !m_options.targets.contains(taskId))
             continue;
+
         print_span(root, 0);
     }
 }

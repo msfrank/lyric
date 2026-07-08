@@ -43,8 +43,11 @@ TEST_P(ParseImpls, EmptyImpl)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(param.astClass));
     ASSERT_EQ (1, defclassNode.numChildren());
@@ -68,8 +71,11 @@ TEST_P(ParseImpls, ImplWithAlias)
 
     ASSERT_THAT (parseResult, tempo_test::IsResult());
     auto archetype = parseResult.getResult();
+
     auto root = archetype.getRoot();
-    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstRootClass));
+    ASSERT_EQ (1, root.numChildren());
+
     auto defclassNode = root.getChild(0);
     ASSERT_TRUE (defclassNode.isClass(param.astClass));
     ASSERT_EQ (1, defclassNode.numChildren());

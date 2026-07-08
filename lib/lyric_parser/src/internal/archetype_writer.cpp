@@ -23,8 +23,8 @@ lyric_parser::internal::ArchetypeWriter::createArchetype(const ArchetypeState *s
 
     auto *root = state->getRoot();
     if (root == nullptr)
-        return lyric_parser::ParseStatus::forCondition(
-            ParseCondition::kParseInvariant, "missing root node");
+        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+            "missing root node");
 
     NodeAddress rootAddress;
     TU_ASSIGN_OR_RETURN (rootAddress, writer.writeNode(root));

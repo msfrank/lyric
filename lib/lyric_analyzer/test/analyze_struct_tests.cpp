@@ -28,7 +28,7 @@ TEST_F(AnalyzeStruct, DeclareStruct)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (3, object.numSymbols());
     ASSERT_EQ (1, object.numStructs());
 
     auto struct0 = object.getStruct(0);
@@ -53,7 +53,7 @@ TEST_F(AnalyzeStruct, DeclareStructMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numStructs());
     ASSERT_EQ (1, object.numFields());
 
@@ -83,9 +83,9 @@ TEST_F(AnalyzeStruct, DeclareStructMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numStructs());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());
@@ -133,9 +133,9 @@ TEST_F(AnalyzeStruct, DeclareStructImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (1, object.numStructs());
-    ASSERT_EQ (3, object.numCalls());
+    ASSERT_EQ (2, object.numCalls());
 
     auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());

@@ -11,7 +11,7 @@ lyric_object::LyricObject::LyricObject()
 }
 
 lyric_object::LyricObject::LyricObject(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes)
-    : m_bytes(immutableBytes)
+    : m_bytes(std::move(immutableBytes))
 {
     TU_ASSERT (m_bytes != nullptr);
     std::span<const tu_uint8> bytes(m_bytes->getData(), m_bytes->getSize());
@@ -406,7 +406,6 @@ lyric_object::LyricObject::getPlugin() const
     return PluginWalker(m_reader, (void *) pluginDescriptor);
 }
 
-
 const tu_uint8 *
 lyric_object::LyricObject::getBytecodeData() const
 {
@@ -421,6 +420,22 @@ lyric_object::LyricObject::getBytecodeSize() const
     if (m_reader == nullptr)
         return 0;
     return m_reader->getBytecodeSize();
+}
+
+bool
+lyric_object::LyricObject::hasEntry() const
+{
+    if (!isValid())
+        return false;
+    return m_reader->hasEntry();
+}
+
+lyric_object::CallWalker
+lyric_object::LyricObject::getEntry() const
+{
+    if (!hasEntry())
+        return {};
+    return CallWalker(m_reader, m_reader->getEntryIndex());
 }
 
 std::shared_ptr<const lyric_object::internal::ObjectReader>

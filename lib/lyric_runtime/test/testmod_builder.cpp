@@ -1,12 +1,12 @@
 
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/entry_handle.h>
+#include <lyric_assembler/object_root.h>
+#include <lyric_assembler/object_state.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
+#include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_runtime/static_loader.h>
 #include <tempo_utils/file_writer.h>
-
-#include "lyric_assembler/call_symbol.h"
-#include "lyric_assembler/object_root.h"
-#include "lyric_assembler/object_state.h"
-#include "lyric_bootstrap/bootstrap_helpers.h"
-#include "lyric_bootstrap/bootstrap_loader.h"
-#include "lyric_runtime/static_loader.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,11 +30,13 @@ int main(int argc, char *argv[])
     lyric_assembler::ObjectRoot *objectRoot;
     TU_ASSIGN_OR_RAISE (objectRoot, state.defineRoot());
 
-    auto *entryCall = objectRoot->entryCall();
-    auto *proc = entryCall->callProc();;
+    lyric_assembler::EntryHandle *entryHandle;
+    TU_ASSIGN_OR_RAISE (entryHandle, objectRoot->declareEntry());
+
+    auto *proc = entryHandle->entryProc();;
     auto *fragment = proc->procFragment();
     TU_RAISE_IF_NOT_OK (fragment->returnToCaller());
-    TU_RAISE_IF_STATUS (entryCall->finalizeCall());
+    TU_RAISE_IF_STATUS (entryHandle->finalizeEntry());
 
     lyric_object::LyricObject object;
     TU_ASSIGN_OR_RAISE (object, state.toObject());

@@ -95,6 +95,9 @@ namespace lyric_object::internal {
         const uint8_t *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;
 
+        bool hasEntry() const;
+        const tu_uint32 getEntryIndex() const;
+
         std::span<const tu_uint8> bytesView() const;
 
         std::string dumpJson() const;

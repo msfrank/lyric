@@ -971,6 +971,85 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
         "missing variable {}", name);
 }
 
+tempo_utils::Result<lyric_assembler::DataReference>
+lyric_assembler::BlockHandle::resolveReference(
+    const lyric_common::SymbolPath &symbolPath,
+    std::vector<std::string> &remaining)
+{
+    auto parts = symbolPath.getPath();
+    if (parts.empty())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid reference ''");
+
+    auto curr = parts.cbegin();
+
+    //
+    DataReference ref;
+    TU_ASSIGN_OR_RETURN (ref, resolveReference(*curr++));
+    if (curr == parts.cend()) {
+        remaining.clear();
+        return ref;
+    }
+
+    auto *symbolCache = m_state->symbolCache();
+    BlockHandle *currBlock;
+
+    switch (ref.referenceType) {
+        case ReferenceType::Variable:
+        case ReferenceType::Value: {
+            remaining = std::vector(curr, parts.cend());
+            return ref;
+        }
+        case ReferenceType::Descriptor: {
+            AbstractSymbol *symbol;
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
+            currBlock = symbol->derefBlock();
+            break;
+        }
+        case ReferenceType::Namespace: {
+            NamespaceSymbol *namespaceSymbol;
+            TU_ASSIGN_OR_RETURN (namespaceSymbol, symbolCache->getOrImportNamespace(ref.symbolUrl));
+            currBlock = namespaceSymbol->derefBlock();
+            break;
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid reference '{}'", symbolPath.toString());
+    }
+
+    SymbolBinding binding;
+
+    for (; curr != parts.cend(); ++curr) {
+        binding = currBlock->getBinding(*curr);
+
+        switch (binding.bindingType) {
+            case BindingType::Variable:
+            case BindingType::Value: {
+                remaining = std::vector(curr, parts.cend());
+                return symbol_binding_to_data_reference(binding);
+            }
+            case BindingType::Descriptor: {
+                AbstractSymbol *symbol;
+                TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
+                currBlock = symbol->derefBlock();
+                break;
+            }
+            case BindingType::Namespace: {
+                NamespaceSymbol *namespaceSymbol;
+                TU_ASSIGN_OR_RETURN (namespaceSymbol, symbolCache->getOrImportNamespace(ref.symbolUrl));
+                currBlock = namespaceSymbol->derefBlock();
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "no such reference '{}'", symbolPath.toString());
+        }
+    }
+
+    remaining = std::vector(curr, parts.cend());
+    return symbol_binding_to_data_reference(binding);
+}
+
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::BlockHandle::declareFunction(
     const std::string &name,
@@ -1467,44 +1546,12 @@ lyric_assembler::BlockHandle::resolveStruct(const lyric_common::TypeDef &structT
 }
 
 tempo_utils::Status
-lyric_assembler::BlockHandle::useImpls(
+lyric_assembler::BlockHandle::putImpls(
+    const AbstractSymbol *symbol,
     const DataReference &usingRef,
+    const lyric_common::SymbolUrl &captureUrl,
     const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
 {
-    AbstractSymbol *symbol;
-    auto *symbolCache = m_state->symbolCache();
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(usingRef.symbolUrl));
-
-    switch (symbol->getSymbolType()) {
-        case SymbolType::BINDING: {
-            auto *bindingSymbol = cast_symbol_to_binding(symbol);
-            lyric_common::TypeDef targetType;
-            TU_ASSIGN_OR_RETURN (targetType, bindingSymbol->resolveTarget({}));
-            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetType.getConcreteUrl()));
-            break;
-        }
-        case SymbolType::LOCAL: {
-            auto *localVariable = cast_symbol_to_local(symbol);
-            auto localType = localVariable->getTypeDef();
-            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(localType.getConcreteUrl()));
-            break;
-        }
-        case SymbolType::LEXICAL: {
-            auto *lexicalVariable = cast_symbol_to_lexical(symbol);
-            auto lexicalType = lexicalVariable->getTypeDef();
-            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(lexicalType.getConcreteUrl()));
-            break;
-        }
-        case SymbolType::ARGUMENT: {
-            auto *argumentVariable = cast_symbol_to_local(symbol);
-            auto argumentType = argumentVariable->getTypeDef();
-            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(argumentType.getConcreteUrl()));
-            break;
-        }
-        default:
-            break;
-    }
-
     absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsBegin;
     absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsEnd;
 
@@ -1560,7 +1607,8 @@ lyric_assembler::BlockHandle::useImpls(
         ImplReference implRef;
         implRef.implType = implType;
         implRef.usingRef = usingRef;
-        m_impls[implType] = implRef;
+        implRef.captureUrl = captureUrl;
+        m_impls[implType] = std::move(implRef);
     }
 
     return {};
@@ -1568,16 +1616,85 @@ lyric_assembler::BlockHandle::useImpls(
 
 tempo_utils::Status
 lyric_assembler::BlockHandle::useImpls(
+    const DataReference &usingRef,
+    const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
+{
+    TU_ASSERT (usingRef.referenceType != ReferenceType::Invalid);
+    auto *symbolCache = m_state->symbolCache();
+
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(usingRef.symbolUrl));
+
+    switch (symbol->getSymbolType()) {
+        case SymbolType::BINDING: {
+            auto *bindingSymbol = cast_symbol_to_binding(symbol);
+            lyric_common::TypeDef targetType;
+            TU_ASSIGN_OR_RETURN (targetType, bindingSymbol->resolveTarget({}));
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::LOCAL: {
+            auto *localVariable = cast_symbol_to_local(symbol);
+            auto localType = localVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(localType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::LEXICAL: {
+            auto *lexicalVariable = cast_symbol_to_lexical(symbol);
+            auto lexicalType = lexicalVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(lexicalType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::ARGUMENT: {
+            auto *argumentVariable = cast_symbol_to_local(symbol);
+            auto argumentType = argumentVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(argumentType.getConcreteUrl()));
+            break;
+        }
+        default:
+            break;
+    }
+
+    return putImpls(symbol, usingRef, {}, implTypes);
+}
+
+tempo_utils::Status
+lyric_assembler::BlockHandle::useImpls(
+    const DataReference &usingRef,
+    const lyric_common::SymbolUrl &captureUrl,
+    const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
+{
+    TU_ASSERT (usingRef.referenceType != ReferenceType::Invalid);
+    TU_ASSERT (captureUrl.isValid());
+    auto *symbolCache = m_state->symbolCache();
+
+    CallSymbol *captureSymbol;
+    TU_ASSIGN_OR_RETURN (captureSymbol, symbolCache->getOrImportCall(captureUrl));
+
+    auto captureReturnType = captureSymbol->getReturnType();
+    if (captureReturnType.getType() != lyric_common::TypeDefType::Concrete)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid impl capture call {}", captureUrl.toString());
+
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(captureReturnType.getConcreteUrl()));
+
+    return putImpls(symbol, usingRef, captureUrl, implTypes);
+}
+
+tempo_utils::Status
+lyric_assembler::BlockHandle::useImpls(
     const InstanceSymbol *instanceSymbol,
     const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
 {
-    TU_ASSERT (instanceSymbol != nullptr);
+    TU_NOTNULL (instanceSymbol);
 
     DataReference usingRef;
     usingRef.referenceType = ReferenceType::Value;
     usingRef.symbolUrl = instanceSymbol->getSymbolUrl();
     usingRef.typeDef = instanceSymbol->getTypeDef();
-    return useImpls(usingRef, implTypes);
+
+    return putImpls(instanceSymbol, usingRef, {}, implTypes);
 }
 
 bool
