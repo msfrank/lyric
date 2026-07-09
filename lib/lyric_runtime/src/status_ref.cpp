@@ -29,6 +29,12 @@ lyric_runtime::StatusRef::~StatusRef()
     TU_LOG_VV << "free" << StatusRef::toString();
 }
 
+tu_uint64
+lyric_runtime::StatusRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 bool
 lyric_runtime::StatusRef::getField(const Operand &field, Operand &value) const
 {

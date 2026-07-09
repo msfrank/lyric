@@ -47,6 +47,12 @@ lyric_runtime::StringRef::~StringRef()
     TU_LOG_VV << "free StringRef" << StringRef::toString();
 }
 
+tu_uint64
+lyric_runtime::StringRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::StringRef::getDescriptorEntry() const
 {

@@ -315,7 +315,7 @@ lyric_test::matchers::MatchesDescriptorSection(lyric_object::LinkageSection sect
 }
 
 testing::Matcher<lyric_runtime::Operand>
-lyric_test::matchers::MatchesDataCellType(lyric_runtime::OperandType type)
+lyric_test::matchers::MatchesOperandType(lyric_runtime::OperandType type)
 {
     return OperandMatcher(type);
 }

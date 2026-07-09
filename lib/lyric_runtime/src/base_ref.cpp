@@ -11,6 +11,12 @@ lyric_runtime::BaseRef::BaseRef(const VirtualTable *vtable)
     m_reachable = false;
 }
 
+tu_uint64
+lyric_runtime::BaseRef::getTypeTag() const
+{
+    return 0;
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::BaseRef::getDescriptorEntry() const
 {

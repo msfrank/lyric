@@ -79,7 +79,7 @@ namespace lyric_test {
         Matcher<lyric_runtime::Operand> OperandRef(const lyric_common::SymbolUrl &symbolUrl);
         Matcher<lyric_runtime::Operand> OperandRef(const lyric_common::SymbolPath &symbolPath);
         Matcher<lyric_runtime::Operand> MatchesDescriptorSection(lyric_object::LinkageSection section);
-        Matcher<lyric_runtime::Operand> MatchesDataCellType(lyric_runtime::OperandType type);
+        Matcher<lyric_runtime::Operand> MatchesOperandType(lyric_runtime::OperandType type);
     }
 }
 

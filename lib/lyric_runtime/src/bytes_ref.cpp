@@ -44,6 +44,12 @@ lyric_runtime::BytesRef::~BytesRef()
     TU_LOG_VV << "free BytesRef" << BytesRef::toString();
 }
 
+tu_uint64
+lyric_runtime::BytesRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::BytesRef::getDescriptorEntry() const
 {

@@ -34,6 +34,12 @@ lyric_runtime::ProtocolRef::~ProtocolRef()
     TU_LOG_VV << "free ProtocolRef" << ProtocolRef::toString();
 }
 
+tu_uint64
+lyric_runtime::ProtocolRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::ProtocolRef::getDescriptorEntry() const
 {

@@ -14,7 +14,7 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardProtocol)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        MatchesDataCellType(lyric_runtime::OperandType::Protocol))));
+        MatchesOperandType(lyric_runtime::OperandType::Protocol))));
 }
 
 TEST_F(DiscardProtocolTests, EvaluateDiscardCanSend)

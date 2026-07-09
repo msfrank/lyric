@@ -4,6 +4,7 @@
 #include <tempo_utils/rope.h>
 
 #include "abstract_ref.h"
+#include "virtual_table.h"
 
 namespace lyric_runtime {
 
@@ -13,6 +14,10 @@ namespace lyric_runtime {
         StringRef(const ExistentialTable *etable, const char *data, int32_t size);
         StringRef(const ExistentialTable *etable, tempo_utils::Rope<char> rope);
         ~StringRef() override;
+
+        static constexpr tu_uint64 type_tag() { return 0x20cce23e9c63d151; }
+
+        tu_uint64 getTypeTag() const override;
 
         const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;

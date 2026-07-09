@@ -126,7 +126,7 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
 
     ASSERT_THAT (result,
         tempo_test::ContainsResult(RunModule(
-            MatchesDataCellType(lyric_runtime::OperandType::Invalid))));
+            MatchesOperandType(lyric_runtime::OperandType::Invalid))));
 }
 
 TEST_F(CompileDefenum, EvaluateDerefGlobalMember)

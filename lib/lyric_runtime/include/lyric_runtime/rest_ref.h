@@ -10,6 +10,10 @@ namespace lyric_runtime {
         RestRef(const ExistentialTable *etable, std::vector<Operand> &&restArgs);
         ~RestRef() override;
 
+        static constexpr tu_uint64 type_tag() { return 0xd1e25ddc2e0ccb39; }
+
+        tu_uint64 getTypeTag() const override;
+
         const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;

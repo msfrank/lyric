@@ -2,6 +2,7 @@
 #define LYRIC_RUNTIME_NAMESPACE_REF_H
 
 #include "abstract_ref.h"
+#include "virtual_table.h"
 
 namespace lyric_runtime {
 
@@ -13,6 +14,10 @@ namespace lyric_runtime {
             DescriptorEntry *descriptorEntry,
             TypeEntry *typeEntry);
         ~NamespaceRef() override;
+
+        static constexpr tu_uint64 type_tag() { return 0xe48d7d25a9e308b3; }
+
+        tu_uint64 getTypeTag() const override;
 
         const DescriptorEntry *getDescriptorEntry() const override;
         const AbstractMemberResolver *getMemberResolver() const override;

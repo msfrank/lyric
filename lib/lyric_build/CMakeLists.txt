@@ -36,6 +36,7 @@ add_custom_command(
 set(LYRIC_BUILD_INCLUDES
     include/lyric_build/abstract_artifact_cache.h
     include/lyric_build/abstract_virtual_filesystem.h
+    include/lyric_build/abstract_task_notifier.h
     include/lyric_build/artifact_loader.h
     include/lyric_build/base_task.h
     include/lyric_build/build_attrs.h

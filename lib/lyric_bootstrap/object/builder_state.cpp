@@ -1,5 +1,6 @@
 
 #include <lyric_common/symbol_url.h>
+#include <lyric_runtime/runtime_types.h>
 #include <tempo_utils/bytes_appender.h>
 
 #include "builder_state.h"

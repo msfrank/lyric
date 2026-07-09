@@ -8,10 +8,11 @@
 #include <lyric_object/object_types.h>
 #include <tempo_utils/integer_types.h>
 
+#include "abstract_ref.h"
+
 namespace lyric_runtime {
 
     // forward declarations
-    class AbstractRef;
     class BaseRef;
     class BytesRef;
     class DescriptorEntry;
@@ -115,6 +116,19 @@ namespace lyric_runtime {
         bool getDescriptor(DescriptorEntry *&descriptor) const;
         bool getDescriptor(DescriptorEntry *&descriptor, lyric_object::LinkageSection section) const;
         bool getType(TypeEntry *&type) const;
+
+        template<class RefType>
+        bool castRef(RefType *&ref) const
+        {
+            BaseRef *baseRef;
+            if (!getRef(baseRef))
+                return false;
+            auto *result = runtime_cast<RefType>(baseRef);
+            if (result == nullptr)
+                return false;
+            ref = result;
+            return true;
+        }
 
         void setReachable() const;
         void clearReachable() const;

@@ -8,6 +8,7 @@
 #include <lyric_common/symbol_url.h>
 #include <lyric_object/generated/object.h>
 #include <lyric_object/bytecode_builder.h>
+#include <lyric_object/lyric_object.h>
 #include <lyric_runtime/abstract_heap.h>
 #include <tempo_utils/option_template.h>
 

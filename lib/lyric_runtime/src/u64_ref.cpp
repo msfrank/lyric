@@ -18,6 +18,12 @@ lyric_runtime::U64Ref::~U64Ref()
     TU_LOG_VV << "free U64Ref" << U64Ref::toString();
 }
 
+tu_uint64
+lyric_runtime::U64Ref::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::U64Ref::getDescriptorEntry() const
 {

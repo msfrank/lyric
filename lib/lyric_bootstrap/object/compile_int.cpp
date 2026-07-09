@@ -320,40 +320,27 @@ declare_core_U8(BuilderState &state, const PreludeSymbols &preludeSymbols)
     return U8Existential;
 }
 
-CoreInstance *
-build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
+void
+build_impls_for_IntType(BuilderState &state,
+    const CoreType *IntType,
+    const CoreInstance *IntInstance,
+    const PreludeSymbols &preludeSymbols)
 {
     auto *BoolType = preludeSymbols.BoolExistential->existentialType;
-    auto *I64Type = preludeSymbols.I64Existential->existentialType;
 
-    lyric_common::SymbolPath instancePath({"IntInstance"});
+    auto *IntArithmeticType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        preludeSymbols.ArithmeticConcept->concept_index, {IntType});
+    auto *IntComparisonType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        preludeSymbols.ComparisonConcept->concept_index, {IntType, IntType});
+    auto *IntEqualityType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        preludeSymbols.EqualityConcept->concept_index, {IntType, IntType});
+    auto *IntOrderedType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        preludeSymbols.OrderedConcept->concept_index, {IntType});
 
-    auto *IntArithmeticType = state.addConcreteType(nullptr,
-        lyo1::TypeSection::Concept,
-        preludeSymbols.ArithmeticConcept->concept_index,
-        {I64Type});
-
-    auto *IntComparisonType = state.addConcreteType(nullptr,
-        lyo1::TypeSection::Concept,
-        preludeSymbols.ComparisonConcept->concept_index,
-        {I64Type, I64Type});
-
-    auto *IntEqualityType = state.addConcreteType(nullptr,
-        lyo1::TypeSection::Concept,
-        preludeSymbols.EqualityConcept->concept_index,
-        {I64Type, I64Type});
-
-    auto *IntOrderedType = state.addConcreteType(nullptr,
-        lyo1::TypeSection::Concept,
-        preludeSymbols.OrderedConcept->concept_index,
-        {I64Type});
-
-    auto *IntInstance = state.addInstance(instancePath,
-        lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
-    auto *IntArithmeticImpl = state.addImpl(instancePath, IntArithmeticType, preludeSymbols.ArithmeticConcept);
-    auto *IntComparisonImpl = state.addImpl(instancePath, IntComparisonType, preludeSymbols.ComparisonConcept);
-    auto *IntEqualityImpl = state.addImpl(instancePath, IntEqualityType, preludeSymbols.EqualityConcept);
-    auto *IntOrderedImpl = state.addImpl(instancePath, IntOrderedType, preludeSymbols.OrderedConcept);
+    auto *IntArithmeticImpl = state.addImpl(IntInstance->instancePath, IntArithmeticType, preludeSymbols.ArithmeticConcept);
+    auto *IntComparisonImpl = state.addImpl(IntInstance->instancePath, IntComparisonType, preludeSymbols.ComparisonConcept);
+    auto *IntEqualityImpl = state.addImpl(IntInstance->instancePath, IntEqualityType, preludeSymbols.EqualityConcept);
+    auto *IntOrderedImpl = state.addImpl(IntInstance->instancePath, IntOrderedType, preludeSymbols.OrderedConcept);
 
     {
         lyric_object::BytecodeBuilder code;
@@ -363,10 +350,10 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Add", IntArithmeticImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -376,10 +363,10 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Subtract", IntArithmeticImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -389,10 +376,10 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Multiply", IntArithmeticImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -402,10 +389,10 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Divide", IntArithmeticImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -414,9 +401,9 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Negate", IntArithmeticImpl,
             {
-                make_list_param("lhs", I64Type),
+                make_list_param("lhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
@@ -435,8 +422,8 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Equals", IntEqualityImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
             code, BoolType, true);
     }
@@ -457,8 +444,8 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("LessThan", IntComparisonImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
             code, BoolType, true);
     }
@@ -479,8 +466,8 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("GreaterThan", IntComparisonImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
             code, BoolType, true);
     }
@@ -501,8 +488,8 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("LessEquals", IntComparisonImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
             code, BoolType, true);
     }
@@ -523,8 +510,8 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("GreaterEquals", IntComparisonImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
             code, BoolType, true);
     }
@@ -536,17 +523,44 @@ build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Compare", IntOrderedImpl,
             {
-                make_list_param("lhs", I64Type),
-                make_list_param("rhs", I64Type),
+                make_list_param("lhs", IntType),
+                make_list_param("rhs", IntType),
             },
-            code, I64Type, true);
+            code, IntType, true);
     }
+}
+
+CoreInstance *
+build_core_IntInstance(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    lyric_common::SymbolPath instancePath({"IntInstance"});
+    auto *IntInstance = state.addInstance(instancePath,
+        lyo1::InstanceFlags::NONE, preludeSymbols.SingletonInstance);
+
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(IntInstance, {}, code);
         state.setInstanceAllocator(IntInstance, "SingletonAlloc");
     }
+
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *I32Type = preludeSymbols.I32Existential->existentialType;
+    auto *I16Type = preludeSymbols.I16Existential->existentialType;
+    auto *I8Type = preludeSymbols.I8Existential->existentialType;
+    auto *U64Type = preludeSymbols.U64Existential->existentialType;
+    auto *U32Type = preludeSymbols.U32Existential->existentialType;
+    auto *U16Type = preludeSymbols.U16Existential->existentialType;
+    auto *U8Type = preludeSymbols.U8Existential->existentialType;
+
+    build_impls_for_IntType(state, I64Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, I32Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, I16Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, I8Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, U64Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, U32Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, U16Type, IntInstance, preludeSymbols);
+    build_impls_for_IntType(state, U8Type, IntInstance, preludeSymbols);
 
     return IntInstance;
 }

@@ -28,6 +28,12 @@ lyric_runtime::NamespaceRef::~NamespaceRef()
     TU_LOG_VV << "free NamespaceRef" << NamespaceRef::toString();
 }
 
+tu_uint64
+lyric_runtime::NamespaceRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::NamespaceRef::getDescriptorEntry() const
 {

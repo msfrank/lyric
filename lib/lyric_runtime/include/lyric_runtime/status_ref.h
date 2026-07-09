@@ -13,6 +13,10 @@ namespace lyric_runtime {
         StatusRef(const VirtualTable *vtable, tempo_utils::StatusCode statusCode, StringRef *message);
         ~StatusRef() override;
 
+        static constexpr tu_uint64 type_tag() { return 0x691b41f0b4e3d9a6; }
+
+        tu_uint64 getTypeTag() const override;
+
         bool getField(const Operand &field, Operand &value) const override;
         bool setField(const Operand &field, const Operand &value, Operand *prev) override;
         std::string toString() const override;

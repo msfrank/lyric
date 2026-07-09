@@ -3,15 +3,31 @@
 
 #include <absl/hash/hash.h>
 
-#include "system_scheduler.h"
-#include "virtual_table.h"
+#include <lyric_common/symbol_url.h>
 
 namespace lyric_runtime {
+
+    // forward declarations
+    class AbstractMemberResolver;
+    class AbstractMethodResolver;
+    class AbstractExtensionResolver;
+    class DescriptorEntry;
+    class InterpreterState;
+    class Operand;
+    class Promise;
+    class SystemScheduler;
+    class Task;
 
     class AbstractRef {
 
     public:
         virtual ~AbstractRef() = default;
+
+        /**
+         *
+         * @return
+         */
+        virtual tu_uint64 getTypeTag() const = 0;
 
         /**
          * Returns the symbol url for the ref.
@@ -208,6 +224,25 @@ namespace lyric_runtime {
          */
         virtual void finalize() = 0;
     };
+
+    /**
+     *
+     * @tparam RefType
+     * @param ref
+     * @return
+     */
+    template<class RefType>
+    RefType* runtime_cast(AbstractRef *ref)
+    {
+        if (ref == nullptr)
+            return nullptr;
+        tu_uint64 tag = RefType::type_tag();
+        if (tag == 0 || tag == 0xffffffffffffffff)
+            return nullptr;
+        if (ref->getTypeTag() == RefType::type_tag())
+            return static_cast<RefType *>(ref);
+        return nullptr;
+    }
 }
 
 #endif // LYRIC_RUNTIME_ABSTRACT_REF_H

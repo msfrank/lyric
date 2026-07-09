@@ -18,6 +18,12 @@ lyric_runtime::RestRef::~RestRef()
     TU_LOG_VV << "free RestRef" << RestRef::toString();
 }
 
+tu_uint64
+lyric_runtime::RestRef::getTypeTag() const
+{
+    return type_tag();
+}
+
 const lyric_runtime::DescriptorEntry *
 lyric_runtime::RestRef::getDescriptorEntry() const
 {

@@ -16,7 +16,7 @@ TEST_F(BytesTests, TestEvaluateBytesFromString)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(MatchesDataCellType(lyric_runtime::OperandType::Bytes))));
+                     RunModule(MatchesOperandType(lyric_runtime::OperandType::Bytes))));
 }
 
 TEST_F(BytesTests, TestEvaluateBytesLength)
