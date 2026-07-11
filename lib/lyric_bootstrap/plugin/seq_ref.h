@@ -5,57 +5,43 @@
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/interpreter_state.h>
 
-enum class SeqNodeType {
-    INVALID,
-    LEAF,
-    CONCAT,
-};
-
-struct SeqNode {
-    SeqNodeType type;
-    int refcount;
-    int count;
-};
-
-struct LeafSeqNode : public SeqNode {
-    lyric_runtime::Operand *values;
-};
-
-struct ConcatSeqNode : public SeqNode {
-    SeqNode *left;
-    SeqNode *right;
-    int height;
-};
+typedef tempo_utils::Rope<lyric_runtime::Operand> OperandSeq;
 
 class SeqRef : public lyric_runtime::BaseRef {
-
 public:
     explicit SeqRef(const lyric_runtime::VirtualTable *vtable);
     ~SeqRef() override;
 
+    static constexpr tu_uint64 type_tag() { return 0x30a9096165580ad5; }
+
+    tu_uint64 getTypeTag() const override;
+
     std::string toString() const override;
 
-    SeqNode *getNode() const;
-    void setNode(SeqNode *node);
+    OperandSeq getSeq() const;
+    void setSeq(const OperandSeq &seq);
 
+    bool isEmpty() const;
     size_t numElements() const;
-    lyric_runtime::Operand seqSize() const;
-    lyric_runtime::Operand seqGet(const lyric_runtime::Operand &index) const;
-    SeqNode *seqSlice(const lyric_runtime::Operand &start, const lyric_runtime::Operand &length) const;
+    bool getElement(tu_int64 index, lyric_runtime::Operand &element) const;
+    OperandSeq slice(tu_int64 start, tu_int64 length) const;
 
 protected:
     void setMembersReachable() override;
     void clearMembersReachable() override;
 
 private:
-    SeqNode *m_node;
+    OperandSeq m_rope;
 };
 
 class SeqIterator : public lyric_runtime::BaseRef {
-
 public:
     explicit SeqIterator(const lyric_runtime::VirtualTable *vtable);
-    SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq);
+    SeqIterator(const lyric_runtime::VirtualTable *vtable, OperandSeq rope);
+
+    static constexpr tu_uint64 type_tag() { return 0xb13c47f3271ed56; }
+
+    tu_uint64 getTypeTag() const override;
 
     std::string toString() const override;
 
@@ -67,9 +53,11 @@ protected:
     void clearMembersReachable() override;
 
 private:
-    size_t m_curr;
-    size_t m_size;
-    SeqRef *m_seq;
+    struct Priv {
+        OperandSeq rope;
+        tempo_utils::RopeElementIterator<lyric_runtime::Operand> iterator;
+    };
+    std::shared_ptr<Priv> m_priv;
 };
 
 tempo_utils::Status seq_alloc(

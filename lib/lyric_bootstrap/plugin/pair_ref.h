@@ -11,6 +11,10 @@ public:
     explicit PairRef(const lyric_runtime::VirtualTable *vtable);
     ~PairRef() override;
 
+    static constexpr tu_uint64 type_tag() { return 0x9d22c0fca0817f85; }
+
+    tu_uint64 getTypeTag() const override;
+
     bool hashValue(absl::HashState state) override;
     std::string toString() const override;
 

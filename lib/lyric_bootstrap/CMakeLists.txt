@@ -11,7 +11,6 @@ add_library(prelude-plugin STATIC
     plugin/float_traps.h
     plugin/iterator_ref.cpp
     plugin/iterator_ref.h
-    plugin/map_key.h
     plugin/map_ref.cpp
     plugin/map_ref.h
     plugin/native_prelude.cpp

@@ -1,54 +1,42 @@
 #ifndef LYRIC_BOOTSTRAP_MAP_REF_H
 #define LYRIC_BOOTSTRAP_MAP_REF_H
 
-#include <stack>
-
 #include <lyric_runtime/base_ref.h>
-#include <lyric_runtime/bytecode_interpreter.h>
-#include <lyric_runtime/interpreter_state.h>
+#include <lyric_runtime/operand.h>
+#include <tempo_utils/hash_array_mapped_trie.h>
 
-enum class MapNodeType {
-    VALUE,
-    INDEX,
-};
-
-struct MapNode {
-    MapNodeType type;
-    int refcount;
-};
-
-struct ValueMapNode : public MapNode {
+struct MapKey {
     lyric_runtime::Operand key;
-    lyric_runtime::Operand value;
-    tu_uint32 hash;
-};
 
-struct ChainMapNode : public MapNode {
-    lyric_runtime::Operand key;
-    lyric_runtime::Operand value;
-    ChainMapNode *next;
-};
-
-constexpr int BITS_PER_LEVEL = 4;
-
-constexpr int table_slots(int bitsPerLevel) {
-    int numSlots = 1;
-    for (int i = 0; i < bitsPerLevel; i++) {
-        numSlots *= 2;
+    template <typename H>
+    friend H AbslHashValue(H state, const MapKey &mapKey)
+    {
+        mapKey.key.hashEquality(absl::HashState::Create(&state));
+        return std::move(state);
     }
-    return numSlots;
-}
-
-typedef std::array<MapNode *,table_slots(BITS_PER_LEVEL)> IndexMapNodeTable;
-
-struct IndexMapNode : public MapNode {
-    IndexMapNodeTable table;
 };
 
-struct NodePointer {
-    MapNode *node;
-    int index;
+class KeyHash {
+public:
+    size_t operator()(const MapKey &key);
 };
+
+class KeyEqual {
+public:
+    bool operator()(const MapKey &lhs, const MapKey &rhs) const;
+};
+
+typedef tempo_utils::HashArrayMappedTrie<
+    MapKey,
+    lyric_runtime::Operand,
+    KeyHash,
+    KeyEqual> OperandMap;
+
+typedef tempo_utils::HamtIterator<
+    MapKey,
+    lyric_runtime::Operand,
+    KeyHash,
+    KeyEqual> OperandMapIterator;
 
 class MapRef : public lyric_runtime::BaseRef {
 
@@ -56,32 +44,38 @@ public:
     explicit MapRef(const lyric_runtime::VirtualTable *vtable);
     ~MapRef() override;
 
+    static constexpr tu_uint64 type_tag() { return 0x85f6246ec6b3cbbc; }
+
+    tu_uint64 getTypeTag() const override;
+
     std::string toString() const override;
 
-    MapNode *getNode() const;
-    void setNode(MapNode *node);
+    OperandMap getMap() const;
+    void setMap(const OperandMap &map);
 
-    int mapSize() const;
-    bool mapContains(const lyric_runtime::Operand &key) const;
-    lyric_runtime::Operand mapGet(const lyric_runtime::Operand &key) const;
-    MapNode *mapUpdate(const lyric_runtime::Operand &key, const lyric_runtime::Operand &value) const;
-    MapNode *mapRemove(const lyric_runtime::Operand &key) const;
+    size_t numEntries();
+    bool getEntry(const MapKey &key, lyric_runtime::Operand &value);
+    bool containsEntry(const MapKey &key);
+    OperandMap update(const MapKey &key, const lyric_runtime::Operand &value);
+    OperandMap remove(const MapKey &key);
 
 protected:
     void setMembersReachable() override;
     void clearMembersReachable() override;
 
 private:
-    MapNode *m_node;
-
-    friend void init_node_pointer_stack(std::stack<NodePointer> &stack, MapRef *map);
+    OperandMap m_hamt;
 };
 
 class MapIterator : public lyric_runtime::BaseRef {
 
 public:
     explicit MapIterator(const lyric_runtime::VirtualTable *vtable);
-    MapIterator(const lyric_runtime::VirtualTable *vtable, MapRef *map);
+    MapIterator(const lyric_runtime::VirtualTable *vtable, OperandMap map);
+
+    static constexpr tu_uint64 type_tag() { return 0xee3ff776c5745a9f; }
+
+    tu_uint64 getTypeTag() const override;
 
     std::string toString() const override;
 
@@ -93,10 +87,11 @@ protected:
     void clearMembersReachable() override;
 
 private:
-    std::stack<NodePointer> m_stack;
-    MapRef *m_map;
-
-    friend void init_node_pointer_stack(std::stack<NodePointer> &stack, MapRef *map);
+    struct Priv {
+        OperandMap hamt;
+        OperandMapIterator iterator;
+    };
+    std::shared_ptr<Priv> m_priv;
 };
 
 tempo_utils::Status map_alloc(

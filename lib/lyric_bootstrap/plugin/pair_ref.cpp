@@ -2,10 +2,9 @@
 #include <absl/strings/substitute.h>
 
 #include "pair_ref.h"
-#include "map_key.h"
 
 PairRef::PairRef(const lyric_runtime::VirtualTable *vtable)
-    : lyric_runtime::BaseRef(vtable)
+    : BaseRef(vtable)
 {
     TU_ASSERT (vtable != nullptr);
 }
@@ -15,10 +14,16 @@ PairRef::~PairRef()
     TU_LOG_VV << "free " << PairRef::toString();
 }
 
+tu_uint64
+PairRef::getTypeTag() const {
+    return type_tag();
+}
+
 bool
 PairRef::hashValue(absl::HashState state)
 {
-    absl::HashState::combine(std::move(state), MapKey{m_first}, MapKey{m_second});
+    m_first.hashEquality(absl::HashState::Create(&state));
+    m_second.hashEquality(absl::HashState::Create(&state));
     return true;
 }
 
