@@ -1,6 +1,7 @@
 
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
+#include <lyric_compiler/conversion_utils.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -86,13 +87,19 @@ lyric_compiler::VariableHandler::after(
         m_typeHint = expressionType;
     }
 
-    // val type was explicitly declared and is disjoint from rvalue type
+    // if expression is not assignable to the variable then attempt conversion or fail
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_typeHint, expressionType));
-    if (!isAssignable)
-        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-            "expression {} is incompatible with declared type {}",
-            expressionType.toString(), m_typeHint.toString());
+    if (!isAssignable) {
+        bool isConvertible;
+        TU_ASSIGN_OR_RETURN (isConvertible, convert_operand(expressionType, m_typeHint, block, m_fragment));
+        if (!isConvertible)
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                "expression {} cannot be assigned to {} {}; type is not compatible and no conversion found",
+                expressionType.toString(),
+                m_isVariable? "variable" : "value",
+                identifier);
+    }
 
     lyric_assembler::DataReference var;
     TU_ASSIGN_OR_RETURN (var, block->declareVariable(identifier, isHidden, m_typeHint, m_isVariable));

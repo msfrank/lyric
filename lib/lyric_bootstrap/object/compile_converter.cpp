@@ -9,12 +9,12 @@ build_core_Converter(BuilderState &state, const PreludeSymbols &preludeSymbols)
     auto *ConverterTemplate = state.addTemplate(
         conceptPath,
         {
-            {"FromType", lyo1::PlaceholderVariance::Invariant},
-            {"IntoType", lyo1::PlaceholderVariance::Invariant, /* isAlias= */ true},
+            {"IntoType", lyo1::PlaceholderVariance::Invariant},
+            {"FromType", lyo1::PlaceholderVariance::Invariant, /* isAlias= */ true},
         });
 
-    auto *FromType = ConverterTemplate->types["FromType"];
     auto *IntoType = ConverterTemplate->types["IntoType"];
+    auto *FromType = ConverterTemplate->types["FromType"];
 
     auto *ConverterConcept = state.addGenericConcept(conceptPath, ConverterTemplate,
         lyo1::ConceptFlags::NONE, preludeSymbols.IdeaConcept);

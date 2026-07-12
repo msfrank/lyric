@@ -776,6 +776,96 @@ lyric_assembler::CodeFragment::patchTarget(JumpTarget jumpTarget, JumpLabel jump
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::convertToI8()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_I8);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToI16()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_I16);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToI32()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_I32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToI64()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_I64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToU8()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_U8);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToU16()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_U16);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToU32()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_U32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToU64()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_U64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToF32()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_F32);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::convertToF64()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<ConversionOperationInstruction>(lyric_object::Opcode::OP_TO_F64);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::callStatic(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags)
 {
     TU_ASSERT (callSymbol != nullptr);

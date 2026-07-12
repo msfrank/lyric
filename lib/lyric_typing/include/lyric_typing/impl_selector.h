@@ -13,7 +13,9 @@ namespace lyric_typing {
         ImplSelector(const SummonReifier *reifier, lyric_assembler::BlockHandle *block);
         ImplSelector(const ImplSelector &other) = delete;
 
-        tempo_utils::Status select(std::unique_ptr<lyric_assembler::AbstractCallable> &callable);
+        tempo_utils::Status select(
+            std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
+            bool allowMissing = false);
 
         std::vector<lyric_common::TypeDef> getCallsiteArguments() const;
 

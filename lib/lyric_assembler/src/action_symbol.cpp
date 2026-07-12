@@ -421,3 +421,9 @@ lyric_assembler::ActionPlacement::getReceiver() const
 {
     return m_actionSymbol->getReceiverUrl();
 }
+
+lyric_common::TypeDef
+lyric_assembler::ActionPlacement::getReturnType() const
+{
+    return m_actionSymbol->getReturnType();
+}

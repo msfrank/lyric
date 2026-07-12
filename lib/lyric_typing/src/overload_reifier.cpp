@@ -52,6 +52,7 @@ lyric_typing::OverloadReifier::initialize(
     if (restPlacement != nullptr) {
         m_unifiedParameters.push_back(*restPlacement);
     }
+    m_returnType = actionSymbol->getReturnType();
 
     auto *invokerTemplate = actionSymbol->actionTemplate();
 
@@ -92,6 +93,7 @@ lyric_typing::OverloadReifier::initialize(
     if (restPlacement != nullptr) {
         m_unifiedParameters.push_back(*restPlacement);
     }
+    m_returnType = callSymbol->getReturnType();
 
     auto *invokerTemplate = callSymbol->callTemplate();
 
@@ -195,7 +197,18 @@ lyric_typing::OverloadReifier::reifyParameters(const lyric_assembler::ParameterP
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_typing::OverloadReifier::reifyResult(const lyric_common::TypeDef &returnType) const
+lyric_typing::OverloadReifier::reifyResult(const lyric_common::TypeDef &resultType)
 {
-    return internal::reify_result_type(returnType, m_state.get());
+    lyric_common::TypeDef reifiedType;
+    TU_ASSIGN_OR_RETURN (reifiedType, internal::reify_singular_return(m_returnType, resultType, m_state.get()));
+
+    if (m_resultType.isValid()) {
+        if (reifiedType != m_resultType)
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "overload return type is already reified");
+    } else {
+        m_resultType = reifiedType;
+    }
+
+    return m_resultType;
 }

@@ -65,6 +65,7 @@ lyric_typing::CallsiteReifier::initialize(
     if (restPlacement != nullptr) {
         m_restParameter = Option(*restPlacement);
     }
+    m_returnType = placement->getReturnType();
 
     lyric_assembler::TemplateHandle *invokerTemplate = placement->getTemplate();
 
@@ -171,6 +172,7 @@ lyric_typing::CallsiteReifier::initialize(
     if (restPlacement != nullptr) {
         m_restParameter = Option(*restPlacement);
     }
+    m_returnType = placement->getReturnType();
 
     lyric_assembler::TemplateHandle *invokerTemplate = placement->getTemplate();
 
@@ -286,6 +288,7 @@ lyric_typing::CallsiteReifier::initialize(
     if (callsiteArgumentOverrides.empty())
         return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
             "empty type arguments list for callsite");
+    m_returnType = placement->getReturnType();
 
     auto placementUrl = placement->getReceiver();
 
@@ -552,7 +555,30 @@ lyric_typing::CallsiteReifier::reifyNextContext()
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnType) const
+lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &resultType)
 {
-    return internal::reify_result_type(returnType, m_state.get());
+    lyric_common::TypeDef reifiedType;
+    switch (m_returnType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder:
+        case lyric_common::TypeDefType::NoReturn:
+            TU_ASSIGN_OR_RETURN (reifiedType, internal::reify_singular_return(m_returnType, resultType, m_state.get()));
+            break;
+        case lyric_common::TypeDefType::Union:
+            TU_ASSIGN_OR_RETURN (reifiedType, internal::reify_union_return(m_returnType, resultType, m_state.get()));
+            break;
+        default:
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "invalid return type {}", m_returnType.toString());
+    }
+
+    if (m_resultType.isValid()) {
+        if (reifiedType != m_resultType)
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "callsite return type is already reified");
+    } else {
+        m_resultType = reifiedType;
+    }
+
+    return m_resultType;
 }

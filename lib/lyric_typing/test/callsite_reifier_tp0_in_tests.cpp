@@ -38,7 +38,7 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     p0.typeDef = templateHandle->getPlaceholder(0);
     p0.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle, BoolType));
 
     // simulate the function f[T](p0: T): Bool
     lyric_typing::CallsiteReifier reifier(typeSystem.get());

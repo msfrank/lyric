@@ -37,21 +37,22 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
         bool hasReceiver() const override;
         lyric_common::SymbolUrl getReceiver() const override;
+        lyric_common::TypeDef getReturnType() const override;
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier,
+            AbstractCallsiteReifier &reifier,
             CodeFragment *fragment) override;
 
         tempo_utils::Result<lyric_common::TypeDef> invokeCtor(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier,
+            AbstractCallsiteReifier &reifier,
             CodeFragment *fragment,
             tu_uint8 flags) override;
 
         tempo_utils::Result<lyric_common::TypeDef> invokeNew(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier,
+            AbstractCallsiteReifier &reifier,
             CodeFragment *fragment,
             tu_uint8 flags) override;
 

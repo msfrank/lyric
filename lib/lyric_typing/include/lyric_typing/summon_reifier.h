@@ -31,7 +31,7 @@ namespace lyric_typing {
         size_t numReifiedArguments() const;
         tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType);
         tempo_utils::Result<lyric_common::TypeDef> reifyNextContext();
-        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &returnType) const;
+        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &resultType);
 
         tempo_utils::Status finalize();
 
@@ -45,9 +45,11 @@ namespace lyric_typing {
         lyric_common::SymbolUrl m_conceptUrl;
         std::vector<lyric_assembler::Parameter> m_unifiedParameters;
         Option<lyric_assembler::Parameter> m_restParameter;
+        lyric_common::TypeDef m_returnType;
         bool m_initialized = false;
 
         std::vector<lyric_common::TypeDef> m_argumentTypes;
+        lyric_common::TypeDef m_resultType;
         lyric_common::TypeDef m_summonType;
         bool m_finalized = false;
 

@@ -28,6 +28,7 @@ namespace lyric_assembler {
         CompareOperation,
         LogicalOperation,
         BitwiseOperation,
+        ConversionOperation,
         TypeOperation,
         StackOperation,
         LoadLiteral,

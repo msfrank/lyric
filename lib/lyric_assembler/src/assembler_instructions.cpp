@@ -2,7 +2,6 @@
 #include <lyric_assembler/assembler_instructions.h>
 #include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/literal_cache.h>
-#include <lyric_assembler/literal_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
@@ -22,10 +21,8 @@
 #include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
-#include <lyric_assembler/synthetic_symbol.h>
 #include <tempo_utils/unicode.h>
 
-#include "lyric_assembler/protocol_symbol.h"
 
 lyric_assembler::InstructionType
 lyric_assembler::NoopInstruction::getType() const
@@ -1269,6 +1266,64 @@ tu_uint32
 lyric_assembler::BranchInstruction::getTargetId() const
 {
     return m_targetId;
+}
+
+lyric_assembler::ConversionOperationInstruction::ConversionOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::ConversionOperationInstruction::getType() const
+{
+    return InstructionType::ConversionOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::ConversionOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::ConversionOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_TO_I8:
+        case lyric_object::Opcode::OP_TO_I16:
+        case lyric_object::Opcode::OP_TO_I32:
+        case lyric_object::Opcode::OP_TO_I64:
+        case lyric_object::Opcode::OP_TO_U8:
+        case lyric_object::Opcode::OP_TO_U16:
+        case lyric_object::Opcode::OP_TO_U32:
+        case lyric_object::Opcode::OP_TO_U64:
+        case lyric_object::Opcode::OP_TO_F32:
+        case lyric_object::Opcode::OP_TO_F64:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::ConversionOperationInstruction::toString() const
+{
+    return absl::StrCat("Conversion Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::ConversionOperationInstruction::getOpcode() const
+{
+    return m_opcode;
 }
 
 lyric_assembler::CallInstruction::CallInstruction(

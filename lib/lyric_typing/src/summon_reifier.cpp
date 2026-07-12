@@ -48,6 +48,7 @@ lyric_typing::SummonReifier::initialize(lyric_assembler::ActionSymbol *actionSym
     if (restPlacement != nullptr) {
         m_restParameter = Option(*restPlacement);
     }
+    m_returnType = actionSymbol->getReturnType();
 
     auto *invokerTemplate = placement.getTemplate();
 
@@ -188,9 +189,20 @@ lyric_typing::SummonReifier::reifyNextContext()
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_typing::SummonReifier::reifyResult(const lyric_common::TypeDef &returnType) const
+lyric_typing::SummonReifier::reifyResult(const lyric_common::TypeDef &resultType)
 {
-    return internal::reify_result_type(returnType, m_state.get());
+    lyric_common::TypeDef reifiedType;
+    TU_ASSIGN_OR_RETURN (reifiedType, internal::reify_singular_return(m_returnType, resultType, m_state.get()));
+
+    if (m_resultType.isValid()) {
+        if (reifiedType != m_resultType)
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "summon return type is already reified");
+    } else {
+        m_resultType = reifiedType;
+    }
+
+    return m_resultType;
 }
 
 lyric_common::TypeDef

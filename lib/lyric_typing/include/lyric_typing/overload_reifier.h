@@ -32,18 +32,16 @@ namespace lyric_typing {
         tempo_utils::Result<lyric_assembler::ParameterPack> reifyParameters(
             const lyric_assembler::ParameterPack &parameterPack);
 
-        tempo_utils::Result<lyric_common::TypeDef> reifyResult(
-            const lyric_common::TypeDef &returnType) const;
+        tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &resultType);
 
     private:
         std::unique_ptr<internal::DispatchState> m_state;
         std::vector<lyric_assembler::Parameter> m_unifiedParameters;
         Option<lyric_assembler::Parameter> m_restParameter;
+        lyric_common::TypeDef m_returnType;
         std::vector<lyric_common::TypeDef> m_overloadArguments;
+        lyric_common::TypeDef m_resultType;
         bool m_initialized;
-
-        //std::vector<lyric_common::TypeDef> m_argumentTypes;
-        //lyric_common::TypeDef m_restType;
     };
 }
 #endif // LYRIC_TYPING_OVERLOAD_REIFIER_H

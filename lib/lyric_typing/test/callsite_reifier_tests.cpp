@@ -17,7 +17,7 @@ TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
     auto *fundamentalCache = objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}, BoolType));
 
     // simulate the function f(): Bool
     lyric_typing::CallsiteReifier reifier(typeSystem.get());
@@ -43,7 +43,7 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
     p0.typeDef = IntType;
     p0.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, IntType));
 
     // simulate the function f(p0: Int): Int
     lyric_typing::CallsiteReifier reifier(typeSystem.get());
@@ -78,7 +78,7 @@ TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
     p1.typeDef = FloatType;
     p1.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0, p1}, {}, {}));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0, p1}, {}, {}, IntType));
 
     // simulate the function f(p0: Int, p1: Float): Int
     lyric_typing::CallsiteReifier reifier(typeSystem.get());

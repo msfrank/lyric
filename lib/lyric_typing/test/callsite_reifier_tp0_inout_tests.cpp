@@ -28,13 +28,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, rootBlock));
+    auto TType = templateHandle->getPlaceholder(0);
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
-    p0.typeDef = templateHandle->getPlaceholder(0);
+    p0.typeDef = TType;
     p0.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle, TType));
 
     // simulate the function f[T](p0: T): T
     lyric_typing::CallsiteReifier reifier(typeSystem.get());
@@ -44,7 +45,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());
 
     // result type should be Int
-    auto reifyReturnResult = reifier.reifyResult(templateHandle->getPlaceholder(0));
+    auto reifyReturnResult = reifier.reifyResult(TType);
     ASSERT_TRUE (reifyReturnResult.isResult());
     auto resultType = reifyReturnResult.getResult();
     ASSERT_EQ (IntType, resultType);
@@ -72,6 +73,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, rootBlock));
+    auto TType = templateHandle->getPlaceholder(0);
 
     lyric_assembler::ClassSymbol *collectionClass;
     TU_ASSIGN_OR_RAISE (collectionClass,
@@ -81,15 +83,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     TU_RAISE_IF_NOT_OK (collectionClass->finalizeClass(ObjectType));
     auto collectionUrl = collectionClass->getSymbolUrl();
     lyric_common::TypeDef CollectionOfTType;
-    TU_ASSIGN_OR_RAISE (CollectionOfTType, lyric_common::TypeDef::forConcrete(
-        collectionUrl, {templateHandle->getPlaceholder(0)}));
+    TU_ASSIGN_OR_RAISE (CollectionOfTType, lyric_common::TypeDef::forConcrete(collectionUrl, {TType}));
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
     p0.typeDef = CollectionOfTType;
     p0.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle, TType));
 
     // simulate the function f[T](p0: Collection[T]): T
     lyric_typing::CallsiteReifier reifier(typeSystem.get());
@@ -128,13 +129,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, rootBlock));
+    auto TType = templateHandle->getPlaceholder(0);
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
-    TU_ASSIGN_OR_RAISE (p0.typeDef, lyric_common::TypeDef::forUnion({templateHandle->getPlaceholder(0), NilType}));
+    TU_ASSIGN_OR_RAISE (p0.typeDef, lyric_common::TypeDef::forUnion({TType, NilType}));
     p0.placement = lyric_object::PlacementType::List;
 
-    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle, TType));
 
     // simulate the function f[T](p0: T | Nil): T
     lyric_typing::CallsiteReifier reifier(typeSystem.get());
@@ -144,7 +146,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());
 
     // result type should be Int
-    auto reifyReturnResult = reifier.reifyResult(templateHandle->getPlaceholder(0));
+    auto reifyReturnResult = reifier.reifyResult(TType);
     ASSERT_TRUE (reifyReturnResult.isResult());
     auto resultType = reifyReturnResult.getResult();
     ASSERT_EQ (IntType, resultType);

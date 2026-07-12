@@ -21,8 +21,14 @@ namespace lyric_typing::internal {
         const lyric_common::TypeDef &argType,
         DispatchState *invokerState);
 
-    tempo_utils::Result<lyric_common::TypeDef> reify_result_type(
+    tempo_utils::Result<lyric_common::TypeDef> reify_singular_return(
         const lyric_common::TypeDef &returnType,
+        const lyric_common::TypeDef &resultType,
+        DispatchState *invokerState);
+
+    tempo_utils::Result<lyric_common::TypeDef> reify_union_return(
+        const lyric_common::TypeDef &returnType,
+        const lyric_common::TypeDef &resultType,
         DispatchState *invokerState);
 }
 

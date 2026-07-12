@@ -10,23 +10,27 @@ public:
     TestCallable(
         const std::vector<lyric_assembler::Parameter> &listParameters,
         const std::vector<lyric_assembler::Parameter> &namedParameters,
-        const lyric_assembler::Parameter &restParameter);
-    TestCallable(
-        const std::vector<lyric_assembler::Parameter> &listParameters,
-        const std::vector<lyric_assembler::Parameter> &namedParameters,
         const lyric_assembler::Parameter &restParameter,
-        lyric_assembler::TemplateHandle *templateHandle);
-    TestCallable(
-        const std::vector<lyric_assembler::Parameter> &listParameters,
-        const std::vector<lyric_assembler::Parameter> &namedParameters,
-        const lyric_assembler::Parameter &restParameter,
-        const lyric_common::SymbolUrl &receiverUrl);
+        const lyric_common::TypeDef &returnType = lyric_common::TypeDef::noReturn());
     TestCallable(
         const std::vector<lyric_assembler::Parameter> &listParameters,
         const std::vector<lyric_assembler::Parameter> &namedParameters,
         const lyric_assembler::Parameter &restParameter,
         lyric_assembler::TemplateHandle *templateHandle,
-        const lyric_common::SymbolUrl &receiverUrl);
+        const lyric_common::TypeDef &returnType = lyric_common::TypeDef::noReturn());
+    TestCallable(
+        const std::vector<lyric_assembler::Parameter> &listParameters,
+        const std::vector<lyric_assembler::Parameter> &namedParameters,
+        const lyric_assembler::Parameter &restParameter,
+        const lyric_common::SymbolUrl &receiverUrl,
+        const lyric_common::TypeDef &returnType = lyric_common::TypeDef::noReturn());
+    TestCallable(
+        const std::vector<lyric_assembler::Parameter> &listParameters,
+        const std::vector<lyric_assembler::Parameter> &namedParameters,
+        const lyric_assembler::Parameter &restParameter,
+        lyric_assembler::TemplateHandle *templateHandle,
+        const lyric_common::SymbolUrl &receiverUrl,
+        const lyric_common::TypeDef &returnType = lyric_common::TypeDef::noReturn());
 
     lyric_assembler::TemplateHandle *getTemplate() const override;
     std::vector<lyric_assembler::Parameter>::const_iterator listPlacementBegin() const override;
@@ -38,21 +42,22 @@ public:
     lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
     bool hasReceiver() const override;
     lyric_common::SymbolUrl getReceiver() const override;
+    lyric_common::TypeDef getReturnType() const override;
 
     tempo_utils::Result<lyric_common::TypeDef> invoke(
         lyric_assembler::BlockHandle *block,
-        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::AbstractCallsiteReifier &reifier,
         lyric_assembler::CodeFragment *fragment) override;
 
     tempo_utils::Result<lyric_common::TypeDef> invokeCtor(
         lyric_assembler::BlockHandle *block,
-        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::AbstractCallsiteReifier &reifier,
         lyric_assembler::CodeFragment *fragment,
         tu_uint8 flags) override;
 
     tempo_utils::Result<lyric_common::TypeDef> invokeNew(
         lyric_assembler::BlockHandle *block,
-        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::AbstractCallsiteReifier &reifier,
         lyric_assembler::CodeFragment *fragment,
         tu_uint8 flags) override;
 
@@ -62,6 +67,7 @@ private:
     std::vector<lyric_assembler::Parameter> m_listParameters;
     std::vector<lyric_assembler::Parameter> m_namedParameters;
     lyric_assembler::Parameter m_restParameter;
+    lyric_common::TypeDef m_returnType;
 };
 
 #endif // LYRIC_TYPING_TEST_CALLABLE_H

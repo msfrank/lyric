@@ -21,11 +21,7 @@ protected:
     tempo_utils::Status applyDigit(tu_uint8 value)
     {
         boost::multiprecision::cpp_int acc = value * (boost::multiprecision::pow(m_base, m_digit));
-        TU_LOG_INFO << "acc=" << to_string(acc)
-                    << " base=" << to_string(m_base)
-                    << " digit=" << m_digit;
         m_total += acc;
-        TU_LOG_INFO << "total=" << to_string(m_total);
         m_digit++;
         return {};
     }

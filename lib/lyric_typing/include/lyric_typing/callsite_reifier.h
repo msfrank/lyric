@@ -43,16 +43,18 @@ namespace lyric_typing {
         tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType) override;
         tempo_utils::Result<lyric_common::TypeDef> reifyNextContext() override;
         tempo_utils::Result<lyric_common::TypeDef> reifyResult(
-            const lyric_common::TypeDef &returnType) const override;
+            const lyric_common::TypeDef &resultType) override;
 
     private:
         std::unique_ptr<internal::DispatchState> m_state;
         std::vector<lyric_assembler::Parameter> m_unifiedParameters;
         Option<lyric_assembler::Parameter> m_restParameter;
         std::vector<lyric_common::TypeDef> m_callsiteArguments;
+        lyric_common::TypeDef m_returnType;
         bool m_initialized;
 
         std::vector<lyric_common::TypeDef> m_argumentTypes;
+        lyric_common::TypeDef m_resultType;
         lyric_common::TypeDef m_restType;
     };
 }

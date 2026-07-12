@@ -177,6 +177,31 @@ lyric_common::TypeDef::isValid() const
     return m_priv->type != TypeDefType::Invalid;
 }
 
+bool
+lyric_common::TypeDef::isComposite() const
+{
+    switch (m_priv->type) {
+        case TypeDefType::Intersection:
+        case TypeDefType::Union:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_common::TypeDef::isSingular() const
+{
+    switch (m_priv->type) {
+        case TypeDefType::Concrete:
+        case TypeDefType::Placeholder:
+        case TypeDefType::NoReturn:
+            return true;
+        default:
+            return false;
+    }
+}
+
 lyric_common::TypeDefType
 lyric_common::TypeDef::getType() const
 {

@@ -1006,3 +1006,9 @@ lyric_assembler::CallPlacement::getReceiver() const
         return m_callSymbol->getReceiverUrl();
     return {};
 }
+
+lyric_common::TypeDef
+lyric_assembler::CallPlacement::getReturnType() const
+{
+    return m_callSymbol->getReturnType();
+}

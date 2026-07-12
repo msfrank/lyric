@@ -112,6 +112,18 @@ namespace lyric_assembler {
         // target patching
         tempo_utils::Status patchTarget(JumpTarget jumpTarget, JumpLabel jumpLabel);
 
+        // conversion operations
+        tempo_utils::Status convertToI8();
+        tempo_utils::Status convertToI16();
+        tempo_utils::Status convertToI32();
+        tempo_utils::Status convertToI64();
+        tempo_utils::Status convertToU8();
+        tempo_utils::Status convertToU16();
+        tempo_utils::Status convertToU32();
+        tempo_utils::Status convertToU64();
+        tempo_utils::Status convertToF32();
+        tempo_utils::Status convertToF64();
+
         // call instructions
         tempo_utils::Status callStatic(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callVirtual(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);

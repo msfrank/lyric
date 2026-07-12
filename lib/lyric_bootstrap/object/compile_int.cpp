@@ -80,42 +80,25 @@ declare_core_I32(BuilderState &state, const PreludeSymbols &preludeSymbols)
 
 void build_core_I32(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
     auto *I32Type = preludeSymbols.I32Existential->existentialType;
-    auto *I16Type = preludeSymbols.I16Existential->existentialType;
-    auto *I8Type = preludeSymbols.I8Existential->existentialType;
     auto *I32Existential = preludeSymbols.I32Existential;
     auto *ConverterConcept = preludeSymbols.ConverterConcept;
 
-    auto *I16ConverterType = state.addConcreteType(
+    auto *I64ConverterType = state.addConcreteType(
         nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {I16Type, I32Type});
-    auto *I16ConverterImpl = state.addImpl(I32Existential->existentialPath, I16ConverterType, ConverterConcept);
+        {I64Type, I32Type});
+    auto *I64ConverterImpl = state.addImpl(I32Existential->existentialPath, I64ConverterType, ConverterConcept);
 
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
-        state.addImplExtension("Convert", I16ConverterImpl,
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I64ConverterImpl,
             {
-                make_list_param("source", I16Type),
+                make_list_param("source", I32Type),
             },
-            code, I32Type, true);
-    }
-
-    auto *I8ConverterType = state.addConcreteType(
-        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {I8Type, I32Type});
-    auto *I8ConverterImpl = state.addImpl(I32Existential->existentialPath, I8ConverterType, ConverterConcept);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
-        state.addImplExtension("Convert", I8ConverterImpl,
-            {
-                make_list_param("source", I8Type),
-            },
-            code, I32Type, true);
+            code, I64Type, true);
     }
 }
 
@@ -130,25 +113,42 @@ declare_core_I16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 
 void build_core_I16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *I32Type = preludeSymbols.I32Existential->existentialType;
     auto *I16Type = preludeSymbols.I16Existential->existentialType;
-    auto *I8Type = preludeSymbols.I8Existential->existentialType;
     auto *I16Existential = preludeSymbols.I16Existential;
     auto *ConverterConcept = preludeSymbols.ConverterConcept;
 
-    auto *I8ConverterType = state.addConcreteType(
+    auto *I64ConverterType = state.addConcreteType(
         nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {I8Type, I16Type});
-    auto *I8ConverterImpl = state.addImpl(I16Existential->existentialPath, I8ConverterType, ConverterConcept);
+        {I64Type, I16Type});
+    auto *I64ConverterImpl = state.addImpl(I16Existential->existentialPath, I64ConverterType, ConverterConcept);
 
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I16));
-        state.addImplExtension("Convert", I8ConverterImpl,
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I64ConverterImpl,
             {
-                make_list_param("source", I8Type),
+                make_list_param("source", I16Type),
             },
-            code, I16Type, true);
+            code, I64Type, true);
+    }
+
+    auto *I32ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I32Type, I16Type});
+    auto *I32ConverterImpl = state.addImpl(I16Existential->existentialPath, I32ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
+        state.addImplExtension("Convert", I32ConverterImpl,
+            {
+                make_list_param("source", I16Type),
+            },
+            code, I32Type, true);
     }
 }
 
@@ -159,6 +159,64 @@ declare_core_I8(BuilderState &state, const PreludeSymbols &preludeSymbols)
     auto *I8Existential = state.addExistential(
         existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return I8Existential;
+}
+
+void build_core_I8(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *I64Type = preludeSymbols.I64Existential->existentialType;
+    auto *I32Type = preludeSymbols.I32Existential->existentialType;
+    auto *I16Type = preludeSymbols.I16Existential->existentialType;
+    auto *I8Type = preludeSymbols.I8Existential->existentialType;
+    auto *I8Existential = preludeSymbols.I8Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *I64ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I64Type, I8Type});
+    auto *I64ConverterImpl = state.addImpl(I8Existential->existentialPath, I64ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I64));
+        state.addImplExtension("Convert", I64ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, I64Type, true);
+    }
+
+    auto *I32ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I32Type, I8Type});
+    auto *I32ConverterImpl = state.addImpl(I8Existential->existentialPath, I32ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I32));
+        state.addImplExtension("Convert", I32ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, I32Type, true);
+    }
+
+    auto *I16ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {I16Type, I8Type});
+    auto *I16ConverterImpl = state.addImpl(I8Existential->existentialPath, I16ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_I16));
+        state.addImplExtension("Convert", I16ConverterImpl,
+            {
+                make_list_param("source", I8Type),
+            },
+            code, I16Type, true);
+    }
 }
 
 CoreExistential *
@@ -172,60 +230,6 @@ declare_core_U64(BuilderState &state, const PreludeSymbols &preludeSymbols)
 
 void build_core_U64(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
-    auto *U64Type = preludeSymbols.U64Existential->existentialType;
-    auto *U32Type = preludeSymbols.U32Existential->existentialType;
-    auto *U16Type = preludeSymbols.U16Existential->existentialType;
-    auto *U8Type = preludeSymbols.U8Existential->existentialType;
-    auto *U64Existential = preludeSymbols.U64Existential;
-    auto *ConverterConcept = preludeSymbols.ConverterConcept;
-
-    auto *U32ConverterType = state.addConcreteType(
-        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U32Type, U64Type});
-    auto *U32ConverterImpl = state.addImpl(U64Existential->existentialPath, U32ConverterType, ConverterConcept);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
-        state.addImplExtension("Convert", U32ConverterImpl,
-            {
-                make_list_param("source", U32Type),
-            },
-            code, U64Type, true);
-    }
-
-    auto *U16ConverterType = state.addConcreteType(
-        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U16Type, U64Type});
-    auto *U16ConverterImpl = state.addImpl(U64Existential->existentialPath, U16ConverterType, ConverterConcept);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
-        state.addImplExtension("Convert", U16ConverterImpl,
-            {
-                make_list_param("source", U16Type),
-            },
-            code, U64Type, true);
-    }
-
-    auto *U8ConverterType = state.addConcreteType(
-        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U8Type, U64Type});
-    auto *U8ConverterImpl = state.addImpl(U64Existential->existentialPath, U8ConverterType, ConverterConcept);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
-        state.addImplExtension("Convert", U8ConverterImpl,
-            {
-                make_list_param("source", U8Type),
-            },
-            code, U64Type, true);
-    }
 }
 
 CoreExistential *
@@ -239,42 +243,25 @@ declare_core_U32(BuilderState &state, const PreludeSymbols &preludeSymbols)
 
 void build_core_U32(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *U64Type = preludeSymbols.U64Existential->existentialType;
     auto *U32Type = preludeSymbols.U32Existential->existentialType;
-    auto *U16Type = preludeSymbols.U16Existential->existentialType;
-    auto *U8Type = preludeSymbols.U8Existential->existentialType;
     auto *U32Existential = preludeSymbols.U32Existential;
     auto *ConverterConcept = preludeSymbols.ConverterConcept;
 
-    auto *U16ConverterType = state.addConcreteType(
+    auto *U64ConverterType = state.addConcreteType(
         nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U16Type, U32Type});
-    auto *U16ConverterImpl = state.addImpl(U32Existential->existentialPath, U16ConverterType, ConverterConcept);
+        {U64Type, U32Type});
+    auto *U64ConverterImpl = state.addImpl(U32Existential->existentialPath, U64ConverterType, ConverterConcept);
 
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
-        state.addImplExtension("Convert", U16ConverterImpl,
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
+        state.addImplExtension("Convert", U64ConverterImpl,
             {
-                make_list_param("source", U16Type),
+                make_list_param("source", U32Type),
             },
-            code, U32Type, true);
-    }
-
-    auto *U8ConverterType = state.addConcreteType(
-        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U8Type, U32Type});
-    auto *U8ConverterImpl = state.addImpl(U32Existential->existentialPath, U8ConverterType, ConverterConcept);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
-        state.addImplExtension("Convert", U8ConverterImpl,
-            {
-                make_list_param("source", U8Type),
-            },
-            code, U32Type, true);
+            code, U64Type, true);
     }
 }
 
@@ -289,25 +276,42 @@ declare_core_U16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 
 void build_core_U16(BuilderState &state, const PreludeSymbols &preludeSymbols)
 {
+    auto *U64Type = preludeSymbols.U64Existential->existentialType;
+    auto *U32Type = preludeSymbols.U32Existential->existentialType;
     auto *U16Type = preludeSymbols.U16Existential->existentialType;
-    auto *U8Type = preludeSymbols.U8Existential->existentialType;
     auto *U16Existential = preludeSymbols.U16Existential;
     auto *ConverterConcept = preludeSymbols.ConverterConcept;
 
-    auto *U8ConverterType = state.addConcreteType(
+    auto *U64ConverterType = state.addConcreteType(
         nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
-        {U8Type, U16Type});
-    auto *U8ConverterImpl = state.addImpl(U16Existential->existentialPath, U8ConverterType, ConverterConcept);
+        {U64Type, U16Type});
+    auto *U64ConverterImpl = state.addImpl(U16Existential->existentialPath, U64ConverterType, ConverterConcept);
 
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK (code.loadArgument(0));
-        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U16));
-        state.addImplExtension("Convert", U8ConverterImpl,
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
+        state.addImplExtension("Convert", U64ConverterImpl,
             {
-                make_list_param("source", U8Type),
+                make_list_param("source", U16Type),
             },
-            code, U16Type, true);
+            code, U64Type, true);
+    }
+
+    auto *U32ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U32Type, U16Type});
+    auto *U32ConverterImpl = state.addImpl(U16Existential->existentialPath, U32ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
+        state.addImplExtension("Convert", U32ConverterImpl,
+            {
+                make_list_param("source", U16Type),
+            },
+            code, U32Type, true);
     }
 }
 
@@ -318,6 +322,64 @@ declare_core_U8(BuilderState &state, const PreludeSymbols &preludeSymbols)
     auto *U8Existential = state.addExistential(
         existentialPath, lyo1::ExistentialFlags::Final, preludeSymbols.IntrinsicExistential);
     return U8Existential;
+}
+
+void build_core_U8(BuilderState &state, const PreludeSymbols &preludeSymbols)
+{
+    auto *U64Type = preludeSymbols.U64Existential->existentialType;
+    auto *U32Type = preludeSymbols.U32Existential->existentialType;
+    auto *U16Type = preludeSymbols.U16Existential->existentialType;
+    auto *U8Type = preludeSymbols.U8Existential->existentialType;
+    auto *U8Existential = preludeSymbols.U8Existential;
+    auto *ConverterConcept = preludeSymbols.ConverterConcept;
+
+    auto *U64ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U64Type, U8Type});
+    auto *U64ConverterImpl = state.addImpl(U8Existential->existentialPath, U64ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U64));
+        state.addImplExtension("Convert", U64ConverterImpl,
+            {
+                make_list_param("source", U8Type),
+            },
+            code, U64Type, true);
+    }
+
+    auto *U32ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U32Type, U8Type});
+    auto *U32ConverterImpl = state.addImpl(U8Existential->existentialPath, U32ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U32));
+        state.addImplExtension("Convert", U32ConverterImpl,
+            {
+                make_list_param("source", U8Type),
+            },
+            code, U32Type, true);
+    }
+
+    auto *U16ConverterType = state.addConcreteType(
+        nullptr, lyo1::TypeSection::Concept, ConverterConcept->concept_index,
+        {U16Type, U8Type});
+    auto *U16ConverterImpl = state.addImpl(U8Existential->existentialPath, U16ConverterType, ConverterConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK (code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK (code.writeOpcode(lyric_object::Opcode::OP_TO_U16));
+        state.addImplExtension("Convert", U16ConverterImpl,
+            {
+                make_list_param("source", U8Type),
+            },
+            code, U16Type, true);
+    }
 }
 
 void

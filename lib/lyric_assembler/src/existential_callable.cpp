@@ -118,10 +118,16 @@ lyric_assembler::ExistentialCallable::getReceiver() const
     return m_callSymbol->getReceiverUrl();
 }
 
+lyric_common::TypeDef
+lyric_assembler::ExistentialCallable::getReturnType() const
+{
+    return m_callSymbol->getReturnType();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExistentialCallable::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment)
 {
     checkValid();
@@ -152,7 +158,7 @@ lyric_assembler::ExistentialCallable::invoke(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExistentialCallable::invokeCtor(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {
@@ -163,7 +169,7 @@ lyric_assembler::ExistentialCallable::invokeCtor(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExistentialCallable::invokeNew(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {

@@ -9,6 +9,7 @@ set(TEST_CASES
     compile_assignment_tests.cpp
     compile_cast_tests.cpp
     compile_conditional_tests.cpp
+    compile_conversion_tests.cpp
     compile_data_deref_tests.cpp
     compile_def_tests.cpp
     compile_alias_tests.cpp

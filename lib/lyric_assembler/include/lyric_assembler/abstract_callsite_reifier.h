@@ -19,8 +19,7 @@ namespace lyric_assembler {
 
         virtual tempo_utils::Result<lyric_common::TypeDef> reifyNextContext() = 0;
 
-        virtual tempo_utils::Result<lyric_common::TypeDef> reifyResult(
-            const lyric_common::TypeDef &returnType) const = 0;
+        virtual tempo_utils::Result<lyric_common::TypeDef> reifyResult(const lyric_common::TypeDef &returnType) = 0;
     };
 }
 

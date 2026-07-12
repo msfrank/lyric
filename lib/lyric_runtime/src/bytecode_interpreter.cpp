@@ -705,6 +705,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_I8(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to I16
@@ -713,6 +714,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_I16(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to I32
@@ -721,6 +723,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_I32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to I64
@@ -729,6 +732,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_I64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to U8
@@ -737,6 +741,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_U8(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to U16
@@ -745,6 +750,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_U16(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to U32
@@ -753,6 +759,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_U32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to U64
@@ -761,6 +768,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_U64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to F32
@@ -769,6 +777,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_F32(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // pop value from stack and convert its representation to F64
@@ -777,6 +786,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(source));
                 ON_ERROR_IF_NOT_OK (internal::convert_to_F64(heapManager, source, result));
                 ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
+                break;
             }
 
             // load assembly specified by the literal address operand

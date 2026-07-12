@@ -166,7 +166,13 @@ main(int argc, char *argv[])
     build_core_String(state, preludeSymbols);
 
     build_core_I64(state, preludeSymbols);
+    build_core_I32(state, preludeSymbols);
+    build_core_I16(state, preludeSymbols);
+    build_core_I8(state, preludeSymbols);
     build_core_U64(state, preludeSymbols);
+    build_core_U32(state, preludeSymbols);
+    build_core_U16(state, preludeSymbols);
+    build_core_U8(state, preludeSymbols);
     build_core_F64(state, preludeSymbols);
     build_core_F32(state, preludeSymbols);
 

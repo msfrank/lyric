@@ -99,6 +99,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getInitializer(const std::string &name) const override;
         bool hasReceiver() const override;
         lyric_common::SymbolUrl getReceiver() const override;
+        lyric_common::TypeDef getReturnType() const override;
 
     private:
         const ActionSymbol *m_actionSymbol;

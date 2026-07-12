@@ -434,6 +434,24 @@ namespace lyric_assembler {
         tu_uint32 m_targetId;
     };
 
+    class ConversionOperationInstruction: public AbstractInstruction {
+    public:
+        explicit ConversionOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
     class CallInstruction: public AbstractInstruction {
     public:
         CallInstruction(

@@ -625,6 +625,37 @@ lyric_assembler::internal::import_proc(
                 TU_RETURN_IF_NOT_OK (apply_jump(op, data));
                 break;
 
+            case lyric_object::Opcode::OP_TO_I8:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToI8());
+                break;
+            case lyric_object::Opcode::OP_TO_I16:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToI16());
+                break;
+            case lyric_object::Opcode::OP_TO_I32:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToI32());
+                break;
+            case lyric_object::Opcode::OP_TO_I64:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToI64());
+                break;
+            case lyric_object::Opcode::OP_TO_U8:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToU8());
+                break;
+            case lyric_object::Opcode::OP_TO_U16:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToU16());
+                break;
+            case lyric_object::Opcode::OP_TO_U32:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToU32());
+                break;
+            case lyric_object::Opcode::OP_TO_U64:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToU64());
+                break;
+            case lyric_object::Opcode::OP_TO_F32:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToF32());
+                break;
+            case lyric_object::Opcode::OP_TO_F64:
+                TU_RETURN_IF_NOT_OK (data.fragment->convertToF64());
+                break;
+
             case lyric_object::Opcode::OP_CALL_STATIC:
             case lyric_object::Opcode::OP_CALL_VIRTUAL:
             case lyric_object::Opcode::OP_CALL_EXISTENTIAL:

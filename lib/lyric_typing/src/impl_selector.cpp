@@ -196,7 +196,9 @@ lyric_typing::ImplSelector::findImplOutsideProc(
 }
 
 tempo_utils::Status
-lyric_typing::ImplSelector::select(std::unique_ptr<lyric_assembler::AbstractCallable> &callable)
+lyric_typing::ImplSelector::select(
+    std::unique_ptr<lyric_assembler::AbstractCallable> &callable,
+    bool allowMissing)
 {
     lyric_common::TypeDef consumerType;
     TU_ASSIGN_OR_RETURN (consumerType, m_reifier->reifySummonType());
@@ -241,7 +243,10 @@ lyric_typing::ImplSelector::select(std::unique_ptr<lyric_assembler::AbstractCall
         }
     }
 
-    // impl not found
+    // otherwise impl was not found
+
+    if (allowMissing)
+        return {};
     return TypingStatus::forCondition(TypingCondition::kInvalidType,
         "missing impl for {}", consumerType.toString());
 }

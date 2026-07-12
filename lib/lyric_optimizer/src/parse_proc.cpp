@@ -110,6 +110,7 @@ scan_for_basic_blocks(
             case lyric_assembler::InstructionType::CompareOperation:
             case lyric_assembler::InstructionType::LogicalOperation:
             case lyric_assembler::InstructionType::BitwiseOperation:
+            case lyric_assembler::InstructionType::ConversionOperation:
             case lyric_assembler::InstructionType::TypeOperation:
             case lyric_assembler::InstructionType::StackOperation:
             case lyric_assembler::InstructionType::LoadLiteral:

@@ -30,6 +30,8 @@ namespace lyric_common {
         TypeDef &operator=(TypeDef &&other) noexcept;
 
         bool isValid() const;
+        bool isComposite() const;
+        bool isSingular() const;
 
         TypeDefType getType() const;
 

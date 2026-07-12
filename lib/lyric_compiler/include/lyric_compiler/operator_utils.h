@@ -21,4 +21,5 @@ namespace lyric_compiler {
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 }
+
 #endif // LYRIC_COMPILER_OPERATOR_UTILS_H

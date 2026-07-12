@@ -121,10 +121,16 @@ lyric_assembler::ExtensionCallable::getReceiver() const
     return {};
 }
 
+lyric_common::TypeDef
+lyric_assembler::ExtensionCallable::getReturnType() const
+{
+    return m_callSymbol->getReturnType();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExtensionCallable::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment)
 {
     checkValid();
@@ -163,7 +169,7 @@ lyric_assembler::ExtensionCallable::invoke(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExtensionCallable::invokeCtor(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {
@@ -174,7 +180,7 @@ lyric_assembler::ExtensionCallable::invokeCtor(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExtensionCallable::invokeNew(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {

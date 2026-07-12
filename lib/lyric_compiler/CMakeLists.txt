@@ -26,6 +26,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/conditional_handler.h
     include/lyric_compiler/constant_utils.h
     include/lyric_compiler/constructor_handler.h
+    include/lyric_compiler/conversion_utils.h
     include/lyric_compiler/data_deref_handler.h
     include/lyric_compiler/def_handler.h
     include/lyric_compiler/defclass_handler.h
@@ -97,6 +98,7 @@ target_sources(lyric_compiler PRIVATE
     src/conditional_handler.cpp
     src/constant_utils.cpp
     src/constructor_handler.cpp
+    src/conversion_utils.cpp
     src/data_deref_handler.cpp
     src/def_handler.cpp
     src/defclass_handler.cpp

@@ -24,6 +24,7 @@ namespace lyric_assembler {
         virtual lyric_common::SymbolUrl getInitializer(const std::string &name) const = 0;
         virtual bool hasReceiver() const = 0;
         virtual lyric_common::SymbolUrl getReceiver() const = 0;
+        virtual lyric_common::TypeDef getReturnType() const = 0;
     };
 }
 

@@ -102,10 +102,16 @@ lyric_assembler::FunctionCallable::getReceiver() const
     return {};
 }
 
+lyric_common::TypeDef
+lyric_assembler::FunctionCallable::getReturnType() const
+{
+    return m_callSymbol->getReturnType();
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::FunctionCallable::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment)
 {
     checkValid();
@@ -140,7 +146,7 @@ lyric_assembler::FunctionCallable::invoke(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::FunctionCallable::invokeCtor(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {
@@ -151,7 +157,7 @@ lyric_assembler::FunctionCallable::invokeCtor(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::FunctionCallable::invokeNew(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier,
+    AbstractCallsiteReifier &reifier,
     CodeFragment *fragment,
     tu_uint8 flags)
 {
